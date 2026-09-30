@@ -30,6 +30,28 @@ module Aim
       assert Aim::Users.member?(employee.id)
     end
 
+    test 'a person\'s home unit is their unit as the Chart of Accounts has it' do
+      hca = Employee.new(agency: 'HCA', unit: '8123')
+      parent = Struct.new(:unit_id).new('8100')
+
+      Coa::Unit.stub(:resolve_for_employee, parent) { assert_equal '8100', Aim::Users.home_unit(hca) }
+      Coa::Unit.stub(:resolve_for_employee, nil) { assert_equal '8123', Aim::Users.home_unit(hca) }
+      assert_nil Aim::Users.home_unit(nil)
+    end
+
+    test 'home units for many people ask the Chart of Accounts once per agency and unit' do
+      asked = []
+      Coa::Unit.stub(:resolve_for_employee, lambda { |employee|
+        asked << employee.unit
+        nil
+      }) do
+        units = Aim::Users.home_units(1 => %w[GSA 4601], 2 => %w[GSA 4601], 3 => ['GSA', nil])
+
+        assert_equal({ 1 => '4601', 2 => '4601', 3 => nil }, units)
+      end
+      assert_equal ['4601'], asked
+    end
+
     test 'seeding from the groups adds each group member once' do
       employee = Employee.order(:id).first
       skip 'no employee to test with' if employee.nil?

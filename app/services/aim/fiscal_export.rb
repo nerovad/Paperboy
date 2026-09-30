@@ -18,6 +18,12 @@ module Aim
       'Check Number'
     ].freeze
 
+    # Numbers Fiscal's macro reads as numbers. A credit is negative, so these
+    # start with "-" and must reach the macro as written; every other cell is
+    # text and is defused against formula injection (Paperboy::CsvSafe).
+    MONEY_COLUMNS = ['Sales Tax', 'SubTotal', 'Credit Amount', 'Total', 'Split Invoice Amount'].freeze
+    MONEY_INDEXES = MONEY_COLUMNS.to_set { |name| COLUMNS.index(name) }.freeze
+
     attr_reader :records
 
     def initialize(records)
@@ -39,14 +45,14 @@ module Aim
 
     def self.approver_names(emails)
       Employee.where(email: emails.compact.uniq).pluck(:email, :last_name, :first_name)
-              .to_h { |email, last, first| [email.to_s.downcase, "#{last}, #{first}"] }
+              .to_h { |email, last, first| [email.to_s.downcase, Employee.format_sort_name(first, last)] }
     rescue ActiveRecord::ActiveRecordError
       {}
     end
 
     def filename = "AIM_Fiscal_Report_#{Time.current.strftime('%Y%m%d_%H%M%S')}.csv"
 
-    def rows = records.map { |record| row(record) }
+    def rows = records.map { |record| defused(row(record)) }
 
     def to_csv
       CSV.generate { |csv| ([COLUMNS] + rows).each { |line| csv << line } }
@@ -74,6 +80,10 @@ module Aim
     # and whatever Fiscal wrote.
     def description(record)
       [@stamps[record.invoice_id], record.description.presence].compact.join(' _ ')
+    end
+
+    def defused(cells)
+      cells.each_with_index.map { |cell, index| MONEY_INDEXES.include?(index) ? cell : Paperboy::CsvSafe.defuse_cell(cell) }
     end
 
     def day(value) = value&.in_time_zone&.strftime('%m/%d/%Y')

@@ -12,8 +12,6 @@ import fitz
 from PIL import Image
 import pytesseract
 
-from pydantic import BaseModel, Field
-
 from state_store import record_state, invoice_facts
 
 from pipeline_common import (
@@ -27,7 +25,11 @@ from pipeline_common import (
     normalize_document_type, HANDWRITTEN_FINANCIAL_FIELDS,
     QueueDrop, discard_file, retire_queue_folder, ROUTED_MARKER,
 )
-from typing import Optional
+# The model schemas and the vision merge are v2's; pipeline_common has put
+# the v2 folder on the path. See "SHARED WITH v2" there.
+from invoice_models import (
+    Phase1Data, VISION_SCHEMA, STICKY_TRUE_FIELDS, UNION_FIELDS, merge_vision_fields,
+)
 
 ACTOR = "01_ai_extraction_worker"
 
@@ -40,42 +42,6 @@ REPROCESS_ERROR_MARKER = ".ai_reprocess_error.json"
 # in folders that already hold one -- so whichever the filesystem listed first
 # won. The suffix makes the two tellable apart by name. Plan step 1.2.
 VENDOR_RULE_SUFFIX = "_VENDOR_RULE.json"
-
-class Phase1Data(BaseModel):
-    contains_multiple_invoices: bool
-    is_high_confidence: bool
-    # The enum constrains what the model may answer; the field itself stays a
-    # plain string so an off-list answer is spelled by normalize_document_type
-    # rather than failing validation as a hallucination.
-    document_type: str = Field(json_schema_extra={"enum": list(DOCUMENT_TYPES)})
-    extracted_vendor_name: Optional[str] = None
-
-# The JSON the vision model must return. Module level so the tests can see the
-# same schema the model is given.
-VISION_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "document_type": {"type": "string", "enum": list(DOCUMENT_TYPES)},
-        "extracted_vendor_name": {"type": "string"},
-        "invoice_date": {"type": "string"},
-        "invoice_number": {"type": "string"},
-        "invoice_number_label": {"type": "string"},
-        "invoice_total": {"type": "string"},
-        "order_number": {"type": "string"},
-        "customer_number": {"type": "string"},
-        # Which money fields are handwritten, not whether there is any
-        # handwriting at all. See HANDWRITTEN_FINANCIAL_FIELDS.
-        "handwritten_financial_fields": {
-            "type": "array",
-            "items": {"type": "string", "enum": list(HANDWRITTEN_FINANCIAL_FIELDS)}
-        }
-    },
-    "required": [
-        "document_type", "extracted_vendor_name", "invoice_date",
-        "invoice_number", "invoice_number_label", "invoice_total",
-        "order_number", "customer_number", "handwritten_financial_fields"
-    ]
-}
 
 def generate_unique_id(bu_number, filename):
     name_without_ext, _ = os.path.splitext(filename)
@@ -116,47 +82,6 @@ def mark_reprocess_error(folder_path, folder_name, pdf_path, error):
             }, marker, indent=4)
     except Exception:
         pass
-
-# A vision pass fills in what the text pass could not read. Two different
-# rules apply, and using one for both is what broke the handwriting check:
-#
-#   * A data field is filled only when it is still blank -- the first answer
-#     wins, later passes do not overwrite it.
-#   * A risk flag latches. Any pass that raises it raises it for the invoice,
-#     because "page 4's total is handwritten" is not cancelled by page 1
-#     looking fine.
-#
-# `contains_handwritten_financials` defaults to False rather than None, so the
-# blank-filling rule never copied it and the routing check below it had never
-# once fired. Step 1.5.
-#
-# Since 2026-09-23 the latch is per money field: each pass names which of
-# subtotal, tax and total are handwritten, and the answer is the union of every
-# pass. A signature page no longer raises the flag for the whole document,
-# because it names no money field; a handwritten total on page 4 still does.
-STICKY_TRUE_FIELDS = ("contains_handwritten_financials",)
-UNION_FIELDS = ("handwritten_financial_fields",)
-
-def merge_vision_fields(master_data, vision_data):
-    """Merge one vision pass into the running answer."""
-    for field in InvoiceData.model_fields:
-        value = getattr(vision_data, field)
-
-        if field in UNION_FIELDS:
-            if value is not None:
-                seen = set(getattr(master_data, field) or []) | set(value)
-                setattr(master_data, field, [f for f in HANDWRITTEN_FINANCIAL_FIELDS if f in seen])
-                master_data.contains_handwritten_financials = bool(seen) or bool(
-                    master_data.contains_handwritten_financials)
-            continue
-
-        if field in STICKY_TRUE_FIELDS:
-            if value:
-                setattr(master_data, field, True)
-            continue
-
-        if getattr(master_data, field) is None and value is not None:
-            setattr(master_data, field, value)
 
 def write_vendor_rule_sidecar(dest_folder, processing_id, master_data):
     """Write the vendor-rule sidecar a reviewer fills in, under its own name."""

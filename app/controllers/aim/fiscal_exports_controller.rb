@@ -23,9 +23,6 @@ module Aim
 
     private
 
-    def back_path
-      remembered = session[:aim_fiscal_page].to_s
-      remembered.start_with?('/aim/fiscal') ? remembered : aim_fiscal_path(status: 'ready')
-    end
+    def back_path = remembered_return(:aim_fiscal_page, '/aim/fiscal') { aim_fiscal_path(status: 'ready') }
   end
 end

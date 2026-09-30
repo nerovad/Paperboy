@@ -72,7 +72,7 @@ class SettingsController < ApplicationController
     @delegate_options = Employee.where.not(id: employee_id)
                                 .order(:last_name, :first_name)
                                 .pluck(:last_name, :first_name, :id)
-                                .map { |last, first, id| ["#{last}, #{first}", id] }
+                                .map { |last, first, id| [Employee.format_sort_name(first, last), id] }
   end
 
   def current_user_settings

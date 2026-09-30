@@ -18,7 +18,7 @@ REPO_ROOT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 V2_DIR = os.path.join(REPO_ROOT, "script", "python", "aim", "v2")
-V2_MODULES = ("settings", "invoice_models", "cleaning", "vendors", "extraction",
+V2_MODULES = ("worker_common", "batch_ids", "settings", "invoice_models", "cleaning", "vendors", "extraction",
               "store", "intake", "splitting", "exporting", "worker")
 
 

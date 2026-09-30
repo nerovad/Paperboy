@@ -60,7 +60,7 @@ class SubmissionsEmployeeFilterTest < ActionController::TestCase
 
   test 'All is listed first and selected, with Me just below it' do
     sign_in_as
-    report = Struct.new(:employee_id, :first_name, :last_name).new(REPORT, 'Ana', 'Ruiz')
+    report = Employee.new(id: REPORT, first_name: 'Ana', last_name: 'Ruiz')
     reports = Struct.new(:rows) { def order(*) = rows }.new([report])
 
     Employee.stub(:where, reports) { scope_for(nil) }

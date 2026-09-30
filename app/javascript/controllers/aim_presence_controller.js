@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { csrfToken } from "controllers/aim_shared"
 
 // Keep an invoice's working lock while its review page is open, and let it
 // go when the page is left. The server lets a lock lapse by itself if the
@@ -19,7 +20,7 @@ export default class extends Controller {
   }
 
   checkIn() {
-    fetch(this.lockUrlValue, { method: "PATCH", headers: { "X-CSRF-Token": this.token() }, keepalive: true })
+    fetch(this.lockUrlValue, { method: "PATCH", headers: { "X-CSRF-Token": csrfToken() }, keepalive: true })
       .catch(() => {})
   }
 
@@ -27,11 +28,7 @@ export default class extends Controller {
     if (this.released) return
     this.released = true
     const body = new FormData()
-    body.append("authenticity_token", this.token())
+    body.append("authenticity_token", csrfToken())
     navigator.sendBeacon(this.unlockUrlValue, body)
-  }
-
-  token() {
-    return document.querySelector("meta[name=csrf-token]")?.content || ""
   }
 }

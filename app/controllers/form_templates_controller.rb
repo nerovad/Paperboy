@@ -649,7 +649,7 @@ class FormTemplatesController < ApplicationController
 
   def fetch_employees
     Employee.order(:last_name, :first_name)
-            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] }
+            .map { |e| [e.name_with_id, e.employee_id] }
   rescue StandardError
     []
   end

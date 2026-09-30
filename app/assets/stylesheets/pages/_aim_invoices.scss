@@ -289,15 +289,6 @@
   padding: 0 14px;
 }
 
-.aim-sidebar .sidebar-section-label {
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  margin: 20px 0 8px;
-  text-transform: uppercase;
-}
-
 .aim-sidebar .nav-link {
   align-items: center;
   display: flex;
@@ -408,9 +399,9 @@
 }
 
 .aim-pdf-page {
-  background: #ffffff;
+  background: $surface-base;
   border-radius: 4px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: $shadow-soft;
   position: relative;
   user-select: none;
 }
@@ -433,12 +424,6 @@
   z-index: 10;
 }
 
-.btn-ocr.active-ocr {
-  background: $green-approved-text;
-  border-color: $green-approved-text;
-  color: $surface-base;
-}
-
 /* Density pass: the review screen is read top-to-bottom against the PDF, so
    fitting more fields on screen at once matters more than roomy controls. */
 .aim-fields {
@@ -452,11 +437,8 @@
   gap: 6px;
 }
 
-.aim-field-row .btn.compact {
+.aim-field-row .btn {
   flex: 0 0 auto;
-  font-size: 0.72rem;
-  height: 32px;
-  padding: 0 10px;
 }
 
 .aim-field {
@@ -477,7 +459,7 @@
 .aim-field textarea {
   background: $surface-base;
   border: 1px solid $neutral-border-subtle;
-  border-radius: 6px;
+  border-radius: $radius-6;
   box-sizing: border-box;
   color: $text-strong;
   font: inherit;
@@ -532,33 +514,13 @@
 
 .aim-review-action-strip .btn {
   flex: 0 0 auto;
-}
-
-.aim-review-action-strip .btn {
-  font-size: 0.78rem;
-  height: 32px;
-  min-height: 32px;
-  padding: 0 10px;
   white-space: nowrap;
-}
-
-.aim-review-action-strip .aim-placeholder-action {
-  font-size: 0.7rem;
-  height: 28px;
-  min-height: 28px;
-  padding: 0 8px;
-}
-
-.aim-page .aim-placeholder-action:disabled {
-  background: $button-disabled-bg;
-  color: $text-muted;
-  opacity: 0.78;
 }
 
 .aim-ticket {
   background: $red-denied-bg;
   border-left: 4px solid $danger;
-  border-radius: 6px;
+  border-radius: $radius-6;
   color: $danger-dark;
   margin-bottom: 18px;
   padding: 14px;
@@ -579,7 +541,7 @@
 .aim-split-summary {
   background: $surface-base;
   border: 1px solid $neutral-border-subtle;
-  border-radius: 6px;
+  border-radius: $radius-6;
   padding: 14px;
 }
 
@@ -604,7 +566,7 @@
 .aim-vendor-review {
   background: $amber-review-bg;
   border: 1px solid $amber-soft-border;
-  border-radius: 6px;
+  border-radius: $radius-6;
   padding: 14px;
 }
 
@@ -620,7 +582,7 @@
 .aim-vendor-review .choices__inner {
   background: $surface-base;
   border: 1px solid $neutral-border-subtle;
-  border-radius: 6px;
+  border-radius: $radius-6;
   color: $text-strong;
   min-height: 42px;
   padding: 5px 10px;
@@ -1526,7 +1488,7 @@
 .aim-coding {
   background: $surface-subtle;
   border-left: 4px solid $border-muted;
-  border-radius: 6px;
+  border-radius: $radius-6;
   margin-bottom: 18px;
   padding: 14px;
 
@@ -1617,7 +1579,7 @@
 .aim-frame-flash {
   background: $surface-subtle;
   border-left: 4px solid $border-muted;
-  border-radius: 6px;
+  border-radius: $radius-6;
   font-size: 0.9rem;
   margin: 0 0 12px;
   padding: 8px 12px;

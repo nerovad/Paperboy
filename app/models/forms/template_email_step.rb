@@ -51,7 +51,7 @@ module Forms
       when 'group'
         return [] unless group_id
 
-        member_ids = EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID)
+        member_ids = EmployeeGroup.member_ids(group_id)
         Employee.where(id: member_ids).pluck(:email).compact_blank
       when 'custom_email'
         [custom_email].compact_blank
@@ -88,7 +88,7 @@ module Forms
       when 'submitter' then 'Submitter'
       when 'employee'
         emp = Employee.find_by(employee_id: employee_id)
-        emp ? "#{emp.first_name} #{emp.last_name}" : "Employee ##{employee_id}"
+        emp ? emp.full_name : "Employee ##{employee_id}"
       when 'group'        then Group.find_by(GroupID: group_id)&.group_name || "Group ##{group_id}"
       when 'custom_email' then custom_email
       when 'form_field'   then "Form field: #{recipient_field_name}"

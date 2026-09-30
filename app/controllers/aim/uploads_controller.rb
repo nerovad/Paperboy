@@ -6,12 +6,12 @@ module Aim
   # row is inserted. Anyone signed in may upload, usually for someone else;
   # the BU is picked from AIM's budget units (Chart of Accounts units an AIM
   # Admin has chosen, other agencies' too, since GSA sometimes processes
-  # theirs), and defaults to their own unit. AIM v2.
+  # theirs), and defaults to their own unit. An invoice for someone who is
+  # away goes to whoever covers for them. AIM v2.
   class UploadsController < BaseController
-    skip_before_action :require_app_access
-    before_action :require_signed_in
-
-    PDF_TYPES = %w[application/pdf application/x-pdf].freeze
+    # What the bytes must be, whatever the file is called or the browser
+    # declares.
+    PDF_TYPE = 'application/pdf'
 
     def new
       @budget_unit = current_user_unit
@@ -41,10 +41,12 @@ module Aim
     private
 
     def store(file, budget_unit)
-      Aim::Intake.new.store(file,
-                            original_filename: file.original_filename, budget_unit: budget_unit,
-                            submitter: submitter_name, owner: { name: owner_name, employee_id: owner_employee_id },
-                            actor: current_user_email, source: 'upload').invoice
+      invoice = Aim::Intake.new.store(file,
+                                      original_filename: file.original_filename, budget_unit: budget_unit,
+                                      submitter: submitter_name, owner: { name: owner_name, employee_id: owner_employee_id },
+                                      actor: current_user_email, source: 'upload').invoice
+      invoice.hand_to_cover!(by: current_user_employee_id)
+      invoice
     end
 
     def submitter_name = current_user_name || current_user_email
@@ -78,8 +80,16 @@ module Aim
       theirs.any? && theirs.exclude?(budget_unit)
     end
 
+    # Sniffed from the content with Marcel, as the DAM's watch-folder intake
+    # does (Dam::WatchFolderIngest). The name and the declared type are left
+    # out: a renamed Word file is not a PDF, and a PDF is one whatever it is
+    # called.
     def pdf?(file)
-      PDF_TYPES.include?(file.content_type.to_s.downcase) || File.extname(file.original_filename.to_s).casecmp?('.pdf')
+      io = file.respond_to?(:tempfile) ? file.tempfile : file
+      io.rewind
+      Marcel::MimeType.for(io) == PDF_TYPE
+    ensure
+      io&.rewind
     end
 
     def refuse(message)

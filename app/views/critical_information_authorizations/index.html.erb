@@ -73,7 +73,7 @@
                 <div class="approval-item">
                   <div class="approval-details">
                     <strong>
-                      <%= manager ? "#{manager.first_name} #{manager.last_name}" : "Employee ##{authorization.employee_id}" %>
+                      <%= manager ? manager.full_name : "Employee ##{authorization.employee_id}" %>
                       <span class="employee-id">(<%= authorization.employee_id %>)</span>
                     </strong>
                     <% if manager&.email.present? %>

@@ -1,12 +1,13 @@
 <%# One table of AIM users, shared by the list and the By BU groups. One line
     per person; everything else they can be done to sits in the Actions menu. %>
+<% sort_keep = @filters.merge(view: @view) %>
 <table class="submission-table aim-queue-table aim-people-table">
   <thead>
     <tr>
-      <th><%= aim_admin_sort_link 'Name', 'name' %></th>
-      <th><%= aim_admin_sort_link 'Unit', 'unit' %></th>
-      <th><%= aim_admin_sort_link 'Role', 'role' %></th>
-      <th class="aim-people-table__open"><%= aim_admin_sort_link 'Open invoices', 'open' %></th>
+      <th><%= aim_sort_link 'Name', 'name', sort_keep %></th>
+      <th><%= aim_sort_link 'Unit', 'unit', sort_keep %></th>
+      <th><%= aim_sort_link 'Role', 'role', sort_keep %></th>
+      <th class="aim-people-table__open"><%= aim_sort_link 'Open invoices', 'open', sort_keep %></th>
       <th class="aim-people-table__actions" aria-label="Actions"></th>
     </tr>
   </thead>

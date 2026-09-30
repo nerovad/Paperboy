@@ -21,7 +21,8 @@ module Aim
       unit, refusal = unit_for(owner)
       return redirect_back_or_to(home_queue_path, alert: refusal) if refusal
 
-      moved = @invoice.reassign!(owner, actor: current_user_email, unit: unit, exception: keeping_unit?(owner))
+      moved = @invoice.reassign!(owner, actor: current_user_email, by: current_user_employee_id, unit: unit,
+                                        exception: keeping_unit?(owner))
       notice = moved ? "Moved to #{helpers.aim_owner_label(@invoice.queue_owner)}." : 'The invoice was already there.'
       redirect_back_or_to home_queue_path, notice: notice
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
@@ -38,7 +39,8 @@ module Aim
         unit, refusal = unit_for(owner)
         raise Aim::Invoice::IllegalTransition, refusal if refusal
 
-        invoice.reassign!(owner, actor: current_user_email, unit: unit, exception: keeping_unit?(owner))
+        invoice.reassign!(owner, actor: current_user_email, by: current_user_employee_id, unit: unit,
+                                 exception: keeping_unit?(owner))
       end
       report_moves(moved, skipped)
     end

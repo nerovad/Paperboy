@@ -106,13 +106,10 @@ module Aim
     # in BU order, anyone with no BU last. Someone in several BUs is under each.
     # For the grouped person picker (aim_grouped_search_controller).
     def aim_person_groups
-      people = Aim::Users.all.pluck(:id, :first_name, :last_name, :unit)
-      names = people.to_h { |id, first, last, _| [id, "#{last}, #{first} (#{id})"] }
-      rows = Aim::UserBudgetUnit.where(employee_id: names.keys).pluck(:employee_id, :budget_unit, :hidden)
-      hidden = rows.select(&:last).to_set { |row| row.first(2) }
-      by_unit = Hash.new { |hash, unit| hash[unit] = [] }
-      people.each { |id, _, _, unit| by_unit[unit] << id if unit.present? && !hidden.include?([id, unit]) }
-      rows.reject(&:last).each { |id, unit, _| by_unit[unit] << id }
+      people = Aim::Users.all.pluck(:id, :first_name, :last_name, :agency, :unit)
+      names = people.to_h { |id, first, last, _, _| [id, Employee.format_picker_label(id, first, last)] }
+      grants = Aim::UserBudgetUnit.where(employee_id: names.keys).pluck(:employee_id, :budget_unit, :hidden)
+      by_unit = aim_people_by_unit(people.map { |id, _, _, agency, unit| [id, agency, unit] }, grants)
       coa = Aim::Units.new
       groups = by_unit.keys.sort.map { |unit| [unit, coa.label(unit), aim_named(by_unit[unit], names)] }
       loose = names.keys - by_unit.values.flatten
@@ -121,7 +118,25 @@ module Aim
       []
     end
 
-    def aim_named(ids, names) = ids.uniq.sort_by { |id| names[id].downcase }.map { |id| [names[id], id] }
+    def aim_named(ids, names) = ids.sort_by { |id| names[id].downcase }.map { |id| [names[id], id] }
+
+    # The BUs each AIM user works in, as { unit => [employee_id, ...] }: their
+    # home unit unless hidden there, plus every BU granted on their profile
+    # and not hidden. The same rule as Aim::Users.budget_units_of, for
+    # everyone at once, from rows the caller has already read:
+    #   people  [[employee_id, home_unit], ...]
+    #   grants  [[employee_id, budget_unit, hidden], ...]  (Aim::UserBudgetUnit)
+    # The grouped person picker and the BU page both list people this way.
+    # people are [employee_id, agency, raw unit]; the home unit is resolved as
+    # Aim::Users.home_unit does, so an HCA sub-unit counts as its parent.
+    def aim_people_by_unit(people, grants)
+      hidden = grants.select(&:last).to_set { |grant| grant.first(2) }
+      homes = Aim::Users.home_units(people.to_h { |id, agency, unit| [id, [agency, unit]] })
+      by_unit = Hash.new { |hash, unit| hash[unit] = [] }
+      homes.each { |id, unit| by_unit[unit] << id if unit.present? && !hidden.include?([id, unit]) }
+      grants.reject(&:last).each { |id, unit, _| by_unit[unit] << id }
+      by_unit.transform_values(&:uniq)
+    end
 
     # The Move dialog's "another budget unit" choices, grouped by agency, from
     # the Chart of Accounts.
@@ -146,8 +161,6 @@ module Aim
       session[:aim_mode] ||= Aim::UserPreference.start_mode_for(aim_session_employee_id)
     end
 
-    def aim_session_employee_id
-      (session[:user] || session['user'] || {})['employee_id']
-    end
+    def aim_session_employee_id = current_user&.employee_id
   end
 end

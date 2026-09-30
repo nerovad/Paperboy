@@ -79,10 +79,10 @@ class AppFeature
       { key: 'publish_targets', label: 'Publish Targets (set up and connect)' },
       { key: 'storage',     label: 'Storage' }
     ],
-    'aim' => [
-      { key: 'dashboard',         label: 'Dashboard' },
-      { key: 'processing_queues', label: 'Processing Queues' }
-    ],
+    # AIM declares none: who reaches its Dashboard and queues comes from the
+    # person's AIM account (Aim::AccessHelper#aim_queue_access?), decided
+    # 2026-09-25. Its old aim:dashboard / aim:processing_queues rows grant
+    # nothing any more.
     'hsa_adoption_cards' => [
       { key: 'search',      label: 'Search' },
       { key: 'browse',      label: 'Browse' },

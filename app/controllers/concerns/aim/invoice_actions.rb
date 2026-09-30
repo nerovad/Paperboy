@@ -7,33 +7,40 @@ module Aim
   # state through Aim::Invoice#transition_to!, so a move the pipeline does not
   # make is refused with its reason (the controller turns IllegalTransition
   # into an alert). The worker is asked for work by setting the row's command.
+  #
+  # Each button posts invoice_action=<value>, never its label (as Fiscal's
+  # post fiscal_action), so a button can be renamed without breaking what it
+  # does.
   module InvoiceActions
     extend ActiveSupport::Concern
 
     ACTIONS = {
-      'Save Changes' => :save_only,
-      'Send to Approval' => :send_to_approval,
-      'Approve' => :approve,
-      'Send Back' => :send_back,
-      'Retry AI' => :retry_ai,
-      'Approve Split' => :approve_split,
-      'Process as One Invoice' => :process_as_one,
-      'Reject' => :reject,
-      'Delete' => :delete_invoice,
-      'Learn & Retry AI' => :learn_and_retry,
-      'Learn & Send to Approval' => :learn_and_send,
-      'Retry Export' => :retry_export
+      'save' => :save_only,
+      'send_to_approval' => :send_to_approval,
+      'approve' => :approve,
+      'send_back' => :send_back,
+      'retry_ai' => :retry_ai,
+      'approve_split' => :approve_split,
+      'process_as_one' => :process_as_one,
+      'reject' => :reject,
+      'delete' => :delete_invoice,
+      'learn_and_retry' => :learn_and_retry,
+      'learn_and_send' => :learn_and_send,
+      'retry_export' => :retry_export
     }.freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
-    REASON_ACTIONS = { 'Reject' => 'Rejected', 'Delete' => 'Deleted', 'Send Back' => 'Sent back' }.freeze
+    # The value is the button's label, for the refusal without one.
+    REASON_ACTIONS = { 'reject' => 'Reject', 'delete' => 'Delete', 'send_back' => 'Send Back' }.freeze
 
     private
 
-    def perform(commit)
-      action = ACTIONS[commit.to_s]
+    def invoice_action = params[:invoice_action].to_s
+
+    def perform(name)
+      action = ACTIONS[name.to_s]
       return redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'Unknown action.' if action.nil?
-      return refuse_without_reason(commit) if REASON_ACTIONS.key?(commit.to_s) && reason.blank?
+      return refuse_without_reason(REASON_ACTIONS.fetch(name.to_s)) if REASON_ACTIONS.key?(name.to_s) && reason.blank?
 
       send(action)
     end
@@ -148,8 +155,8 @@ module Aim
 
     def refuse(message) = redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: message)
 
-    def refuse_without_reason(commit)
-      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: "#{commit} needs a reason."
+    def refuse_without_reason(label)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: "#{label} needs a reason."
     end
 
     # The invoice's notes with one line added: when, what, who, and why.

@@ -215,7 +215,7 @@ module Forms
 
       @prefill_data = {
         employee_id: @employee&.employee_id,
-        name: "#{@employee&.first_name} #{@employee&.last_name}",
+        name: @employee&.full_name.to_s,
         phone: @employee&.work_phone,
         email: @employee&.email,
         agency: agency&.agency_id,

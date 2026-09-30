@@ -65,8 +65,9 @@ module Aim
     test 'the Fiscal page saves what Fiscal types, the invoice\'s fields too, with a history line' do
       get :show, params: { id: @invoice.batch_id }
       assert_response :success
+      assert_select 'button[name=fiscal_action][value=hold]', text: 'Hold'
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Save',
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'save',
                                fiscal_record: { check_number: ' 1001 ', pay_doc_number: 'PD 1' },
                                coding_line: { encumbrance: 'bdo_46402024072600000009_1', object_code: '2162', fund: 'G001' },
                                invoice: { vendor_name: 'ACME Inc', invoice_number: 'A-1' } }
@@ -103,11 +104,13 @@ module Aim
       assert_equal '%PDF-1.4 stamped', response.body
     end
 
-    test 'Hold needs a reason' do
-      patch :update, params: { id: @invoice.batch_id, commit: 'Hold' }
+    test 'Hold needs a reason, and a button label is no action' do
+      patch :update, params: { id: @invoice.batch_id, commit: 'Hold', reason: 'Missing MA' }
+      assert_equal 'Unknown action.', flash[:alert]
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'hold' }
       assert_match(/Say why/, flash[:alert])
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Hold', reason: 'Missing MA' }
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'hold', reason: 'Missing MA' }
 
       record = Aim::FiscalRecord.find_by(invoice_id: @invoice.id)
       assert_equal ['on_hold', 'Missing MA'], [record.status, record.hold_reason]
@@ -116,13 +119,13 @@ module Aim
     test 'Release, Ready and Archive move it on; a move it cannot make is refused' do
       record = Aim::FiscalRecord.create!(invoice: @invoice, status: 'on_hold', hold_reason: 'x')
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Release' }
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'release' }
       assert_equal ['review', nil], [record.reload.status, record.hold_reason]
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Add to Report Queue' }
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'make_ready' }
       assert_equal 'ready', record.reload.status
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Archive' }
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'archive' }
       assert_match(/cannot go to Archived/, flash[:alert])
       assert_equal 'ready', record.reload.status
     end
@@ -130,7 +133,7 @@ module Aim
     test 'an archived invoice keeps what it had' do
       record = Aim::FiscalRecord.create!(invoice: @invoice, status: 'archived', check_number: '1')
 
-      patch :update, params: { id: @invoice.batch_id, commit: 'Save', fiscal_record: { check_number: '2' } }
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'save', fiscal_record: { check_number: '2' } }
 
       assert_equal '1', record.reload.check_number
     end

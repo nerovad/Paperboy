@@ -7,45 +7,51 @@ module Aim
   # Two views of the same people: a list, sortable and filterable, and one
   # collapsible group per budget unit. The choice is kept in the session.
   class AdminController < BaseController
+    include Filterable
+
     before_action :require_aim_user_admin
 
     VIEWS = %w[list bu].freeze
-    SORTS = %w[name unit role open].freeze
     ROLES = ['AIM Admin', 'BU Admin', 'User'].freeze
 
-    # Each filter on the page, as a test of one person against its value.
-    FILTERS = {
-      'agency' => ->(person, value) { person.agency == value },
-      'unit' => ->(person, value) { person.unit == value },
-      'role' => ->(person, value) { person.roles.include?(value) },
-      'has_open' => ->(person, _) { person.open.positive? },
-      'via_group' => ->(person, _) { person.via_group },
-      'missing' => ->(person, _) { person.missing }
+    # Each column the list sorts by, then by name (Filterable#sort_collection).
+    SORTS = {
+      'name' => ->(p) { [p.name.downcase] },
+      'unit' => ->(p) { [p.unit.to_s, p.name.downcase] },
+      'role' => ->(p) { [ROLES.index(p.roles.first).to_i, p.name.downcase] },
+      'open' => ->(p) { [-p.open, p.name.downcase] }
     }.freeze
+
+    # Each filter on the page (Filterable#apply_filters): the value a person
+    # must have. The checkboxes send '1'.
+    FILTERS = [
+      { param: :agency, extractor: :agency.to_proc },
+      { param: :unit, extractor: :unit.to_proc },
+      { param: :role, extractor: :roles.to_proc },
+      { param: :has_open, extractor: ->(p) { '1' if p.open.positive? } },
+      { param: :via_group, extractor: ->(p) { '1' if p.via_group } },
+      { param: :missing, extractor: ->(p) { '1' if p.missing } }
+    ].freeze
 
     # unit_label and agency come from the Chart of Accounts (Aim::Units).
     Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_label, :agency, :member, :via_group,
                         :open, :missing, :roles, :inactive, keyword_init: true) do
-      def name = missing ? "Employee #{employee_id}" : "#{last_name}, #{first_name}"
+      def name = missing ? "Employee #{employee_id}" : Employee.format_sort_name(first_name, last_name)
       def search_text = [name, first_name, employee_id, unit_label, agency, *roles].compact.join(' ')
     end
 
     def index
       @view = choose_view
-      @sort = SORTS.include?(params[:sort]) ? params[:sort] : 'name'
+      @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'name'
       @filters = params.permit(:agency, :unit, :role, :has_open, :via_group, :missing, :inactive).to_h.compact_blank
-      @people = filtered(sorted(all_people))
-      @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
-      in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
-      @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
-      @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error "AIM could not list its users: #{e.message}"
-      @people = []
-      @units = []
-      @agencies = []
-      @groups = []
-      flash.now[:alert] = 'The AIM users could not be read.'
+      reading_database('list its users', alert: 'The AIM users could not be read.',
+                                         empty: { people: [], units: [], agencies: [], groups: [] }) do
+        @people = filtered(sort_collection(all_people, @sort, 'asc', SORTS, default_sort: 'name'))
+        @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
+        in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
+        @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
+        @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
+      end
     end
 
     private
@@ -86,18 +92,9 @@ module Aim
                   .group(:assigned_employee_id).count
     end
 
-    def sorted(list)
-      case @sort
-      when 'unit' then list.sort_by { |p| [p.unit.to_s, p.name.downcase] }
-      when 'role' then list.sort_by { |p| [ROLES.index(p.roles.first).to_i, p.name.downcase] }
-      when 'open' then list.sort_by { |p| [-p.open, p.name.downcase] }
-      else list.sort_by { |p| p.name.downcase }
-      end
-    end
-
     # Inactive people are left out unless asked for.
     def filtered(list)
-      list = list.select { |person| @filters.all? { |key, value| FILTERS.fetch(key, ->(*) { true }).call(person, value) } }
+      list = apply_filters(list, filter_configs: FILTERS)
       @filters['inactive'] == '1' ? list : list.reject(&:inactive)
     end
   end

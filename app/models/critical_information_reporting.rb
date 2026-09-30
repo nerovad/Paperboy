@@ -82,7 +82,7 @@ class CriticalInformationReporting < ApplicationRecord
 
   def assigned_manager_name
     employee = Employee.find_by(employee_id: assigned_manager_id)
-    employee ? "#{employee.first_name} #{employee.last_name}" : nil
+    employee&.full_name
   end
 
   def acceptable_media_photo_pdf_etc_files

@@ -6,10 +6,20 @@ module Aim
   # normally; a split has several, and their amounts add up to the total.
   # source: rule (the one matching coding rule), person (picked from several
   # matches, or typed on the review page), fiscal (typed on the Fiscal page).
+  #
+  # Its whole life is audited (Aim::Audited): the lookup deletes and remakes
+  # lines, so an edit trail that went with a deleted line would lose who had
+  # coded the invoice before.
   class CodingLine < Record
+    include Aim::CodingFields
+    include Aim::Audited
+
+    audit_record_lifecycle!
+
     SOURCES = %w[rule person fiscal].freeze
-    CODING_FIELDS = %w[fund department org_number object_code dept_object activity function_code major_program program
-                       phase task].freeze
+    # The rules' chart-of-accounts fields, with the org number after the
+    # department.
+    CODING_FIELDS = Aim::CodingFields::COA_FIELDS.dup.insert(2, 'org_number').freeze
     FIELDS = (%w[encumbrance_type encumbrance_number ma_number vendor_code] + CODING_FIELDS).freeze
     # What a coding rule supplies (rules carry no org number).
     RULE_FIELDS = (FIELDS - %w[org_number]).freeze
@@ -23,14 +33,6 @@ module Aim
 
     def self.from_rule(rule, source:, set_by:)
       new(rule.attributes.slice(*RULE_FIELDS).merge(coding_rule: rule, source: source, set_by: set_by, warnings: rule.warnings))
-    end
-
-    def encumbrance = [encumbrance_type, encumbrance_number].compact_blank.join('_').presence
-
-    def encumbrance=(value)
-      type, number = value.to_s.strip.match(/\A([A-Za-z]{2,4})_?(.*)\z/)&.captures
-      self.encumbrance_type = type&.upcase
-      self.encumbrance_number = number.presence
     end
 
     def blank_coding? = FIELDS.all? { |field| public_send(field).blank? }

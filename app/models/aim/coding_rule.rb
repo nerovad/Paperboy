@@ -11,8 +11,9 @@ module Aim
   # nil). Nothing is deleted: a rule that no longer applies is retired, and
   # every change is an Aim::CodingRuleChange.
   class CodingRule < Record
-    CODING_FIELDS = %w[fund department object_code dept_object activity function_code major_program program phase
-                       task].freeze
+    include Aim::CodingFields
+
+    CODING_FIELDS = Aim::CodingFields::COA_FIELDS
     FIELDS = (%w[budget_unit vendor_name customer_number encumbrance_type encumbrance_number ma_number vendor_code] +
               CODING_FIELDS + %w[notes effective_from effective_until]).freeze
 
@@ -52,16 +53,8 @@ module Aim
 
     def in_effect?(on = Date.current) = effective_from <= on && (effective_until.nil? || effective_until >= on)
 
-    def encumbrance = [encumbrance_type, encumbrance_number].compact_blank.join('_').presence
-
     # Rules carry no org number; the shared coding fields ask for one.
     def org_number = nil
-
-    def encumbrance=(value)
-      type, number = value.to_s.strip.match(/\A([A-Za-z]{2,4})_?(.*)\z/)&.captures
-      self.encumbrance_type = type&.upcase
-      self.encumbrance_number = number.presence
-    end
 
     # The same as another rule in everything a file carries (dates aside): a
     # second import of an unchanged row.

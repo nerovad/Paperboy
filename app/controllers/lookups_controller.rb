@@ -69,7 +69,7 @@ class LookupsController < ApplicationController
 
     options = Employee.where(unit: params[:unit])
                       .order(:last_name, :first_name)
-                      .map { |e| ["#{e.last_name}, #{e.first_name} (#{e.id})", e.id] }
+                      .map { |e| [e.picker_label, e.id] }
 
     render json: options
   end
@@ -84,7 +84,7 @@ class LookupsController < ApplicationController
 
     options = case column
               when 'full_name'
-                scope.map { |e| "#{e.last_name}, #{e.first_name}" }
+                scope.map(&:sort_name)
               when 'first_name'
                 scope.pluck(:first_name).uniq
               when 'last_name'

@@ -9,12 +9,11 @@ module Aim
     include Aim::AccessHelper
     include Aim::WorkTabHelper
 
-    def current_user = session[:user]
+    def current_user = @employee && SessionUser.new(employee_id: @employee.id)
     def current_user_group_names = Set[]
 
     setup do
       @employee = Employee.where.not(id: Aim::Users.group_employee_ids).order(:id).first || skip('no employee')
-      session[:user] = { 'employee_id' => @employee.id.to_s }
     end
 
     test 'someone on the AIM list gets the Invoices tab, linked to My Queue' do

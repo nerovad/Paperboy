@@ -136,14 +136,16 @@ class NavigationCatalog
                       .map { |table| { label: table[:label], path: public_send("coa_#{table[:collection]}_path"), keywords: 'table' } }
   end
 
+  # AIM decides who reaches its Dashboard and queues from the person's AIM
+  # account, not from ACL feature grants: aim_queue_access? is the check both
+  # pages make (Aim::BaseController#require_aim_admin) and the AIM sidebar too.
   def aim_rows
-    rows = []
-    rows << { label: 'Dashboard', path: aim_dashboard_path } if feature?('aim', 'dashboard')
-    return rows unless view.aim_queue_access?
+    return [] unless view.aim_queue_access?
 
-    rows + Aim::InvoiceDirectoryService::BACKEND_QUEUES.map do |queue, config|
-      { label: config[:label], path: aim_invoices_path(queue: queue), keywords: config[:description].to_s }
-    end
+    [{ label: 'Dashboard', path: aim_dashboard_path }] +
+      Aim::InvoiceDirectoryService::BACKEND_QUEUES.map do |queue, config|
+        { label: config[:label], path: aim_invoices_path(queue: queue), keywords: config[:description].to_s }
+      end
   end
 
   def feature_rows(app_key)

@@ -28,14 +28,17 @@ module Filterable
 
     # Apply standard filters. A param may arrive as a single value (the filter
     # bar's dropdowns) or as several (the Advanced Search modal's checkbox
-    # sets), so both are treated as a set the row has to be a member of.
+    # sets), so both are treated as a set the row has to be a member of. An
+    # extractor may return an Array (a person's roles): the row matches when
+    # any of its values is wanted.
     filter_configs.each do |config|
       wanted = Array(params[config[:param]]).map(&:to_s).compact_blank
       next if wanted.empty?
 
       filtered = filtered.select do |item|
-        extractor = config[:extractor]
-        wanted.include?(extractor.call(item).to_s)
+        value = config[:extractor].call(item)
+        values = value.is_a?(Array) ? value : [value]
+        values.any? { |v| wanted.include?(v.to_s) }
       end
     end
 
@@ -62,12 +65,27 @@ module Filterable
 
   # Sort a collection by a given field
   # sort_configs: Hash of { sort_key => lambda to extract sort value }
+  # A lambda may return an Array to sort on several keys at once
+  # ([unit, name]); it is compared as given, so it must be comparable.
   def sort_collection(collection, sort_by, sort_direction, sort_configs, default_sort: 'created_at')
     sort_key = sort_configs.key?(sort_by) ? sort_by : default_sort
     extractor = sort_configs[sort_key]
 
-    sorted = collection.sort_by { |item| extractor.call(item).to_s.downcase }
+    sorted = collection.sort_by do |item|
+      value = extractor.call(item)
+      value.is_a?(Array) ? value : value.to_s.downcase
+    end
     sort_direction == 'desc' ? sorted.reverse : sorted
+  end
+
+  # Rows any of whose texts contain +term+, ignoring case. A blank term keeps
+  # every row.
+  # extractors: lambdas returning each text to search
+  def search_collection(collection, term, *extractors)
+    needle = term.to_s.squish.downcase
+    return collection if needle.empty?
+
+    collection.select { |item| extractors.any? { |extractor| extractor.call(item).to_s.downcase.include?(needle) } }
   end
 
   # Pick a safe default sort key from a set of resolved TableColumns::Column.

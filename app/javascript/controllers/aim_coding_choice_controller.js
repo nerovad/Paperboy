@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { pbConfirm } from "pb_modal"
+import { csrfToken } from "controllers/aim_shared"
 
 // Tick a coding rule and the coding fields below fill in from it at once,
 // so what it would overwrite is seen before anything is saved: a field whose
@@ -35,8 +36,7 @@ export default class extends Controller {
                                  message: "Run the coding rules again? The coding below is replaced by what they find.",
                                  confirmLabel: "Look up again" })
     if (!ok) return
-    const token = document.querySelector("meta[name=csrf-token]")?.content
-    const response = await fetch(this.urlValue, { method: "POST", headers: { "X-CSRF-Token": token, Accept: "text/html" } })
+    const response = await fetch(this.urlValue, { method: "POST", headers: { "X-CSRF-Token": csrfToken(), Accept: "text/html" } })
     if (!response.ok) return
     this.element.outerHTML = await response.text()
   }

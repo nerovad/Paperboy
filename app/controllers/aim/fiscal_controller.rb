@@ -10,13 +10,15 @@ module Aim
     include Aim::StoredPdf
     include Aim::FiscalEdits
 
+    # Each button posts fiscal_action=<value>, never its label, so a button
+    # can be renamed without breaking what it does.
     ACTIONS = {
-      'Save' => :save_only,
-      'Hold' => :hold,
-      'Add to Report Queue' => :make_ready,
-      'Release' => :release,
-      'Back to Fiscal Queue' => :back_to_review,
-      'Archive' => :archive
+      'save' => :save_only,
+      'hold' => :hold,
+      'make_ready' => :make_ready,
+      'release' => :release,
+      'back_to_review' => :back_to_review,
+      'archive' => :archive
     }.freeze
 
     before_action :require_fiscal
@@ -28,22 +30,15 @@ module Aim
     # One status at a time, as one list or grouped by budget unit. The Fiscal
     # Queue starts grouped, the rest as one list.
     def index
-      session[:aim_fiscal_page] = request.fullpath
+      remember_return(:aim_fiscal_page)
       @view = VIEWS.include?(params[:view]) ? params[:view] : default_view
-      Aim::FiscalRecord.take_in_approved!
-      @records = Aim::FiscalRecord.in_status(@status).to_a.sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
-      @stamps = Aim::FiscalExport.approval_stamps(@records.map(&:invoice_id))
-      return unless @view == 'bu'
-
-      coa = Aim::Units.new
-      @groups = @records.group_by { |record| record.invoice.budget_unit }.sort_by { |unit, _| unit.to_s }
-                        .map { |unit, rows| [unit, coa.label(unit), rows] }
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error "AIM could not list the Fiscal #{@status} invoices: #{e.message}"
-      @records = []
-      @groups = []
-      @stamps = {}
-      flash.now[:alert] = 'The invoice database could not be read.'
+      reading_database("list the Fiscal #{@status} invoices", alert: 'The invoice database could not be read.',
+                                                              empty: { records: [], groups: [], stamps: {} }) do
+        Aim::FiscalRecord.take_in_approved!
+        @records = Aim::FiscalRecord.in_status(@status).to_a.sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
+        @stamps = Aim::FiscalExport.approval_stamps(@records.map(&:invoice_id))
+        @groups = fiscal_groups if @view == 'bu'
+      end
     end
 
     def show
@@ -55,7 +50,7 @@ module Aim
     end
 
     def update
-      action = ACTIONS[params[:commit].to_s]
+      action = ACTIONS[params[:fiscal_action].to_s]
       return redirect_to(aim_fiscal_invoice_path(@record.invoice.batch_id), alert: 'Unknown action.') if action.nil?
 
       Aim::FiscalRecord.transaction do
@@ -77,6 +72,12 @@ module Aim
 
     def default_view = @status == 'review' ? 'bu' : 'all'
 
+    def fiscal_groups
+      coa = Aim::Units.new
+      @records.group_by { |record| record.invoice.budget_unit }.sort_by { |unit, _| unit.to_s }
+              .map { |unit, rows| [unit, coa.label(unit), rows] }
+    end
+
     def set_status
       @status = params[:status].presence || 'review'
       return if Aim::FiscalRecord::STATUSES.include?(@status)
@@ -94,10 +95,7 @@ module Aim
       redirect_to aim_fiscal_path, alert: 'That invoice is not with Fiscal.'
     end
 
-    def fiscal_return_path
-      remembered = session[:aim_fiscal_page].to_s
-      remembered.start_with?('/aim/fiscal') ? remembered : aim_fiscal_path
-    end
+    def fiscal_return_path = remembered_return(:aim_fiscal_page, '/aim/fiscal') { aim_fiscal_path }
     helper_method :fiscal_return_path
 
     def reason = params[:reason].to_s.squish.presence

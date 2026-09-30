@@ -31,7 +31,7 @@ module Forms
       when 'group'
         return [] unless group_id
 
-        EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s)
+        EmployeeGroup.member_ids(group_id).map(&:to_s)
       else
         []
       end
@@ -41,7 +41,7 @@ module Forms
       case recipient_type
       when 'employee'
         emp = Employee.find_by(employee_id: employee_id)
-        emp ? "#{emp.first_name} #{emp.last_name}" : "Employee ##{employee_id}"
+        emp ? emp.full_name : "Employee ##{employee_id}"
       when 'group'
         Group.find_by(GroupID: group_id)&.group_name || "Group ##{group_id}"
       when 'supervisor'

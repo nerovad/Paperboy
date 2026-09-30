@@ -128,13 +128,13 @@ class SafetyAuthorizationsController < ApplicationController
 
     Employee.where(id: ids)
             .order(:last_name, :first_name)
-            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id.to_s] }
+            .map { |e| [e.name_with_id, e.employee_id.to_s] }
   end
 
   def employee_filter_options(authorizations)
     Employee.where(id: authorizations.map(&:employee_id).uniq)
             .sort_by { |e| [e.last_name.to_s, e.first_name.to_s] }
-            .map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id.to_s] }
+            .map { |e| [e.name_with_id, e.employee_id.to_s] }
   end
 
   def safety_authorization_params

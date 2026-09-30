@@ -30,7 +30,7 @@ module Aim
     def claim
       return redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: 'This invoice cannot be claimed.') unless claimable?
 
-      @invoice.reassign!(current_user_employee_id, actor: current_user_email)
+      @invoice.reassign!(current_user_employee_id, actor: current_user_email, by: current_user_employee_id)
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Claimed. It is in your queue now.'
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid => e
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: e.message

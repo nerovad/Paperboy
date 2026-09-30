@@ -1,8 +1,8 @@
-"""One spelling for every key field. Copied from v1's pipeline_common.
+"""One spelling for every key field.
 
 The vendor name, invoice number, total and date make up the business key,
-so each has exactly one stored form. See the v1 docstrings for the cases
-each rule was written for; they are kept here unchanged.
+so each has exactly one stored form. This is the one copy: v1's
+pipeline_common imports these rather than keeping its own.
 """
 import re
 import unicodedata
@@ -15,10 +15,20 @@ from invoice_models import InvoiceData
 def clean_text_field(v):
     """Tidy a key field's whitespace without editing what the vendor printed.
 
-    Only what cannot survive a round trip is removed: control codes, and the
-    invisible formatting codes such as a zero-width space that would make two
-    identical-looking numbers compare unequal. Runs of whitespace collapse to
-    one space. INV-2024/001 stays INV-2024/001.
+    This deleted every character outside [a-zA-Z0-9_\\- ], so INV-2024/001 was
+    stored as INV-2024001 -- a different number to the one on the page, and a
+    different business key. Invoice and order numbers are held as text, passed
+    to SQL as parameters, escaped by the XML writer and written into the PDF's
+    Info dictionary, so none of those need a restricted character set.
+
+    What is removed is what cannot survive a round trip: control codes, and
+    the invisible formatting codes such as a zero-width space that would make
+    two identical-looking numbers compare unequal. Runs of whitespace, a
+    non-breaking space among them, collapse to one space.
+
+    Anything built into a *path* is made safe where the path is built --
+    03_batch_splitter does that from the manifest, which never comes through
+    here -- and not by narrowing the value everyone else stores.
     """
     if not v:
         return None
@@ -33,9 +43,23 @@ def clean_text_field(v):
 def clean_money(v):
     """One spelling for an amount: an optional sign and exactly two decimals.
 
-    "(100.00)" and "100.00-" are credits and keep their sign; "-0.00" folds to
-    "0.00"; a comma used as the decimal separator is refused rather than
-    guessed at, so the invoice goes to review instead of storing 1.23.
+    The total is a quarter of the business key, so "100.0", "100.00" and
+    "$100.00" have to reach storage as one string or the same invoice arrives
+    twice. Stripping the currency and padding the decimals already did that
+    much; the sign did not survive:
+
+    * "(100.00)" is how an invoice prints a credit. The brackets were dropped
+      with the dollar sign, so a credit was stored as a charge -- the sign
+      silently inverted, which is worse than either spelling.
+    * "100.00-" is the same amount with a trailing minus. `float` refused it,
+      so the total became empty.
+    * "-0.00" and "0.00" are one amount with two spellings, and therefore two
+      business keys.
+
+    A comma used as the decimal separator ("1.234,56") is refused rather than
+    guessed at: a trailing ",56" cannot be told from a grouping comma without
+    assuming a locale, and assuming one produced 1.23 -- a wrong number,
+    stored silently. Returning None sends the invoice to review instead.
     """
     if not v:
         return None
@@ -78,8 +102,12 @@ def clean_date(v):
 
 def sanitize_data(data: InvoiceData):
     if data.vendor_name:
-        # A business key field, stored and exported as typed. Rewriting "&"
-        # to "and" once changed it for 58 of the ~900 official vendors.
+        # The vendor name is a business key field and is stored, indexed and
+        # exported as typed. Rewriting "&" to "and" changed it for 58 of the
+        # ~900 official vendors -- "AT&T MOBILITY" reached Laserfiche as
+        # "ATandT MOBILITY" while the SQL row kept the real name. ElementTree
+        # escapes the ampersand on its own, so nothing downstream needs it
+        # removed.
         data.vendor_name = data.vendor_name.strip() or None
     data.invoice_total = clean_money(data.invoice_total)
     data.invoice_date = clean_date(data.invoice_date)

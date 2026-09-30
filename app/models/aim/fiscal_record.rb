@@ -14,6 +14,9 @@ module Aim
   #
   # Every move is a line in the invoice's history (action 'fiscal').
   class FiscalRecord < Record
+    include Aim::Transitions
+    include Aim::Audited
+
     STATUSES = %w[review on_hold ready exported archived].freeze
     STATUS_LABELS = { 'review' => 'Fiscal Queue', 'on_hold' => 'On Hold', 'ready' => 'Report Queue',
                       'exported' => 'Exported', 'archived' => 'Archived' }.freeze
@@ -24,6 +27,7 @@ module Aim
       'exported' => %w[archived],
       'archived' => []
     }.freeze
+    moves_along :status, TRANSITIONS, error: ArgumentError
     # Offered as you type a tag; anything else may be typed too. The marks
     # Fiscal put on DocuShare titles.
     TAG_SUGGESTIONS = ['#INV', '#BDO$', '#CT$', '#RQS', 'CT-PEND', 'HOLD PMT', 'DISCOUNT', 'Cross-FY Invoice',
@@ -61,12 +65,10 @@ module Aim
       STATUSES.to_h { |status| ["fiscal_#{status}", by_status.fetch(status, 0)] }
     end
 
-    def can_move_to?(new_status) = TRANSITIONS.fetch(status, []).include?(new_status.to_s)
-
     # Moves the record on, naming who moved it, and writes the history line.
     def move_to!(new_status, actor:, note: nil, **changes)
       new_status = new_status.to_s
-      raise ArgumentError, refusal(new_status) unless can_move_to?(new_status)
+      check_move!(new_status)
 
       transaction do
         old = status
@@ -95,7 +97,7 @@ module Aim
 
     private
 
-    def refusal(new_status)
+    def transition_refusal(new_status)
       "This invoice is #{STATUS_LABELS[status]}; it cannot go to #{STATUS_LABELS[new_status] || new_status}."
     end
   end

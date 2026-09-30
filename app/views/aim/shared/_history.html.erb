@@ -1,0 +1,18 @@
+<%# An invoice's history, folded under its fields on the review and Fiscal
+    pages. An event with no state change (a Fiscal edit) shows only its note. %>
+<% if events.present? %>
+  <details class="aim-history-fold">
+    <summary>History (<%= events.size %>)</summary>
+    <ul>
+      <% events.each do |event| %>
+        <li>
+          <%= event.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %>
+          <% if event.to_state.present? %>
+            <%= event.from_state.present? ? "#{aim_state_label(event.from_state)} → " : '' %><%= aim_state_label(event.to_state) %>
+          <% end %>
+          by <%= event.actor %><%= " — #{event.note}" if event.note.present? %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

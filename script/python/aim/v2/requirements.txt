@@ -8,3 +8,4 @@ pyodbc
 python-dateutil
 python-dotenv
 thefuzz
+tzdata

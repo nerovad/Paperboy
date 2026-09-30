@@ -20,6 +20,10 @@ class EmployeeGroup < ApplicationRecord
 
   validate :member_exists
 
+  # Employee ids (integers, each once) of the members of these groups: a
+  # GroupID, a list of them, or a relation selecting GroupID.
+  def self.member_ids(group_ids) = where(GroupID: group_ids).pluck(:EmployeeID).uniq
+
   private
 
   def member_exists

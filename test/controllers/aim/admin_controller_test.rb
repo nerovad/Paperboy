@@ -55,6 +55,21 @@ module Aim
       assert_not_includes response.body, ">#{idle.last_name}, "
     end
 
+    test 'filters by role, sorts by open invoices, and the sort links keep the filters' do
+      busy, idle = two_employees
+      as_groups 'aim_admin'
+      Aim::Member.create!(employee_id: busy.id)
+      Aim::Member.create!(employee_id: idle.id)
+      Aim::Invoice.create!(actor: 'test', batch_id: 'B-2', state: 'ready_for_approval', assigned_employee_id: busy.id)
+
+      get :index, params: { role: 'User', sort: 'open', view: 'list' }
+
+      people = @controller.instance_variable_get(:@people)
+      assert_equal busy.id, people.first.employee_id
+      assert(people.all? { |person| person.roles.include?('User') })
+      assert_select 'a.aim-sort-link[href=?]', aim_admin_path(role: 'User', view: 'list', sort: 'name')
+    end
+
     test 'someone on the list GSABSS no longer knows is shown and flagged' do
       as_groups 'aim_admin'
       Aim::Member.create!(employee_id: 999_999_999)

@@ -44,11 +44,11 @@
         <% if @invoice.restorable? && aim_queue_access? %>
           <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
                         class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
-                    data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open"
-                    data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
-            <%= render 'reason_modal' %>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                    data-value="restore_to_needs_review" data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
+            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                    data-value="restore_to_ready_for_approval" data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
+            <%= render 'aim/shared/reason_modal', id: 'aim-restore' %>
           <% end %>
         <% end %>
         <% if @claimable && !@claimed_by_other %>
@@ -175,20 +175,7 @@
 
         <%= render 'coding' unless state == 'needs_split' %>
 
-        <% if @events.present? %>
-          <details class="aim-history-fold">
-            <summary>History (<%= @events.size %>)</summary>
-            <ul>
-              <% @events.each do |event| %>
-                <li>
-                  <%= event.created_at.strftime('%m/%d/%y %H:%M') %>
-                  <%= event.from_state.present? ? "#{aim_state_label(event.from_state)} → " : '' %><%= aim_state_label(event.to_state) %>
-                  by <%= event.actor %><%= " — #{event.note}" if event.note.present? %>
-                </li>
-              <% end %>
-            </ul>
-          </details>
-        <% end %>
+        <%= render 'aim/shared/history', events: @events %>
       </div>
 
       <div class="aim-form-actions">
@@ -199,39 +186,40 @@
         <% else %>
           <div class="aim-action-group aim-review-action-strip">
             <% unless state == 'needs_split' %>
-              <%= form.submit 'Save Changes', class: 'btn secondary', data: { turbo_frame: 'aim-review-panel' } %>
+              <%= form.button 'Save Changes', name: 'invoice_action', value: 'save', class: 'btn secondary',
+                                              data: { turbo_frame: 'aim-review-panel' } %>
             <% end %>
 
             <% if state == 'needs_review' %>
               <% if @invoice.review_reason == 'unknown_vendor' %>
-                <%= form.submit 'Learn & Retry AI',
+                <%= form.button 'Learn & Retry AI', name: 'invoice_action', value: 'learn_and_retry',
                                 data: { turbo_confirm: 'Save this vendor match and have the AI read the invoice again?' },
                                 class: 'btn warning' %>
-                <%= form.submit 'Learn & Send to Approval',
+                <%= form.button 'Learn & Send to Approval', name: 'invoice_action', value: 'learn_and_send',
                                 data: { turbo_confirm: 'Save this vendor match and send the invoice for approval?' },
                                 class: 'btn approve' %>
               <% end %>
-              <%= form.submit 'Send to Approval',
+              <%= form.button 'Send to Approval', name: 'invoice_action', value: 'send_to_approval',
                               data: { turbo_confirm: 'Send this invoice to its owner for approval?' },
                               class: 'btn approve' %>
-              <%= form.submit 'Retry AI',
+              <%= form.button 'Retry AI', name: 'invoice_action', value: 'retry_ai',
                               data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>
             <% elsif state == 'ready_for_approval' %>
-              <%= form.submit 'Approve',
+              <%= form.button 'Approve', name: 'invoice_action', value: 'approve',
                               data: { turbo_confirm: 'Approve this invoice and send it to billing and Fiscal?' },
                               class: 'btn approve' %>
               <button type="button" class="btn warning" data-action="aim-reason#open"
-                      data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
+                      data-value="send_back" data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
             <% elsif state == 'needs_split' %>
-              <%= form.submit 'Approve Split',
+              <%= form.button 'Approve Split', name: 'invoice_action', value: 'approve_split',
                               data: {
                                 turbo_confirm: 'Split this PDF into the invoices above? The AI reads each one.',
                                 confirm_title: 'Approve split',
                                 confirm_label: 'Approve Split'
                               },
                               class: 'btn approve' %>
-              <%= form.submit 'Process as One Invoice',
+              <%= form.button 'Process as One Invoice', name: 'invoice_action', value: 'process_as_one',
                               data: {
                                 turbo_confirm: 'Keep this PDF as one invoice and have the AI read it?',
                                 confirm_title: 'Process as one invoice',
@@ -239,26 +227,26 @@
                               },
                               class: 'btn warning' %>
             <% elsif state == 'failed' %>
-              <%= form.submit 'Retry AI',
+              <%= form.button 'Retry AI', name: 'invoice_action', value: 'retry_ai',
                               data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>
-              <%= form.submit 'Retry Export',
+              <%= form.button 'Retry Export', name: 'invoice_action', value: 'retry_export',
                               data: { turbo_confirm: 'Try sending it to billing again?' },
                               class: 'btn approve' %>
             <% end %>
 
             <% if @invoice.can_move_to?('rejected') %>
               <button type="button" class="btn deny" data-action="aim-reason#open"
-                      data-commit="Reject" data-title="Reject invoice">Reject</button>
+                      data-value="reject" data-commit="Reject" data-title="Reject invoice">Reject</button>
             <% end %>
             <% if @invoice.can_move_to?('deleted') && aim_queue_access? %>
               <button type="button" class="btn deny" data-action="aim-reason#open"
-                      data-commit="Delete" data-title="Delete invoice">Delete</button>
+                      data-value="delete" data-commit="Delete" data-title="Delete invoice">Delete</button>
             <% end %>
           </div>
         <% end %>
       </div>
-      <%= render 'reason_modal' unless @read_only %>
+      <%= render 'aim/shared/reason_modal' unless @read_only %>
     <% end %>
     <% end %>
   </div>

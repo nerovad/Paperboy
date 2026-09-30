@@ -36,8 +36,7 @@ class CriticalInformationAuthorization < ApplicationRecord
   end
 
   def manager_name
-    e = employee
-    e ? "#{e.first_name} #{e.last_name}".strip : nil
+    employee&.full_name
   end
 
   # The incident manager covering a site, or nil when nobody does. Exact match

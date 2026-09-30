@@ -10,9 +10,17 @@ module Aim
   # +extract+ command. This is exactly what the worker's intake does for a
   # file dropped on the share; the Upload page does it from Paperboy.
   class Intake
-    ID_HASH_ALPHABET = ('A'..'Z').to_a + ('0'..'9').to_a
+    # How a batch id is made is written once, in a file the v2 worker ships
+    # with and reads too: a file dropped on the share and a file uploaded here
+    # get their ids -- and store folders -- the same way.
+    # test/python/aim_v2/batch_id_cases.json holds the cases both sides check.
+    BATCH_ID_SPEC_FILE = Rails.root.join('script/python/aim/v2/batch_id_spec.json')
+    BATCH_ID_SPEC = JSON.parse(BATCH_ID_SPEC_FILE.read).freeze
+    ID_HASH_ALPHABET = BATCH_ID_SPEC.dig('code', 'alphabet').chars.freeze
     # Windows will not take these in a file name, and the batch id names a folder.
-    UNSAFE_IN_NAME = %r{[<>:"/\\|?*\x00-\x1F]}
+    UNSAFE_IN_NAME = Regexp.new(BATCH_ID_SPEC.dig('name', 'unsafe_pattern'))
+    ID_TIME_ZONE = ActiveSupport::TimeZone[BATCH_ID_SPEC.dig('stamp', 'time_zone')] ||
+                   raise(ArgumentError, "#{BATCH_ID_SPEC_FILE}: unknown time zone")
 
     Result = Struct.new(:invoice, :pdf_path, keyword_init: true)
 
@@ -48,15 +56,25 @@ module Aim
       raise
     end
 
-    # v1's format, kept: {BU}.{YYYYMMDD_HHMMSS}.{name}-[HASH].
-    def mint_batch_id(budget_unit, original_filename)
-      name = File.basename(original_filename.to_s, '.*').gsub(UNSAFE_IN_NAME, '').squish.first(80).presence || 'scan'
-      stamp = Time.zone.now.strftime('%Y%m%d_%H%M%S')
-      code = Array.new(4) { ID_HASH_ALPHABET[SecureRandom.random_number(ID_HASH_ALPHABET.size)] }.join
-      "#{budget_unit}.#{stamp}.#{name}-[#{code}]"
+    # {BU}.{YYYYMMDD_HHMMSS}.{name}-[HASH], by the shared spec.
+    def mint_batch_id(budget_unit, original_filename, now: Time.current, code: nil)
+      parts = { 'budget_unit' => budget_unit, 'stamp' => now.in_time_zone(ID_TIME_ZONE).strftime(BATCH_ID_SPEC.dig('stamp', 'format')),
+                'name' => self.class.batch_name(original_filename), 'code' => code || random_code }
+      BATCH_ID_SPEC['format'].gsub(/\{(\w+)\}/) { parts.fetch(Regexp.last_match(1)).to_s }
+    end
+
+    # The name part: the file's stem, safe for a Windows folder name.
+    def self.batch_name(original_filename)
+      rules = BATCH_ID_SPEC['name']
+      File.basename(original_filename.to_s, '.*').gsub(UNSAFE_IN_NAME, '').squish
+          .first(rules['max_length']).presence || rules['fallback']
     end
 
     private
+
+    def random_code
+      Array.new(BATCH_ID_SPEC.dig('code', 'length')) { ID_HASH_ALPHABET[SecureRandom.random_number(ID_HASH_ALPHABET.size)] }.join
+    end
 
     def page_count(bytes)
       require 'pdf-reader'

@@ -45,14 +45,13 @@ export default class extends Controller {
   }
 
   async activateOcrMode(targetName, button) {
-    if (this.activeOcrButton) {
-      this.activeOcrButton.classList.remove("active-ocr")
-      this.activeOcrButton.innerText = "OCR"
-    }
+    this.resetActiveButton()
 
     this.activeOcrTargetName = targetName
     this.activeOcrButton = button
-    button.classList.add("active-ocr")
+    // The shared `active` variant replaces the button's usual one while it
+    // is armed, so the button carries one colour variant at a time.
+    button.classList.replace("secondary", "active")
     button.innerText = "Cancel"
 
     await this.ensurePdfRendered()
@@ -255,7 +254,7 @@ export default class extends Controller {
   resetActiveButton() {
     if (!this.activeOcrButton) return
 
-    this.activeOcrButton.classList.remove("active-ocr")
+    this.activeOcrButton.classList.replace("active", "secondary")
     this.activeOcrButton.innerText = "OCR"
   }
 }

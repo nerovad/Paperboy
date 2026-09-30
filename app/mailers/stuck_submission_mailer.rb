@@ -38,10 +38,9 @@ class StuckSubmissionMailer < ApplicationMailer
   end
 
   def system_admin_emails
-    grp = Group.where('LOWER(Group_Name) = ?', 'system_admins').first
-    return [] unless grp
+    ids = Group.employee_ids_named(Group::PRIVILEGED_NAME)
+    return [] if ids.empty?
 
-    ids = EmployeeGroup.where(GroupID: grp.GroupID).pluck(:EmployeeID)
     Employee.where(id: ids).pluck(:email)
   rescue StandardError
     []

@@ -5,7 +5,7 @@ class AclController < ApplicationController
   # Membership of this group confers full system-admin rights everywhere, so an
   # 'acl' grantee who could edit it — or rename any group into it — could
   # promote themselves. Only existing system admins may touch it.
-  PRIVILEGED_GROUP_NAME = 'system_admins'
+  PRIVILEGED_GROUP_NAME = Group::PRIVILEGED_NAME
 
   before_action -> { require_admin_tab('acl') }
   before_action :set_group, only: %i[show edit update destroy add_member remove_member permissions update_permissions
@@ -85,16 +85,7 @@ class AclController < ApplicationController
 
     return unless params[:search].present?
 
-    search = params[:search].strip
-    sanitized = ActiveRecord::Base.sanitize_sql_like(search)
-    @search_results = Employee
-                      .where(
-                        'first_name LIKE :q OR last_name LIKE :q OR CAST(id AS VARCHAR) LIKE :q ' \
-                        "OR (first_name + ' ' + last_name) LIKE :q",
-                        q: "%#{sanitized}%"
-                      )
-                      .order(:last_name, :first_name)
-                      .limit(20)
+    @search_results = Employee.search_ranked(params[:search]).limit(20)
   end
 
   def new

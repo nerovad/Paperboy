@@ -8,8 +8,6 @@ module Aim
   # point of use and never during boot -- an AIM misconfiguration must not
   # take down Billing, Forms or Print 2 Mail along with it.
   class MissingConfiguration < StandardError
-    def self.for(variable, subject)
-      new("#{subject} is not configured. Set #{variable}.")
-    end
+    extend Paperboy::MissingConfiguration
   end
 end

@@ -24,7 +24,7 @@
             <label for="filter_employee">Employee</label>
             <%= select_tag :filter_employee,
                 options_for_select(
-                  [["Me", ''], ['All', 'all']] + @filter_employees.map { |e| ["#{e.last_name}, #{e.first_name}", e.employee_id.to_s] },
+                  [["Me", ''], ['All', 'all']] + @filter_employees.map { |e| [e.sort_name, e.employee_id.to_s] },
                   params[:filter_employee]
                 ),
                 class: 'filter-select',

@@ -1,0 +1,19 @@
+{
+  "_about": "How an AIM batch id is minted: {BU}.{stamp}.{name}-[{code}]. The id is also the store folder's name, so the name is made safe for Windows. Read by the v2 worker (batch_ids.py, intake from the share) and by Paperboy (Aim::Intake, the Upload page). Both follow this file and nothing else; test/python/aim_v2/batch_id_cases.json is the table both test suites check against it.",
+  "format": "{budget_unit}.{stamp}.{name}-[{code}]",
+  "name": {
+    "_about": "The original file name without its extension; then every character matching unsafe_pattern removed; then runs of whitespace collapsed to one space and the ends trimmed; then cut to max_length characters; fallback when nothing is left.",
+    "unsafe_pattern": "[<>:\"/\\\\|?*\\x00-\\x1F]",
+    "max_length": 80,
+    "fallback": "scan"
+  },
+  "stamp": {
+    "_about": "strftime format, in this IANA time zone -- not the clock of whichever machine minted it.",
+    "format": "%Y%m%d_%H%M%S",
+    "time_zone": "America/Los_Angeles"
+  },
+  "code": {
+    "alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    "length": 4
+  }
+}

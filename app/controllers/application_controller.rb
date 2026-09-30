@@ -59,7 +59,7 @@ class ApplicationController < ActionController::Base
 
     {
       employee_id: employee.employee_id,
-      name: "#{employee.first_name} #{employee.last_name}",
+      name: employee.full_name,
       phone: employee.work_phone,
       email: employee.email,
       agency: agency&.agency_id,

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { unitsOf } from "controllers/aim_shared"
 
 // Moving invoices on the AIM queues: tick one or several rows, then Move
 // selected opens one dialog for them all. Modelled on reassign_modal_controller.
@@ -48,7 +49,7 @@ export default class extends Controller {
   // starts with nobody chosen.
   preparePeople() {
     if (!this.hasPersonTarget) return
-    const units = [...new Set(this.checked().map((box) => box.dataset.budgetUnit || ""))]
+    const units = this.checkedUnits()
     this.personTarget.dataset.priorityUnit = units.length === 1 ? units[0] : ""
     this.personTarget.dispatchEvent(new Event("aim-grouped-search:reset"))
     this.personChanged()
@@ -60,8 +61,8 @@ export default class extends Controller {
   personChanged() {
     if (!this.hasUnitChoiceTarget) return
     const id = this.personTarget.value
-    const theirs = id ? this.unitsOf(id) : []
-    const units = [...new Set(this.checked().map((box) => box.dataset.budgetUnit || ""))].filter(Boolean)
+    const theirs = id ? unitsOf(this.personTarget, id) : []
+    const units = this.checkedUnits().filter(Boolean)
     const outside = units.filter((unit) => !theirs.includes(unit))
     const show = Boolean(id) && outside.length > 0 && theirs.length > 0
     this.unitChoiceTarget.hidden = !show
@@ -85,12 +86,6 @@ export default class extends Controller {
     this.unitSelectTarget.required = !keep
   }
 
-  unitsOf(id) {
-    return Array.from(this.personTarget.querySelectorAll("optgroup"))
-      .filter((group) => group.dataset.unit && group.querySelector(`option[value="${id}"]`))
-      .map((group) => group.dataset.unit)
-  }
-
   unitLabel(unit) {
     return this.personTarget.querySelector(`optgroup[data-unit="${unit}"]`)?.label || unit
   }
@@ -108,6 +103,11 @@ export default class extends Controller {
     const n = this.checked().length
     if (this.hasBulkCountTarget) this.bulkCountTarget.textContent = n
     if (this.hasBulkButtonTarget) this.bulkButtonTarget.disabled = n === 0
+  }
+
+  // The ticked invoices' budget units, each once ("" for an invoice with none).
+  checkedUnits() {
+    return [...new Set(this.checked().map((box) => box.dataset.budgetUnit || ""))]
   }
 
   checked() {

@@ -23,6 +23,9 @@ class SessionUser
     nil
   end
 
+  # "First Last", as Employee formats it.
+  def full_name = Employee.format_full_name(first_name, last_name)
+
   # Get the actual Employee record for this session user
   def employee
     @employee ||= Employee.find_by(employee_id: employee_id)

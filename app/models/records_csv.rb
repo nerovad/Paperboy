@@ -11,7 +11,7 @@ module RecordsCsv
 
   # A cell starting with one of these is run as a formula by Excel and Sheets.
   # Record values are typed in by users, so they are defused rather than trusted.
-  FORMULA_TRIGGERS = /\A[=+\-@\t\r]/
+  FORMULA_TRIGGERS = Paperboy::CsvSafe::FORMULA_TRIGGERS
 
   def generate(view)
     columns = exportable_columns(view)
@@ -47,7 +47,5 @@ module RecordsCsv
     end
   end
 
-  def defuse(text)
-    text.match?(FORMULA_TRIGGERS) ? "'#{text}" : text
-  end
+  def defuse(text) = Paperboy::CsvSafe.defuse(text)
 end

@@ -5,8 +5,6 @@ module HsaAdoptionCards
   # the point of use, never at boot, so a misconfiguration here cannot take
   # any other app down with it.
   class MissingConfiguration < Error
-    def self.for(variable, subject)
-      new("#{subject} is not configured. Set #{variable}.")
-    end
+    extend Paperboy::MissingConfiguration
   end
 end

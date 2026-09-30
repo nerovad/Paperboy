@@ -36,8 +36,9 @@ module Aim
       runs.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }.join(', ')
     end
 
-    # The splitter accepts numbers and "a-b" strings, so a manifest may hold
-    # either.
+    # Manifests hold page numbers: #manifest writes them, and the worker's
+    # extraction schema is a list of integers. A string is read as a range
+    # only so a hand-edited manifest still shows on the page.
     def self.pages_from(value)
       Array(value).flat_map do |part|
         next [part] if part.is_a?(Integer)
@@ -73,7 +74,10 @@ module Aim
       @errors.empty?
     end
 
-    # The manifest the splitter reads, keeping whatever else it already held --
+    # The manifest the splitter reads. Each invoice's pages are written as
+    # sorted, distinct integers -- parsed and checked here, once, so the
+    # worker (splitting.py) reads numbers and never parses page syntax.
+    # Keeping whatever else it already held --
     # the BU, submitter and owner the AI worker wrote. A blank vendor or
     # invoice number is left out rather than written as null: the splitter
     # names a piece part_N only when the key is absent, and a null crashes it.

@@ -58,7 +58,7 @@
                   <div class="approval-item">
                     <div class="approval-details">
                       <strong>
-                        <%= officer ? "#{officer.first_name} #{officer.last_name}" : "Employee ##{authorization.employee_id}" %>
+                        <%= officer ? officer.full_name : "Employee ##{authorization.employee_id}" %>
                         <span class="employee-id">(<%= authorization.employee_id %>)</span>
                       </strong>
                       <% if officer&.email.present? %>
@@ -79,7 +79,7 @@
                                 data-action="click->confirm-modal#open"
                                 data-delete-path="<%= safety_authorization_path(authorization) %>"
                                 data-confirm-title="Remove Authorization"
-                                data-confirm-message="Remove <%= officer ? "#{officer.first_name} #{officer.last_name}" : authorization.employee_id %> as a safety officer for <%= card[:label] %>?">
+                                data-confirm-message="Remove <%= officer ? officer.full_name : authorization.employee_id %> as a safety officer for <%= card[:label] %>?">
                           Remove
                         </button>
                       <% end %>

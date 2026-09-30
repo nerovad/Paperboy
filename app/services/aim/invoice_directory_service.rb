@@ -59,27 +59,39 @@ module Aim
     def drop_dir = path_for!(:drop)
     def program_dir = path_for!(:program)
 
+    # A server path as the share spells it. Only a leading
+    # AIM_LINUX_QUEUE_BASE_PATH is swapped (Paperboy::SharePath); a path
+    # outside it just gets backslashes. Unchanged when the bases are not set.
     def to_windows_path(linux_path)
       return if linux_path.blank?
 
-      linux_base = ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH', nil)
-      windows_base = ENV.fetch('AIM_WINDOWS_QUEUE_BASE_PATH', nil)
-      return linux_path.to_s if linux_base.blank? || windows_base.blank?
+      share = share_path
+      return linux_path.to_s unless share
 
-      linux_path.to_s.gsub(linux_base, windows_base).tr('/', '\\')
+      share.to_windows(linux_path) || linux_path.to_s.tr('/', '\\')
     end
 
+    # A share path as this server mounts it. Only a leading
+    # AIM_WINDOWS_QUEUE_BASE_PATH is swapped, matched case-insensitively as
+    # Windows does; a path outside it just gets forward slashes.
     def translate_path(path)
       return if path.blank?
 
-      linux_base = ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH', nil)
-      windows_base = ENV.fetch('AIM_WINDOWS_QUEUE_BASE_PATH', nil)
-      return path.to_s.tr('\\', '/') if linux_base.blank? || windows_base.blank?
+      share = share_path
+      return path.to_s.tr('\\', '/') unless share
 
-      path.to_s.gsub(windows_base, linux_base).tr('\\', '/')
+      share.to_linux(path) || path.to_s.tr('\\', '/')
     end
 
     private
+
+    def share_path
+      linux_base = ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH', nil)
+      windows_base = ENV.fetch('AIM_WINDOWS_QUEUE_BASE_PATH', nil)
+      return if linux_base.blank? || windows_base.blank?
+
+      Paperboy::SharePath.new(windows_base: windows_base, linux_base: linux_base)
+    end
 
     def translated_env(name)
       translate_path(ENV.fetch(name, nil))

@@ -110,6 +110,13 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     assert_includes labels(catalog(apps: apps, aim_queues: true)), 'Action Needed'
   end
 
+  test 'the AIM Dashboard follows the check its page makes, not a feature grant' do
+    apps = [{ key: 'aim', label: 'Automated Invoice Management', path: '/aim' }]
+
+    assert_not_includes labels(catalog(apps: apps, features: ['aim:dashboard'])), 'Dashboard'
+    assert_includes labels(catalog(apps: apps, aim_queues: true)), 'Dashboard'
+  end
+
   test 'Billing offers its screens and not its operations' do
     items = [{ label: 'View Billing', path: '/billing/dashboard', page: true },
              { label: 'Run Billing', path: '/billing/monthly_report/run' }]

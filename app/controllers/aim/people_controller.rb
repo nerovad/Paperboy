@@ -1,36 +1,22 @@
 # frozen_string_literal: true
 
 module Aim
-  # Search the people who work AIM for one to own a queue, the way the Chart of Accounts
-  # employee lookup searches: by first name, last name or employee id, and
-  # labelled "Last, First (id)" with the unit beside it. AIM's own endpoint,
-  # so AIM's access rules apply rather than COA's.
+  # Search the people who work AIM for one to own a queue, the way the Chart
+  # of Accounts employee lookup searches (Employee.search_ranked: name,
+  # "First Last" or id, a full id first), labelled "Last, First (id)" with the
+  # unit beside it. AIM's own endpoint, so AIM's access rules apply rather
+  # than COA's. Open to anyone signed in: whoever holds an invoice may hand it
+  # to someone's queue.
   class PeopleController < BaseController
-    skip_before_action :require_app_access
-    before_action :require_signed_in
-
     SEARCH_LIMIT = 20
 
     def index
       query = params[:q].to_s.strip
       return render json: [] if query.blank?
 
-      matches = matching(query).order(:last_name, :first_name).limit(SEARCH_LIMIT)
-                               .pluck(:id, :first_name, :last_name, :unit)
-      render json: matches.map { |id, first, last, unit|
-        { value: id, label: "#{last}, #{first} (#{id})", unit: unit }
-      }
-    end
-
-    private
-
-    def matching(query)
       # Only people who work AIM have a queue to send an invoice to.
       people = Employee.where(id: Aim::Users.all.pluck(:id))
-      return people.where(id: query) if query.match?(/\A\d+\z/)
-
-      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-      people.where('first_name LIKE :query OR last_name LIKE :query', query: pattern)
+      render json: people.search_ranked(query).limit(SEARCH_LIMIT).search_options
     end
   end
 end

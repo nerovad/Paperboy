@@ -37,10 +37,9 @@ class OshaReportableMailer < ApplicationMailer
   # is the same group that gates the OSHA recordable/reportable fields on the
   # safety report form.
   def safety_officer_emails
-    grp = Group.where('LOWER(Group_Name) = ?', 'hca_safety_officers').first
-    return [] unless grp
+    ids = Group.employee_ids_named(SafetyReportAuthorization::OFFICER_GROUP_NAME)
+    return [] if ids.empty?
 
-    ids = EmployeeGroup.where(GroupID: grp.GroupID).pluck(:EmployeeID)
     Employee.where(id: ids).pluck(:email)
   rescue StandardError
     []

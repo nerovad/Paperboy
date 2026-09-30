@@ -59,7 +59,7 @@ module Forms
       @employee_options = Employee.where(agency: gsa&.agency_id)
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
-                                  .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
+                                  .map { |e| [e.full_name, e.employee_id] }
 
       # Agency options for Impacted Customers multi-select
       @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
@@ -124,7 +124,7 @@ module Forms
       @employee_options = Employee.where(agency: gsa&.agency_id)
                                   .select(:employee_id, :first_name, :last_name)
                                   .order(:last_name, :first_name)
-                                  .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
+                                  .map { |e| [e.full_name, e.employee_id] }
 
       @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
@@ -159,7 +159,7 @@ module Forms
         @employee_options = Employee.where(agency: gsa&.agency_id)
                                     .select(:employee_id, :first_name, :last_name)
                                     .order(:last_name, :first_name)
-                                    .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
+                                    .map { |e| [e.full_name, e.employee_id] }
 
         @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
@@ -254,7 +254,7 @@ module Forms
         @employee_options = Employee.where(agency: gsa&.agency_id)
                                     .select(:employee_id, :first_name, :last_name)
                                     .order(:last_name, :first_name)
-                                    .map { |e| ["#{e.first_name} #{e.last_name}", e.employee_id] }
+                                    .map { |e| [e.full_name, e.employee_id] }
 
         @impacted_customer_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 

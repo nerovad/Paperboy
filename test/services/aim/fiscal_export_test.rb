@@ -41,5 +41,17 @@ module Aim
       assert_match(/_\d{2}:\d{2}:\d{2} _ PRUDENTIALOVFY25MA01\z/, row['Description'])
       assert_equal 'HOLD PMT, emailed Karen', row['Keywords']
     end
+
+    test 'text cells are defused against formulas; money, credits included, is left for the macro' do
+      @invoice.update!(vendor_name: '=HYPERLINK("x")')
+      @record.update!(credit_amount: -25, description: '+1 call Karen')
+      row = Aim::FiscalExport::COLUMNS.zip(Aim::FiscalExport.new([@record.reload]).rows.first).to_h
+
+      assert_equal %('=HYPERLINK("x")), row['Vendor Name']
+      assert row['Title'].start_with?('4641_=HYPERLINK')
+      assert_equal '-25.00', row['Credit Amount']
+      assert_equal '12.50', row['Total']
+      assert_match(/ _ \+1 call Karen\z/, row['Description'])
+    end
   end
 end

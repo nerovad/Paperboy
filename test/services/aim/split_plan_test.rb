@@ -81,6 +81,16 @@ module Aim
                                     { 'pages' => [3] }] }, manifest)
     end
 
+    # The worker reads these as they are and parses nothing (splitting.py).
+    test 'the manifest writes each invoice as sorted, distinct page numbers' do
+      split = Aim::SplitPlan.new([{ pages_text: '3, 1-2, 2' }, { pages_text: ' 5 , 4 ' }], page_count: 5)
+
+      pages = split.manifest['invoices'].pluck('pages')
+
+      assert_equal [[1, 2, 3], [4, 5]], pages
+      assert(pages.flatten.all?(Integer))
+    end
+
     test 'a manifest is read back as rows, whichever way it wrote its pages' do
       rows = Aim::SplitPlan.rows_from_manifest('invoices' => [
                                                  { 'vendor_name' => 'ACME', 'pages' => [1, 2, 3] },

@@ -6,7 +6,7 @@ import hashlib
 from datetime import datetime
 from PIL import Image
 from pipeline_common import (BASE_DIR, AI_QUEUE_DIR, ERROR_QUEUE_DIR, is_file_stable, bootstrap, env,
-                             SPOOL_STATE_DIR as pipeline_spool_state_dir)
+                             V2_DIR, SPOOL_STATE_DIR as pipeline_spool_state_dir)
 from state_store import record_state, invoice_facts
 
 ACTOR = "00_ingestion_watcher"
@@ -25,7 +25,8 @@ SHARED_FOLDER_NAME = env('AIM_SHARED_FOLDER_NAME')
 # and copied into a BU folder that has none; never over one that exists, so a
 # README someone has edited is theirs.
 BU_README_NAME = "README - How to submit invoices.txt"
-BU_README_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "BU_FOLDER_README.txt")
+# The one copy is v2's, which the live worker places.
+BU_README_TEMPLATE = os.path.join(V2_DIR, "BU_FOLDER_README.txt")
 
 
 def route_for(relative_path):

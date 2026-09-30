@@ -25,13 +25,12 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
 
   test 'employees fuzzy finds first or last name and limits results' do
     matches = employee_relation([[7, 'Avery', 'Smith', '1450']])
-    finder = lambda do |clause, query:|
-      assert_equal 'first_name LIKE :query OR last_name LIKE :query', clause
-      assert_equal '%mit%', query
+    finder = lambda do |term|
+      assert_equal 'mit', term
       matches
     end
 
-    Employee.stub(:where, finder) do
+    Employee.stub(:search, finder) do
       get :employees, params: { q: 'mit' }
     end
 
@@ -42,7 +41,7 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
   end
 
   test 'blank employee search does not query GSABSS' do
-    Employee.stub(:where, ->(*) { flunk 'blank search queried employees' }) do
+    Employee.stub(:search, ->(*) { flunk 'blank search queried employees' }) do
       get :employees, params: { q: ' ' }
     end
 
@@ -88,12 +87,13 @@ class CoaCustomerLookupsControllerTest < ActionController::TestCase
   def employee_relation(rows)
     relation = Object.new
     relation.define_singleton_method(:order) { |*| self }
+    relation.define_singleton_method(:in_search_order) { |*| self }
     relation.define_singleton_method(:limit) do |value|
       @limit_value = value
       self
     end
     relation.define_singleton_method(:limit_value) { @limit_value }
-    relation.define_singleton_method(:pluck) { |*| rows }
+    relation.define_singleton_method(:search_options) { rows.map { |row| Employee.search_option(*row) } }
     relation
   end
 
@@ -201,12 +201,12 @@ class CoaEmployeeIdLookupsControllerTest < ActionController::TestCase
 
   test 'employees finds numeric input by employee id' do
     matches = employee_relation([[102_989, 'Avery', 'Smith', '1450']])
-    finder = lambda do |conditions|
-      assert_equal({ id: '102989' }, conditions)
+    finder = lambda do |term|
+      assert_equal '102989', term
       matches
     end
 
-    Employee.stub(:where, finder) { get :employees, params: { q: '102989' } }
+    Employee.stub(:search, finder) { get :employees, params: { q: '102989' } }
 
     assert_response :success
     assert_equal [{ 'value' => 102_989, 'label' => 'Smith, Avery (102989)', 'unit' => '1450' }],
@@ -219,12 +219,13 @@ class CoaEmployeeIdLookupsControllerTest < ActionController::TestCase
   def employee_relation(rows)
     relation = Object.new
     relation.define_singleton_method(:order) { |*| self }
+    relation.define_singleton_method(:in_search_order) { |*| self }
     relation.define_singleton_method(:limit) do |value|
       @limit_value = value
       self
     end
     relation.define_singleton_method(:limit_value) { @limit_value }
-    relation.define_singleton_method(:pluck) { |*| rows }
+    relation.define_singleton_method(:search_options) { rows.map { |row| Employee.search_option(*row) } }
     relation
   end
 end

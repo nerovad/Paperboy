@@ -100,11 +100,8 @@ module HsaAdoptionCards
     # Case-insensitive on the prefix, because Windows paths are; the rest of
     # the path keeps its case, because the mount may not be.
     def translated
-      prefix = windows_base.tr('\\', '/').chomp('/')
-      given = unc_path.tr('\\', '/')
-      raise FileUnavailable, 'That file is outside the scanned-cards folder.' unless given.downcase.start_with?("#{prefix.downcase}/")
-
-      File.join(linux_base, given[(prefix.length + 1)..])
+      Paperboy::SharePath.new(windows_base: windows_base, linux_base: linux_base).to_linux(unc_path) ||
+        raise(FileUnavailable, 'That file is outside the scanned-cards folder.')
     end
   end
 end

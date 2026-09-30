@@ -54,7 +54,7 @@ module Forms
       return {} if ids.empty?
 
       Employee.where(id: ids).to_a.to_h do |employee|
-        [employee.id.to_s, [employee.first_name, employee.last_name].compact_blank.join(' ')]
+        [employee.id.to_s, employee.full_name]
       end
     rescue StandardError
       {}

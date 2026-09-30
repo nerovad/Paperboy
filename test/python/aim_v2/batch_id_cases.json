@@ -1,0 +1,96 @@
+{
+  "_about": "Batch id cases for script/python/aim/v2/batch_id_spec.json. Checked by test/python/aim_v2/test_batch_ids.py (the worker) and test/services/aim/intake_test.rb (Paperboy), so the two cannot mint differently.",
+  "names": [
+    {
+      "filename": "Scan: 001?.pdf",
+      "name": "Scan 001"
+    },
+    {
+      "filename": "Invoice 12345.pdf",
+      "name": "Invoice 12345"
+    },
+    {
+      "filename": "a<b>c:d\"e|f?g*h.pdf",
+      "name": "abcdefgh"
+    },
+    {
+      "filename": "back\\slash.pdf",
+      "name": "backslash"
+    },
+    {
+      "filename": "tab\there.pdf",
+      "name": "tabhere"
+    },
+    {
+      "filename": "  lots   of   space  .pdf",
+      "name": "lots of space"
+    },
+    {
+      "filename": "no break space.pdf",
+      "name": "no break space"
+    },
+    {
+      "filename": "Café Façade.pdf",
+      "name": "Café Façade"
+    },
+    {
+      "filename": "a.b.c.pdf",
+      "name": "a.b.c"
+    },
+    {
+      "filename": "Scan.PDF",
+      "name": "Scan"
+    },
+    {
+      "filename": "no extension",
+      "name": "no extension"
+    },
+    {
+      "filename": "folder/inside.pdf",
+      "name": "inside"
+    },
+    {
+      "filename": ".pdf",
+      "name": ".pdf"
+    },
+    {
+      "filename": "???.pdf",
+      "name": "scan"
+    },
+    {
+      "filename": "",
+      "name": "scan"
+    },
+    {
+      "filename": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.pdf",
+      "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    {
+      "filename": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB tail.pdf",
+      "name": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB "
+    }
+  ],
+  "ids": [
+    {
+      "budget_unit": "4601",
+      "filename": "Scan: 001?.pdf",
+      "time": "2026-01-15T20:30:05Z",
+      "code": "AB12",
+      "batch_id": "4601.20260115_123005.Scan 001-[AB12]"
+    },
+    {
+      "budget_unit": "0100",
+      "filename": "summer.pdf",
+      "time": "2026-07-01T06:59:59Z",
+      "code": "ZZ99",
+      "batch_id": "0100.20260630_235959.summer-[ZZ99]"
+    },
+    {
+      "budget_unit": "4601",
+      "filename": "???.pdf",
+      "time": "2026-03-08T10:00:00Z",
+      "code": "0000",
+      "batch_id": "4601.20260308_030000.scan-[0000]"
+    }
+  ]
+}

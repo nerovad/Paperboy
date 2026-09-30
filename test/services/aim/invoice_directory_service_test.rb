@@ -47,6 +47,19 @@ module Aim
       assert_equal 'E:\AIM\_BACK_END\_STORE', @service.to_windows_path('/mnt/aim-test/_BACK_END/_STORE')
     end
 
+    test 'only a leading base is swapped, matched without regard to case on the share side' do
+      assert_equal '/mnt/aim-test/_STORE', @service.translate_path('e:\\aim\\_STORE')
+      assert_equal 'F:/Copy/E:/AIM/x', @service.translate_path('F:\\Copy\\E:\\AIM\\x')
+      assert_equal '\\backup\\mnt\\aim-test\\x', @service.to_windows_path('/backup/mnt/aim-test/x')
+    end
+
+    test 'a UNC share base translates whatever case the path spells it in' do
+      ENV['AIM_WINDOWS_QUEUE_BASE_PATH'] = '\\\\gsa-fs01\\AIM'
+
+      assert_equal '/mnt/aim-test/_BACK_END', @service.translate_path('\\\\GSA-FS01\\aim\\_BACK_END')
+      assert_equal '\\\\gsa-fs01\\AIM\\_BACK_END', @service.to_windows_path('/mnt/aim-test/_BACK_END')
+    end
+
     test 'an invoice knows its store folder and pdf' do
       ENV['AIM_STORE_DIR'] = 'E:\AIM\_BACK_END\_STORE'
       invoice = Aim::Invoice.new(batch_id: '4601.X', state: 'received')

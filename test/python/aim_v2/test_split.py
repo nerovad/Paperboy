@@ -5,8 +5,9 @@ import fitz
 import pytest
 
 PARENT = "4601.20260924_090000.Batch-[AB12]"
+# Shaped exactly as Aim::SplitPlan#manifest writes it: pages are integers.
 MANIFEST = {"invoices": [{"vendor_name": "ACME", "invoice_number": "INV-1", "pages": [1, 2]},
-                         {"vendor_name": "ACME", "invoice_number": "INV-2", "pages": "3"}]}
+                         {"vendor_name": "ACME", "invoice_number": "INV-2", "pages": [3]}]}
 
 
 @pytest.fixture
@@ -103,3 +104,32 @@ def test_a_pdf_missing_from_the_store_is_a_split_error_not_an_export_error(worke
     parent = fake_db.get(parent_id)
     assert parent["state"] == "failed"
     assert parent["review_reason"] == "split_error"
+
+
+@pytest.mark.parametrize("pages", ["3", "1-3", ["3-5"], [], [0], [1.5], [True], None])
+def test_pages_that_are_not_page_numbers_fail_the_split_rather_than_being_dropped(
+        worker, fake_db, pdf_maker, settings, pages):
+    """Paperboy parses what people type; the worker never guesses at a string."""
+    manifest = {"invoices": [{"invoice_number": "INV-1", "pages": [1, 2]},
+                             {"invoice_number": "INV-2", "pages": pages}]}
+    parent_id = parent_row(fake_db, pdf_maker, settings, manifest=manifest)
+
+    worker.run_once()
+
+    parent = fake_db.get(parent_id)
+    assert parent["state"] == "failed"
+    assert parent["review_reason"] == "split_error"
+    assert "invoice 2" in parent["review_note"]
+    assert len(fake_db.rows) == 1, "no children were made"
+
+
+def test_pages_are_cut_in_page_order_whatever_order_the_manifest_lists(worker, fake_db, pdf_maker, settings):
+    manifest = {"invoices": [{"invoice_number": "INV-1", "pages": [3, 1, 1]},
+                             {"invoice_number": "INV-2", "pages": [2]}]}
+    parent_id = parent_row(fake_db, pdf_maker, settings, manifest=manifest)
+
+    worker.run_once()
+
+    first = next(r for r in fake_db.rows.values() if r["batch_id"] == f"{PARENT}_SPLIT_1")
+    assert first["page_count"] == 2
+    assert fake_db.get(parent_id)["state"] == "split"

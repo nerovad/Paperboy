@@ -5,7 +5,7 @@ require 'test_helper'
 module Coa
   class BillingOptionsTest < ActiveSupport::TestCase
     test 'restricts objects through the selected agency mapping' do
-      relation = option_relation([['Professional Services', 2100]])
+      relation = option_relation([[2100, 'Professional Services']])
       relation.define_singleton_method(:where) do |conditions|
         raise "unexpected scope: #{conditions.inspect}" unless conditions == { agency_objects: { agency_id: 'GSA' } }
 
@@ -37,7 +37,7 @@ module Coa
       Object.new.tap do |relation|
         relation.define_singleton_method(:distinct) { self }
         relation.define_singleton_method(:order) { |_column| self }
-        relation.define_singleton_method(:pluck) { |_label, _value| rows }
+        relation.define_singleton_method(:pluck) { |_value, _label| rows }
       end
     end
   end

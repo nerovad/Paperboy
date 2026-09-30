@@ -17,7 +17,16 @@ module AuditableEdits
   # StatusChange already records transitions in full, with labels rather than
   # raw values; approver_id and the timestamps are routing mechanics rather
   # than anything a person edited.
-  IGNORED_COLUMNS = %w[id created_at updated_at status approver_id].freeze
+  #
+  # The rest are AIM's (Aim::Audited), and no other table has them: the
+  # working lock and the worker's lease and command, bookkeeping stamps, the
+  # extracted JSON and split manifest, and who last touched a row -- which the
+  # trail's own actor already says.
+  IGNORED_COLUMNS = %w[
+    id created_at updated_at status approver_id
+    claimed_by claimed_by_name claimed_at lease_owner lease_until attempt command extracted manifest coded_at
+    updated_by set_by stamped_at stamp_error exported_at archived_at
+  ].freeze
 
   # What an encrypted attribute's value is recorded as. That it changed is
   # worth keeping; the decrypted value saved_changes hands over is not — it

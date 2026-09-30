@@ -47,16 +47,18 @@
     <section class="aim-panel aim-empty-state"><p>No rules yet. Load a file to start.</p></section>
   <% else %>
     <section class="aim-panel aim-queue-panel aim-rules-panel">
+      <%# Sorting keeps the agency, BU and in-effect choices. %>
+      <% sort_keep = request.query_parameters.slice('agency', 'unit', 'show') %>
       <table class="submission-table aim-queue-table aim-rules-table">
         <thead>
           <tr>
-            <th><%= aim_rules_sort_link 'BU', 'budget_unit' %></th>
-            <th><%= aim_rules_sort_link 'Vendor', 'vendor' %></th>
+            <th><%= aim_sort_link 'BU', 'budget_unit', sort_keep %></th>
+            <th><%= aim_sort_link 'Vendor', 'vendor', sort_keep %></th>
             <% columns.each do |field| %>
-              <th><%= sortable[field] ? aim_rules_sort_link(aim_coding_field_label(field), sortable[field]) : aim_coding_field_label(field) %></th>
+              <th><%= sortable[field] ? aim_sort_link(aim_coding_field_label(field), sortable[field], sort_keep) : aim_coding_field_label(field) %></th>
             <% end %>
             <th>Notes</th>
-            <th><%= aim_rules_sort_link 'In effect', 'effective' %></th>
+            <th><%= aim_sort_link 'In effect', 'effective', sort_keep %></th>
           </tr>
         </thead>
         <tbody>

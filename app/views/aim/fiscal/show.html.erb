@@ -109,22 +109,7 @@
           <% end %>
         </div>
 
-        <% if @events.present? %>
-          <details class="aim-history-fold">
-            <summary>History (<%= @events.size %>)</summary>
-            <ul>
-              <% @events.each do |event| %>
-                <li>
-                  <%= event.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %>
-                  <% if event.to_state.present? %>
-                    <%= event.from_state.present? ? "#{aim_state_label(event.from_state)} → " : '' %><%= aim_state_label(event.to_state) %>
-                  <% end %>
-                  by <%= event.actor %><%= " — #{event.note}" if event.note.present? %>
-                </li>
-              <% end %>
-            </ul>
-          </details>
-        <% end %>
+        <%= render 'aim/shared/history', events: @events %>
       </div>
 
       <div class="aim-form-actions">
@@ -132,32 +117,34 @@
           <% if read_only %>
             <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
           <% else %>
-            <%= submit_tag 'Save', class: 'btn secondary', data: { turbo_frame: 'aim-fiscal-panel' } %>
+            <%= button_tag 'Save', name: 'fiscal_action', value: 'save', class: 'btn secondary',
+                                   data: { turbo_frame: 'aim-fiscal-panel' } %>
             <% if @record.can_move_to?('ready') %>
-              <%= submit_tag 'Add to Report Queue', class: 'btn approve',
+              <%= button_tag 'Add to Report Queue', name: 'fiscal_action', value: 'make_ready', class: 'btn approve',
                                                     data: { turbo_confirm: 'Add this invoice to the Report Queue?',
                                                             confirm_label: 'Add' } %>
             <% end %>
             <% if status == 'on_hold' %>
-              <%= submit_tag 'Release', class: 'btn take-back' %>
+              <%= button_tag 'Release', name: 'fiscal_action', value: 'release', class: 'btn take-back' %>
             <% end %>
             <% if status == 'ready' %>
-              <%= submit_tag 'Back to Fiscal Queue', class: 'btn warning' %>
+              <%= button_tag 'Back to Fiscal Queue', name: 'fiscal_action', value: 'back_to_review', class: 'btn warning' %>
             <% end %>
             <% if @record.can_move_to?('on_hold') %>
               <button type="button" class="btn warning" data-action="aim-reason#open"
-                      data-commit="Hold" data-title="Put on hold">Hold</button>
+                      data-value="hold" data-commit="Hold" data-title="Put on hold">Hold</button>
             <% end %>
             <% if status == 'exported' %>
               <%# Check and pay doc numbers come back after payment, so Archive is where a gap matters. %>
-              <%= submit_tag 'Archive', class: 'btn approve',
+              <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve',
                                         data: { turbo_confirm: missing.any? ? "There is no #{missing.join(' or ')} yet. Archive it anyway?" : 'Archive this invoice? It is finished after this.',
                                                 confirm_label: 'Archive' } %>
             <% end %>
           <% end %>
         </div>
       </div>
-      <%= render 'hold_modal' unless read_only %>
+      <%= render 'aim/shared/reason_modal', id: 'aim-hold', title: 'Put on hold', placeholder: 'What is it waiting on?',
+                                            submit: 'Hold', name: 'fiscal_action', value: 'hold' unless read_only %>
     <% end %>
     <% end %>
   </div>

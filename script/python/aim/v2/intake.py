@@ -14,18 +14,14 @@ release the original) is recognised by its hash and path next time round.
 """
 import hashlib
 import os
-import random
 import shutil
-import string
-from datetime import datetime
 
 import fitz
 from PIL import Image
 
-from store import ACTOR
+from batch_ids import mint_batch_id
+from worker_common import is_file_stable
 
-# Wait time to ensure a file is fully copied over the network.
-STABLE_WAIT_TIME = 2
 SUPPORTED_IMAGES = (".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif")
 
 # What each Budget Unit folder says about itself. Shipped beside the worker
@@ -45,25 +41,6 @@ def route_for(relative_path, shared_folder_name):
     if folder.casefold() == shared_folder_name.casefold():
         return {"bu_number": bu_number, "owner": None, "queue": "shared"}
     return {"bu_number": bu_number, "owner": folder, "queue": "person"}
-
-
-def is_file_stable(filepath, wait_time=STABLE_WAIT_TIME):
-    """A file still being copied changes size; one that is done does not."""
-    try:
-        initial_size = os.path.getsize(filepath)
-        import time
-        time.sleep(wait_time)
-        return os.path.getsize(filepath) == initial_size and initial_size > 0
-    except OSError:
-        return False
-
-
-def mint_batch_id(bu_number, filename):
-    """`{BU}.{YYYYMMDD_HHMMSS}.{name}-[HASH]`, minted once, here."""
-    name_only, _ = os.path.splitext(filename)
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    tag = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
-    return f"{bu_number}.{stamp}.{name_only}-[{tag}]"
 
 
 def content_hash(path):

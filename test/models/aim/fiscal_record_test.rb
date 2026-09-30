@@ -34,6 +34,15 @@ module Aim
       assert_equal 'on_hold', record.reload.status
     end
 
+    test 'a move Fiscal does not make is refused however it is saved, but a new record starts where it is put' do
+      record = Aim::FiscalRecord.create!(invoice: invoice('F-4b', 'approved'))
+
+      assert_not record.update(status: 'archived')
+      assert_includes record.errors[:status], 'cannot move from review to archived'
+      assert_predicate Aim::FiscalRecord.new(invoice: invoice('F-4c', 'approved'), status: 'archived'), :valid?
+      assert_equal %w[on_hold ready], record.reload.next_states
+    end
+
     test 'the name is Fiscal\'s: BU, vendor, invoice number and date, safe as a file name' do
       acme = invoice('F-5', 'approved', budget_unit: '4641', vendor_name: 'A/B Supply', invoice_number: 'A-9',
                                         invoice_date: Date.new(2026, 9, 3))

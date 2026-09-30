@@ -6,7 +6,6 @@ import subprocess
 import csv
 import json
 import re
-import unicodedata
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from datetime import datetime
@@ -17,47 +16,53 @@ from datetime import datetime
 # Dependencies are installed by deployment (requirements.txt), never on
 # import. Importing a module must not reach the network or mutate the
 # machine -- that is what made every Python step here untestable.
-import fitz  
 import pyodbc
 from dotenv import load_dotenv
 from thefuzz import fuzz, process
 from PIL import Image, ImageDraw
-from pydantic import BaseModel, field_validator, model_validator
-from typing import Optional
-from dateutil import parser as dateparser
 
 # -----------------------------------------------------------------------------
 # ENVIRONMENT & DIRECTORIES
 # -----------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# -----------------------------------------------------------------------------
+# SHARED WITH v2
+# -----------------------------------------------------------------------------
+# v2 (script/python/aim/v2) is the live worker and owns every helper the two
+# pipelines have in common: the .env search, env(), file stability, page
+# rendering, the invoice models and the key-field cleaning. v1 is stopped and
+# awaiting retirement (docs/aim/aim_plan.md, `## Next` item h), so it imports
+# them from the v2 folder beside it instead of keeping copies that drift.
+#
+# bin/deploy-aim-workers ships v1 as one flat folder without v2/, so a v1
+# deployed from this checkout stops here, saying why. v1 is not to be
+# redeployed; the copy on the share is the one it was stopped with.
+V2_DIR = os.path.join(SCRIPT_DIR, "v2")
+if not os.path.isfile(os.path.join(V2_DIR, "worker_common.py")):
+    sys.exit(f"CRITICAL ERROR: v1 reads its shared helpers from the v2 worker, not found in {V2_DIR}")
+if V2_DIR not in sys.path:
+    sys.path.append(V2_DIR)
+
+import worker_common
+from worker_common import is_file_stable, pdf_page_to_image
+from invoice_models import (
+    DOCUMENT_TYPE_GUIDE, HANDWRITTEN_FINANCIAL_FIELDS, DocumentManifest, InvoiceData, ManifestItem,
+    normalize_document_type,
+)
+from cleaning import (
+    apply_invoice_number_rules, check_missing_fields, sanitize_data,
+    clean_date as _clean_date, clean_money as _clean_money, clean_text_field as _clean_text_field,
+)
+
 def env_file_candidates():
-    explicit_env_file = os.getenv('AIM_ENV_FILE')
-    candidates = []
-    if explicit_env_file:
-        candidates.append(explicit_env_file)
-
-    # Only the script's own directory. Walking parents and the working
-    # directory meant a worker could silently pick up a stranger's .env
-    # depending on where it was started from. See Guardrails exception 2.
-    candidates.append(os.path.join(SCRIPT_DIR, '.env'))
-
-    seen = set()
-    for candidate in candidates:
-        normalized = os.path.abspath(candidate)
-        if normalized in seen:
-            continue
-        seen.add(normalized)
-        yield normalized
+    # AIM_ENV_FILE, then this script's own folder, and nothing else: never
+    # the working directory or a parent. See worker_common and Guardrails
+    # exception 2.
+    return worker_common.env_file_candidates(SCRIPT_DIR)
 
 def load_aim_environment():
-    for candidate in env_file_candidates():
-        if os.path.exists(candidate):
-            load_dotenv(candidate)
-            return candidate
-
-    checked_paths = "\n  ".join(env_file_candidates())
-    sys.exit(f"CRITICAL ERROR: AIM .env file was not found. Checked:\n  {checked_paths}")
+    return worker_common.load_environment(SCRIPT_DIR)
 
 ENV_FILE = load_aim_environment()
 
@@ -70,10 +75,7 @@ def env(name):
     variable is missing, the worker refuses to start rather than inventing a
     path. See the plan's Guardrails.
     """
-    value = os.getenv(name)
-    if value is None or value == '':
-        sys.exit(f"CRITICAL ERROR: environment variable {name} is missing")
-    return value
+    return worker_common.env(name)
 
 BASE_DIR = env('AIM_BASE_DIR')
 PROCESSED_DIR = env('AIM_PROCESSED_DIR')
@@ -159,110 +161,12 @@ def bootstrap():
     # the module.
     get_vendor_aliases()
 
-# The kinds of document AIM handles. Every type flows through the same queues;
-# the type decides only what happens at the end. `Unknown` is not a verdict
-# but a placeholder -- what the model says when it cannot tell -- and AIM
-# staff replace it in QA review before the invoice reaches a user's queue.
-# Plan step 5.3a.
+# The kinds of document AIM handles, declared by v2's invoice_models, which
+# is what normalize_document_type and InvoiceData (imported above) use. Kept
+# written out here only because test/lib/aim/document_types_test.rb reads it
+# from this file; test/python/aim/test_shared_with_v2.py holds the two equal.
 DOCUMENT_TYPES = ("Invoice", "Memo", "Credit", "Coupon", "Statement", "Unknown")
 UNKNOWN_DOCUMENT_TYPE = "Unknown"
-
-# How the models are told the types apart. Both the text pass and the vision
-# pass read this one definition, so the two cannot drift.
-DOCUMENT_TYPE_GUIDE = (
-    "Classify the document_type as exactly one of: "
-    + ", ".join(f"'{name}'" for name in DOCUMENT_TYPES) + ". "
-    "Invoice: a bill for goods or services with an amount due. 'Member Statement' and "
-    "'Customer Receipt' documents from stores such as Home Depot are Invoices. "
-    "Statement: an account summary listing several invoices, payments or a running balance, "
-    "rather than a bill for one purchase. "
-    "Credit: a credit memo, credit note or refund that reduces what is owed. "
-    "Memo: a memo or letter asking for or authorising a payment that is not a vendor's invoice, "
-    "such as a debit memo or an internal payment memo. "
-    "Coupon: a payment coupon or remittance slip sent with a payment, such as the tear-off stub "
-    "of a utility or loan bill. "
-    "Unknown: anything else, such as a letter or a notice, or when you cannot tell."
-)
-
-def normalize_document_type(value):
-    """One spelling for a document type, and `Unknown` for anything else.
-
-    The models were asked for `INVOICE`, `CREDIT` and so on before 5.3a, and
-    a model can answer in any case, so the comparison ignores case. Anything
-    that is not one of the six -- blank, missing, invented -- is `Unknown`,
-    which sends the document to QA review rather than guessing.
-    """
-    if isinstance(value, str):
-        wanted = value.strip().strip("'\"").casefold()
-        for name in DOCUMENT_TYPES:
-            if name.casefold() == wanted:
-                return name
-    return UNKNOWN_DOCUMENT_TYPE
-
-# The money fields whose being handwritten sends an invoice to a person.
-# Anything else written by hand -- a signature, initials, "OK to pay", a date
-# or a PO number in pen -- does not, because every amount AIM needs can still
-# be read. Asking the model "is there handwriting?" flagged invoices whose
-# totals were printed perfectly clearly, and stopped them before vendor and
-# missing-field checks ever ran. Found in testing 2026-09-23.
-HANDWRITTEN_FINANCIAL_FIELDS = ("subtotal", "tax", "total")
-
-class InvoiceData(BaseModel):
-    contains_multiple_invoices: Optional[bool] = False
-    contains_handwritten_financials: Optional[bool] = False
-    # Which money fields are handwritten. None means the model was not asked
-    # (an older payload); an empty list means it looked and found none.
-    handwritten_financial_fields: Optional[list[str]] = None
-    document_type: Optional[str] = None
-    extracted_vendor_name: Optional[str] = None
-    vendor_name: Optional[str] = None # Normalized Vendor
-    invoice_date: Optional[str] = None
-    invoice_number: Optional[str] = None
-    invoice_number_label: Optional[str] = None
-    invoice_total: Optional[str] = None
-    order_number: Optional[str] = None
-    customer_number: Optional[str] = None
-
-    @field_validator("customer_number", "invoice_number", "order_number", "invoice_total", mode="before")
-    @classmethod
-    def reject_hallucinated_long_strings(cls, v):
-        if isinstance(v, str) and len(v) > 50:
-            return None
-        return v
-
-    # Only a value actually given is spelled; a field left at its default
-    # stays None, so merge_vision_fields can still tell "not yet answered"
-    # from "answered Unknown".
-    @field_validator("document_type", mode="before")
-    @classmethod
-    def spell_document_type(cls, v):
-        return normalize_document_type(v)
-
-    @field_validator("handwritten_financial_fields", mode="before")
-    @classmethod
-    def keep_only_money_fields(cls, v):
-        if v is None:
-            return None
-        named = {str(field).strip().lower() for field in v if field is not None}
-        return [field for field in HANDWRITTEN_FINANCIAL_FIELDS if field in named]
-
-    # When the model has named the handwritten money fields, the flag follows
-    # the list and nothing else: an empty list cannot raise it, whatever the
-    # model thought of the signature. With no list at all, the flag is left as
-    # given, so a payload written before this change reads as it always did.
-    @model_validator(mode="after")
-    def flag_follows_the_fields(self):
-        if self.handwritten_financial_fields is not None:
-            self.contains_handwritten_financials = bool(self.handwritten_financial_fields)
-        return self
-
-class ManifestItem(BaseModel):
-    vendor_name: Optional[str] = "Unknown"
-    invoice_number: Optional[str] = "Unknown"
-    pages: list[int]
-
-class DocumentManifest(BaseModel):
-    invoices: list[ManifestItem]
 
 # -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
@@ -554,102 +458,6 @@ def archive_batch(processing_id, bu_number, submitter_name, source_dir):
     return False
 
 
-def is_file_stable(filepath, wait_time=2):
-    """Check if a file is currently being copied by comparing its size over time."""
-    try:
-        initial_size = os.path.getsize(filepath)
-        import time
-        time.sleep(wait_time)
-        current_size = os.path.getsize(filepath)
-        return initial_size == current_size and initial_size > 0
-    except OSError:
-        return False
-
-def pdf_page_to_image(pdf_path, page_num, output_path):
-    doc = fitz.open(pdf_path)
-    page = doc[page_num]
-    matrix = fitz.Matrix(1.5, 1.5)
-    pix = page.get_pixmap(matrix=matrix)
-    pix.save(output_path)
-    doc.close()
-
-def check_missing_fields(data: InvoiceData) -> list:
-    missing = []
-    if not data.vendor_name and not data.extracted_vendor_name: missing.append("Vendor Name")
-    if not data.invoice_date: missing.append("Invoice Date")
-    if not data.invoice_number: missing.append("Invoice Number")
-    if not data.invoice_total: missing.append("Invoice Total")
-    return missing
-
-def _clean_money(v):
-    """One spelling for an amount: an optional sign and exactly two decimals.
-
-    The total is a quarter of the business key, so "100.0", "100.00" and
-    "$100.00" have to reach storage as one string or the same invoice arrives
-    twice. Stripping the currency and padding the decimals already did that
-    much; the sign did not survive:
-
-    * "(100.00)" is how an invoice prints a credit. The brackets were dropped
-      with the dollar sign, so a credit was stored as a charge -- the sign
-      silently inverted, which is worse than either spelling.
-    * "100.00-" is the same amount with a trailing minus. `float` refused it,
-      so the total became empty.
-    * "-0.00" and "0.00" are one amount with two spellings, and therefore two
-      business keys.
-
-    A comma used as the decimal separator ("1.234,56") is refused rather than
-    guessed at: a trailing ",56" cannot be told from a grouping comma without
-    assuming a locale, and assuming one produced 1.23 -- a wrong number,
-    stored silently. Returning None sends the invoice to review instead.
-    """
-    if not v:
-        return None
-
-    text = str(v).strip()
-
-    negative = False
-    bracketed = re.match(r'^\((.*)\)$', text)
-    if bracketed:
-        negative, text = True, bracketed.group(1).strip()
-    if text.endswith('-'):
-        negative, text = True, text[:-1].strip()
-
-    if re.search(r',\d{1,2}$', text):
-        return None
-
-    digits = re.sub(r'[^0-9.\-]', '', text)
-    if digits in ('', '-', '.', '-.', '--'):
-        return None
-    try:
-        amount = float(digits)
-    except ValueError:
-        return None
-
-    if negative:
-        amount = -abs(amount)
-    if amount == 0:
-        amount = 0.0
-    return f"{amount:.2f}"
-
-def _clean_date(v):
-    if not v or not str(v).strip():
-        return None
-    try:
-        return dateparser.parse(str(v), dayfirst=False).strftime("%Y-%m-%d")
-    except (ValueError, OverflowError):
-        return None
-
-def apply_invoice_number_rules(data, document_text=None):
-    if document_text:
-        m = re.search(r'INVOICE\s+(\d+)\s+TOTAL', document_text, re.IGNORECASE)
-        if m:
-            data.invoice_number = m.group(1)
-        if not data.order_number:
-            mp = re.search(r'\bLAR\s*PO[:#\s]*([0-9]+)', document_text, re.IGNORECASE)
-            if mp:
-                data.order_number = mp.group(1)
-    return data
-
 def get_vendor_aliases():
     """
     Retrieves vendor aliases from SQL table Aim_Vendor_Aliases.
@@ -905,48 +713,6 @@ def normalize_vendor_name(extracted_name):
                 
     # 4. Unknown Vendor (Route to Human Review)
     return None, False
-
-def _clean_text_field(v):
-    """Tidy a key field's whitespace without editing what the vendor printed.
-
-    This deleted every character outside [a-zA-Z0-9_\\- ], so INV-2024/001 was
-    stored as INV-2024001 -- a different number to the one on the page, and a
-    different business key. Invoice and order numbers are held as text, passed
-    to SQL as parameters, escaped by the XML writer and written into the PDF's
-    Info dictionary, so none of those need a restricted character set.
-
-    What is removed is what cannot survive a round trip: control codes, and
-    the invisible formatting codes such as a zero-width space that would make
-    two identical-looking numbers compare unequal. Runs of whitespace, a
-    non-breaking space among them, collapse to one space.
-
-    Anything built into a *path* is made safe where the path is built --
-    03_batch_splitter does that from the manifest, which never comes through
-    here -- and not by narrowing the value everyone else stores.
-    """
-    if not v:
-        return None
-    kept = ''.join(
-        c for c in str(v)
-        if c.isspace() or unicodedata.category(c) not in ('Cc', 'Cf')
-    )
-    cleaned = re.sub(r'\s+', ' ', kept).strip()
-    return cleaned if cleaned else None
-
-def sanitize_data(data: InvoiceData):
-    if data.vendor_name:
-        # The vendor name is a business key field and is stored, indexed and
-        # exported as typed. Rewriting "&" to "and" changed it for 58 of the
-        # ~900 official vendors -- "AT&T MOBILITY" reached Laserfiche as
-        # "ATandT MOBILITY" while the SQL row kept the real name. ElementTree
-        # escapes the ampersand on its own, so nothing downstream needs it
-        # removed.
-        data.vendor_name = data.vendor_name.strip() or None
-    data.invoice_total = _clean_money(data.invoice_total)
-    data.invoice_date = _clean_date(data.invoice_date)
-    data.invoice_number = _clean_text_field(data.invoice_number)
-    data.order_number = _clean_text_field(data.order_number)
-    return data
 
 def draw_bounding_boxes(pdf_path, page_num, data, output_path):
     temp_draw_path = os.path.join(TEMP_DIR, f"_temp_draw_{page_num}.png")

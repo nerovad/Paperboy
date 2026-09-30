@@ -34,6 +34,28 @@ module Aim
       assert_match(/\A4601\.\d{8}_\d{6}\.Scan 001-\[[A-Z0-9]{4}\]\z/, result.invoice.batch_id)
     end
 
+    # Shared with test/python/aim_v2/test_batch_ids.py: the worker must mint
+    # exactly these too.
+    BATCH_ID_CASES = JSON.parse(Rails.root.join('test/python/aim_v2/batch_id_cases.json').read)
+
+    test 'the name part follows the cases shared with the worker' do
+      BATCH_ID_CASES['names'].each do |c|
+        assert_equal c['name'], Aim::Intake.batch_name(c['filename']), c['filename'].inspect
+      end
+    end
+
+    test 'the whole id follows the cases shared with the worker' do
+      BATCH_ID_CASES['ids'].each do |c|
+        minted = Aim::Intake.new.mint_batch_id(c['budget_unit'], c['filename'], now: Time.iso8601(c['time']), code: c['code'])
+
+        assert_equal c['batch_id'], minted
+      end
+    end
+
+    test 'the spec stamps ids in the time zone Paperboy shows them in' do
+      assert_equal Time.zone.tzinfo.name, Aim::Intake::ID_TIME_ZONE.tzinfo.name
+    end
+
     test 'the pdf lands in the store and the row says received, extract' do
       result = store
 

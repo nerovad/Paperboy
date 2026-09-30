@@ -32,7 +32,7 @@ module Aim
       already = member.persisted?
       member.update!(added_by: current_user_email) unless already
       grant_unit(employee, unit) if unit
-      redirect_to back, notice: "#{display_name(employee)} #{already ? 'already works' : 'now works'} AIM" \
+      redirect_to back, notice: "#{employee.full_name} #{already ? 'already works' : 'now works'} AIM" \
                                 "#{" in #{unit}" if unit}."
     end
 
@@ -59,7 +59,7 @@ module Aim
 
     def destroy
       member = Aim::Member.find_by!(employee_id: params[:id].to_i)
-      name = member.employee ? display_name(member.employee) : "Employee #{member.employee_id}"
+      name = member.employee ? member.employee.full_name : "Employee #{member.employee_id}"
       if member.open_invoices.exists?
         return redirect_to(aim_member_path(member.employee_id),
                            alert: "#{name} still has invoices. Move them to another person or a shared queue first.")
@@ -82,11 +82,7 @@ module Aim
       query = params[:q].to_s.strip
       return render json: [] if query.blank?
 
-      matches = matching(query).order(:last_name, :first_name).limit(SEARCH_LIMIT)
-                               .pluck(:id, :first_name, :last_name, :unit)
-      render json: matches.map { |id, first, last, unit|
-        { value: id, label: "#{last}, #{first} (#{id})", unit: unit }
-      }
+      render json: Employee.search_ranked(query).limit(SEARCH_LIMIT).search_options
     end
 
     private
@@ -114,13 +110,6 @@ module Aim
       end
     end
 
-    def matching(query)
-      return Employee.where(id: query) if query.match?(/\A\d+\z/)
-
-      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-      Employee.where('first_name LIKE :query OR last_name LIKE :query', query: pattern)
-    end
-
     # Removing someone from the list does not end access they hold through a
     # group, during the switchover; say so.
     def removed_notice(member, name)
@@ -129,7 +118,5 @@ module Aim
 
       "#{notice} They still work AIM through an AIM group; remove them from it under ACL to end that."
     end
-
-    def display_name(employee) = "#{employee.first_name} #{employee.last_name}".squish
   end
 end

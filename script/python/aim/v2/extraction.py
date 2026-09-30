@@ -22,6 +22,7 @@ from invoice_models import (
     Phase1Data, merge_vision_fields, normalize_document_type,
 )
 from vendors import normalize_vendor_name, rules_for
+from worker_common import pdf_page_to_image
 
 # Why a person is needed. These are the row's review_reason values.
 UNKNOWN_TYPE = "unknown_type"
@@ -45,14 +46,6 @@ class ExtractionResult:
     # An alias the AI smart match learned, for the worker to record.
     learned_alias: Optional[tuple] = None
     vision_calls: int = field(default=0)
-
-
-def pdf_page_to_image(pdf_path, page_num, output_path):
-    doc = fitz.open(pdf_path)
-    page = doc[page_num]
-    pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
-    pix.save(output_path)
-    doc.close()
 
 
 def page_count(pdf_path):

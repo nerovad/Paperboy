@@ -40,6 +40,24 @@ module Aim
       assert_includes @controller.instance_variable_get(:@units_without_rules), '4601'
     end
 
+    test 'sorting keeps the agency, BU and in-effect choices' do
+      rule
+      get :index, params: { agency: 'GSA', unit: '4641', show: 'all', sort: 'vendor' }
+
+      assert_select 'a.aim-sort-link[href=?]', aim_coding_rules_path(agency: 'GSA', unit: '4641', show: 'all', sort: 'budget_unit')
+      assert_select 'a.aim-sort-link', text: 'Vendor ▾'
+    end
+
+    test 'a database that cannot be read leaves an empty list and says so' do
+      Aim::CodingRule.stub(:distinct, -> { raise ActiveRecord::ConnectionNotEstablished, 'down' }) do
+        get :index
+      end
+
+      assert_response :success
+      assert_equal [], @controller.instance_variable_get(:@rules)
+      assert_equal 'The coding rules could not be read.', flash[:alert]
+    end
+
     test 'someone who is neither Fiscal nor an admin is turned away' do
       sign_in_nobody
       get :index
@@ -79,6 +97,18 @@ module Aim
       assert_not r.reload.in_effect?
       level, rules = Aim::CodingLookup.candidates(Aim::Invoice.new(agency: 'GSA', budget_unit: '4641', vendor_name: 'ACME Inc'))
       assert_equal [:unit, ['2199']], [level, rules.map(&:object_code)]
+    end
+
+    test 'the download defuses formula-like cells, and a re-upload reads them back as typed' do
+      rule(vendor_name: '=ACME', notes: '-- per Fiscal')
+      get :index, params: { agency: 'GSA' }, format: :csv
+      rows = CSV.parse(response.body)
+      assert_equal ["'=ACME", '2162', "'-- per Fiscal"], rows.last.values_at(0, 8, 15)
+
+      path = File.join(Dir.mktmpdir, 'download.csv')
+      File.write(path, response.body)
+      fields = Aim::LookupFile.new(path).rows.first.fields
+      assert_equal ['=ACME', '-- per Fiscal'], fields.values_at('vendor_name', 'notes')
     end
 
     test 'the COA\'s links fill and check: a program brings its major program, a dept object its object' do

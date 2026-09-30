@@ -116,7 +116,7 @@ module Forms
       employee = Employee.find_by(id: value)
       return nil unless employee
 
-      [employee.first_name, employee.last_name].compact_blank.join(' ').presence
+      employee.full_name.presence
     end
 
     # Formatted the way the Created and Last Updated columns are, so one date

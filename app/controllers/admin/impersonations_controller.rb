@@ -28,7 +28,7 @@ module Admin
       # Set session as the impersonated user
       sign_in_as(person)
 
-      redirect_to root_path, notice: "Now emulating #{person.first_name} #{person.last_name}"
+      redirect_to root_path, notice: "Now emulating #{person.full_name}"
     end
 
     def destroy

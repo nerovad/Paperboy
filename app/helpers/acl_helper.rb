@@ -17,7 +17,7 @@ module AclHelper
     return [] if contractor.supervisor_id.blank?
 
     emp = Employee.find_by(id: contractor.supervisor_id)
-    label = emp ? "#{emp.last_name}, #{emp.first_name} (#{emp.id})" : contractor.supervisor_id.to_s
+    label = emp ? emp.picker_label : contractor.supervisor_id.to_s
     [[label, contractor.supervisor_id]]
   end
 end

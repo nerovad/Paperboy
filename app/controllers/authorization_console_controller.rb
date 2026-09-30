@@ -48,7 +48,7 @@ class AuthorizationConsoleController < ApplicationController
     # employee/service/location filters) so values stay switchable.
     @employee_filter_options = Employee.where(id: scoped.map(&:employee_id).uniq)
                                        .sort_by { |e| [e.last_name.to_s, e.first_name.to_s] }
-                                       .map { |e| ["#{e.first_name} #{e.last_name} (#{e.id})", e.id.to_s] }
+                                       .map { |e| [e.name_with_id, e.id.to_s] }
     @service_type_filter_options = scoped.map(&:service_type).uniq
                                          .sort_by { |s| SERVICE_ORDER.index(s) || 99 }
                                          .map { |s| [AuthorizedApprover::SERVICE_TYPES[s] || s, s] }
@@ -255,7 +255,7 @@ class AuthorizationConsoleController < ApplicationController
         service_types = rows.map(&:service_type).uniq.sort_by { |s| SERVICE_ORDER.index(s) || 99 }
         key_types     = rows.map(&:key_type).compact.uniq.sort
         csv << [emp_id,
-                e && "#{e.first_name} #{e.last_name}",
+                e&.full_name,
                 dept_id,
                 depts[dept_id]&.long_name,
                 service_types.join(','),
@@ -289,7 +289,7 @@ class AuthorizationConsoleController < ApplicationController
     employees.map do |e|
       {
         id: e.employee_id,
-        name: "#{e.first_name} #{e.last_name} (#{e.employee_id})",
+        name: e.name_with_id,
         email: e.email
       }
     end

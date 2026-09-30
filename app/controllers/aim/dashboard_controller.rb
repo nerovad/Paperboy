@@ -10,10 +10,9 @@ module Aim
 
     def index
       @dashboard_queues = Aim::Invoice::QUEUES
-      @review_reasons = Aim::Invoice.in_queue('needs_review').group(:review_reason).count
-    rescue StandardError => e
-      Rails.logger.error "AIM dashboard could not read the invoices: #{e.message}"
-      @review_reasons = {}
+      reading_database('read the invoices for the dashboard', empty: { review_reasons: {} }, errors: StandardError) do
+        @review_reasons = Aim::Invoice.in_queue('needs_review').group(:review_reason).count
+      end
     end
   end
 end

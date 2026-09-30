@@ -19,6 +19,8 @@ module Aim
     include Aim::InvoiceAssignment
     include Aim::InvoiceNaming
     include Aim::InvoiceCoding
+    include Aim::Transitions
+    include Aim::Audited
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end
@@ -62,6 +64,7 @@ module Aim
       'deleted' => RESTORE_STATES,
       'split' => []
     }.freeze
+    moves_along :state, TRANSITIONS, error: IllegalTransition
 
     # The columns a reviewer may change on the review page. The submitter is
     # who sent it in, and stays as recorded.
@@ -88,7 +91,6 @@ module Aim
     validates :claimed_at, presence: true, if: :claimed_by?
     validates :assignment_source, presence: true, if: :assigned_to?
     validates :actor, presence: true, if: :will_save_change_to_state?
-    validate :move_is_one_the_pipeline_makes, if: :state_changed?
     validate :document_type_is_settled_for_a_user, if: -> { state_changed? && persisted? }
 
     after_save :record_transition, if: :saved_change_to_state?
@@ -96,20 +98,11 @@ module Aim
 
     def terminal? = TERMINAL_STATES.include?(state)
 
-    def next_states = TRANSITIONS.fetch(state, [])
-
-    def can_move_to?(new_state) = next_states.include?(new_state.to_s)
-
     # Move to another state, naming who moved it. Raises rather than returning
     # false, because a caller asking for a move the pipeline cannot make has a
     # bug, not a validation message to show someone.
     def transition_to!(new_state, actor:, note: nil, **changes)
-      unless can_move_to?(new_state)
-        raise IllegalTransition,
-              "#{batch_id}: cannot move from #{state} to #{new_state}. " \
-              "From #{state} an invoice can go to: #{next_states.presence&.join(', ') || 'nowhere, it is finished'}."
-      end
-
+      check_move!(new_state)
       self.actor = actor
       assign_attributes(changes)
       self.state = new_state.to_s
@@ -134,12 +127,9 @@ module Aim
 
     private
 
-    def move_is_one_the_pipeline_makes
-      from, to = state_change
-      return if from.blank? || !STATES.include?(from) || !STATES.include?(to.to_s)
-      return if TRANSITIONS.fetch(from, []).include?(to.to_s)
-
-      errors.add(:state, "cannot move from #{from} to #{to}")
+    def transition_refusal(new_state)
+      "#{batch_id}: cannot move from #{state} to #{new_state}. " \
+        "From #{state} an invoice can go to: #{next_states.presence&.join(', ') || 'nowhere, it is finished'}."
     end
 
     # An invoice nobody has typed is not ready for the person who has to act

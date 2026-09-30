@@ -1,38 +1,15 @@
 import os
 import time
 import json
-import fitz
 import ollama
-from dotenv import load_dotenv
 from PIL import Image
 
 # The two models to compare. Configured, not hardcoded -- these change with
 # every move to new hardware.
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-def env_file_candidates():
-    explicit_env_file = os.getenv("AIM_ENV_FILE")
-    candidates = []
-    if explicit_env_file:
-        candidates.append(explicit_env_file)
-
-    candidates.append(os.path.join(SCRIPT_DIR, ".env"))
-
-    seen = set()
-    for candidate in candidates:
-        normalized = os.path.abspath(candidate)
-        if normalized in seen:
-            continue
-        seen.add(normalized)
-        yield normalized
-
-for env_file in env_file_candidates():
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-        break
-
-from pipeline_common import env
+# Importing pipeline_common loads the AIM .env (AIM_ENV_FILE, else the one
+# beside the scripts) the same way every worker does.
+from pipeline_common import env, pdf_page_to_image
 
 MODEL_A = env("AIM_BENCHMARK_MODEL_A")
 MODEL_B = env("AIM_BENCHMARK_MODEL_B")
@@ -60,14 +37,6 @@ SCHEMA = {
         "sales_tax": {"type": "string"}
     }
 }
-
-def pdf_page_to_image(pdf_path, page_num, output_path):
-    doc = fitz.open(pdf_path)
-    page = doc[page_num]
-    matrix = fitz.Matrix(1.5, 1.5)
-    pix = page.get_pixmap(matrix=matrix)
-    pix.save(output_path)
-    doc.close()
 
 def run_model(model_name, image_path):
     start_time = time.time()

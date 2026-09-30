@@ -18,12 +18,6 @@ module Aim
       'coding_rule_id' => 'the rule picked'
     }.freeze
 
-    # A column heading on Coding Rules that sorts the list.
-    def aim_rules_sort_link(label, sort)
-      text = @sort == sort ? "#{label} ▾" : label
-      link_to text, aim_coding_rules_path(sort: sort), class: 'aim-sort-link'
-    end
-
     def aim_coding_field_label(field) = CODING_FIELD_LABELS.fetch(field.to_s, field.to_s.humanize)
 
     FISCAL_DESCRIPTIONS = {
@@ -34,6 +28,8 @@ module Aim
       'archived' => 'Finished.'
     }.freeze
 
+    # Not SubmissionsHelper#category_badge_class: a Fiscal status has no
+    # submission category for 'exported' (is-sent), so the map stays here.
     FISCAL_BADGES = { 'review' => 'is-in-review', 'on_hold' => 'is-denied', 'ready' => 'is-pending',
                       'exported' => 'is-sent', 'archived' => 'is-approved' }.freeze
 

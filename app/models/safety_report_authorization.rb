@@ -69,10 +69,7 @@ class SafetyReportAuthorization < ApplicationRecord
   # Employee_Groups live in the Paperboy DB while Employees lives in GSABSS, so
   # this can't be a join — the ids come back first and are looked up separately.
   def self.officer_candidate_ids
-    group_id = Group.find_by(Group_Name: OFFICER_GROUP_NAME)&.GroupID
-    return [] if group_id.blank?
-
-    EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s).uniq
+    Group.employee_ids_named(OFFICER_GROUP_NAME).map(&:to_s)
   end
 
   # The org node a submission sits under. Safety Reporting captures the

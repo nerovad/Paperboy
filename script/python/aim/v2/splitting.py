@@ -16,49 +16,31 @@ from store import ACTOR
 SPLIT_ERROR = "split_error"
 
 
-def parse_page_range(pages_input):
-    """Pages as people and models write them: [1, 2], "1-3, 5", [1, "3-5"]."""
-    if isinstance(pages_input, list):
-        resolved = []
-        for item in pages_input:
-            if isinstance(item, int):
-                resolved.append(item)
-            elif isinstance(item, str):
-                resolved.extend(parse_range_string(item))
-        return sorted(set(resolved))
-    if isinstance(pages_input, str):
-        return sorted(set(parse_range_string(pages_input)))
-    if isinstance(pages_input, int):
-        return [pages_input]
-    return []
+def manifest_pages(invoice, number):
+    """An invoice's pages: the sorted list of 1-based page numbers it names.
 
-
-def parse_range_string(s):
-    resolved = []
-    for part in s.split(","):
-        part = part.strip()
-        if not part:
-            continue
-        if "-" in part:
-            try:
-                start, end = part.split("-")
-                resolved.extend(range(int(start), int(end) + 1))
-            except ValueError:
-                pass
-        else:
-            try:
-                resolved.append(int(part))
-            except ValueError:
-                pass
-    return resolved
+    Pages arrive already as numbers. Paperboy's Aim::SplitPlan -- the only
+    thing that asks for a split -- parses what a person typed ("1-3, 5"),
+    refuses junk and reversed ranges, and writes integers; the extraction
+    manifest is `list[int]` by its schema. So there is no page syntax to parse
+    here, and anything that is not a list of page numbers is refused, not
+    guessed at: the split fails and a person looks.
+    """
+    pages = invoice.get("pages")
+    if (not isinstance(pages, list) or not pages
+            or any(isinstance(p, bool) or not isinstance(p, int) or p < 1 for p in pages)):
+        raise ValueError(f"invoice {number} of the manifest does not list its pages as page numbers: {pages!r}")
+    return sorted(set(pages))
 
 
 def read_manifest(row):
+    """The manifest's invoices, each with its `pages` checked and sorted."""
     raw = row.get("manifest")
     if not raw:
         raise ValueError("the row has no manifest to split by")
     manifest = json.loads(raw) if isinstance(raw, str) else raw
-    invoices = [inv for inv in manifest.get("invoices", []) if parse_page_range(inv.get("pages", []))]
+    invoices = [dict(inv, pages=manifest_pages(inv, number))
+                for number, inv in enumerate(manifest.get("invoices", []), start=1)]
     if len(invoices) < 2:
         raise ValueError("a split needs at least two invoices with pages")
     return invoices
@@ -73,7 +55,7 @@ def split_batch(row, settings, db):
     children = []
     try:
         for index, invoice in enumerate(invoices, start=1):
-            pages = parse_page_range(invoice.get("pages", []))
+            pages = invoice["pages"]
             child_id = f"{parent_id}_SPLIT_{index}"
             folder = settings.store_folder(child_id)
             os.makedirs(folder, exist_ok=True)

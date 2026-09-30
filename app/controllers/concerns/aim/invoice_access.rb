@@ -15,7 +15,8 @@ module Aim
   module InvoiceAccess
     extend ActiveSupport::Concern
 
-    OWNER_ACTIONS = ['Save Changes', 'Approve', 'Send Back', 'Reject'].freeze
+    # Aim::InvoiceActions::ACTIONS names an owner may post.
+    OWNER_ACTIONS = %w[save approve send_back reject].freeze
     # What a BU Admin may do to someone else's invoice in their BUs: look,
     # move and claim -- never approve it (decided 2026-09-25).
     BU_ADMIN_ACTIONS = %w[show pdf reassign claim].freeze
@@ -57,7 +58,7 @@ module Aim
       return if staff?
       return if bu_admin_here? && BU_ADMIN_ACTIONS.include?(action_name)
       return deny_owner unless @invoice.state == 'ready_for_approval' && (mine? || shared_to_me?)
-      return if action_name != 'update' || OWNER_ACTIONS.include?(params[:commit].to_s)
+      return if action_name != 'update' || OWNER_ACTIONS.include?(params[:invoice_action].to_s)
 
       deny_owner
     end

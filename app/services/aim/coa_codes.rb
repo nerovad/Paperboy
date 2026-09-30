@@ -6,29 +6,33 @@ module Aim
   # value lists are not copied (decided 2026-09-23). Each list is read once
   # per instance.
   class CoaCodes
-    # field on a rule => [model, id column, scoped by agency?]
-    LISTS = {
-      'budget_unit' => [Coa::Unit, :unit_id, true],
-      'fund' => [Coa::Fund, :fund_id, false],
-      'object_code' => [Coa::Object, :object_id, false],
-      'activity' => [Coa::Activity, :activity_id, true],
-      'function_code' => [Coa::Function, :function_id, true],
-      'program' => [Coa::Program, :program_id, true],
-      'major_program' => [Coa::MajorProgram, :major_program_id, true],
-      'phase' => [Coa::Phase, :phase_id, true],
-      'task' => [Coa::Task, :task_id, true],
-      'department' => [Coa::Department, :department_id, true]
+    # field on a rule => its list in Coa::FieldCatalog
+    CATALOG_KEYS = {
+      'budget_unit' => :unit, 'fund' => :fund, 'object_code' => :object, 'activity' => :activity,
+      'function_code' => :function, 'program' => :program, 'major_program' => :major_program,
+      'phase' => :phase, 'task' => :task, 'department' => :department
     }.freeze
+    # field on a line => its list: the lists people choose from, as Fusion
+    # offered them.
+    OPTION_KEYS = CATALOG_KEYS.merge('dept_object' => :dept_object).freeze
+
+    # field on a rule => [model, id column, scoped by agency?]
+    LISTS = CATALOG_KEYS.transform_values do |key|
+      Coa::FieldCatalog.fetch(key).then { |entry| [entry.model, entry.column, entry.agency_scoped] }
+    end.freeze
 
     def initialize(agency)
       @agency = agency.to_s.upcase
       @lists = {}
     end
 
-    # field on a line => [model, id column, name column, scoped by agency?]:
-    # the lists people choose from, as Fusion offered them.
-    OPTION_LISTS = LISTS.merge('dept_object' => [Coa::ObjectInference, :agency_object_code, true]).freeze
-    NAMES = { Coa::ObjectInference => :agency_object_name }.freeze
+    # field on a line => [model, id column, scoped by agency?]
+    OPTION_LISTS = OPTION_KEYS.transform_values do |key|
+      Coa::FieldCatalog.fetch(key).then { |entry| [entry.model, entry.column, entry.agency_scoped] }
+    end.freeze
+    # The lists labelled by something other than short_name.
+    NAMES = OPTION_KEYS.values.map { |key| Coa::FieldCatalog.fetch(key) }.reject { |entry| entry.name_column == :short_name }
+                       .to_h { |entry| [entry.model, entry.name_column] }.freeze
 
     def agency? = Coa::Agency.exists?(agency_id: @agency)
 
@@ -60,13 +64,8 @@ module Aim
     # only, in code order.
     def options(field)
       @options ||= {}
-      @options[field] ||= begin
-        model, column, scoped = OPTION_LISTS.fetch(field)
-        scope = scoped ? model.where(agency_id: @agency) : model.all
-        scope = scope.where(active: true) if model.column_names.include?('active')
-        name = NAMES.fetch(model, :short_name)
-        scope.order(column).pluck(column, name).map { |code, label| ["#{code} · #{label.to_s.strip}".strip, code.to_s] }
-      end
+      @options[field] ||= Coa::FieldCatalog.pairs(OPTION_KEYS.fetch(field), agency: @agency, active_only: true)
+                                           .map { |code, label| ["#{code} · #{label.to_s.strip}".strip, code.to_s] }
     end
 
     def valid?(field, value)
@@ -84,9 +83,8 @@ module Aim
 
     def list(field)
       @lists[field] ||= begin
-        model, column, scoped = LISTS.fetch(field)
-        scope = scoped ? model.where(agency_id: @agency) : model.all
-        scope.pluck(column).to_set { |id| id.to_s.strip.upcase }
+        entry = Coa::FieldCatalog.fetch(CATALOG_KEYS.fetch(field))
+        entry.scope(@agency).pluck(entry.column).to_set { |id| id.to_s.strip.upcase }
       end
     end
   end

@@ -89,7 +89,7 @@ class RecordsHistoriesController < ApplicationController
           csv << [entry.at.in_time_zone(RecurringSchedule::TIME_ZONE).strftime('%Y-%m-%d %H:%M:%S'),
                   entry.actor_name, entry.actor_id, RecordEdit::ACTION_LABELS[entry.action],
                   row_labels[entry.record_id], entry.record_id, change.label,
-                  change.old_value, change.new_value].map { |cell| RecordsCsv.defuse(cell.to_s) }
+                  change.old_value, change.new_value].map { |cell| Paperboy::CsvSafe.defuse(cell.to_s) }
         end
       end
     end

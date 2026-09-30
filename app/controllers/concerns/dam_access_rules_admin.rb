@@ -13,20 +13,16 @@ module DamAccessRulesAdmin
     return {} if ids.empty?
 
     Employee.where(id: ids).pluck(:id, :first_name, :last_name)
-            .to_h { |id, first, last| [id.to_s, "#{first} #{last}".strip] }
+            .to_h { |id, first, last| [id.to_s, Employee.format_full_name(first, last)] }
   rescue StandardError
     {}
   end
 
   # The same search the group Members page runs.
   def employee_search(term)
-    term = term.to_s.strip
-    return [] if term.blank?
+    return [] if term.to_s.strip.blank?
 
-    Employee.where('first_name LIKE :q OR last_name LIKE :q OR CAST(id AS VARCHAR) LIKE :q ' \
-                   "OR (first_name + ' ' + last_name) LIKE :q",
-                   q: "%#{ActiveRecord::Base.sanitize_sql_like(term)}%")
-            .order(:last_name, :first_name).limit(20).to_a
+    Employee.search_ranked(term).limit(20).to_a
   rescue StandardError
     []
   end

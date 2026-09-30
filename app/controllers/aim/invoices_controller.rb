@@ -24,16 +24,14 @@ module Aim
     before_action :require_editor, only: %i[update relookup]
 
     def index
-      # The reason filter is on the page itself; every Action Needed row is sent.
-      @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
-      @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
-      # Budget unit -> shared queue and each person -> invoices, as on By BU.
-      @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error "AIM could not list the #{@queue} queue: #{e.message}"
-      @invoices = []
-      @reason_counts = {}
-      flash.now[:alert] = 'The invoice database could not be read.'
+      reading_database("list the #{@queue} queue", alert: 'The invoice database could not be read.',
+                                                   empty: { invoices: [], reason_counts: {} }) do
+        # The reason filter is on the page itself; every Action Needed row is sent.
+        @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
+        @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
+        # Budget unit -> shared queue and each person -> invoices, as on By BU.
+        @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
+      end
     end
 
     def show
@@ -41,13 +39,13 @@ module Aim
     end
 
     def update
-      if params[:commit] == 'Unclaim'
+      if invoice_action == 'unclaim'
         @invoice.release_claim!
         return redirect_to aim_invoices_path(queue: @queue), notice: 'Invoice unclaimed.'
       end
 
       save_fields
-      perform(params[:commit])
+      perform(invoice_action)
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid, ArgumentError => e
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: e.message
     rescue Aim::MissingConfiguration, SystemCallError => e

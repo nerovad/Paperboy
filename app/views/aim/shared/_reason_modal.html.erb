@@ -1,0 +1,32 @@
+<%# Asks why before an action: Reject, Delete, Send Back and Restore on the
+    review page, Hold on Fiscal. It sits inside the page's form, so the reason
+    and the action are posted with the form itself. The button that opens it
+    says what it posts -- data-value, a stable action name the controller
+    dispatches on, never the button's text -- and data-commit, the label the
+    submit button shows (aim_reason_controller). The reason goes into the
+    invoice's history.
+    `id` keeps the ids apart when a page holds two; `name` is the parameter
+    the action is posted as (invoice_action on the review page), and `value`
+    what a single-purpose dialog posts before anything opens it. %>
+<% id = local_assigns.fetch(:id, 'aim-reason') %>
+<div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
+  <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="<%= id %>-title">
+    <div class="pb-modal__header">
+      <h3 id="<%= id %>-title" data-aim-reason-target="title"><%= local_assigns.fetch(:title, 'Why?') %></h3>
+      <button type="button" class="pb-modal__close" data-action="aim-reason#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body">
+      <div class="form-group">
+        <label for="<%= id %>-text">Reason</label>
+        <textarea id="<%= id %>-text" name="reason" class="form-control" rows="3"
+                  placeholder="<%= local_assigns.fetch(:placeholder, 'Briefly explain why') %>"
+                  data-aim-reason-target="reason" disabled></textarea>
+      </div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
+        <button type="submit" name="<%= local_assigns.fetch(:name, 'invoice_action') %>" value="<%= local_assigns[:value] %>"
+                class="btn deny" data-aim-reason-target="submit"><%= local_assigns.fetch(:submit, 'Confirm') %></button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -7,9 +7,6 @@ module Aim
   # scope=mine asks for My Queue's count alone: the Invoices tab on My Work
   # and the name badge ask on every page, and need nothing more.
   class CountsController < BaseController
-    skip_before_action :require_app_access
-    before_action :require_signed_in
-
     def show
       return render json: { my_queue: my_queue_count } if params[:scope] == 'mine'
 

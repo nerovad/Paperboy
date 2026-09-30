@@ -53,8 +53,8 @@ module Aim
       Aim::Invoice.create!(batch_id: batch_id, state: state, actor: 'aim_worker', **defaults.merge(attributes))
     end
 
-    def act(row, commit, queue: row.queue, **params)
-      patch :update, params: { id: row.batch_id, queue: queue, commit: commit, **params }
+    def act(row, action, queue: row.queue, **params)
+      patch :update, params: { id: row.batch_id, queue: queue, invoice_action: action, **params }
       row.reload
     end
 
@@ -102,8 +102,9 @@ module Aim
 
       assert_response :success
       assert_equal [REVIEWER, 'Aim Staff'], [row.reload.claimed_by, row.claimed_by_name]
-      assert_select 'input[type=submit][value=?]', 'Send to Approval'
-      assert_select 'button[data-action=?][data-commit=?]', 'aim-reason#open', 'Delete'
+      assert_select 'button[name=invoice_action][value=?]', 'send_to_approval'
+      assert_select 'button[data-action=?][data-value=?][data-commit=?]', 'aim-reason#open', 'delete', 'Delete'
+      assert_select '.pb-modal button[type=submit][name=invoice_action][data-aim-reason-target=submit]'
     end
 
     test 'Return to Queue goes back to the queue page the invoice was opened from' do
@@ -122,10 +123,10 @@ module Aim
 
       assert_response :success
       assert_includes response.body, 'Dana Reyes is working on this invoice. You can view it'
-      assert_select 'input[type=submit][value=?]', 'Send to Approval', count: 0
+      assert_select 'button[name=invoice_action][value=?]', 'send_to_approval', count: 0
       assert_select '[data-controller~=aim-presence]', 0, 'a reader keeps no lock'
 
-      patch :update, params: { id: row.batch_id, queue: 'needs_review', commit: 'Save Changes' }
+      patch :update, params: { id: row.batch_id, queue: 'needs_review', invoice_action: 'save' }
       assert_redirected_to aim_invoice_path(row.batch_id, queue: 'needs_review')
       assert_match(/is working on this invoice/, flash[:alert])
     end
@@ -148,7 +149,7 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
 
       assert_nil row.reload.claimed_by, 'looking never locks'
-      assert_select 'input[type=submit][value=Approve]', 0
+      assert_select 'button[name=invoice_action][value=approve]', 0
       assert_select 'form[action=?]', claim_aim_invoice_path(row.batch_id, queue: 'ready_for_approval')
 
       Aim::Users.stub(:member?, true) { post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' } }
@@ -216,8 +217,8 @@ module Aim
     test 'save writes the reviewed fields and notes to the row' do
       row = invoice('4601.K', pdf: false)
 
-      act(row, 'Save Changes', invoice: { vendor_name: ' AT&T MOBILITY ', invoice_total: '1234.50',
-                                          invoice_date: '2026-06-22', notes: 'checked', document_type: 'Credit' })
+      act(row, 'save', invoice: { vendor_name: ' AT&T MOBILITY ', invoice_total: '1234.50',
+                                  invoice_date: '2026-06-22', notes: 'checked', document_type: 'Credit' })
 
       assert_equal 'AT&T MOBILITY', row.vendor_name
       assert_equal BigDecimal('1234.50'), row.invoice_total
@@ -229,7 +230,7 @@ module Aim
     test 'send to approval moves the row and releases the claim' do
       row = invoice('4601.L', review_reason: 'missing_fields', claimed_by: REVIEWER, claimed_at: Time.current)
 
-      act(row, 'Send to Approval')
+      act(row, 'send_to_approval')
 
       assert_equal 'ready_for_approval', row.state
       assert_nil row.review_reason
@@ -253,13 +254,13 @@ module Aim
       assert row.reload.coded?
       assert_empty row.coding_lines
 
-      act(row, 'Approve', queue: 'ready_for_approval')
+      act(row, 'approve', queue: 'ready_for_approval')
       assert_equal 'ready_for_approval', row.state
       assert_match(/Pick or enter the coding/, flash[:alert])
 
       picked = Aim::CodingRule.last
-      act(row, 'Save Changes', queue: 'ready_for_approval',
-                               coding_line: { encumbrance: picked.encumbrance, object_code: '2162', coding_rule_id: picked.id })
+      act(row, 'save', queue: 'ready_for_approval',
+                       coding_line: { encumbrance: picked.encumbrance, object_code: '2162', coding_rule_id: picked.id })
 
       line = row.coding_lines.first
       assert_equal ['BDO_46002024072600000001_2', 'person', REVIEWER, picked.id], [line.encumbrance, line.source, line.set_by, line.coding_rule_id]
@@ -280,7 +281,7 @@ module Aim
       assert_equal %w[2162 rule], [row.reload.coding.object_code, row.coding.source]
 
       bare = invoice('4601.C4', invoice_date: nil, invoice_total: nil)
-      act(bare, 'Send to Approval')
+      act(bare, 'send_to_approval')
       assert_equal 'needs_review', bare.state
       assert_match(/still needs an invoice date and an invoice total/, flash[:alert])
     end
@@ -290,16 +291,16 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
 
       assert_select 'turbo-frame#aim-review-panel[target=_top]' do
-        assert_select 'input[type=submit][value=?][data-turbo-frame=?]', 'Save Changes', 'aim-review-panel'
-        assert_select 'input[type=submit][value=Approve]:not([data-turbo-frame])'
+        assert_select 'button[name=invoice_action][value=?][data-turbo-frame=?]', 'save', 'aim-review-panel'
+        assert_select 'button[name=invoice_action][value=approve]:not([data-turbo-frame])'
       end
     end
 
     test 'a reviewer enters the coding by hand when no rule fits' do
       row = invoice('4601.C2', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Save Changes', queue: 'ready_for_approval',
-                               coding_line: { encumbrance: 'DO_46012026', object_code: '2162', activity: 'GATV' })
+      act(row, 'save', queue: 'ready_for_approval',
+                       coding_line: { encumbrance: 'DO_46012026', object_code: '2162', activity: 'GATV' })
 
       line = row.coding_lines.first
       assert_equal %w[DO_46012026 2162 GATV person], [line.encumbrance, line.object_code, line.activity, line.source]
@@ -309,7 +310,7 @@ module Aim
     test 'an invoice missing its vendor is not sent for approval, and nothing moves' do
       row = invoice('4601.M', vendor_name: nil, pdf: false)
 
-      act(row, 'Send to Approval')
+      act(row, 'send_to_approval')
 
       assert_equal 'needs_review', row.state
       assert_match(/still needs a vendor name/, flash[:alert])
@@ -318,7 +319,7 @@ module Aim
     test 'approve asks the worker to export, and queues the approval stamp' do
       row = invoice('4601.N', state: 'ready_for_approval', pdf: false)
 
-      assert_enqueued_with(job: Aim::StampApprovedJob, args: [row.id]) { act(row, 'Approve') }
+      assert_enqueued_with(job: Aim::StampApprovedJob, args: [row.id]) { act(row, 'approve') }
 
       assert_equal %w[approved export], [row.state, row.command]
     end
@@ -327,9 +328,9 @@ module Aim
       row = invoice('4601.N2', state: 'needs_review', pdf: false)
 
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
-      assert_select 'input[type=submit][value=Approve]', 0
+      assert_select 'button[name=invoice_action][value=approve]', 0
 
-      act(row, 'Approve')
+      act(row, 'approve')
       assert_equal 'needs_review', row.state
       assert_match(/from its queue/, flash[:alert])
     end
@@ -340,7 +341,7 @@ module Aim
       as_owner_not_staff
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
 
-      act(row, 'Delete', reason: 'no', queue: 'ready_for_approval')
+      act(row, 'delete', reason: 'no', queue: 'ready_for_approval')
       assert_equal 'ready_for_approval', row.state
       assert_match(/Only AIM Admins|not in your queue/, flash[:alert])
     end
@@ -348,7 +349,7 @@ module Aim
     test 'send back returns an invoice to AIM review' do
       row = invoice('4601.O', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Send Back', reason: 'wrong PO')
+      act(row, 'send_back', reason: 'wrong PO')
 
       assert_equal 'needs_review', row.state
       assert_equal 'reason: wrong PO', row.events.last.note
@@ -358,7 +359,7 @@ module Aim
     test 'reject, delete and send back need a reason, and nothing moves without one' do
       row = invoice('4601.O9', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Reject', reason: '  ')
+      act(row, 'reject', reason: '  ')
 
       assert_equal 'ready_for_approval', row.state
       assert_match(/needs a reason/, flash[:alert])
@@ -367,7 +368,7 @@ module Aim
     test 'the reason is added to what the notes already say' do
       row = invoice('4601.O8', notes: 'Called the vendor.')
 
-      act(row, 'Reject', reason: 'duplicate of INV-1')
+      act(row, 'reject', reason: 'duplicate of INV-1')
 
       assert_match(/\ACalled the vendor.\n\d{4}-\d{2}-\d{2} \d{2}:\d{2} Rejected by Aim Staff: duplicate of INV-1\z/, row.notes)
       assert_match(/\Areason: duplicate of INV-1; /, row.events.last.note)
@@ -376,7 +377,7 @@ module Aim
     test 'retry ai asks the worker to extract again' do
       row = invoice('4601.P', state: 'failed', review_reason: 'extraction_error', pdf: false)
 
-      act(row, 'Retry AI')
+      act(row, 'retry_ai')
 
       assert_equal %w[received extract], [row.state, row.command]
       assert_nil row.review_reason
@@ -385,15 +386,24 @@ module Aim
     test 'retry export asks the worker to export again' do
       row = invoice('4601.Q', state: 'failed', pdf: false)
 
-      act(row, 'Retry Export')
+      act(row, 'retry_export')
 
       assert_equal %w[approved export], [row.state, row.command]
+    end
+
+    test 'a button\'s label is no action; the stable value is' do
+      row = invoice('4601.R0', state: 'ready_for_approval', pdf: false)
+
+      patch :update, params: { id: row.batch_id, queue: 'ready_for_approval', commit: 'Approve' }
+
+      assert_equal 'Unknown action.', flash[:alert]
+      assert_equal 'ready_for_approval', row.reload.state
     end
 
     test 'a move the pipeline does not make is refused with its reason' do
       row = invoice('4601.R', state: 'ready_for_approval', pdf: false)
 
-      act(row, 'Retry AI')
+      act(row, 'retry_ai')
 
       assert_equal 'ready_for_approval', row.state
       assert_redirected_to aim_invoice_path(row.batch_id, queue: 'ready_for_approval')
@@ -403,7 +413,7 @@ module Aim
     test 'reject keeps a copy for the submitter and ends the invoice' do
       row = invoice('4601.S')
 
-      act(row, 'Reject', reason: 'not ours')
+      act(row, 'reject', reason: 'not ours')
 
       assert_equal 'rejected', row.state
       assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.S.pdf'))
@@ -413,7 +423,7 @@ module Aim
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 
-      act(row, 'Delete', reason: 'test upload')
+      act(row, 'delete', reason: 'test upload')
 
       assert_equal 'deleted', row.state
       assert File.exist?(File.join(@tmpdir, 'Invoices', '_GONE', '4601.T', '4601.T.pdf'))
@@ -422,7 +432,7 @@ module Aim
     test 'learning an alias records it and sets the vendor before the next step' do
       row = invoice('4601.U', review_reason: 'unknown_vendor', vendor_name: nil, extracted_vendor_name: 'AIRGAS USA LLC', pdf: false)
 
-      act(row, 'Learn & Send to Approval', normalized_vendor_new: 'Airgas')
+      act(row, 'learn_and_send', normalized_vendor_new: 'Airgas')
 
       assert_equal 'Airgas', row.vendor_name
       assert_equal 'ready_for_approval', row.state
@@ -432,7 +442,7 @@ module Aim
     test 'unclaim releases the row' do
       row = invoice('4601.V', claimed_by: REVIEWER, claimed_at: Time.current, pdf: false)
 
-      act(row, 'Unclaim')
+      act(row, 'unclaim')
 
       assert_nil row.claimed_by
     end
@@ -456,13 +466,13 @@ module Aim
 
       assert_response :success
       assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-2'
-      assert_select 'input[type=submit][value=?]', 'Approve Split'
+      assert_select 'button[name=invoice_action][value=?]', 'approve_split'
     end
 
     test 'an approved split saves the manifest and asks the worker to cut' do
       row = invoice('4601.X', state: 'needs_split', pages: 3, manifest: { 'bu' => '4601', 'invoices' => [] }.to_json)
 
-      act(row, 'Approve Split', split: split_params(%w[ACME INV-1 1], %w[ACME INV-2 2-3]))
+      act(row, 'approve_split', split: split_params(%w[ACME INV-1 1], %w[ACME INV-2 2-3]))
 
       assert_equal %w[needs_split split], [row.state, row.command]
       assert_equal [[1], [2, 3]], row.manifest_data['invoices'].pluck('pages')
@@ -472,7 +482,7 @@ module Aim
     test 'a split that does not make sense is refused, keeping what was typed' do
       row = invoice('4601.Y', state: 'needs_split', pages: 3)
 
-      act(row, 'Approve Split', split: split_params(%w[ACME INV-1 1-2], %w[ACME INV-2 2-3]))
+      act(row, 'approve_split', split: split_params(%w[ACME INV-1 1-2], %w[ACME INV-2 2-3]))
 
       assert_response :unprocessable_content
       assert_includes response.body, 'Page 2 is in invoices 1 and 2'
@@ -482,7 +492,7 @@ module Aim
     test 'process as one invoice sends it back through extraction unsplit' do
       row = invoice('4601.Z', state: 'needs_split', pdf: false)
 
-      act(row, 'Process as One Invoice')
+      act(row, 'process_as_one')
 
       assert_equal %w[received extract], [row.state, row.command]
       assert_not row.split_check
@@ -569,9 +579,9 @@ module Aim
 
       get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_response :success
-      assert_select 'input[type=submit][value=Delete]', 0, 'deleting is for AIM staff'
+      assert_select 'button[data-value=delete]', 0, 'deleting is for AIM staff'
 
-      act(row, 'Approve', queue: 'ready_for_approval')
+      act(row, 'approve', queue: 'ready_for_approval')
       assert_equal 'approved', row.state
       assert_redirected_to aim_my_queue_path
     end
@@ -594,7 +604,7 @@ module Aim
                                assignment_source: 'folder')
       as_owner_not_staff
 
-      act(row, 'Delete', queue: 'ready_for_approval', reason: 'x')
+      act(row, 'delete', queue: 'ready_for_approval', reason: 'x')
 
       assert_equal 'ready_for_approval', row.state
       assert_redirected_to aim_my_queue_path
@@ -691,7 +701,7 @@ module Aim
       assert_select 'form[action=?] button[data-commit=?]', restore_aim_invoice_path(row.batch_id, queue: 'rejected'),
                     'Restore to Action Needed'
 
-      post :restore, params: { id: row.batch_id, queue: 'rejected', commit: 'Restore to Action Needed', reason: 'rejected by mistake' }
+      post :restore, params: { id: row.batch_id, queue: 'rejected', invoice_action: 'restore_to_needs_review', reason: 'rejected by mistake' }
 
       assert_equal 'needs_review', row.reload.state
       assert_match(/Restored from rejected by Aim Staff: rejected by mistake\z/, row.notes)
@@ -701,7 +711,7 @@ module Aim
     test 'a deleted invoice can go straight back to its owner' do
       row = invoice('4601.RS2', state: 'deleted', pdf: false)
 
-      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Ready for Approval', reason: 'still owed' }
+      post :restore, params: { id: row.batch_id, queue: 'deleted', invoice_action: 'restore_to_ready_for_approval', reason: 'still owed' }
 
       assert_equal 'ready_for_approval', row.reload.state
     end
@@ -709,12 +719,12 @@ module Aim
     test 'restoring needs a reason, and only staff restore' do
       row = invoice('4601.RS3', state: 'deleted', pdf: false)
 
-      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Action Needed', reason: '' }
+      post :restore, params: { id: row.batch_id, queue: 'deleted', invoice_action: 'restore_to_needs_review', reason: '' }
       assert_equal 'deleted', row.reload.state
       assert_match(/needs a reason/, flash[:alert])
 
       as_owner_not_staff
-      post :restore, params: { id: row.batch_id, queue: 'deleted', commit: 'Restore to Action Needed', reason: 'x' }
+      post :restore, params: { id: row.batch_id, queue: 'deleted', invoice_action: 'restore_to_needs_review', reason: 'x' }
       assert_equal 'deleted', row.reload.state
     end
   end

@@ -53,10 +53,12 @@ module Aim
     end
 
     # { "GSA Maintenance" => ["4703"], ... }: the BU most of each Fusion team's
-    # people are in, read from GSABSS. Ties give every tied BU.
+    # people are in, read from GSABSS as Aim::Users.home_unit reads it. Ties
+    # give every tied BU.
     def self.fusion_team_units
       members = where.not(fusion_team: nil).pluck(:employee_id, :fusion_team)
-      units = Employee.where(id: members.map(&:first)).pluck(:id, :unit).to_h
+      units = Aim::Users.home_units(Employee.where(id: members.map(&:first)).pluck(:id, :agency, :unit)
+                                            .to_h { |id, agency, unit| [id, [agency, unit]] })
       members.group_by(&:last).transform_values do |pairs|
         counts = pairs.filter_map { |id, _| units[id].presence }.tally
         top = counts.values.max

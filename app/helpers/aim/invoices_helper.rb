@@ -119,12 +119,16 @@ module Aim
       mailbox.tr('._-', ' ').squish.titleize
     end
 
+    # [badge class, text] for a queue row, classed as submissions are
+    # (SubmissionsHelper#category_badge_class).
     def aim_status_badge(invoice, current_user_email)
-      return ['is-in-review', 'Open by you'] if invoice.held_by?(current_user_email)
-      return ['is-in-review', "Open by #{aim_claimant_label(invoice)}"] if invoice.claimed_by_other?(current_user_email)
-      return ['is-denied', aim_review_reason_label(invoice.review_reason)] if invoice.review_reason.present?
-
-      ['is-approved', aim_state_label(invoice.state)]
+      category, text =
+        if invoice.held_by?(current_user_email) then [:in_review, 'Open by you']
+        elsif invoice.claimed_by_other?(current_user_email) then [:in_review, "Open by #{aim_claimant_label(invoice)}"]
+        elsif invoice.review_reason.present? then [:denied, aim_review_reason_label(invoice.review_reason)]
+        else [:approved, aim_state_label(invoice.state)]
+        end
+      [category_badge_class(category), text]
     end
 
     # A queue owner for a heading or a notice.

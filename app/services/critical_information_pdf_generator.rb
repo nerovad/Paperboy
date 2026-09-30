@@ -54,7 +54,7 @@ class CriticalInformationPdfGenerator
         staff_ids = cir.staff_involved.split(',').map(&:strip)
         staff_names = staff_ids.map do |employee_id|
           employee = Employee.find_by(employee_id: employee_id)
-          employee ? "#{employee.first_name} #{employee.last_name}" : employee_id
+          employee ? employee.full_name : employee_id
         end
         pdf.text "Staff Involved: #{staff_names.join(', ')}"
       else

@@ -31,7 +31,6 @@ module Aim
       'keyword' => 'keyword', 'notes' => 'notes', 'notes -final approver' => 'notes',
       'approver name' => 'approver', 'fusion queue' => 'queue', 'aim unique identifier' => 'aim_id'
     }.freeze
-    ENCUMBRANCE = /\A([A-Z]{2,4})_?(.*)\z/
     VENDOR_CODE = /\AV[CS]\d{6,}\z/i
     MA_NUMBER = /FY\d{2}MA\d+\z/i
 
@@ -70,7 +69,7 @@ module Aim
     def row(number, cells)
       values = {}
       @columns.each do |name, index|
-        value = cells[index].to_s.strip
+        value = Paperboy::CsvSafe.restore(cells[index]).strip
         values[name] = value if value.present? && values[name].blank?
       end
       notes = []
@@ -89,10 +88,8 @@ module Aim
         values['vendor_code'] ||= code
       end
       values['fund'] = values['fund'].delete_prefix('_') if values['fund']&.start_with?('_')
-      if (match = values.delete('encumbrance').to_s.upcase.match(ENCUMBRANCE))
-        values['encumbrance_type'] = match[1]
-        values['encumbrance_number'] = match[2].presence
-      end
+      type, number = Aim::CodingFields.split_encumbrance(values.delete('encumbrance').to_s.upcase)
+      values.merge!('encumbrance_type' => type, 'encumbrance_number' => number) if type
       keyword = values.delete('keyword')
       if values['ma_number'].present?
         values['notes'] = [values['notes'], "keyword: #{keyword}"].compact.join('; ') if keyword

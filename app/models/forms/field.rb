@@ -483,7 +483,7 @@ module Forms
       return nil unless restricted_to_employee?
 
       employee = Employee.find_by(employee_id: restricted_to_employee_id)
-      employee ? "#{employee.first_name} #{employee.last_name}" : "Employee ##{restricted_to_employee_id}"
+      employee ? employee.full_name : "Employee ##{restricted_to_employee_id}"
     rescue StandardError
       "Employee ##{restricted_to_employee_id}"
     end

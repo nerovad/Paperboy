@@ -21,7 +21,7 @@ module Aim
     # Admin screen, so it is clear why deleting one there does not end their
     # access -- that is changed in ACL.
     def group_employee_ids
-      EmployeeGroup.where(GroupID: Group.where(Group_Name: GROUPS).select(:GroupID)).pluck(:EmployeeID).uniq
+      Group.employee_ids_named(GROUPS)
     end
 
     # Whether this employee has a queue: is one of the people who work AIM.
@@ -37,12 +37,35 @@ module Aim
     def budget_units_of(employee_id)
       return [] if employee_id.blank?
 
-      home = Employee.where(id: employee_id).pick(:unit).presence
+      home = home_unit(Employee.find_by(id: employee_id))
       rows = Aim::UserBudgetUnit.for_person(employee_id).pluck(:budget_unit, :hidden)
       hidden = rows.select(&:last).map(&:first)
       ([home] + rows.map(&:first)).compact.uniq - hidden
     rescue ActiveRecord::ActiveRecordError
       []
+    end
+
+    # A person's own budget unit: their GSABSS unit as the Chart of Accounts
+    # has it (Coa::Unit.resolve_for_employee), so an HCA sub-unit code counts
+    # as the unit it sits under. Their GSABSS unit as recorded when the COA has
+    # no such unit; nil for nobody.
+    def home_unit(employee)
+      return if employee.nil?
+
+      Coa::Unit.resolve_for_employee(employee)&.unit_id.presence || employee.unit.presence
+    rescue ActiveRecord::ActiveRecordError
+      employee.unit.presence
+    end
+
+    # The same for many { id => [agency, unit] }, as { id => home unit },
+    # asking the COA once per distinct agency and unit.
+    def home_units(agency_units)
+      resolved = {}
+      agency_units.transform_values do |agency, unit|
+        resolved.fetch([agency, unit]) do
+          resolved[[agency, unit]] = unit.present? ? home_unit(Employee.new(agency: agency, unit: unit)) : nil
+        end
+      end
     end
 
     # The budget units whose shared queues this person picks up from -- whose
@@ -81,7 +104,7 @@ module Aim
 
     def role_names(groups, bu_admin)
       roles = []
-      roles << 'AIM Admin' if groups.intersect?(%w[system_admins aim_admin])
+      roles << 'AIM Admin' if groups.intersect?([Group::PRIVILEGED_NAME, *GROUPS])
       roles << 'BU Admin' if bu_admin
       roles.presence || ['User']
     end
@@ -90,7 +113,7 @@ module Aim
     # (home unit unless hidden, or granted) that nobody administers. Every such
     # BU should have one (Joshua, 2026-09-25); not enforced, only shown.
     def units_without_admin
-      people = all.pluck(:id, :unit)
+      people = home_units(all.pluck(:id, :agency, :unit).to_h { |id, agency, unit| [id, [agency, unit]] }).to_a
       rows = Aim::UserBudgetUnit.where(employee_id: people.map(&:first)).pluck(:employee_id, :budget_unit, :hidden, :bu_admin)
       hidden = rows.select { |row| row[2] }.to_set { |row| row.first(2) }
       worked = people.filter_map { |id, unit| unit.presence unless hidden.include?([id, unit]) }
@@ -112,7 +135,7 @@ module Aim
 
     # Display names, as a queue is named after a person: "First Last".
     def names
-      all.map { |employee| "#{employee.first_name} #{employee.last_name}".squish }.compact_blank.uniq
+      all.map(&:full_name).compact_blank.uniq
     rescue ActiveRecord::ActiveRecordError => e
       Rails.logger.warn "AIM could not list its users: #{e.message}"
       []

@@ -108,7 +108,7 @@ module Forms
       return nil unless employee_id
 
       employee = Employee.find_by(employee_id: employee_id)
-      employee ? "#{employee.first_name} #{employee.last_name}" : nil
+      employee&.full_name
     rescue StandardError
       nil
     end
@@ -226,7 +226,7 @@ module Forms
     def group_eligible_ids(submission)
       return [] unless group_id
 
-      member_ids = EmployeeGroup.where(GroupID: group_id).pluck(:EmployeeID).map(&:to_s)
+      member_ids = EmployeeGroup.member_ids(group_id).map(&:to_s)
       return member_ids unless org_filtered?
 
       submitter_value = (submission.public_send(org_filter_level) if submission.respond_to?(org_filter_level))

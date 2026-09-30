@@ -5,6 +5,7 @@ require 'test_helper'
 module Aim
   class InvoicesHelperTest < ActionView::TestCase
     tests Aim::InvoicesHelper
+    include SubmissionsHelper # aim_status_badge classes badges as submissions are
 
     self.fixture_table_names = []
 

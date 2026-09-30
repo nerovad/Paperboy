@@ -110,10 +110,11 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
 
   private
 
+  # rows are [long_name, code]; pluck hands them back in the order asked.
   def option_relation(rows)
     relation = Object.new
     relation.define_singleton_method(:order) { |_column| self }
-    relation.define_singleton_method(:pluck) { |_label, _value| rows }
+    relation.define_singleton_method(:pluck) { |first, _second| first == :long_name ? rows : rows.map(&:reverse) }
     relation
   end
 end

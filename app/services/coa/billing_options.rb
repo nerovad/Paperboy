@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
 module Coa
+  # The Billing lookup's code lists: "value - long_name", in long_name order,
+  # inactive codes included. The lists themselves are Coa::FieldCatalog's.
   class BillingOptions
-    FIELD_CONFIG = {
-      object: [Coa::Object, :object_id, false],
-      activity: [Coa::Activity, :activity_id, true],
-      function: [Coa::Function, :function_id, true],
-      program: [Coa::Program, :program_id, true],
-      phase: [Coa::Phase, :phase_id, true],
-      task: [Coa::Task, :task_id, true]
-    }.freeze
+    FIELDS = %i[object activity function program phase task].freeze
+
+    # field => [model, id column, scoped by agency?], as the catalog has it.
+    FIELD_CONFIG = FIELDS.to_h do |field|
+      entry = Coa::FieldCatalog.fetch(field)
+      [field, [entry.model, entry.column, entry.agency_scoped]]
+    end.freeze
 
     def initialize(agency_id: nil, restrict_to_agency: false)
       @agency_id = agency_id
@@ -21,24 +22,25 @@ module Coa
     end
 
     def options_for(field)
-      model, key, agency_specific = FIELD_CONFIG.fetch(field.to_sym)
-      return [] if (agency_specific || restrict_to_agency) && agency_id.blank?
+      field = field.to_sym
+      raise KeyError, "key not found: #{field.inspect}" unless FIELDS.include?(field)
 
-      scope = option_scope(model, agency_specific)
-      scope.order(:long_name).pluck(:long_name, key).map do |long_name, value|
-        { label: "#{value} - #{long_name}", value: value }
-      end
+      entry = Coa::FieldCatalog.fetch(field)
+      return [] if (entry.agency_scoped || restrict_to_agency) && agency_id.blank?
+
+      Coa::FieldCatalog.pairs(field, scope: option_scope(entry), name: :long_name, order: :long_name)
+                       .map { |value, long_name| { label: "#{value} - #{long_name}", value: value } }
     end
 
     private
 
     attr_reader :agency_id, :restrict_to_agency
 
-    def option_scope(model, agency_specific)
-      return model.where(agency_id: agency_id) if agency_specific
-      return model.all unless restrict_to_agency
+    def option_scope(entry)
+      return entry.scope(agency_id) if entry.agency_scoped
+      return entry.model.all unless restrict_to_agency
 
-      model.joins(:object_inferences)
+      entry.model.joins(:object_inferences)
            .where(agency_objects: { agency_id: agency_id })
            .distinct
     end

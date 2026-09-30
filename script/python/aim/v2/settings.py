@@ -1,8 +1,8 @@
 """What the v2 worker needs to know, read once at start.
 
-Same discipline as v1's `env()`: there is no fallback for any variable. A
-fallback is a hardcoded location living in the code, and a wrong guess puts
-invoices somewhere nobody is watching. Everything is defined in LockBox; a
+There is no fallback for any variable (`env()` lives in worker_common, shared
+with v1). A fallback is a hardcoded location living in the code, and a wrong
+guess puts invoices somewhere nobody is watching. Everything is defined in LockBox; a
 missing variable stops the worker before it does anything.
 
 Nothing here is read at import. `Settings.from_env()` is called by the
@@ -10,47 +10,20 @@ worker's main, which is what keeps every module importable in a test against
 a temporary environment.
 """
 import os
-import sys
 from dataclasses import dataclass
 
-from dotenv import load_dotenv
+import worker_common
+from worker_common import env
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def env_file_candidates():
-    explicit = os.getenv("AIM_ENV_FILE")
-    candidates = []
-    if explicit:
-        candidates.append(explicit)
-    # Only the worker's own folder. Walking parents or the working directory
-    # meant a worker could pick up a stranger's .env depending on where it
-    # was started from.
-    candidates.append(os.path.join(SCRIPT_DIR, ".env"))
-    seen = set()
-    for candidate in candidates:
-        normalized = os.path.abspath(candidate)
-        if normalized in seen:
-            continue
-        seen.add(normalized)
-        yield normalized
+    return worker_common.env_file_candidates(SCRIPT_DIR)
 
 
 def load_environment():
-    for candidate in env_file_candidates():
-        if os.path.exists(candidate):
-            load_dotenv(candidate)
-            return candidate
-    checked = "\n  ".join(env_file_candidates())
-    sys.exit(f"CRITICAL ERROR: AIM .env file was not found. Checked:\n  {checked}")
-
-
-def env(name):
-    """Read one AIM variable, or exit naming it."""
-    value = os.getenv(name)
-    if value is None or value == "":
-        sys.exit(f"CRITICAL ERROR: environment variable {name} is missing")
-    return value
+    return worker_common.load_environment(SCRIPT_DIR)
 
 
 def program_path(name):

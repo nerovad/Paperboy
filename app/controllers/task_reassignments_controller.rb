@@ -55,9 +55,9 @@ class TaskReassignmentsController < ApplicationController
     render json: @reassignments.map { |r|
       {
         id: r.id,
-        from: "#{r.from_employee&.first_name} #{r.from_employee&.last_name}",
-        to: "#{r.to_employee&.first_name} #{r.to_employee&.last_name}",
-        reassigned_by: "#{r.reassigned_by_employee&.first_name} #{r.reassigned_by_employee&.last_name}",
+        from: r.from_employee&.full_name.to_s,
+        to: r.to_employee&.full_name.to_s,
+        reassigned_by: r.reassigned_by_employee&.full_name.to_s,
         reason: r.reason,
         created_at: r.created_at.strftime('%Y-%m-%d %H:%M')
       }

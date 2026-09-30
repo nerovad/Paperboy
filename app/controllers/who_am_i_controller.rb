@@ -14,7 +14,7 @@ class WhoAmIController < ApplicationController
     return head(:forbidden) unless current_user
 
     employee = Employee.find_by!(employee_id: current_user.employee_id)
-    @customer_name = "#{employee.last_name}, #{employee.first_name} (#{employee.employee_id})"
+    @customer_name = employee.picker_label
     @hierarchy_nodes = Coa::EmployeeHierarchy.call(employee)
   rescue ActiveRecord::RecordNotFound
     @error = 'Employee record not found.'

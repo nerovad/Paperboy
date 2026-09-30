@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { unitsOf } from "controllers/aim_shared"
 
 // Where an invoice goes, on Upload and in the Move dialog: the person search
 // shows only while "a person" / "Someone else" is chosen, and the budget unit
@@ -23,9 +24,7 @@ export default class extends Controller {
     if (!this.hasBudgetUnitTarget) return
     const chosen = this.element.querySelector("input[type=radio]:checked")?.value
     const id = chosen === "person" && this.hasPersonTarget ? this.personTarget.value : ""
-    const theirs = id ? Array.from(this.personTarget.querySelectorAll("optgroup"))
-      .filter((group) => group.dataset.unit && group.querySelector(`option[value="${id}"]`))
-      .map((group) => group.dataset.unit) : []
+    const theirs = id ? unitsOf(this.personTarget, id) : []
     const select = this.budgetUnitTarget
     Array.from(select.options).forEach((option) => {
       if (option.value) option.disabled = theirs.length > 0 && !theirs.includes(option.value)

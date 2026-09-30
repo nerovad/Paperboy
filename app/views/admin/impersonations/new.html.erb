@@ -9,7 +9,7 @@
     <div data-controller="choices">
       <%= f.select :employee_id,
                    grouped_options_for_select(
-                     "Employees" => @employees.map { |e| ["#{e.first_name} #{e.last_name} (#{e.employee_id})", e.employee_id] },
+                     "Employees" => @employees.map { |e| [e.name_with_id, e.employee_id] },
                      "Contractors" => @contractors.map { |c| [contractor_emulation_label(c), c.id] }
                    ),
                    { prompt: "Choose a user..." },

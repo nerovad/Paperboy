@@ -129,7 +129,7 @@ module Aim
                   .where.not(state: Aim::Invoice::TERMINAL_STATES).find_each do |invoice|
         employee = employee_named(invoice.assigned_to)
         if employee
-          invoice.update_columns(assigned_employee_id: employee.id, assigned_to: "#{employee.first_name} #{employee.last_name}".squish)
+          invoice.update_columns(assigned_employee_id: employee.id, assigned_to: employee.full_name)
           linked += 1
         else
           unmatched[invoice.assigned_to] += 1

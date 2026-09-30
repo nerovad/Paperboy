@@ -57,8 +57,7 @@ class WhoAmIControllerTest < ActionController::TestCase
   private
 
   def stub_employee(nodes = [], &block)
-    employee = Struct.new(:employee_id, :first_name, :last_name)
-                     .new(102_989, 'Maria', 'Acosta')
+    employee = Employee.new(id: 102_989, first_name: 'Maria', last_name: 'Acosta')
 
     Employee.stub(:find_by!, employee) do
       Coa::EmployeeHierarchy.stub(:call, nodes, &block)

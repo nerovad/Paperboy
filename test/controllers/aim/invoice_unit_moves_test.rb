@@ -98,7 +98,7 @@ module Aim
       row = invoice('U-7', budget_unit: '4641', assigned_employee_id: 99, assigned_to: 'Someone Else',
                            assignment_source: 'folder')
 
-      patch :update, params: { id: row.batch_id, commit: 'Approve' }
+      patch :update, params: { id: row.batch_id, invoice_action: 'approve' }
       assert_equal 'ready_for_approval', row.reload.state
     end
 

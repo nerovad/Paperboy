@@ -33,19 +33,16 @@ module Aim
     end
 
     # { unit => { employee_id => "Last, First" } } for the people who work AIM:
-    # their home unit unless hidden, and every BU granted on their profile.
+    # their home unit unless hidden, and every BU granted on their profile
+    # (Aim::AccessHelper#aim_people_by_unit, as the grouped person picker).
     def people_by_unit
       employees = Aim::Users.all.to_a
-      names = employees.to_h { |e| [e.id, "#{e.last_name}, #{e.first_name}"] }
+      names = employees.to_h { |e| [e.id, e.sort_name] }
       rows = Aim::UserBudgetUnit.where(employee_id: names.keys, budget_unit: @units).to_a
       @rows = rows.index_by { |row| [row.employee_id, row.budget_unit] }
-      hidden = rows.select(&:hidden).to_set { |row| [row.employee_id, row.budget_unit] }
-      result = Hash.new { |hash, unit| hash[unit] = {} }
-      employees.each do |e|
-        result[e.unit][e.id] = names[e.id] if e.unit.present? && !hidden.include?([e.id, e.unit])
-      end
-      rows.reject(&:hidden).each { |row| result[row.budget_unit][row.employee_id] = names[row.employee_id] }
-      result
+      helpers.aim_people_by_unit(employees.map { |e| [e.id, e.agency, e.unit] },
+                                 rows.map { |row| [row.employee_id, row.budget_unit, row.hidden] })
+             .transform_values { |ids| ids.index_with { |id| names[id] } }
     end
   end
 end

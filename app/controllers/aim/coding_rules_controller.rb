@@ -14,30 +14,26 @@ module Aim
               'effective' => %i[effective_from vendor_key] }.freeze
 
     def index
-      @agencies = Aim::CodingRule.distinct.order(:agency).pluck(:agency)
-      @agency = @agencies.include?(params[:agency]) ? params[:agency] : @agencies.first
       @unit = params[:unit].presence
       @show = params[:show] == 'all' ? 'all' : 'in_effect'
       @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'budget_unit'
-      if request.format.csv?
-        @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
-        return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv')
+      reading_database('list the coding rules', alert: 'The coding rules could not be read.',
+                                                empty: { rules: [], agencies: [], units: [], units_without_rules: [] }) do
+        @agencies = Aim::CodingRule.distinct.order(:agency).pluck(:agency)
+        @agency = @agencies.include?(params[:agency]) ? params[:agency] : @agencies.first
+        if request.format.csv?
+          @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
+          return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv')
+        end
+
+        # Every rule goes to the page; agency, BU and in-effect filter there,
+        # as you choose them (aim_queue_filter_controller facets).
+        @units = Aim::CodingRule.distinct.order(:budget_unit).pluck(:agency, :budget_unit)
+        @rules = Aim::CodingRule.order(*SORTS[@sort], :id).to_a
+
+        @coa = Aim::Units.new
+        @units_without_rules = units_without_rules
       end
-
-      # Every rule goes to the page; agency, BU and in-effect filter there,
-      # as you choose them (aim_queue_filter_controller facets).
-      @units = Aim::CodingRule.distinct.order(:budget_unit).pluck(:agency, :budget_unit)
-      @rules = Aim::CodingRule.order(*SORTS[@sort], :id).to_a
-
-      @coa = Aim::Units.new
-      @units_without_rules = units_without_rules
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error "AIM could not list the coding rules: #{e.message}"
-      @rules = []
-      @agencies = []
-      @units = []
-      @units_without_rules = []
-      flash.now[:alert] = 'The coding rules could not be read.'
     end
 
     def show
@@ -96,14 +92,17 @@ module Aim
     end
 
     # The rules shown, in the template's layout plus each rule's id, to edit
-    # in bulk and load again.
+    # in bulk and load again. Every value is text (codes too), so a cell that
+    # would run as a formula is defused; Aim::LookupFile undoes that on load.
     def export_csv
       CSV.generate do |csv|
         csv << Aim::LookupFile::EXPORT
         @rules.each do |r|
-          csv << [r.vendor_name, r.customer_number, r.budget_unit, r.encumbrance, r.ma_number, r.vendor_code, r.fund,
-                  r.department, r.object_code, r.activity, r.function_code, r.major_program, r.program, r.phase, r.task,
-                  r.notes, r.id]
+          csv << Paperboy::CsvSafe.defuse_row(
+            [r.vendor_name, r.customer_number, r.budget_unit, r.encumbrance, r.ma_number, r.vendor_code, r.fund,
+             r.department, r.object_code, r.activity, r.function_code, r.major_program, r.program, r.phase, r.task,
+             r.notes, r.id]
+          )
         end
       end
     end
