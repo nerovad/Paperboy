@@ -161,7 +161,15 @@ class FormLookup
       end
 
     join_values = Array(join_cols).select { |c| columns.include?(c) }.map { |c| row[c] }
-    ([primary_value] + join_values).reject { |v| v.nil? || v.to_s.empty? }.join(sep)
+    ([primary_value] + join_values).reject { |v| v.nil? || v.to_s.empty? }.map { |v| display_value(v) }.join(sep)
+  end
+
+  # Timestamps read the way the Records grid shows them ("Jan 22, 2026 12:00
+  # PM", Pacific) rather than as raw UTC JSON; anything else passes through.
+  def self.display_value(value)
+    return value unless value.is_a?(Time) || value.is_a?(DateTime)
+
+    I18n.l(value.in_time_zone('Pacific Time (US & Canada)'), format: :short)
   end
 
   # Build a synthetic column's value from a fetched row.

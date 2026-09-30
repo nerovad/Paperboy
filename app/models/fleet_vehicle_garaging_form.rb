@@ -65,8 +65,10 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   # When the vehicle's record last changed. Display only: the form's Last
   # Updated field looks this up from the fleet list and is never stored.
+  # Formatted as Records shows it (Pacific time, :short) so the saved value
+  # reads the same as the one autofilled when a vehicle is picked.
   def last_updated
-    fleet_vehicle&.updated_at
+    FormLookup.display_value(fleet_vehicle&.updated_at)
   end
 
   # For inbox queue filtering - returns the form type name
