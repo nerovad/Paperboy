@@ -284,7 +284,7 @@ modifies Projects.
 - [x] Add missing-label, missing-milestone, stale-work, and unlinked-PR checks.
 - [x] Add a milestone and release-readiness summary.
 - [x] Add dry-run support before any update operation.
-- [ ] Pilot label and milestone suggestions with a maintainer review step.
+- [x] Pilot label and milestone suggestions with a maintainer review step.
 
 ### Phase 4 — optional safe updates
 
