@@ -7,7 +7,7 @@ class RecordsSearchTest < ActiveSupport::TestCase
   def fleet_table = RegistryTable.find('fleet')
 
   def vehicle(owner:, plate: 'ABC123')
-    FleetVehicle.new(license_plate: plate, assigned_to: owner)
+    FleetVehicle.new(license_plate: plate, contact_name: owner)
   end
 
   test 'searches stored columns' do

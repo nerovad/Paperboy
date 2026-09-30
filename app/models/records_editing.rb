@@ -7,7 +7,7 @@
 # attribute, or a non-scalar display kind. This is the security whitelist the
 # inline-edit endpoint validates against, so nothing outside it can be written.
 module RecordsEditing
-  NON_EDITABLE_NAMES = %w[id created_at updated_at].freeze
+  NON_EDITABLE_NAMES = %w[id created_at updated_at last_updated_by].freeze
   NON_EDITABLE_KINDS = %i[status reference datetime].freeze
 
   module_function

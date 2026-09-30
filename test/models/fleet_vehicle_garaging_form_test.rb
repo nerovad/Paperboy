@@ -7,7 +7,7 @@ require 'test_helper'
 class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
   setup do
     @vehicle = FleetVehicle.create!(vehicle_number: '4763', make: 'CHEV', model: 'VAN', year: 2014,
-                                    take_home: 'No', assigned_to: 'Irma Hernandez',
+                                    take_home: 'No', contact_name: 'Irma Hernandez',
                                     garaging_location: '800 S. Victoria Ave',
                                     secondary_garaging_location: '646 County Square Dr')
   end
@@ -28,11 +28,11 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
   end
 
   test 'submitting copies the answers onto the vehicle' do
-    form = garaging_form(assign_to: 'Jane Smith', is_this_a_take_home_vehicle: 'Yes', location: 'Other',
+    form = garaging_form(contact_name: 'Chris Driver', is_this_a_take_home_vehicle: 'Yes', location: 'Other',
                          other_location: '1 Main St', do_you_have_a_secondary_location: 'No')
     @vehicle.reload
 
-    assert_equal 'Jane Smith', @vehicle.assigned_to
+    assert_equal 'Chris Driver', @vehicle.contact_name
     assert_equal 'Yes', @vehicle.take_home
     assert_equal '1 Main St', @vehicle.garaging_location
     assert_nil @vehicle.secondary_garaging_location
@@ -40,18 +40,43 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
     assert_equal 1, FleetVehicle.where(vehicle_number: '4763').count
   end
 
-  test 'Other assigns the vehicle to the typed name' do
-    garaging_form(assign_to: 'Other', other_assignee: 'Pat Contractor')
+  test 'Other makes the typed name the contact' do
+    garaging_form(contact_name: 'Other', other_contact: 'Pat Contractor')
 
-    assert_equal 'Pat Contractor', @vehicle.reload.assigned_to
+    assert_equal 'Pat Contractor', @vehicle.reload.contact_name
+  end
+
+  test 'the submitter becomes the vehicle\'s Last Updated By' do
+    @vehicle.update_column(:last_updated_by, 'Irma Hernandez')
+    form = FleetVehicleGaragingForm.new(vehicle_number: '4763')
+    assert_equal 'Irma Hernandez', form.last_updated_by
+
+    garaging_form(name: 'Jane Smith')
+
+    assert_equal 'Jane Smith', @vehicle.reload.last_updated_by
+  end
+
+  test 'a Records grid edit names the signed-in user as Last Updated By' do
+    Current.user = { 'employee_id' => '1', 'first_name' => 'Raj', 'last_name' => 'Patel' }
+    @vehicle.update!(color: 'WHITE')
+
+    assert_equal 'Raj Patel', @vehicle.reload.last_updated_by
+  ensure
+    Current.reset
+  end
+
+  test 'a save with nobody signed in leaves Last Updated By alone' do
+    @vehicle.update_column(:last_updated_by, 'Irma Hernandez')
+    @vehicle.update!(color: 'WHITE')
+
+    assert_equal 'Irma Hernandez', @vehicle.reload.last_updated_by
   end
 
   test 'the vehicle details come from the fleet list, not the request' do
-    form = garaging_form(year: 1999, make: 'FORD', model: 'F150', vehicle_assigned_to: 'Someone Else',
+    form = garaging_form(year: 1999, make: 'FORD', model: 'F150',
                          last_known_location: 'Nowhere', location: 'Other', other_location: '1 Main St')
 
     assert_equal [2014, 'CHEV', 'VAN'], [form.year, form.make, form.model]
-    assert_equal 'Irma Hernandez', form.vehicle_assigned_to
     assert_equal '800 S. Victoria Ave', form.last_known_location
   end
 
@@ -59,20 +84,20 @@ class FleetVehicleGaragingFormTest < ActiveSupport::TestCase
     garaging_form
     @vehicle.reload
 
-    assert_equal 'Irma Hernandez', @vehicle.assigned_to
+    assert_equal 'Irma Hernandez', @vehicle.contact_name
     assert_equal 'No', @vehicle.take_home
     assert_equal '800 S. Victoria Ave', @vehicle.garaging_location
     assert_equal '646 County Square Dr', @vehicle.secondary_garaging_location
   end
 
   test 'editing the latest submission updates the vehicle, an older one does not' do
-    older = garaging_form(assign_to: 'Jane Smith')
-    latest = garaging_form(assign_to: 'Pat Contractor')
+    older = garaging_form(contact_name: 'Jane Smith')
+    latest = garaging_form(contact_name: 'Pat Contractor')
 
-    older.update!(assign_to: 'Someone Else')
-    assert_equal 'Pat Contractor', @vehicle.reload.assigned_to
+    older.update!(contact_name: 'Someone Else')
+    assert_equal 'Pat Contractor', @vehicle.reload.contact_name
 
-    latest.update!(assign_to: 'Chris Driver')
-    assert_equal 'Chris Driver', @vehicle.reload.assigned_to
+    latest.update!(contact_name: 'Chris Driver')
+    assert_equal 'Chris Driver', @vehicle.reload.contact_name
   end
 end

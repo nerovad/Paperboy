@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_120000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -850,7 +850,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
   create_table "fleet_vehicle_garaging_forms", force: :cascade do |t|
     t.string "agency"
     t.string "approver_id"
-    t.string "assign_to"
+    t.string "contact_name"
     t.datetime "created_at", null: false
     t.text "deny_reason"
     t.string "department"
@@ -864,7 +864,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
     t.string "make", limit: 50
     t.string "model", limit: 50
     t.string "name"
-    t.string "other_assignee"
+    t.string "other_contact"
     t.string "other_location", limit: 200
     t.string "other_secondary_location", limit: 200
     t.string "phone"
@@ -872,7 +872,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
     t.string "status", default: "in_progress", null: false
     t.string "unit"
     t.datetime "updated_at", null: false
-    t.string "vehicle_assigned_to"
     t.string "vehicle_number", limit: 20
     t.integer "year"
     t.index ["approver_id"], name: "index_fleet_vehicle_garaging_forms_on_approver_id"
@@ -882,12 +881,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
 
   create_table "fleet_vehicles", force: :cascade do |t|
     t.string "agency"
-    t.string "assigned_to"
     t.string "budget_unit", limit: 10
     t.string "color", limit: 20
+    t.string "contact_name"
     t.datetime "created_at", null: false
     t.bigint "fleet_vehicle_garaging_form_id"
     t.string "garaging_location", limit: 200
+    t.string "last_updated_by"
     t.string "license_plate", limit: 15
     t.string "make", limit: 50
     t.string "model", limit: 50

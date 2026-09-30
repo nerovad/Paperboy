@@ -16,7 +16,7 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   # Answers a submission copies onto its vehicle (see FleetVehicle#apply_garaging_form!).
   APPLIED_COLUMNS = %w[
-    assign_to other_assignee is_this_a_take_home_vehicle location other_location
+    contact_name other_contact is_this_a_take_home_vehicle location other_location
     do_you_have_a_secondary_location secondary_location other_secondary_location
   ].freeze
 
@@ -27,8 +27,8 @@ class FleetVehicleGaragingForm < ApplicationRecord
   #
   # The vehicle's own details are read-only on the form, and a disabled select
   # is never posted, so they are taken from the fleet list here rather than
-  # from the request. This also records who held the vehicle and where it was
-  # garaged before this submission changed them.
+  # from the request. This also records where the vehicle was garaged before
+  # this submission changed it.
   before_validation :copy_vehicle_details, if: -> { new_record? || will_save_change_to_vehicle_number? }
   after_save :apply_to_fleet_vehicle, if: :applies_to_fleet_vehicle?
 
@@ -48,9 +48,9 @@ class FleetVehicleGaragingForm < ApplicationRecord
     end
   end
 
-  # Who the vehicle is to be assigned to: the typed name when "Other" was picked.
-  def assignee
-    assign_to == 'Other' ? other_assignee : assign_to
+  # The vehicle's contact: the typed name when "Other" was picked.
+  def contact
+    contact_name == 'Other' ? other_contact : contact_name
   end
 
   # Primary garaging address: the typed one when "Other" was picked.
@@ -69,6 +69,12 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # reads the same as the one autofilled when a vehicle is picked.
   def last_updated
     FormLookup.display_value(fleet_vehicle&.updated_at)
+  end
+
+  # Who last updated the vehicle, shown beside Last Updated the same way. Once
+  # this form is submitted that is its own submitter (FleetVehicle#apply_garaging_form!).
+  def last_updated_by
+    fleet_vehicle&.last_updated_by
   end
 
   # For inbox queue filtering - returns the form type name
@@ -94,7 +100,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
     self.year = vehicle.year
     self.make = vehicle.make
     self.model = vehicle.model
-    self.vehicle_assigned_to = vehicle.assigned_to
     self.last_known_location = vehicle.garaging_location
   end
 
