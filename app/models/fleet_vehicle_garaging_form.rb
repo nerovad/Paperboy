@@ -67,13 +67,13 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # Formatted as Records shows it (Pacific time, :short) so the saved value
   # reads the same as the one autofilled when a vehicle is picked.
   def last_updated
-    FormLookup.display_value(fleet_vehicle&.updated_at)
+    FormLookup.display_value(vehicle_on_file&.updated_at)
   end
 
   # Who last updated the vehicle, shown beside Last Updated the same way. Once
   # this form is submitted that is its own submitter (FleetVehicle#apply_garaging_form!).
   def last_updated_by
-    fleet_vehicle&.last_updated_by
+    vehicle_on_file&.last_updated_by
   end
 
   # For inbox queue filtering - returns the form type name
@@ -102,11 +102,24 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # A new submission always updates its vehicle. An edit does only while this
   # is still the vehicle's latest form, so correcting an old submission never
   # overwrites what a newer one set.
+  # Asked of the database, not the loaded vehicle: that copy is from whenever
+  # this form last saved, and a newer form may have claimed the vehicle since.
   def applies_to_fleet_vehicle?
-    return false unless fleet_vehicle
+    return false unless fleet_vehicle_id
     return true if saved_change_to_id?
 
-    saved_changes.keys.intersect?(APPLIED_COLUMNS) && fleet_vehicle.fleet_vehicle_garaging_form_id == id
+    saved_changes.keys.intersect?(APPLIED_COLUMNS) &&
+      FleetVehicle.exists?(id: fleet_vehicle_id, fleet_vehicle_garaging_form_id: id)
+  end
+
+  # The vehicle the form names right now. The link is only set when the form
+  # is saved, so an unsaved form -- or one whose number just changed -- looks
+  # it up by number.
+  def vehicle_on_file
+    return fleet_vehicle if fleet_vehicle && fleet_vehicle.vehicle_number == vehicle_number
+    return nil if vehicle_number.blank?
+
+    FleetVehicle.find_by(vehicle_number: vehicle_number)
   end
 
   def vehicle_must_be_on_the_fleet_list
@@ -120,6 +133,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # Raises on failure so the submission rolls back with it rather than
   # leaving a saved form whose vehicle never changed.
   def apply_to_fleet_vehicle
-    fleet_vehicle.apply_garaging_form!(self)
+    FleetVehicle.find(fleet_vehicle_id).apply_garaging_form!(self)
   end
 end
