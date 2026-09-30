@@ -194,11 +194,25 @@ class FormLookup
   # The same list, addressed by the form's class name and the field's own name
   # rather than by primary key. This is what generated views call; see the note
   # at the top of the file for why an id cannot be published into one.
-  def self.options_for(class_name, field_name)
+  #
+  # answers supplies the values of any filter that follows another field's
+  # answer: the record being edited, or a Hash from the page. A filter whose
+  # field is unanswered is left off, so the full list shows until one is picked.
+  def self.options_for(class_name, field_name, answers = nil)
     field = lookup_field(class_name, field_name)
     return [] unless field
 
-    field.merge_extra_values(lookup_rows(field))
+    field.merge_extra_values(lookup_rows(field, answers))
+  end
+
+  # A field's answer from a record or a Hash, or nil. A record is only ever
+  # read by attribute: the name comes from builder config, and calling it as a
+  # method could reach anything the model defines.
+  def self.answer_for(answers, field_name)
+    case answers
+    when Hash, ActionController::Parameters then answers[field_name]
+    when ActiveRecord::Base then answers.has_attribute?(field_name) ? answers[field_name] : nil
+    end
   end
 
   # The custom-lookup field a view is asking for, or nil having said in the log
@@ -234,10 +248,10 @@ class FormLookup
     Rails.logger.warn("FormLookup.options_for: #{detail}")
     nil
   end
-  private_class_method :lookup_field, :first_named, :missing
+  private_class_method :lookup_field, :first_named, :missing, :answer_for
 
   # The rows the configured lookup returns. [] on any invalid/failed config.
-  def self.lookup_rows(field)
+  def self.lookup_rows(field, answers = nil)
     cfg  = field.custom_lookup_config
     conn = connection_for(cfg['database'])
     return [] unless conn
@@ -273,7 +287,7 @@ class FormLookup
     # values are bound via #quote.
     grouped = field.custom_lookup_category_filters.each_with_object({}) do |f, h|
       fcol = f['column']
-      fval = f['value']
+      fval = f['field'] ? answer_for(answers, f['field']) : f['value']
       next unless columns.include?(fcol)
       next if fval.nil? || fval.to_s.empty?
 

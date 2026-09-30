@@ -122,6 +122,18 @@ class LookupsController < ApplicationController
     render json: fills
   end
 
+  # Options for a custom-lookup dropdown narrowed by other fields' answers, for
+  # a page to reload the list when one of those answers changes. Only the
+  # answers the field's own filters name are passed on.
+  def filtered_options
+    form = params[:form].to_s
+    field = Forms::Field.joins(:form_template)
+                        .find_by(form_templates: { class_name: form }, field_name: params[:field].to_s)
+    names = field&.custom_lookup_answer_filter_fields || []
+    answers = params.fetch(:answers, {}).permit(*names).to_h
+    render json: FormLookup.options_for(form, params[:field].to_s, answers)
+  end
+
   # --- Generic ("custom") lookup builder endpoints ---------------------------
   # Schema introspection for the form builder's custom data source. database is
   # a logical name (paperboy/gsabss); names are validated and quoted before SQL.

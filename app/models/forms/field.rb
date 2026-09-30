@@ -307,6 +307,11 @@ module Forms
     end
 
     # Fetched options with the manual extras pinned in place, de-duplicated.
+    # Names of the fields whose answers narrow this lookup's options.
+    def custom_lookup_answer_filter_fields
+      custom_lookup_category_filters.filter_map { |f| f['field'] }.uniq
+    end
+
     def merge_extra_values(list)
       return list unless extra_values?
 
@@ -353,6 +358,10 @@ module Forms
     # Normalized category filters [{ 'column' =>, 'value' => }, …] for the custom
     # lookup, combined with AND at query time. Falls back to the legacy single
     # category_column/category_value pair for configs saved before multi-filter.
+    #
+    # A filter may take its value from another field's answer instead of a fixed
+    # one -- { 'column' => 'City', 'field' => 'city' } -- so picking a city
+    # narrows an address list. See #custom_lookup_answer_filter_fields.
     def custom_lookup_category_filters
       cfg = custom_lookup_config
       return [] unless cfg.is_a?(Hash)
@@ -365,7 +374,7 @@ module Forms
           col = f['column'].to_s
           next if col.blank?
 
-          { 'column' => col, 'value' => f['value'] }
+          f['field'].present? ? { 'column' => col, 'field' => f['field'].to_s } : { 'column' => col, 'value' => f['value'] }
         end
       elsif cfg['category_column'].present?
         [{ 'column' => cfg['category_column'], 'value' => cfg['category_value'] }]
