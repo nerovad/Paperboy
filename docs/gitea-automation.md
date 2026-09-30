@@ -253,6 +253,18 @@ The report reads `GITEA_TOKEN` from the environment or the local `.env` file.
 It is read-only and does not create, update, label, close, or delete Gitea
 records.
 
+The Phase 4 updater is dry-run by default. It only targets one explicit issue
+and supports label additions and milestone assignment:
+
+```bash
+ruby script/gitea_apply_updates.rb --issue 10 --add-label priority:normal
+ruby script/gitea_apply_updates.rb --issue 10 --milestone "Gitea Workflow Phase 3"
+```
+
+Review the plan first, then repeat the command with `--apply` to make the
+change. It never closes issues, merges pull requests, deletes branches, or
+modifies Projects.
+
 ### Phase 2 — connect development work
 
 - [ ] Track Phase 2 in [issue #8 — Adopt issue-linked branch and pull request
@@ -271,16 +283,16 @@ records.
 - [x] Build a read-only issue and pull request status report.
 - [x] Add missing-label, missing-milestone, stale-work, and unlinked-PR checks.
 - [x] Add a milestone and release-readiness summary.
-- [ ] Add dry-run support before any update operation.
+- [x] Add dry-run support before any update operation.
 - [ ] Pilot label and milestone suggestions with a maintainer review step.
 
 ### Phase 4 — optional safe updates
 
-- [ ] Add an explicit command to apply approved label changes.
-- [ ] Add an explicit command to assign approved milestones.
+- [x] Add an explicit command to apply approved label changes.
+- [x] Add an explicit command to assign approved milestones.
 - [ ] Add an explicit command to add approved issues and pull requests to a
       Project.
-- [ ] Add audit-friendly output for every change made.
+- [x] Add audit-friendly output for every change made.
 - [ ] Decide whether webhook-triggered updates are worthwhile.
 
 ### Separate CI track — requires GSA
