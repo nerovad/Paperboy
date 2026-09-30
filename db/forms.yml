@@ -653,6 +653,25 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
+  - field_name: last_updated
+    field_type: text
+    label: Last Updated
+    page_number: 3
+    position: 4
+    required: false
+    options:
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: updated_at
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: vehicle_assigned_to
     field_type: text
     label: Vehicle Assigned to
@@ -696,6 +715,49 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  - field_name: last_updated_by
+    field_type: text
+    label: Last Updated By
+    page_number: 3
+    position: 5
+    required: false
+    options:
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: last_updated_by
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: vehicle_number
+  - field_name: contact_name
+    field_type: dropdown
+    label: Contact Name
+    page_number: 3
+    position: 6
+    required: false
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters: []
+        order_column:
+        order_direction: asc
+      values:
+      - Other
+      values_position: end
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
   - field_name: other_assignee
     field_type: text
     label: Other Assignee
@@ -710,25 +772,20 @@ forms:
     conditional_values:
     - Other
     conditional_field: assign_to
-  - field_name: last_updated
+  - field_name: other_contact
     field_type: text
-    label: Last Updated
+    label: Other Contact
     page_number: 3
     position: 7
     required: false
-    options:
-      answer_lookup:
-        database: paperboy
-        table: fleet_vehicles
-        match_column: vehicle_number
-        return_column: updated_at
-        return_join_columns: []
-        return_join_separator: " "
-    read_only: always
+    options: {}
+    read_only: none
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
-    conditional_answer_field: vehicle_number
+    conditional_values:
+    - Other
+    conditional_field: contact_name
   - field_name: is_this_a_take_home_vehicle
     field_type: dropdown
     label: Is this a take home vehicle?
