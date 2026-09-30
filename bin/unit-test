@@ -3,6 +3,19 @@
 set -o pipefail
 
 test_target="${1:-test}"
+summary_file="$(mktemp)"
+trap 'rm -f "$summary_file"' EXIT
 
-bundle exec rails test "$test_target" > error.log 2>&1
-rg -N '\(Finished|runs|assertions|failures|errors\)' error.log
+status=0
+
+{
+  bundle exec rubocop || status=$?
+  bundle exec brakeman || status=$?
+  bundle exec bundle-audit check || status=$?
+  bundle exec rails test "$test_target" || status=$?
+} > error.log 2>&1
+
+rg -i -N '(\(Finished|runs|assertions|failures|errors|offenses?|warnings?|vulnerabilit(y|ies)|insecure|error)' error.log > "$summary_file"
+cat "$summary_file" >> error.log
+
+exit "$status"

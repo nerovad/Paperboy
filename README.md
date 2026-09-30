@@ -20,6 +20,12 @@ for Action Cable.
 
 For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
 
+## Gitea workflow
+
+Paperboy's issue, pull request, milestone, Project, and automation conventions
+are documented in [docs/gitea-automation.md](docs/gitea-automation.md). Use the
+repository's Gitea templates when opening an issue or pull request.
+
 ---
 
 ## Versioning
