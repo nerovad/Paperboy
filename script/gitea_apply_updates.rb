@@ -26,11 +26,11 @@ class GiteaApi
   end
 
   def add_labels(number, label_ids)
-    request(:post, "/issues/#{number}/labels", labels: label_ids)
+    request(:post, "/issues/#{number}/labels", { labels: label_ids })
   end
 
   def assign_milestone(number, milestone_id)
-    request(:patch, "/issues/#{number}", milestone: milestone_id)
+    request(:patch, "/issues/#{number}", { milestone: milestone_id })
   end
 
   private
