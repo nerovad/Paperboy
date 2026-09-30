@@ -17,6 +17,9 @@ tracking](http://gsa-gitea.ent.co.ventura.ca.us:3000/BSS/Paperboy/issues/7).
 Use that issue for the implementation record until a more specific issue is
 needed.
 
+Projects are intentionally deferred. Issues and milestones remain the planning
+source of truth until Project-board administration is revisited.
+
 ## Goals
 
 - Make every piece of planned work visible in Gitea.
@@ -226,7 +229,7 @@ Questions for the CI planning effort include:
 - [x] Confirm access to the Paperboy Gitea repository and its Projects feature.
 - [ ] Confirm who may administer repository labels, milestones, Projects, and
       webhooks.
-- [ ] Create the initial Project with the agreed workflow columns.
+- [ ] Create the initial Project with the agreed workflow columns. **Deferred.**
 - [x] Create the initial issue labels and descriptions.
 - [x] Agree on milestone naming and target-date conventions.
 - [x] Add issue templates for bug, feature, chore, and infrastructure work.
@@ -242,6 +245,8 @@ initial Project board remains a web UI or administrator task.
 
 ### Phase 2 — connect development work
 
+- [ ] Track Phase 2 in [issue #8 — Adopt issue-linked branch and pull request
+      workflow](http://gsa-gitea.ent.co.ventura.ca.us:3000/BSS/Paperboy/issues/8).
 - [ ] Use issue-linked branch names for new implementation work.
 - [ ] Use consistent pull request titles and issue-closing syntax.
 - [ ] Add the appropriate milestone and Project item when work is scheduled.
@@ -292,9 +297,9 @@ Record decisions here as the workflow is established.
 - Project update permissions: TBD
 - CI infrastructure owner: GSA / TBD
 
-## Suggested first implementation
+## Suggested next implementation
 
-Start with Phase 1 and the read-only portion of Phase 3. The first useful
-deliverable is a consistent board, labels, templates, and a report that shows
-which issues need triage and which pull requests need attention. Once that is
-working, update automation can be introduced with dry-run and audit output.
+Continue with Phase 2 by using issue-linked branches and pull requests for the
+next Paperboy change. Keep issues and milestones as the source of planning
+state while Projects are deferred. After the workflow is exercised, begin the
+read-only reporting portion of Phase 3 with dry-run and audit output.
