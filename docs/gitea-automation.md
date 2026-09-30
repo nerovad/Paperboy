@@ -265,12 +265,12 @@ records.
 
 ### Phase 3 — automate reporting
 
-- [ ] Confirm whether the Gitea API is reachable from the Paperboy development
+- [x] Confirm whether the Gitea API is reachable from the Paperboy development
       environment.
-- [ ] Identify the approved authentication method without committing tokens.
+- [x] Identify the approved authentication method without committing tokens.
 - [x] Build a read-only issue and pull request status report.
-- [ ] Add missing-label, missing-milestone, stale-work, and unlinked-PR checks.
-- [ ] Add a milestone and release-readiness summary.
+- [x] Add missing-label, missing-milestone, stale-work, and unlinked-PR checks.
+- [x] Add a milestone and release-readiness summary.
 - [ ] Add dry-run support before any update operation.
 - [ ] Pilot label and milestone suggestions with a maintainer review step.
 
