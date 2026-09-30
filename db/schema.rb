@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -850,7 +850,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
   create_table "fleet_vehicle_garaging_forms", force: :cascade do |t|
     t.string "agency"
     t.string "approver_id"
-    t.string "assign_to"
     t.datetime "created_at", null: false
     t.text "deny_reason"
     t.string "department"
@@ -858,13 +857,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
     t.string "do_you_have_a_secondary_location", limit: 3
     t.string "email"
     t.string "employee_id"
+    t.bigint "fleet_vehicle_id"
     t.string "is_this_a_take_home_vehicle", limit: 3
     t.string "last_known_location", limit: 200
     t.string "location"
     t.string "make", limit: 50
     t.string "model", limit: 50
     t.string "name"
-    t.string "other_assignee"
     t.string "other_location", limit: 200
     t.string "other_secondary_location", limit: 200
     t.string "phone"
@@ -872,22 +871,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
     t.string "status", default: "in_progress", null: false
     t.string "unit"
     t.datetime "updated_at", null: false
-    t.string "vehicle_assigned_to"
     t.string "vehicle_number", limit: 20
     t.integer "year"
     t.index ["approver_id"], name: "index_fleet_vehicle_garaging_forms_on_approver_id"
     t.index ["employee_id"], name: "index_fleet_vehicle_garaging_forms_on_employee_id"
+    t.index ["fleet_vehicle_id"], name: "index_fleet_vehicle_garaging_forms_on_fleet_vehicle_id"
     t.index ["vehicle_number"], name: "index_fleet_vehicle_garaging_forms_on_vehicle_number"
   end
 
   create_table "fleet_vehicles", force: :cascade do |t|
     t.string "agency"
-    t.string "assigned_to"
     t.string "budget_unit", limit: 10
     t.string "color", limit: 20
     t.datetime "created_at", null: false
     t.bigint "fleet_vehicle_garaging_form_id"
     t.string "garaging_location", limit: 200
+    t.string "last_updated_by"
+    t.integer "last_updated_by_employee_id"
     t.string "license_plate", limit: 15
     t.string "make", limit: 50
     t.string "model", limit: 50
@@ -1427,6 +1427,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
     t.index ["record_type", "record_id"], name: "index_record_edits_on_record_type_and_record_id"
   end
 
+  create_table "records_highlight_rules", force: :cascade do |t|
+    t.string "color", null: false
+    t.string "column_name", null: false
+    t.datetime "created_at", null: false
+    t.integer "created_by_employee_id"
+    t.string "label"
+    t.string "operator", null: false
+    t.integer "position", default: 0, null: false
+    t.string "table_slug", null: false
+    t.datetime "updated_at", null: false
+    t.string "value"
+    t.index ["table_slug", "position"], name: "index_records_highlight_rules_on_table_slug_and_position"
+  end
+
   create_table "safety_report_authorizations", force: :cascade do |t|
     t.string "authorized_by"
     t.datetime "created_at", null: false
@@ -1922,6 +1936,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_180000) do
   add_foreign_key "dam_publications", "dam_assets", column: "asset_id"
   add_foreign_key "dam_publications", "dam_publish_targets", column: "publish_target_id"
   add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
+  add_foreign_key "fleet_vehicle_garaging_forms", "fleet_vehicles"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_subscription_opt_outs", "form_subscriptions", on_delete: :cascade
   add_foreign_key "form_template_copy_recipients", "form_templates"

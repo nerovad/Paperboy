@@ -57,8 +57,6 @@ class FleetVehicleGaragingFormPdfGenerator
     pdf.text "Year: #{submission.year}"
     pdf.text "Make: #{submission.make}"
     pdf.text "Model: #{submission.model}"
-    pdf.text "Vehicle Assigned To: #{submission.vehicle_assigned_to}"
-    pdf.text "Assign To: #{submission.assignee}" if submission.assignee.present?
     pdf.text "Take Home Vehicle: #{submission.is_this_a_take_home_vehicle}"
     pdf.text "Last Known Location: #{submission.last_known_location}" if submission.last_known_location.present?
     pdf.text "Garaging Location: #{submission.garaging_location}"

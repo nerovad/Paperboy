@@ -22,16 +22,6 @@ namespace :fleet do
     rows = CSV.read(path, col_sep: '|', headers: true, quote_char: "\x00").map(&:to_h)
     blank = ->(value) { value.to_s.strip.presence&.then { |v| ['[None]', 'NULL', 'Select One'].include?(v) ? nil : v } }
 
-    # Who the vehicle is assigned to: the legacy contact, matched to an employee
-    # by the local part of the address, since the list mixes @ventura.org,
-    # @venturacounty.org and @venturacounty.gov. An unmatched contact keeps a
-    # name derived from the address.
-    assigned_to = Hash.new do |cache, email|
-      local = email.split(%r{[@/]}).first.to_s.strip.downcase
-      employee = Employee.where('LOWER(email) LIKE ?', "#{Employee.sanitize_sql_like(local)}@%").first
-      cache[email] = employee ? [employee.first_name, employee.last_name].compact.join(' ') : local.split('.').map(&:capitalize).join(' ')
-    end
-
     # Agency of a budget unit (a Coa::Unit id), through its org chain.
     agency_of = Hash.new do |cache, budget_unit|
       unit = Coa::Unit.find_by(unit_id: budget_unit)
@@ -51,7 +41,6 @@ namespace :fleet do
           vehicle_number: v['vehicle_number'].strip,
           budget_unit: budget_unit,
           agency: agency_of[budget_unit],
-          assigned_to: assigned_to[v['email'].strip],
           make: v['make'].strip,
           model: v['model'].strip,
           year: v['year'].to_i,

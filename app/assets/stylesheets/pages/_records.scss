@@ -1,5 +1,6 @@
 /* Pages: Records pillar landing */
 @use "sass:color";
+@use "sass:map";
 @use "base/tokens" as *;
 
 .records-wrapper {
@@ -518,4 +519,134 @@
 .edit-row-label {
   font-weight: 600;
   color: $text-color;
+}
+
+/* ---- Highlight rules (see RecordsHighlightRule) ----
+   A matched row is shaded cell by cell rather than on the <tr>, so the sticky
+   leading cell -- which paints its own background -- takes the shade too. */
+
+$records-highlights: (
+  "red": (bg: $red-status-bg, swatch: $red-status-text),
+  "amber": (bg: $warning-row-bg, swatch: $warning-border-strong),
+  "green": (bg: $success-bg, swatch: $success-border-strong),
+  "blue": (bg: $blue-notice-bg, swatch: $blue-notice-text)
+);
+
+@each $name, $shade in $records-highlights {
+  .records-table tbody tr.is-highlight-#{$name} td,
+  .records-table tbody tr.is-highlight-#{$name} td:first-child {
+    background: map.get($shade, bg);
+  }
+
+  .records-table tbody tr.is-highlight-#{$name}:hover td,
+  .records-table tbody tr.is-highlight-#{$name}:hover td:first-child {
+    background: color.adjust(map.get($shade, bg), $lightness: -4%);
+  }
+
+  .records-highlight-chip.is-#{$name} .records-highlight-chip__swatch,
+  .records-highlight-chip__swatch.is-#{$name} {
+    background: map.get($shade, swatch);
+  }
+
+  .records-highlight-chip.is-#{$name}.is-active {
+    background: map.get($shade, bg);
+    border-color: map.get($shade, swatch);
+  }
+}
+
+.records-highlight-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.records-highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border: 1px solid $border-faint;
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.875rem;
+  text-decoration: none;
+
+  &:hover { background: $surface-muted; }
+}
+
+.records-highlight-chip__swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.records-highlight-chip__count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Highlights dialog contents (shell is the shared .pb-modal) ---- */
+
+.records-highlights__hint {
+  margin: 0 0 12px;
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+.records-highlights__heading {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.records-highlights__list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.records-highlights__rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+
+  & + & { border-top: 1px solid $border-faint; }
+}
+
+.records-highlights__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  small { color: $text-muted; }
+}
+
+.records-highlights__inline {
+  display: inline;
+  margin: 0;
+}
+
+.records-highlights__form {
+  padding-top: 14px;
+  border-top: 1px solid $border-faint;
+}
+
+.records-highlights__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 12px;
+
+  .form-group {
+    min-width: 0;
+    margin: 0;
+
+    &[hidden] { display: none; }
+  }
+}
+
+.records-highlights__label-field {
+  grid-column: 1 / -1;
 }

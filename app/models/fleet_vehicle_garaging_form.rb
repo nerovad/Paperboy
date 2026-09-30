@@ -11,12 +11,16 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   include Reassignable
 
+  # The vehicle this form is about, set from vehicle_number when the form is
+  # saved. Forms from before the fleet list existed have none.
+  belongs_to :fleet_vehicle, optional: true
+
   has_many :fleet_vehicle_garaging_form_locations, dependent: :destroy
   accepts_nested_attributes_for :fleet_vehicle_garaging_form_locations, allow_destroy: true, reject_if: :all_blank
 
   # Answers a submission copies onto its vehicle (see FleetVehicle#apply_garaging_form!).
   APPLIED_COLUMNS = %w[
-    assign_to other_assignee is_this_a_take_home_vehicle location other_location
+    is_this_a_take_home_vehicle location other_location
     do_you_have_a_secondary_location secondary_location other_secondary_location
   ].freeze
 
@@ -27,8 +31,8 @@ class FleetVehicleGaragingForm < ApplicationRecord
   #
   # The vehicle's own details are read-only on the form, and a disabled select
   # is never posted, so they are taken from the fleet list here rather than
-  # from the request. This also records who held the vehicle and where it was
-  # garaged before this submission changed them.
+  # from the request. This also records where the vehicle was garaged before
+  # this submission changed it.
   before_validation :copy_vehicle_details, if: -> { new_record? || will_save_change_to_vehicle_number? }
   after_save :apply_to_fleet_vehicle, if: :applies_to_fleet_vehicle?
 
@@ -48,11 +52,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
     end
   end
 
-  # Who the vehicle is to be assigned to: the typed name when "Other" was picked.
-  def assignee
-    assign_to == 'Other' ? other_assignee : assign_to
-  end
-
   # Primary garaging address: the typed one when "Other" was picked.
   def garaging_location
     location == 'Other' ? other_location : location
@@ -65,8 +64,16 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   # When the vehicle's record last changed. Display only: the form's Last
   # Updated field looks this up from the fleet list and is never stored.
+  # Formatted as Records shows it (Pacific time, :short) so the saved value
+  # reads the same as the one autofilled when a vehicle is picked.
   def last_updated
-    fleet_vehicle&.updated_at
+    FormLookup.display_value(vehicle_on_file&.updated_at)
+  end
+
+  # Who last updated the vehicle, shown beside Last Updated the same way. Once
+  # this form is submitted that is its own submitter (FleetVehicle#apply_garaging_form!).
+  def last_updated_by
+    vehicle_on_file&.last_updated_by
   end
 
   # For inbox queue filtering - returns the form type name
@@ -81,30 +88,38 @@ class FleetVehicleGaragingForm < ApplicationRecord
 
   private
 
-  def fleet_vehicle
-    FleetVehicle.find_by(vehicle_number: vehicle_number) if vehicle_number.present?
-  end
-
   def copy_vehicle_details
-    vehicle = fleet_vehicle
+    vehicle = FleetVehicle.find_by(vehicle_number: vehicle_number) if vehicle_number.present?
+    self.fleet_vehicle = vehicle
     return unless vehicle
 
     self.year = vehicle.year
     self.make = vehicle.make
     self.model = vehicle.model
-    self.vehicle_assigned_to = vehicle.assigned_to
     self.last_known_location = vehicle.garaging_location
   end
 
   # A new submission always updates its vehicle. An edit does only while this
   # is still the vehicle's latest form, so correcting an old submission never
   # overwrites what a newer one set.
+  # Asked of the database, not the loaded vehicle: that copy is from whenever
+  # this form last saved, and a newer form may have claimed the vehicle since.
   def applies_to_fleet_vehicle?
-    return false if vehicle_number.blank?
+    return false unless fleet_vehicle_id
     return true if saved_change_to_id?
 
     saved_changes.keys.intersect?(APPLIED_COLUMNS) &&
-      FleetVehicle.exists?(vehicle_number: vehicle_number, fleet_vehicle_garaging_form_id: id)
+      FleetVehicle.exists?(id: fleet_vehicle_id, fleet_vehicle_garaging_form_id: id)
+  end
+
+  # The vehicle the form names right now. The link is only set when the form
+  # is saved, so an unsaved form -- or one whose number just changed -- looks
+  # it up by number.
+  def vehicle_on_file
+    return fleet_vehicle if fleet_vehicle && fleet_vehicle.vehicle_number == vehicle_number
+    return nil if vehicle_number.blank?
+
+    FleetVehicle.find_by(vehicle_number: vehicle_number)
   end
 
   def vehicle_must_be_on_the_fleet_list
@@ -118,6 +133,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
   # Raises on failure so the submission rolls back with it rather than
   # leaving a saved form whose vehicle never changed.
   def apply_to_fleet_vehicle
-    FleetVehicle.find_by!(vehicle_number: vehicle_number).apply_garaging_form!(self)
+    FleetVehicle.find(fleet_vehicle_id).apply_garaging_form!(self)
   end
 end

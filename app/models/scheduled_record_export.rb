@@ -19,7 +19,7 @@ class ScheduledRecordExport < ApplicationRecord
 
   # Grid query keys a snapshot keeps. Anything else in the query string (page
   # chrome, Turbo params) has no bearing on which rows or columns are shown.
-  VIEW_KEYS = %w[search sort_by sort_direction].freeze
+  VIEW_KEYS = %w[search sort_by sort_direction highlight].freeze
   FILTER_KEY = /\Afilter_[a-z0-9_]+\z/
 
   validates :table_slug, presence: true
@@ -79,6 +79,10 @@ class ScheduledRecordExport < ApplicationRecord
     params = view_params || {}
     parts = []
     parts << %(Search "#{params['search']}") if params['search'].present?
+    if params['highlight'].present?
+      rule = RecordsHighlightRule.find_by(id: params['highlight'])
+      parts << "Highlighted: #{rule&.display_label || 'a removed rule'}"
+    end
 
     params.each do |key, value|
       next unless key.to_s.match?(FILTER_KEY)

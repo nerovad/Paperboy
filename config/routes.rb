@@ -481,6 +481,10 @@ Rails.application.routes.draw do
     resources :export_schedules, only: %i[create destroy], controller: 'record_export_schedules' do
       patch :toggle, on: :member
     end
+    # Conditional row colouring, managed from the grid's Highlights dialog.
+    resources :highlight_rules, only: %i[create destroy], controller: 'records_highlight_rules' do
+      patch :move, on: :member
+    end
   end
 
   resources :pcard_inventory, only: %i[index new create edit update] do
@@ -707,6 +711,7 @@ Rails.application.routes.draw do
   get '/lookups/supervisors', to: 'lookups#supervisors'
   get '/lookups/employees', to: 'lookups#employees'
   get '/lookups/answer_fill', to: 'lookups#answer_fill'
+  get '/lookups/filtered_options', to: 'lookups#filtered_options'
   get '/lookups/categories', to: 'lookups#categories'
   get '/lookups/tables', to: 'lookups#tables'
   get '/lookups/columns', to: 'lookups#columns'

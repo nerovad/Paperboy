@@ -1,0 +1,19 @@
+<%# Legend for a Records grid's highlight rules: each rule's colour, label and
+    how many of the rows on screen it caught. Clicking one narrows the grid to
+    those rows; clicking it again shows every row.
+    locals: table, counts ({ rule => count }), view_params %>
+<% active = view_params['highlight'].to_s %>
+<div class="records-highlight-legend" role="group" aria-label="Highlights">
+  <% counts.each do |rule, count| %>
+    <% on = active == rule.id.to_s %>
+    <% target = on ? view_params.except('highlight') : view_params.merge('highlight' => rule.id) %>
+    <%= link_to records_table_path(table.slug, target),
+                class: class_names('records-highlight-chip', "is-#{rule.color}", 'is-active': on),
+                title: on ? 'Show every row' : "Show only: #{rule.description}",
+                aria: { pressed: on } do %>
+      <span class="records-highlight-chip__swatch" aria-hidden="true"></span>
+      <span class="records-highlight-chip__label"><%= rule.display_label %></span>
+      <span class="records-highlight-chip__count"><%= number_with_delimiter(count) %></span>
+    <% end %>
+  <% end %>
+</div>

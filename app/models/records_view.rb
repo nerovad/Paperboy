@@ -12,7 +12,7 @@
 class RecordsView
   include Filterable
 
-  attr_reader :table, :columns, :filter_options, :default_sort, :rows
+  attr_reader :table, :columns, :filter_options, :default_sort, :rows, :highlights, :highlight_counts
 
   def initialize(table, layout:, params:)
     @table = table
@@ -34,6 +34,12 @@ class RecordsView
     # narrow it, so picking one value doesn't empty every other dropdown.
     @filter_options = collect_filter_options(rows, select_filter_extractors)
     rows = apply_column_filters(rows)
+
+    # The legend counts the rows the search and filters leave, before its own
+    # filter narrows them to one rule's.
+    @highlights = RecordsHighlights.new(table)
+    @highlight_counts = @highlights.counts(rows)
+    rows = @highlights.rows_for(rows, params[:highlight]) if params[:highlight].present?
 
     @default_sort = default_sort_key(columns)
     sort_by = params[:sort_by].presence || default_sort

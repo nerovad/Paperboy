@@ -18,6 +18,8 @@ class RecordsTableController < ApplicationController
         @filter_options = view.filter_options
         @default_sort = view.default_sort
         @records = view.rows
+        @highlights = view.highlights
+        @highlight_counts = view.highlight_counts
         @view_params = ScheduledRecordExport.view_params_from(request.query_parameters)
         @export_schedules = ScheduledRecordExport.for_employee(current_employee_id)
                                                  .where(table_slug: @table.slug).order(:created_at)

@@ -3,6 +3,10 @@
 require 'open3'
 
 class FormTemplatesController < ApplicationController
+  # Prefix on a category filter's value that means "the answer to this field"
+  # rather than a fixed value, e.g. "field:city".
+  ANSWER_FILTER_PREFIX = 'field:'
+
   before_action -> { require_admin_tab('manage_forms') }
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive duplicate_preview duplicate]
 
@@ -484,7 +488,12 @@ class FormTemplatesController < ApplicationController
       col = col.to_s.strip
       next if col.blank?
 
-      { 'column' => col, 'value' => cat_vals[i].to_s }
+      value = cat_vals[i].to_s
+      if value.start_with?(ANSWER_FILTER_PREFIX)
+        { 'column' => col, 'field' => value.delete_prefix(ANSWER_FILTER_PREFIX) }
+      else
+        { 'column' => col, 'value' => value }
+      end
     end
     {
       'database' => f[:custom_database],
@@ -2600,7 +2609,7 @@ class FormTemplatesController < ApplicationController
     when 'yes_no'
       %(                      <%= vf.select :#{fname}, options_for_select(['Yes', 'No'], vf.object.#{fname}), { include_blank: "Select..." }, { class: "form-control"#{trigger} } %>)
     when 'dropdown'
-      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field)}, vf.object.#{fname}), { include_blank: "Select..." }, { #{searchable_select_attrs_str(field, ['class: "form-control"'])} } %>)
+      %(                      <%= vf.select :#{fname}, options_for_select(#{field_options_expr(field, 'vf.object')}, vf.object.#{fname}), { include_blank: "Select..." }, { #{searchable_select_attrs_str(field, ['class: "form-control"'])} } %>)
     when 'choices_dropdown'
       data = %(data: { choices_target: "select", placeholder: "Select options...")
       data += ", conditional_trigger: '#{fname}'" if conditional_dependents?(field)
@@ -2615,20 +2624,38 @@ class FormTemplatesController < ApplicationController
   # the searchable-select controller merged into their data hash (one data: key,
   # alongside any conditional_trigger).
   def searchable_select_attrs_str(field, select_attrs)
-    data = ['controller: "searchable-select"']
+    data = answer_filtered_lookup?(field) ? lookup_filter_data(field) : ['controller: "searchable-select"']
     data << "conditional_trigger: '#{field.field_name}'" if conditional_dependents?(field)
     (select_attrs.reject { |a| a.start_with?('data:') } << "data: { #{data.join(', ')} }").join(', ')
   end
 
+  # Wiring for a custom lookup narrowed by other fields' answers: the
+  # lookup-filter controller reloads the options when one of them changes.
+  def lookup_filter_data(field)
+    [
+      'controller: "searchable-select lookup-filter"',
+      "lookup_filter_form_value: #{field.form_template.class_name.inspect}",
+      "lookup_filter_field_value: #{field.field_name.inspect}",
+      "lookup_filter_sources_value: #{field.custom_lookup_answer_filter_fields.to_json.inspect}"
+    ]
+  end
+
+  def answer_filtered_lookup?(field)
+    field.custom_lookup? && field.custom_lookup_answer_filter_fields.any?
+  end
+
   # Dropdown option-source expression, shared by every generated view.
   # Custom lookups merge their manual extras inside FormLookup.options_for; the
-  # curated tables get theirs pinned on here.
-  def field_options_expr(field)
+  # curated tables get theirs pinned on here. A lookup narrowed by other fields'
+  # answers is handed the record, so a saved answer narrows it on first render.
+  def field_options_expr(field, record_expr = "@#{field.form_template.file_name}")
     if field.custom_lookup?
       # Class name + field name, never field.id: the id is an identity column
       # and the file this string lands in is committed and deployed to every
       # database. See the note at the top of FormLookup.
-      "FormLookup.options_for(#{field.form_template.class_name.inspect}, #{field.field_name.inspect})"
+      args = [field.form_template.class_name.inspect, field.field_name.inspect]
+      args << record_expr if answer_filtered_lookup?(field)
+      "FormLookup.options_for(#{args.join(', ')})"
     elsif field.data_source?
       pin_extra_values_expr(field, field.data_source_query_code)
     else

@@ -1494,7 +1494,28 @@ export default class extends Controller {
     const values = await this.fetchJson(
       `/lookups/category_values?database=${encodeURIComponent(database)}&table=${encodeURIComponent(table)}&column=${encodeURIComponent(column)}`
     )
+    this.appendAnswerFilterOptions(fieldItem, valueSelect)
     this.fillSelect(valueSelect, values)
+  }
+
+  // Offer the form's other saved fields as a filter value, so the list follows
+  // that field's answer on the live form (e.g. City narrows an address list).
+  // Sent as "field:<name>"; the controller stores it as { field: <name> }.
+  appendAnswerFilterOptions(fieldItem, valueSelect) {
+    const ownLabel = fieldItem.querySelector('input[name="fields[][label]"]')?.value
+    const fields = (this.hasFormFieldsValue ? this.formFieldsValue : [])
+      .filter(f => f.id && f.field_name && f.label !== ownLabel)
+    if (fields.length === 0) return
+
+    const group = document.createElement('optgroup')
+    group.label = "Match the answer to…"
+    fields.forEach(f => {
+      const option = document.createElement('option')
+      option.value = `field:${f.field_name}`
+      option.textContent = `Answer to: ${f.label}`
+      group.appendChild(option)
+    })
+    valueSelect.appendChild(group)
   }
 
   clearColumnSelects(fieldItem) {
