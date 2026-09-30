@@ -243,6 +243,16 @@ is reachable at `10.135.204.125:3000`. Projects are enabled, but this Gitea
 instance does not expose Project management through its API, so creating the
 initial Project board remains a web UI or administrator task.
 
+Run the Phase 3 report locally with:
+
+```bash
+ruby script/gitea_status_report.rb
+```
+
+The report reads `GITEA_TOKEN` from the environment or the local `.env` file.
+It is read-only and does not create, update, label, close, or delete Gitea
+records.
+
 ### Phase 2 — connect development work
 
 - [ ] Track Phase 2 in [issue #8 — Adopt issue-linked branch and pull request
@@ -258,7 +268,7 @@ initial Project board remains a web UI or administrator task.
 - [ ] Confirm whether the Gitea API is reachable from the Paperboy development
       environment.
 - [ ] Identify the approved authentication method without committing tokens.
-- [ ] Build a read-only issue and pull request status report.
+- [x] Build a read-only issue and pull request status report.
 - [ ] Add missing-label, missing-milestone, stale-work, and unlinked-PR checks.
 - [ ] Add a milestone and release-readiness summary.
 - [ ] Add dry-run support before any update operation.
@@ -299,7 +309,7 @@ Record decisions here as the workflow is established.
 
 ## Suggested next implementation
 
-Continue with Phase 2 by using issue-linked branches and pull requests for the
-next Paperboy change. Keep issues and milestones as the source of planning
-state while Projects are deferred. After the workflow is exercised, begin the
-read-only reporting portion of Phase 3 with dry-run and audit output.
+Use the Phase 3 report to review the current issue and pull request state. Add
+the missing-label, missing-milestone, stale-work, and unlinked-PR checks to the
+report, then begin the optional safe-update phase only after the read-only
+output is trusted.
