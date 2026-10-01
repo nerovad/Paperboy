@@ -134,8 +134,9 @@ class Settings:
             "state": (self.state_server, self.state_database, self.state_user, self.state_password),
             "billing": (self.billing_server, self.billing_database, self.billing_user, self.billing_password),
         }[which]
+        # Braced below, so a name with a space ("GSA Scan" on GSASQL16) is one value.
         database = database.replace("[", "").replace("]", "")
         return (
-            f"DRIVER={{{self.odbc_driver}}};SERVER={server};DATABASE={database};"
+            f"DRIVER={{{self.odbc_driver}}};SERVER={server};DATABASE={{{database}}};"
             f"UID={user};PWD={password};Encrypt={self.odbc_encrypt};"
         )

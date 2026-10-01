@@ -132,3 +132,10 @@ def test_a_billing_failure_is_recorded_on_the_row(exporting, fake_db, settings):
     assert "login failed" in row["review_note"]
     assert row["command"] is None
     assert not os.path.exists(os.path.join(settings.processed_dir, f"{BATCH}.pdf")), "nothing reached Laserfiche"
+
+
+def test_billing_connection_braces_a_database_name_with_a_space(v2_env, monkeypatch, v2):
+    # GSASQL16's database is "GSA Scan"; LockBox may write it with brackets.
+    monkeypatch.setenv("AIM_SQL_BILLING_DATABASE", "[GSA Scan]")
+    conn = v2("settings").Settings.from_env().connection_string("billing")
+    assert "DATABASE={GSA Scan};" in conn

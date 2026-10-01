@@ -850,10 +850,15 @@ Recorded so they are not relitigated.
   a legacy row there and state here, and those cannot share a transaction.
   Accepted by Joshua; it ends when Paperboy moves to `gsa-sql22` and the
   schema moves with its database.
-- **Two servers, today.** Paperboy's own databases -- now including the
-  `aim` schema -- are on `GSASQL16`; the legacy `Aim_*` tables are on
-  `gsa-sql22`, where the Python workers write them. Rails does not read the
-  legacy tables, so it still needs no second connection.
+- **One server since 2026-10-01.** The legacy `Aim_Invoices`,
+  `Aim_Processing_Logs` and `Aim_Vendor_Aliases` were copied from
+  `gsa-sql22` `[GSA_Scan]` to `GSASQL16` `[GSA Scan]` (same names, columns
+  and keys; `db/aim/sql16_legacy_tables.sql`, copied and verified row by row
+  with `script/aim/copy_sql22_to_sql16.rb`), and `AIM_SQL_BILLING_*` /
+  `AIM_SQL_LOGGING_*` now point there as `GSAETL`. Joshua's decision: get off
+  `gsa-sql22` first, move everything to new named spaces later. The
+  `gsa-sql22` tables stay untouched until AIM is confirmed working on
+  `GSASQL16`, then they are dropped. Rails does not read these tables.
 - **Full migration to `gsa-sql22` is planned.** Paperboy will move off
   `GSASQL16` soon. Until then use `GSASQL16` where Paperboy's own data is
   concerned. When the migration happens it must be a LockBox variable

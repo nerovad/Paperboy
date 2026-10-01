@@ -183,7 +183,7 @@ def get_sql_connection(section):
     driver = env('AIM_ODBC_DRIVER')
     encrypt = env('AIM_ODBC_ENCRYPT')
     conn_str = (
-        f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};"
+        f"DRIVER={{{driver}}};SERVER={server};DATABASE={{{database}}};"
         f"UID={user};PWD={password};Encrypt={encrypt};"
     )
     return pyodbc.connect(conn_str)
