@@ -26,6 +26,50 @@ Paperboy's issue, pull request, milestone, Project, and automation conventions
 are documented in [docs/gitea-automation.md](docs/gitea-automation.md). Use the
 repository's Gitea templates when opening an issue or pull request.
 
+### Command-line workflow
+
+Set `GITEA_TOKEN` in the environment or in the ignored repository `.env` file.
+Never commit the token. Create an issue before starting implementation:
+
+```bash
+bin/new-issue --type feature \
+  --title "Short imperative title" \
+  --body-file /path/to/issue.md
+```
+
+Create the issue-linked branch and worktree:
+
+```bash
+bin/worktree create issue/123-short-description
+cd "$(bin/worktree switch issue/123-short-description)"
+```
+
+Use only branches matching `issue/<number>-<lowercase-slug>`. Review the
+repository status with:
+
+```bash
+bin/status-report
+```
+
+After review and merge, clean up the local worktree and branch:
+
+```bash
+git switch master
+git pull --ff-only
+bin/worktree cleanup issue/123-short-description
+```
+
+`bin/apply-updates` can apply an explicitly approved label or milestone
+change. It previews changes unless `--apply` is supplied:
+
+```bash
+bin/apply-updates --issue 123 --add-label priority:normal
+bin/apply-updates --issue 123 --add-label priority:normal --apply
+```
+
+For command options, prompting behavior, and safety rules, see
+[docs/gitea-automation.md](docs/gitea-automation.md).
+
 ---
 
 ## Versioning
