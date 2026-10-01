@@ -302,7 +302,9 @@ cd "$(bin/worktree switch issue/123-add-example-capability)"
 ```
 
 `bin/worktree` accepts only `issue/<number>-<lowercase-slug>` branches and
-places worktrees beside the repository under `<repo>-worktrees/`.
+places new worktrees inside the repository under `worktrees/`.
+Existing worktrees in the former sibling `<repo>-worktrees/` location are not
+migrated automatically.
 
 After a pull request is merged, Gitea automatically deletes the remote source
 branch. To remove the corresponding local worktree and branch, run:
