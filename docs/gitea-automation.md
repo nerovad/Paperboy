@@ -85,6 +85,11 @@ should close when the change is merged and the acceptance criteria are met.
 
 ## Project board
 
+The Paperboy workflow project is **Powerpuff Girls**. It tracks current issue
+and pull request status from planning through completion. The project name
+honors the daughters of the dads who maintain this workflow; its emphasis on
+strength, spirit, and teamwork reflects the way the team works together.
+
 The initial Project workflow should be:
 
 ```text
@@ -363,7 +368,7 @@ Convert Gitea automation to Bash workflow commands](http://gsa-gitea.ent.co.vent
 
 Record decisions here as the workflow is established.
 
-- Project name: TBD
+- Project name: Powerpuff Girls
 - Initial milestone: TBD
 - Label taxonomy owner: TBD
 - Gitea API authentication method: TBD
