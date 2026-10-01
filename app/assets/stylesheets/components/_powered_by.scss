@@ -24,20 +24,3 @@
   border-color: $brand-navy;
   text-decoration: none;
 }
-
-.paperboy-version {
-  position: fixed;
-  left: 50%;
-  bottom: 10px;
-  z-index: 900;
-  transform: translateX(-50%);
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid $border-muted;
-  color: $text-muted;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}

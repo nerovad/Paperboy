@@ -1,0 +1,26 @@
+<%# app/views/shared/_sidebar_footer.html.erb
+    The foot of every app's sidebar: the paperboy beside the name and the
+    running version. Signed in he is the app's help affordance and opens
+    Tips & Tricks; he dispatches the window event rather than reaching for the
+    dialog, which the layout renders. Signed out there is nothing to give tips
+    about, so he is just scenery. %>
+<div class="sidebar-footer">
+  <% if current_user %>
+    <button type="button"
+            class="app-mascot"
+            data-controller="search-command"
+            data-command-event="tips:open"
+            data-action="search-command#run"
+            aria-label="Tips and tricks">
+      <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true } %>
+    </button>
+  <% else %>
+    <span class="app-mascot">
+      <%= image_tag "Paperboy_Icon_0826.png", alt: "", aria: { hidden: true } %>
+    </span>
+  <% end %>
+  <div class="sidebar-footer__text">
+    <span class="sidebar-footer__name">Paperboy</span>
+    <span class="paperboy-version" aria-label="Paperboy version">v<%= paperboy_version %></span>
+  </div>
+</div>
