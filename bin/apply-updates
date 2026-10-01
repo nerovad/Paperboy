@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+issue_number=''
+milestone_title=''
+apply=false
+label_names=()
+usage() {
+  cat <<'EOF'
+Usage: bin/apply-updates --issue NUMBER [OPTIONS]
+
+Plan explicit label and milestone updates for one Gitea issue. The default is
+dry-run; add --apply only after reviewing the plan.
+
+Options:
+  --issue NUMBER       Issue number to update (required)
+  --add-label NAME     Add a repository label (repeatable)
+  --milestone TITLE    Assign the named milestone
+  --apply              Apply the planned remote changes
+  --url URL            Override the Gitea base URL
+  --owner NAME         Override the repository owner
+  --repository NAME    Override the repository name
+  -h, --help           Show this help
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --issue) issue_number="$2"; shift 2 ;;
+    --add-label) label_names+=("$2"); shift 2 ;;
+    --milestone) milestone_title="$2"; shift 2 ;;
+    --apply) apply=true; shift ;;
+    --url) GITEA_URL="$2"; shift 2 ;;
+    --owner) GITEA_OWNER="$2"; shift 2 ;;
+    --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ "${issue_number}" =~ ^[0-9]+$ ]] || { echo '--issue requires a number' >&2; exit 2; }
+(( ${#label_names[@]} > 0 || ${#milestone_title} > 0 )) || {
+  echo 'At least one update is required' >&2
+  exit 2
+}
+
+gitea_require_commands
+gitea_load_config
+issue="$(gitea_get "issues/${issue_number}")"
+current_labels="$(jq -r '(.labels // [])[] | .name' <<<"${issue}")"
+label_ids=()
+new_labels=()
+
+for label_name in "${label_names[@]}"; do
+  label_id="$(gitea_label_id "${label_name}")" || {
+    echo "Unknown label: ${label_name}" >&2
+    exit 1
+  }
+  if ! grep -Fxq "${label_name}" <<<"${current_labels}"; then
+    label_ids+=("${label_id}")
+    new_labels+=("${label_name}")
+  fi
+done
+
+milestone_id=''
+milestone_change=false
+if [[ -n "${milestone_title}" ]]; then
+  milestone_id="$(gitea_milestone_id "${milestone_title}")" || {
+    echo "Unknown milestone: ${milestone_title}" >&2
+    exit 1
+  }
+  current_milestone_id="$(jq -r '.milestone.id // empty' <<<"${issue}")"
+  [[ "${current_milestone_id}" == "${milestone_id}" ]] || milestone_change=true
+fi
+
+echo 'Gitea update plan'
+echo "Issue: #${issue_number} — $(jq -r '.title' <<<"${issue}")"
+for label_name in "${new_labels[@]}"; do echo "- add label: ${label_name}"; done
+if [[ "${milestone_change}" == true ]]; then echo "- assign milestone: ${milestone_title}"; fi
+if (( ${#new_labels[@]} == 0 )) && [[ "${milestone_change}" == false ]]; then echo '- no changes required'; fi
+
+if [[ "${apply}" != true ]]; then
+  echo 'Dry run only: no Gitea state was changed. Use --apply to execute this plan.'
+  exit 0
+fi
+
+if (( ${#label_ids[@]} > 0 )); then
+  label_payload="$(printf '%s\n' "${label_ids[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | tonumber) | {labels: .}')"
+  gitea_json POST "issues/${issue_number}/labels" "${label_payload}" >/dev/null
+  echo "Applied labels: $(IFS=', '; echo "${new_labels[*]}")"
+fi
+
+if [[ "${milestone_change}" == true ]]; then
+  milestone_payload="$(jq -nc --argjson id "${milestone_id}" '{milestone: $id}')"
+  gitea_json PATCH "issues/${issue_number}" "${milestone_payload}" >/dev/null
+  echo "Applied milestone: ${milestone_title}"
+fi
+
+echo "Audit: issue #${issue_number} updated by explicit --apply request."
