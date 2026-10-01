@@ -98,8 +98,9 @@ RAILS_ENV=development bundle exec rails storage:adopt_legacy
 # stage/prod deploy picks it up. See lib/tasks/acl.rake.
 #
 # Form definitions ride along in db/forms.yml for exactly the same reason: the
-# form builder writes .erb views, which travel through git, and form_templates
-# and form_fields rows, which travel nowhere on their own. The two files are
+# form builder writes .erb views, which travel through git, and form_templates,
+# form_fields and workflow rows (statuses, routing, emails), which travel
+# nowhere on their own. The two files are
 # dumped and committed together so a form and the ACL that opens it cannot land
 # in stage or prod one deploy apart. See lib/tasks/forms.rake.
 #

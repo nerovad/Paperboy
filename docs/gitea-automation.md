@@ -85,6 +85,11 @@ should close when the change is merged and the acceptance criteria are met.
 
 ## Project board
 
+The Paperboy workflow project is **Powerpuff Girls**. It tracks current issue
+and pull request status from planning through completion. The project name
+honors the daughters of the dads who maintain this workflow; its emphasis on
+strength, spirit, and teamwork reflects the way the team works together.
+
 The initial Project workflow should be:
 
 ```text
@@ -246,7 +251,7 @@ initial Project board remains a web UI or administrator task.
 Run the Phase 3 report locally with:
 
 ```bash
-ruby script/gitea_status_report.rb
+bin/status-report
 ```
 
 The report reads `GITEA_TOKEN` from the environment or the local `.env` file.
@@ -257,13 +262,67 @@ The Phase 4 updater is dry-run by default. It only targets one explicit issue
 and supports label additions and milestone assignment:
 
 ```bash
-ruby script/gitea_apply_updates.rb --issue 10 --add-label priority:normal
-ruby script/gitea_apply_updates.rb --issue 10 --milestone "Gitea Workflow Phase 3"
+bin/apply-updates --issue 10 --add-label priority:normal
+bin/apply-updates --issue 10 --milestone "Gitea Workflow Phase 3"
 ```
 
 Review the plan first, then repeat the command with `--apply` to make the
 change. It never closes issues, merges pull requests, deletes branches, or
 modifies Projects.
+
+## Bash workflow commands
+
+The current workflow commands are executable files under `bin/`:
+
+- `bin/status-report` — read-only issue, pull request, and milestone report.
+- `bin/apply-updates` — dry-run-first label and milestone updates for one issue.
+- `bin/new-issue` — create a typed issue with interactive templates or command
+  line options.
+- `bin/worktree` — create, locate, or safely clean up an issue-linked
+  worktree.
+
+Create an issue non-interactively:
+
+```bash
+bin/new-issue --type feature \
+  --title "Add example capability" \
+  --body-file /path/to/description.md \
+  --milestone "Gitea Workflow Bash CLI"
+```
+
+If `--type`, `--title`, or a body option is omitted, `bin/new-issue` prompts
+for it. Use `--no-milestone` to skip the optional milestone prompt. The command
+creates and labels the Gitea issue first, then prints the branch name to use.
+
+Create and locate its worktree using only the branch name:
+
+```bash
+bin/worktree create issue/123-add-example-capability
+cd "$(bin/worktree switch issue/123-add-example-capability)"
+```
+
+`bin/worktree` accepts only `issue/<number>-<lowercase-slug>` branches and
+places new worktrees inside the repository under `worktrees/`.
+Existing worktrees in the former sibling `<repo>-worktrees/` location are not
+migrated automatically.
+
+After a pull request is merged, Gitea automatically deletes the remote source
+branch. To remove the corresponding local worktree and branch, run:
+
+```bash
+bin/worktree cleanup issue/123-add-example-capability
+```
+
+Cleanup verifies that the branch is merged into the default branch, refuses
+the current or a dirty worktree, removes the worktree, and then deletes the
+local branch. It never force-removes a worktree or branch. Existing worktrees
+remain until this command is explicitly run.
+
+The repository setting `default_delete_branch_after_merge` is enabled so
+merged pull requests do not leave short-lived remote branches behind.
+
+The Bash conversion and workflow improvements are tracked in [issue #12 —
+Convert Gitea automation to Bash workflow commands](http://gsa-gitea.ent.co.ventura.ca.us:3000/BSS/Paperboy/issues/12).
 
 ### Phase 2 — connect development work
 
@@ -311,7 +370,7 @@ modifies Projects.
 
 Record decisions here as the workflow is established.
 
-- Project name: TBD
+- Project name: Powerpuff Girls
 - Initial milestone: TBD
 - Label taxonomy owner: TBD
 - Gitea API authentication method: TBD

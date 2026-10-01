@@ -25,6 +25,75 @@
 - Git
   * use git mv when moving files
 
+## Gitea workflow commands
+
+The Paperboy repository uses issue-linked branches and worktrees for
+implementation work. The commands below use the Gitea API and read
+`GITEA_TOKEN` from the environment or the ignored repository `.env` file.
+The shared `.env` in the main checkout is also discovered automatically when
+the command runs from a linked worktree. Never commit the token.
+
+The local Gitea service is reached by IP from the sandbox. The ignored `.env`
+should contain:
+
+```dotenv
+GITEA_URL=http://10.135.204.125:3000
+GITEA_TOKEN=<local token value>
+```
+
+Keep the actual token value only in `.env` or the process environment; do not
+replace the placeholder above in tracked documentation.
+
+Create an issue before creating its branch:
+
+```bash
+bin/new-issue --type feature \
+  --title "Short imperative title" \
+  --body-file /path/to/issue.md
+```
+
+The command supports `bug`, `feature`, `chore`, and `infrastructure` issue
+types. Missing required options are prompted. Use `--no-milestone` to skip
+the optional milestone prompt.
+
+Create or locate the issue worktree with the issue number and a lowercase
+slug:
+
+```bash
+bin/worktree create issue/123-short-description
+cd "$(bin/worktree switch issue/123-short-description)"
+```
+
+The branch must match `issue/<number>-<lowercase-slug>`. After the pull
+request merges, update `master` and clean up the local worktree and branch:
+
+```bash
+git switch master
+git pull --ff-only
+bin/worktree cleanup issue/123-short-description
+```
+
+Cleanup refuses the default branch, an unmerged branch, the current worktree,
+or a dirty worktree. It never force-removes work.
+
+Use the read-only status report to review issues, pull requests, milestones,
+missing labels, missing milestones, stale work, and unlinked pull requests:
+
+```bash
+bin/status-report
+```
+
+Use `bin/apply-updates` only for an explicit, approved issue update. It is
+dry-run by default:
+
+```bash
+bin/apply-updates --issue 123 --add-label priority:normal
+bin/apply-updates --issue 123 --add-label priority:normal --apply
+```
+
+See `docs/gitea-automation.md` for the complete workflow and project
+conventions.
+
 ## Stylesheets
 
 SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).

@@ -1,0 +1,89 @@
+# shellcheck shell=bash
+
+gitea_load_config() {
+  local env_file="${GITEA_ENV_FILE:-}"
+
+  if [[ -z "${env_file}" ]]; then
+    env_file=".env"
+
+    if [[ ! -f "${env_file}" ]]; then
+      local common_dir
+      common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+      if [[ "${common_dir}" == */.git ]]; then
+        env_file="${common_dir%/.git}/.env"
+      fi
+    fi
+  fi
+
+  if [[ -f "${env_file}" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${env_file}"
+    set +a
+  fi
+
+  GITEA_URL="${GITEA_URL:-http://10.135.204.125:3000}"
+  GITEA_OWNER="${GITEA_OWNER:-BSS}"
+  GITEA_REPOSITORY="${GITEA_REPOSITORY:-Paperboy}"
+  GITEA_API="${GITEA_URL%/}/api/v1/repos/${GITEA_OWNER}/${GITEA_REPOSITORY}"
+
+  : "${GITEA_TOKEN:?GITEA_TOKEN is required; set it in the environment or .env}"
+}
+
+gitea_require_commands() {
+  local command_name
+
+  for command_name in curl jq; do
+    command -v "${command_name}" >/dev/null 2>&1 || {
+      echo "Required command not found: ${command_name}" >&2
+      return 1
+    }
+  done
+}
+
+gitea_get() {
+  local endpoint="$1"
+  shift
+
+  curl --fail-with-body --silent --show-error \
+    -H "Authorization: token ${GITEA_TOKEN}" \
+    -H 'Accept: application/json' \
+    "${GITEA_API}/${endpoint}" "$@"
+}
+
+gitea_json() {
+  local method="$1"
+  local endpoint="$2"
+  local payload="${3:-}"
+  local curl_args=(
+    --fail-with-body
+    --silent
+    --show-error
+    -X "${method}"
+    -H "Authorization: token ${GITEA_TOKEN}"
+    -H 'Accept: application/json'
+    -H 'Content-Type: application/json'
+  )
+
+  if [[ -n "${payload}" ]]; then
+    curl_args+=(--data-binary "${payload}")
+  fi
+
+  curl "${curl_args[@]}" "${GITEA_API}/${endpoint}"
+}
+
+gitea_label_id() {
+  local label_name="$1"
+
+  gitea_get 'labels?limit=100' |
+    jq -er --arg name "${label_name}" '.[] | select(.name == $name) | .id' |
+    head -n 1
+}
+
+gitea_milestone_id() {
+  local milestone_title="$1"
+
+  gitea_get 'milestones?state=all&limit=100' |
+    jq -er --arg title "${milestone_title}" '.[] | select(.title == $title) | .id' |
+    head -n 1
+}

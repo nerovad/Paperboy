@@ -1,45 +1,30 @@
-@use "base/tokens" as *;
-
-/* The paperboy mascot, fixed to the bottom-left of every page. Sits just clear
-   of the 280px sidebar so it reads as part of the main content area, not the
-   nav.
+/* The paperboy mascot, at the foot of every app's sidebar beside the name and
+   version -- see .sidebar-footer in layout/_sidebar.scss, which places it.
 
    Signed in it is a button that opens Tips & Tricks; signed out it is a plain
    decorative image. It is a one-off affordance like .cc-trigger or
    .hamburger-btn, deliberately outside the .btn system — see AGENTS.md. */
 .app-mascot {
-  position: fixed;
-  left: calc(280px + 16px);
-  bottom: 10px;
-  z-index: 900;
   display: block;
+  flex: 0 0 auto;
   padding: 0;
   border: 0;
   background: none;
   line-height: 0;
 
+  /* The artwork is black line on white fill. The faint glow keeps its outer
+     line from sinking into the sidebar's dark gradient. */
   img {
     display: block;
     width: auto;
-    height: 84px;
-  }
-
-  @media (max-width: 768px) {
-    /* The sidebar is off-canvas below this breakpoint. */
-    left: 12px;
-
-    img { height: 56px; }
+    height: 40px;
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.7));
   }
 }
 
-/* The signed-out mascot is scenery, not a control: clicks pass through it. */
-img.app-mascot {
-  width: auto;
-  height: 84px;
-  pointer-events: none;
+/* The signed-out mascot is scenery, not a control. */
+span.app-mascot {
   user-select: none;
-
-  @media (max-width: 768px) { height: 56px; }
 }
 
 button.app-mascot {
@@ -52,7 +37,7 @@ button.app-mascot {
   }
 
   &:focus-visible {
-    outline: 2px solid $primary-color;
+    outline: 2px solid rgba(255, 255, 255, 0.8);
     outline-offset: 4px;
     border-radius: 8px;
   }

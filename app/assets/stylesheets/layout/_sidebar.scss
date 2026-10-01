@@ -491,6 +491,56 @@
 
   }
 
+  /* Footer: the paperboy, the name and the running version, pinned to the
+     foot of the sidebar. `bottom` holds it there while a long list scrolls
+     beneath it; `top` pushes it down when the list is too short to reach.
+     The negative margins cancel the sidebar's padding so it sits flush.
+
+     It has to be opaque or the links would show through, so it repaints the
+     sidebar's own gradient at the sidebar's size, anchored to the same
+     corner -- the slice it shows lines up with what is behind it. */
+  .sidebar-footer {
+    --sidebar-footer-height: 64px;
+
+    position: sticky;
+    top: calc(100vh - var(--sidebar-footer-height));
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    height: var(--sidebar-footer-height);
+    margin: 20px -20px -20px;
+    padding: 0 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--sidebar-gradient) left bottom / 280px 100vh no-repeat;
+  }
+
+  .sidebar-footer__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    line-height: 1.2;
+  }
+
+  .sidebar-footer__name {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .paperboy-version {
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .nav-link mark {
     background-color: rgba(255, 255, 0, 0.4);
     color: inherit;
