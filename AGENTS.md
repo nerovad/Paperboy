@@ -25,6 +25,63 @@
 - Git
   * use git mv when moving files
 
+## Gitea workflow commands
+
+The Paperboy repository uses issue-linked branches and worktrees for
+implementation work. The commands below use the Gitea API and read
+`GITEA_TOKEN` from the environment or the repository's ignored `.env` file.
+Never commit the token.
+
+Create an issue before creating its branch:
+
+```bash
+bin/new-issue --type feature \
+  --title "Short imperative title" \
+  --body-file /path/to/issue.md
+```
+
+The command supports `bug`, `feature`, `chore`, and `infrastructure` issue
+types. Missing required options are prompted. Use `--no-milestone` to skip
+the optional milestone prompt.
+
+Create or locate the issue worktree with the issue number and a lowercase
+slug:
+
+```bash
+bin/worktree create issue/123-short-description
+cd "$(bin/worktree switch issue/123-short-description)"
+```
+
+The branch must match `issue/<number>-<lowercase-slug>`. After the pull
+request merges, update `master` and clean up the local worktree and branch:
+
+```bash
+git switch master
+git pull --ff-only
+bin/worktree cleanup issue/123-short-description
+```
+
+Cleanup refuses the default branch, an unmerged branch, the current worktree,
+or a dirty worktree. It never force-removes work.
+
+Use the read-only status report to review issues, pull requests, milestones,
+missing labels, missing milestones, stale work, and unlinked pull requests:
+
+```bash
+bin/status-report
+```
+
+Use `bin/apply-updates` only for an explicit, approved issue update. It is
+dry-run by default:
+
+```bash
+bin/apply-updates --issue 123 --add-label priority:normal
+bin/apply-updates --issue 123 --add-label priority:normal --apply
+```
+
+See `docs/gitea-automation.md` for the complete workflow and project
+conventions.
+
 ## Stylesheets
 
 SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).
