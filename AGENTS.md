@@ -29,8 +29,20 @@
 
 The Paperboy repository uses issue-linked branches and worktrees for
 implementation work. The commands below use the Gitea API and read
-`GITEA_TOKEN` from the environment or the repository's ignored `.env` file.
-Never commit the token.
+`GITEA_TOKEN` from the environment or the ignored repository `.env` file.
+The shared `.env` in the main checkout is also discovered automatically when
+the command runs from a linked worktree. Never commit the token.
+
+The local Gitea service is reached by IP from the sandbox. The ignored `.env`
+should contain:
+
+```dotenv
+GITEA_URL=http://10.135.204.125:3000
+GITEA_TOKEN=<local token value>
+```
+
+Keep the actual token value only in `.env` or the process environment; do not
+replace the placeholder above in tracked documentation.
 
 Create an issue before creating its branch:
 

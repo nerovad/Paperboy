@@ -1,7 +1,19 @@
 # shellcheck shell=bash
 
 gitea_load_config() {
-  local env_file="${GITEA_ENV_FILE:-.env}"
+  local env_file="${GITEA_ENV_FILE:-}"
+
+  if [[ -z "${env_file}" ]]; then
+    env_file=".env"
+
+    if [[ ! -f "${env_file}" ]]; then
+      local common_dir
+      common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+      if [[ "${common_dir}" == */.git ]]; then
+        env_file="${common_dir%/.git}/.env"
+      fi
+    fi
+  fi
 
   if [[ -f "${env_file}" ]]; then
     set -a
