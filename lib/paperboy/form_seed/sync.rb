@@ -4,57 +4,69 @@ module Paperboy
   module FormSeed
     # Applies db/forms.yml to this database: the forms:sync half of FormSeed.
     #
-    # Additive by default -- a form or field the file names is created here, and
-    # anything here the file does not mention is left alone. PRUNE=1 makes the
-    # file authoritative and deletes the extras instead. Everything runs inside
-    # one transaction, and DRY_RUN=1 produces the same log without writing.
+    # A form the file names is created here when it is missing, and its
+    # template columns and workflow are made to match the file (see
+    # FormSeed::Workflow). Fields are additive -- one here the file does not
+    # mention is left alone unless PRUNE=1 -- and a form here the file does not
+    # mention is never touched. Everything runs inside one transaction, and
+    # DRY_RUN=1 produces the same log without writing.
     #
-    # A field whose custom lookup names a table this database does not have
-    # fails Forms::Field validation. That is reported as a refusal rather than
-    # raised, so one stale definition cannot take a deploy down halfway through.
+    # A row this database cannot hold -- a field whose custom lookup names a
+    # table that is not here, a routing step for a group that is not -- fails
+    # validation. That is reported as a refusal rather than raised, so one
+    # stale definition cannot take a deploy down halfway through.
     module Sync
       module_function
 
       # Returns a list of human-readable change lines.
-      def call(dry:, prune:, create_templates:)
+      def call(dry:, prune:)
         data = FormSeed.load_file
-        Array(data['forms']).flat_map do |row|
-          form(row, dry: dry, prune: prune, create_templates: create_templates)
-        end
+        Array(data['forms']).flat_map { |row| form(row, dry: dry, prune: prune) }
       end
 
-      def form(row, dry:, prune:, create_templates:)
+      def form(row, dry:, prune:)
         class_name = row['class_name'].to_s.strip
         return ['! a form with a blank class_name in db/forms.yml -- skipped'] if class_name.empty?
 
         template = Forms::Template.find_by(class_name: class_name)
-        log = []
-        if template.nil?
-          return [held_back(class_name, row)] unless create_templates
+        log = template ? update_template(template, class_name, row, dry: dry) : ["+ form   #{class_name}"]
+        template ||= create_template(class_name, row) unless dry
+        return [refused(class_name, 'template', template)] if template&.new_record?
 
-          log << "+ form   #{class_name} -- bare template; its statuses and routing still need configuring"
-          template = create_template(class_name, row) unless dry
-        end
-        log + fields(template, class_name, Array(row['fields']), dry: dry, prune: prune)
+        log + fields(template, class_name, Array(row['fields']), dry: dry, prune: prune) +
+          Workflow.sync(template, class_name, row, dry: dry)
       end
 
-      # A template is a form's workflow as much as its shape, and this file
-      # carries only the shape. Naming what was withheld beats inventing a
-      # half-configured form in the environment people actually file in.
-      def held_back(class_name, row)
-        count = Array(row['fields']).size
-        "! #{class_name}: no template here -- #{count} field#{'s' unless count == 1} held back " \
-          '(CREATE_TEMPLATES=1 to add a bare one)'
-      end
-
-      # db/forms.yml carries a form's shape and not its workflow, so an
-      # approval form arrives with no routing — which Forms::Template refuses
-      # to save. Supervisor is what the form builder offers first, and the log
-      # line above already says the routing still needs configuring.
+      # Returned unsaved, with its errors, when this database will not have it.
       def create_template(class_name, row)
-        attributes = row.slice(*FormSeed::TEMPLATE_COLUMNS).merge('class_name' => class_name)
-        attributes['approval_routing_to'] = 'supervisor' if attributes['submission_type'] == 'approval'
-        Forms::Template.create!(attributes)
+        template = Forms::Template.new('class_name' => class_name)
+        assign_template(template, row, row.slice(*FormSeed::TEMPLATE_COLUMNS))
+        save(template)
+        template
+      end
+
+      # Only the columns the file carries, so an older db/forms.yml that knows
+      # nothing of a column cannot clear it.
+      def update_template(template, class_name, row, dry:)
+        changed = row.slice(*FormSeed::TEMPLATE_COLUMNS).reject { |column, value| template.public_send(column) == value }
+        return [] if changed.empty?
+
+        line = "~ form   #{class_name}: #{changed.keys.join(', ')}"
+        return [line] if dry
+
+        assign_template(template, row, changed)
+        save(template) ? [line] : [refused(class_name, 'template', template)]
+      end
+
+      # The template is saved before its routing steps and statuses are, which
+      # an approval form's validations would refuse. pending_routing_steps is
+      # how the form builder says they are on their way. A file dumped before
+      # routing travelled names none, so such a form falls back to the
+      # supervisor, the first thing the builder offers.
+      def assign_template(template, row, attributes)
+        template.assign_attributes(attributes)
+        template.pending_routing_steps = row['routing_steps'].presence
+        template.approval_routing_to ||= 'supervisor' if template.requires_legacy_routing?
       end
 
       def fields(template, class_name, rows, dry:, prune:)
