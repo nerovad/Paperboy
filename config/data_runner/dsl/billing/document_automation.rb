@@ -5,7 +5,7 @@
   {
     steps: {
       manual: {
-        enabled: true,
+        enabled: false,
         steps: Workflow::MANUAL_STEPS
       },
       scheduled: {
