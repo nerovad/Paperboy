@@ -273,7 +273,8 @@ The current workflow commands are executable files under `bin/`:
 - `bin/apply-updates` — dry-run-first label and milestone updates for one issue.
 - `bin/new-issue` — create a typed issue with interactive templates or command
   line options.
-- `bin/worktree` — create or locate a worktree for an issue-linked branch.
+- `bin/worktree` — create, locate, or safely clean up an issue-linked
+  worktree.
 
 Create an issue non-interactively:
 
@@ -297,6 +298,21 @@ cd "$(bin/worktree switch issue/123-add-example-capability)"
 
 `bin/worktree` accepts only `issue/<number>-<lowercase-slug>` branches and
 places worktrees beside the repository under `<repo>-worktrees/`.
+
+After a pull request is merged, Gitea automatically deletes the remote source
+branch. To remove the corresponding local worktree and branch, run:
+
+```bash
+bin/worktree cleanup issue/123-add-example-capability
+```
+
+Cleanup verifies that the branch is merged into the default branch, refuses
+the current or a dirty worktree, removes the worktree, and then deletes the
+local branch. It never force-removes a worktree or branch. Existing worktrees
+remain until this command is explicitly run.
+
+The repository setting `default_delete_branch_after_merge` is enabled so
+merged pull requests do not leave short-lived remote branches behind.
 
 The Bash conversion and workflow improvements are tracked in [issue #12 —
 Convert Gitea automation to Bash workflow commands](http://gsa-gitea.ent.co.ventura.ca.us:3000/BSS/Paperboy/issues/12).
