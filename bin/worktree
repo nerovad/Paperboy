@@ -9,7 +9,7 @@ Usage:
   bin/worktree cleanup issue/<number>-<slug>
 
 Create or locate a worktree for a branch following the issue-linked convention.
-The worktree is placed beside the repository in <repo>-worktrees/<branch>.
+The worktree is placed inside the repository in worktrees/<branch>.
 Use: cd "$(bin/worktree switch issue/123-short-description)"
 
 Cleanup only removes a branch that is merged into the default branch and has
@@ -37,7 +37,7 @@ fi
 
 repo_root="$(git rev-parse --show-toplevel)"
 repo_name="$(basename "${repo_root}")"
-worktree_root="$(dirname "${repo_root}")/${repo_name}-worktrees"
+worktree_root="${repo_root}/worktrees"
 worktree_path="${worktree_root}/${branch_name//\//-}"
 branch_ref="refs/heads/${branch_name}"
 default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
