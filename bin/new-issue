@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+issue_type=''
+title=''
+body=''
+body_file=''
+milestone_title=''
+no_milestone=false
+extra_labels=()
+usage() {
+  cat <<'EOF'
+Usage: bin/new-issue [OPTIONS]
+
+Create a Paperboy Gitea issue. Missing required values are prompted.
+
+Options:
+  --type TYPE          bug, feature, chore, or infrastructure
+  --title TITLE        Issue title
+  --body TEXT          Complete Markdown issue body
+  --body-file PATH     Read the Markdown body from PATH
+  --label NAME         Add a label (repeatable; type label is automatic)
+  --milestone TITLE    Assign a milestone
+  --no-milestone       Do not prompt for a milestone
+  --url URL            Override the Gitea base URL
+  --owner NAME         Override the repository owner
+  --repository NAME    Override the repository name
+  -h, --help           Show this help
+
+After creation, use the suggested issue-linked branch with bin/worktree.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --type) issue_type="$2"; shift 2 ;;
+    --title) title="$2"; shift 2 ;;
+    --body) body="$2"; shift 2 ;;
+    --body-file) body_file="$2"; shift 2 ;;
+    --label) extra_labels+=("$2"); shift 2 ;;
+    --milestone) milestone_title="$2"; shift 2 ;;
+    --no-milestone) no_milestone=true; shift ;;
+    --url) GITEA_URL="$2"; shift 2 ;;
+    --owner) GITEA_OWNER="$2"; shift 2 ;;
+    --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+gitea_require_commands
+gitea_load_config
+
+if [[ -n "${body}" && -n "${body_file}" ]]; then
+  echo 'Use only one of --body or --body-file' >&2
+  exit 2
+fi
+if [[ -n "${body_file}" ]]; then
+  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
+  body="$(<"${body_file}")"
+fi
+
+if [[ -z "${issue_type}" ]]; then
+  read -r -p 'Type (bug, feature, chore, infrastructure): ' issue_type
+fi
+case "${issue_type}" in
+  bug|feature|chore|infrastructure) ;;
+  *) echo "Unsupported issue type: ${issue_type}" >&2; exit 2 ;;
+esac
+
+if [[ -z "${title}" ]]; then
+  read -r -p 'Title: ' title
+fi
+[[ -n "${title}" ]] || { echo 'Title is required' >&2; exit 2; }
+
+if [[ -z "${body}" ]]; then
+  case "${issue_type}" in
+    bug)
+      read -r -p 'Problem: ' problem
+      read -r -p 'Steps to reproduce: ' reproduction
+      read -r -p 'Expected behavior: ' expected
+      read -r -p 'Actual behavior: ' actual
+      read -r -p 'Acceptance criteria: ' acceptance
+      body=$'## Problem\n\n'"${problem}"$'\n\n## Steps to reproduce\n\n'"${reproduction}"$'\n\n## Expected behavior\n\n'"${expected}"$'\n\n## Actual behavior\n\n'"${actual}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n' ;;
+    feature)
+      read -r -p 'Problem or opportunity: ' problem
+      read -r -p 'Proposed capability: ' capability
+      read -r -p 'Acceptance criteria: ' acceptance
+      read -r -p 'Scope considerations: ' scope
+      body=$'## Problem or opportunity\n\n'"${problem}"$'\n\n## Proposed capability\n\n'"${capability}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n\n## Scope considerations\n\n'"${scope}"$'\n' ;;
+    chore)
+      read -r -p 'Work to perform: ' work
+      read -r -p 'Reason: ' reason
+      read -r -p 'Acceptance criteria: ' acceptance
+      read -r -p 'Risk and impact: ' risk
+      body=$'## Work to perform\n\n'"${work}"$'\n\n## Reason\n\n'"${reason}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n\n## Risk and impact\n\n'"${risk}"$'\n' ;;
+    infrastructure)
+      read -r -p 'Request: ' request
+      read -r -p 'Reason and outcome: ' outcome
+      read -r -p 'Environment: ' environment
+      read -r -p 'Required coordination: ' coordination
+      read -r -p 'Acceptance criteria: ' acceptance
+      body=$'## Request\n\n'"${request}"$'\n\n## Reason and outcome\n\n'"${outcome}"$'\n\n## Environment\n\n'"${environment}"$'\n\n## Required coordination\n\n'"${coordination}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n' ;;
+  esac
+fi
+
+if [[ -z "${milestone_title}" && "${no_milestone}" != true ]]; then
+  read -r -p 'Milestone (optional): ' milestone_title
+fi
+
+label_names=("${issue_type}" "${extra_labels[@]}")
+issue_payload="$(jq -nc --arg title "${title}" --arg body "${body}" '{title: $title, body: $body}')"
+issue="$(gitea_json POST 'issues' "${issue_payload}")"
+issue_number="$(jq -r '.number' <<<"${issue}")"
+issue_url="$(jq -r '.html_url' <<<"${issue}")"
+
+label_ids=()
+for label_name in "${label_names[@]}"; do
+  label_id="$(gitea_label_id "${label_name}")" || {
+    echo "Issue created, but label was not found: ${label_name}" >&2
+    exit 1
+  }
+  label_ids+=("${label_id}")
+done
+label_payload="$(printf '%s\n' "${label_ids[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | tonumber) | {labels: .}')"
+gitea_json POST "issues/${issue_number}/labels" "${label_payload}" >/dev/null
+
+if [[ -n "${milestone_title}" ]]; then
+  milestone_id="$(gitea_milestone_id "${milestone_title}")" || {
+    echo "Issue created, but milestone was not found: ${milestone_title}" >&2
+    exit 1
+  }
+  milestone_payload="$(jq -nc --argjson id "${milestone_id}" '{milestone: $id}')"
+  gitea_json PATCH "issues/${issue_number}" "${milestone_payload}" >/dev/null
+fi
+
+slug="$(tr '[:upper:]' '[:lower:]' <<<"${title}" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+branch_name="issue/${issue_number}-${slug}"
+echo "Created issue #${issue_number}: ${issue_url}"
+echo "Suggested branch: ${branch_name}"
+echo "Create its worktree with: bin/worktree create ${branch_name}"

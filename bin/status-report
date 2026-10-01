@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+stale_days=30
+usage() {
+  cat <<'EOF'
+Usage: bin/status-report [OPTIONS]
+
+Read-only report of Paperboy's Gitea issues, pull requests, and milestones.
+
+Options:
+  --stale-days DAYS  Mark work older than DAYS as stale (default: 30)
+  --url URL          Override the Gitea base URL
+  --owner NAME       Override the repository owner
+  --repository NAME  Override the repository name
+  -h, --help         Show this help
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --stale-days) stale_days="$2"; shift 2 ;;
+    --url) GITEA_URL="$2"; shift 2 ;;
+    --owner) GITEA_OWNER="$2"; shift 2 ;;
+    --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ "${stale_days}" =~ ^[0-9]+$ ]] || {
+  echo '--stale-days must be a non-negative integer' >&2
+  exit 2
+}
+
+gitea_require_commands
+gitea_load_config
+stale_before="$(date -d "-${stale_days} days" --iso-8601=seconds)"
+issues="$(gitea_get 'issues?state=open&type=issues&limit=100')"
+pull_requests="$(gitea_get 'pulls?state=open&limit=100')"
+milestones="$(gitea_get 'milestones?state=all&limit=100')"
+
+echo 'Paperboy Gitea status report'
+echo "Generated: $(date --iso-8601=seconds)"
+echo "Repository: ${GITEA_OWNER}/${GITEA_REPOSITORY}"
+echo "Stale threshold: ${stale_days} days"
+echo
+echo "Open issues: $(jq 'length' <<<"${issues}")"
+echo "Open pull requests: $(jq 'length' <<<"${pull_requests}")"
+
+print_items() {
+  local title="$1"
+  local items="$2"
+
+  echo
+  echo "${title}: $(jq 'length' <<<"${items}")"
+  if [[ "$(jq 'length' <<<"${items}")" -eq 0 ]]; then
+    echo '- none'
+  else
+    jq -r '.[] | "- #\(.number): \(.title)"' <<<"${items}"
+  fi
+}
+
+missing_labels="$(jq '[.[] | select((.labels // []) | length == 0)]' <<<"${issues}")"
+missing_milestones="$(jq '[.[] | select(.milestone == null)]' <<<"${issues}")"
+blocked="$(jq '[.[] | select((.labels // []) | map(.name) | index("blocked"))]' <<<"${issues}")"
+stale_issues="$(jq --arg cutoff "${stale_before}" '[.[] | select(.updated_at < $cutoff)]' <<<"${issues}")"
+stale_pull_requests="$(jq --arg cutoff "${stale_before}" '[.[] | select(.updated_at < $cutoff)]' <<<"${pull_requests}")"
+unlinked_pull_requests="$(jq '[.[] | select(((.title // "") + " " + (.body // "")) | test("(#|issues? )([0-9]+)"; "i") | not)]' <<<"${pull_requests}")"
+
+print_items 'Issues needing labels' "${missing_labels}"
+print_items 'Issues needing milestones' "${missing_milestones}"
+print_items 'Blocked issues' "${blocked}"
+print_items 'Stale issues' "${stale_issues}"
+print_items 'Stale pull requests' "${stale_pull_requests}"
+print_items 'Pull requests without a linked issue' "${unlinked_pull_requests}"
+print_items 'Open pull requests needing attention' "${pull_requests}"
+
+echo
+echo 'Milestones'
+if [[ "$(jq 'length' <<<"${milestones}")" -eq 0 ]]; then
+  echo '- none'
+else
+  jq -r '.[] | (.open_issues + .closed_issues) as $total |
+    (if $total == 0 then 0 else ((.closed_issues * 100) / $total) end) as $completion |
+    "- \(.title): \($completion)% complete (\(.open_issues) open, \(.closed_issues) closed)"' \
+    <<<"${milestones}"
+fi
+
+echo
+echo 'Read-only report: no Gitea state was changed.'
