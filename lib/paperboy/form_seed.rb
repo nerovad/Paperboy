@@ -1,15 +1,22 @@
 # frozen_string_literal: true
 
 module Paperboy
-  # Mirrors the form *definitions* -- form_templates and the form_fields hanging
-  # off them -- across Paperboy_Dev / _Stage / _Prod, which are three independent
-  # databases. Driven by lib/tasks/forms.rake: forms:dump here, commit
-  # db/forms.yml, forms:sync there. This half writes the file; FormSeed::Sync
-  # applies it.
+  # Mirrors the form *definitions* -- form_templates, the form_fields hanging
+  # off them and the workflow that runs them -- across Paperboy_Dev / _Stage /
+  # _Prod, which are three independent databases. Driven by lib/tasks/forms.rake:
+  # forms:dump here, commit db/forms.yml, forms:sync there. This half writes the
+  # file; FormSeed::Sync applies it.
   #
   # The form builder writes two things: the .erb views, which reach every
-  # environment through git, and these rows, which until this task reached none.
-  # That split is why a dropdown configured in dev renders empty in production.
+  # environment through git, and these rows, which reach none on their own.
+  # That split is why a dropdown configured in dev rendered empty in production,
+  # and why a form built in dev, or an email reworded there, never arrived.
+  #
+  # Dev is the source of truth. A form the file names is created where it is
+  # missing, and its template columns, statuses, routing steps, emails, email
+  # rules and copy recipients are made to match (see FormSeed::Workflow).
+  # Fields alone stay additive -- removing one needs PRUNE=1 -- because the
+  # file is a union and a field dropped in dev is still in it.
   #
   # Nothing is matched on an id that a single database owns:
   #   * templates by class_name -- it names a class checked into the repo, while
@@ -18,21 +25,20 @@ module Paperboy
   #     field writes to.
   #   * conditional_field_id and conditional_answer_field_id by the field name
   #     they point at, rewritten to local ids on sync.
-  #   * restricted_to_group_id by Group_Name, the same key db/acl.yml already
-  #     carries between these three databases.
+  #   * restricted_to_group_id, and group_id on a workflow row, by Group_Name,
+  #     the same key db/acl.yml already carries between these three databases.
   #
-  # Portable as they stand, and so dumped raw: restricted_to_employee_id and a
+  # Portable as they stand, and so dumped raw: every employee id and a
   # template's agency/division/department/unit ids all name GSABSS rows, which
   # are shared reference data rather than per-database.
   #
   # Deliberately NOT handled:
-  #   * form_template_statuses, _routing_steps, _email_steps, _copy_recipients.
-  #     They are a form's workflow rather than its shape, and carry approver ids
-  #     and status wiring that each environment tunes for itself.
-  #   * reference_prefix, which has a unique index -- a dumped prefix could
-  #     collide with a different form here and abort a deploy mid-transaction.
-  #   * archived, metabase_dashboard_id, inbox_buttons, tags: operational state,
-  #     set where the form actually runs.
+  #   * reference_prefix, which has a unique index and is stamped on references
+  #     already issued. A new template derives its own, as it does in the builder.
+  #   * archived, has_dashboard, metabase_dashboard_id: operational state, set
+  #     where the form actually runs.
+  #   * form_visibility_grants and subscriptions: who sees or hears about a
+  #     submission, granted per environment like the rest of the ACL screens.
   module FormSeed
     PATH = Rails.root.join('db/forms.yml')
 
@@ -42,10 +48,12 @@ module Paperboy
                        restricted_to_employee_id restricted_to_org_filter_level
                        conditional_values conditional_answer_mappings].freeze
 
-    # Template columns carried when CREATE_TEMPLATES=1 invents a bare row.
+    # Template columns that mean the same thing in every database.
     TEMPLATE_COLUMNS = %w[name page_count page_headers submission_type description
                           form_number form_type agency_id division_id department_id
-                          unit_id].freeze
+                          unit_id approval_routing_to approval_employee_id
+                          status_transition_mode inbox_buttons tags records_table
+                          skip_code_generation].freeze
 
     # Pointer columns, dumped as the field_name they name rather than as an id.
     LINKS = { 'conditional_field' => 'conditional_field_id',
@@ -61,9 +69,12 @@ module Paperboy
     def form_row(template, groups)
       fields = Forms::Field.where(form_template_id: template.id).order(:page_number, :position, :id).to_a
       by_id = fields.index_by(&:id)
+      # Not compacted: a column dev has blanked has to say so, or sync could
+      # not tell it from one an older file never carried.
       { 'class_name' => template.class_name }
-        .merge(plain(template.slice(*TEMPLATE_COLUMNS).to_h).compact)
+        .merge(plain(template.slice(*TEMPLATE_COLUMNS).to_h))
         .merge('fields' => fields.map { |field| field_row(field, by_id, groups) })
+        .merge(Workflow.dump(template, groups))
     end
 
     def field_row(field, by_id, groups)

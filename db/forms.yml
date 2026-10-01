@@ -13,6 +13,19 @@ forms:
   division_id: '4660'
   department_id: '4661'
   unit_id: '4661'
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: transportation,security
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: locker_location
     field_type: dropdown
@@ -89,6 +102,49 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Reyleen Dowler
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: employee
+    employee_id: 134622
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: CarpoolForm
   name: Carpool
   page_count: 5
@@ -97,6 +153,26 @@ forms:
   - Vehicle Info
   - Additional Information
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: car,commute,transportation,security
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: passengers
     field_type: choices_dropdown
@@ -236,6 +312,49 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Reyleen Dowler
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: denied
+    name: Denied
+    category: denied
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: approved
+    name: Approved
+    category: approved
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: employee
+    employee_id: 134622
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: CriticalInformationReporting
   name: Critical Information Reporting
   page_count: 5
@@ -251,6 +370,20 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  - status_dropdown
+  tags: Safety,outage,elevator
+  records_table: true
+  skip_code_generation: false
   fields:
   - field_name: incident_type
     field_type: dropdown
@@ -529,12 +662,79 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: scheduled
+    name: Scheduled
+    category: scheduled
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: false
+  - key: resolved
+    name: Resolved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps: []
+  emails:
+  - kind: awaiting_approval
+    body: |-
+      Hello {{recipient_first_name}},
+
+      A {{form_name}} is waiting for your approval.
+
+      Reference: {{reference}}
+      Submitted by: {{submitter_name}}
+      Submitted: {{submitted_at}}
+      Status: {{status_label}}
+      Approval step: {{approval_step}}
+      Incident Type: {{field.incident_type}}
+      Urgency of Reporting: {{field.urgency}}
+      Location: {{field.location}}
+      Impact: {{field.impact}}
+      When - Impact Started: {{field.impact_started}}
+
+      {{link}}
+  - kind: new_submission
+    body: |-
+      Hello {{recipient_first_name}},
+
+      A new {{form_name}} has been submitted.
+
+      Reference: {{reference}}
+      Submitted by: {{submitter_name}}
+      Submitted: {{submitted_at}}
+      Status: {{status_label}}
+      Incident Type: {{field.incident_type}}
+      Urgency of Reporting: {{field.urgency}}
+      Location: {{field.location}}
+      Impact: {{field.impact}}
+      When - Impact Started: {{field.impact_started}}
+
+      {{link}}
+  email_steps: []
+  copy_recipients: []
 - class_name: FleetVehicleGaragingForm
   name: Fleet Vehicle Garaging
-  page_count: 4
+  page_count: 3
   page_headers:
   - Vehicle Info
-  - Garaging Location
   submission_type: database
   description: Fleet Vehicle Garaging track the location and person(s) responsible
     for each county vehicle.
@@ -544,6 +744,20 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  - status_history
+  tags: cars,parking,gsa,general services agency
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: vehicle_number
     field_type: dropdown
@@ -653,6 +867,25 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
+  - field_name: last_updated
+    field_type: text
+    label: Last Updated
+    page_number: 3
+    position: 4
+    required: false
+    options:
+      answer_lookup:
+        database: paperboy
+        table: fleet_vehicles
+        match_column: vehicle_number
+        return_column: updated_at
+        return_join_columns: []
+        return_join_separator: " "
+    read_only: always
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_answer_field: vehicle_number
   - field_name: vehicle_assigned_to
     field_type: text
     label: Vehicle Assigned to
@@ -696,32 +929,18 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
-  - field_name: other_assignee
+  - field_name: last_updated_by
     field_type: text
-    label: Other Assignee
+    label: Last Updated By
     page_number: 3
-    position: 6
-    required: false
-    options: {}
-    read_only: none
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - Other
-    conditional_field: assign_to
-  - field_name: last_updated
-    field_type: text
-    label: Last Updated
-    page_number: 3
-    position: 7
+    position: 5
     required: false
     options:
       answer_lookup:
         database: paperboy
         table: fleet_vehicles
         match_column: vehicle_number
-        return_column: updated_at
+        return_column: last_updated_by
         return_join_columns: []
         return_join_separator: " "
     read_only: always
@@ -729,25 +948,11 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
-  - field_name: is_this_a_take_home_vehicle
-    field_type: dropdown
-    label: Is this a take home vehicle?
-    page_number: 3
-    position: 8
-    required: true
-    options:
-      values:
-      - 'Yes'
-      - 'No'
-    read_only: none
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
   - field_name: last_known_location
     field_type: text
     label: Last Known Location
-    page_number: 4
-    position: 9
+    page_number: 3
+    position: 6
     required: false
     options:
       answer_lookup:
@@ -762,11 +967,25 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
     conditional_answer_field: vehicle_number
+  - field_name: other_assignee
+    field_type: text
+    label: Other Assignee
+    page_number: 3
+    position: 6
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: assign_to
   - field_name: location
     field_type: dropdown
     label: Location
-    page_number: 4
-    position: 10
+    page_number: 3
+    position: 7
     required: false
     options:
       custom_lookup:
@@ -784,6 +1003,16 @@ forms:
       values:
       - Other
       values_position: end
+      answer_lookup:
+        database: gsabss
+        table: fleet_locations
+        match_column: City
+        return_column: Address
+        return_join_columns:
+        - City
+        - State
+        - Zip
+        return_join_separator: " "
     read_only: none
     has_custom_view: false
     visible_to_filler: false
@@ -791,8 +1020,8 @@ forms:
   - field_name: other_location
     field_type: text
     label: Other Location
-    page_number: 4
-    position: 11
+    page_number: 3
+    position: 8
     required: false
     options: {}
     read_only: none
@@ -805,8 +1034,8 @@ forms:
   - field_name: do_you_have_a_secondary_location
     field_type: dropdown
     label: Do you have a secondary location?
-    page_number: 4
-    position: 12
+    page_number: 3
+    position: 9
     required: false
     options:
       values:
@@ -819,8 +1048,8 @@ forms:
   - field_name: secondary_location
     field_type: dropdown
     label: Secondary Location
-    page_number: 4
-    position: 13
+    page_number: 3
+    position: 10
     required: false
     options:
       custom_lookup:
@@ -848,8 +1077,8 @@ forms:
   - field_name: other_secondary_location
     field_type: text
     label: Other Secondary Location
-    page_number: 4
-    position: 14
+    page_number: 3
+    position: 11
     required: false
     options: {}
     read_only: none
@@ -859,6 +1088,46 @@ forms:
     conditional_values:
     - Other
     conditional_field: secondary_location
+  - field_name: is_this_a_take_home_vehicle
+    field_type: dropdown
+    label: Is this a take home vehicle?
+    page_number: 3
+    position: 12
+    required: true
+    options:
+      values:
+      - 'Yes'
+      - 'No'
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: approved
+    name: Approved
+    category: approved
+    position: 1
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: FormRequestForm
   name: Form Request
   page_count: 7
@@ -869,6 +1138,21 @@ forms:
   - Notifications
   - Extras
   submission_type: database
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  tags: ''
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: about_the_form
     field_type: text_box
@@ -1026,6 +1310,21 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses: []
+  routing_steps: []
+  emails:
+  - kind: new_submission
+    subject: New Form Request
+    body: "Hello! \r\n\r\nYou have a new form request for Paperboy. Attached is the
+      PDF."
+  email_steps:
+  - trigger_event: submit
+    recipient_type: employee
+    employee_id: 136626
+    attach_pdf: true
+    attach_media: false
+    position: 0
+  copy_recipients: []
 - class_name: GymLockerForm
   name: Gym Locker
   page_count: 4
@@ -1033,6 +1332,22 @@ forms:
   - Lockers 13
   - Lockers 12
   submission_type: database
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to: ''
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - reassign
+  - take_back
+  tags:
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: which_locker
     field_type: text
@@ -1082,6 +1397,11 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses: []
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: IdBadgeRequestForm
   name: ID Badge Request
   page_count: 4
@@ -1089,6 +1409,26 @@ forms:
   - Badge Type
   - Price List
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: Security,gsa
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: badge_type
     field_type: choices_dropdown
@@ -1190,6 +1530,65 @@ forms:
     has_custom_view: true
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Supervisor
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: step_2_pending
+    name: Sent to Sean Payne
+    category: in_review
+    position: 3
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 5
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: supervisor
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  - step_number: 2
+    routing_type: employee
+    employee_id: 104236
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: LeaveOfAbsenceForm
   name: Leave of Absence
   page_count: 4
@@ -1197,6 +1596,26 @@ forms:
   - Leave Details
   - Employee Declarations
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: loa,injury,hca
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: last_date_worked
     field_type: date
@@ -1598,6 +2017,56 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to HCA_HR
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: group
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    group: HCA_HR
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: NoticeOfChangeForm
   name: Notice of Change
   page_count: 4
@@ -1605,6 +2074,26 @@ forms:
   - Services
   - Billing Information
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: billing,square footage,f and m,facilities and materials
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: change_or_service_requested
     field_type: dropdown
@@ -1744,6 +2233,56 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Dana Vodantis
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: employee
+    employee_id: 123385
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: OshaReport
   name: OSHA Reporting
   page_count: 5
@@ -1752,6 +2291,26 @@ forms:
   - Physician Information
   - Case Information
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: health,hca,safety
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: street
     field_type: text
@@ -2156,6 +2715,48 @@ forms:
     conditional_values:
     - Other Illness
     conditional_field: case_type
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Supervisor
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: supervisor
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: ParkingLotSubmission
   name: Parking Permit Application
   page_count: 3
@@ -2170,6 +2771,18 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - view_pdf
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: security,gsa,cars
+  records_table: false
+  skip_code_generation: true
   fields:
   - field_name: vehicles
     field_type: text
@@ -2182,6 +2795,112 @@ forms:
     has_custom_view: true
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: pending_delegated_approval
+    name: Pending delegated approval
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Authorized approver — Parking Permits
+    category: in_review
+    position: 2
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: step_2_pending
+    name: Sent to Sean Payne
+    category: in_review
+    position: 3
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: step_3_pending
+    name: Sent to GSA_Security
+    category: in_review
+    position: 4
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: step_4_pending
+    name: Sent to GSA_Security
+    category: in_review
+    position: 5
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: denied
+    name: Denied
+    category: denied
+    position: 6
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: approved
+    name: Approved
+    category: approved
+    position: 7
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: authorization
+    authorization_service_type: P
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    - status_history
+  - step_number: 2
+    routing_type: employee
+    employee_id: 104236
+    condition_field_name: permit_types
+    condition_operator: equals
+    condition_value: R Lot
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    - status_history
+  - step_number: 3
+    routing_type: group
+    approve_button_label: Permit Printed
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - status_history
+    group: GSA_Security
+  - step_number: 4
+    routing_type: group
+    approve_button_label: Permit Picked Up
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - status_history
+    group: GSA_Security
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: PcardRequestForm
   name: P-Card Request
   page_count: 5
@@ -2190,6 +2909,27 @@ forms:
   - Approver Information
   - Billing Information
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - status_dropdown
+  - reassign
+  - take_back
+  tags: Procurement,Card,Credit card,money,payment
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: brown_mail_location_number
     field_type: text
@@ -2363,12 +3103,75 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Supervisor
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: supervisor
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - status_dropdown
+    - reassign
+    - take_back
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: ProbationTransferRequest
   name: Probation Transfer Request
   page_count: 3
   page_headers:
   - Transfer Request Details
   submission_type: database
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags:
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: current_work_location
     field_type: dropdown
@@ -2391,6 +3194,32 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: manager_approved
+    name: Manager Approved
+    category: approved
+    position: 1
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: SafetyReport
   name: Safety Reporting
   page_count: 11
@@ -2412,6 +3241,19 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: safety,hca,health care
+  records_table: true
+  skip_code_generation: false
   fields:
   - field_name: report_type
     field_type: dropdown
@@ -3302,6 +4144,74 @@ forms:
     restricted_to_type: group
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Authorized approver — HCA Safety Officer
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: authorization
+    authorization_service_type: hca_safety
+    condition_field_name: bloodborne_pathogen_exposure
+    condition_operator: equals
+    condition_value: 'Yes'
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    - status_history
+  emails:
+  - kind: new_submission
+    subject: New Safety Reporting Form Submission
+    body: "Hello, \r\n\r\nA new Safety Reporting form has been submitted. Please see
+      the attached PDF for more information."
+  email_steps:
+  - trigger_event: submit
+    recipient_type: employee
+    employee_id: 121825
+    attach_pdf: true
+    attach_media: true
+    position: 0
+  copy_recipients:
+  - recipient_type: group
+    trigger_event: submit
+    position: 0
+    group: HCA_HR
 - class_name: SheriffSafetyReportingForm
   name: Sheriff Safety Reporting
   page_count: 11
@@ -3323,6 +4233,19 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  tags: RM75,rm75i,osha
+  records_table: true
+  skip_code_generation: false
   fields:
   - field_name: report_type
     field_type: dropdown
@@ -4213,12 +5136,86 @@ forms:
     restricted_to_type: group
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Authorized approver — HCA Safety Officer
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: authorization
+    authorization_service_type: hca_safety
+    condition_field_name: bloodborne_pathogen_exposure
+    condition_operator: equals
+    condition_value: 'Yes'
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    - status_history
+  emails: []
+  email_steps: []
+  copy_recipients:
+  - recipient_type: group
+    trigger_event: submit
+    position: 0
+    group: HCA_HR
 - class_name: SocialMediaForm
   name: Social Media
   page_count: 3
   page_headers:
   - Social Media
   submission_type: database
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to: ''
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - reassign
+  - take_back
+  tags:
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: social_media_platform
     field_type: dropdown
@@ -4266,6 +5263,11 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses: []
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: TeleworkLogForm
   name: Telework Log
   page_count: 3
@@ -4280,6 +5282,14 @@ forms:
   division_id: ''
   department_id: ''
   unit_id: ''
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  tags: Remote,work
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: telework_date
     field_type: date
@@ -4330,6 +5340,32 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: approved
+    name: Approved
+    category: approved
+    position: 1
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: TextbookAndTuitionReimbursementForm
   name: Textbook and Tuition Reimbursement
   page_count: 4
@@ -4345,6 +5381,20 @@ forms:
   division_id: '4600'
   department_id: '4601'
   unit_id: '4601'
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  - status_history
+  tags: college,hr,education,money
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: fund
     field_type: text
@@ -4533,6 +5583,42 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to Supervisor
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: supervisor
+    inbox_buttons: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: WorkScheduleOrLocationUpdateForm
   name: Work Schedule or Location Update
   page_count: 4
@@ -4540,6 +5626,27 @@ forms:
   - Change Request
   - HR Only
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode:
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - status_dropdown
+  - reassign
+  - take_back
+  tags:
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: requested_by
     field_type: dropdown
@@ -4754,6 +5861,46 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Step 1 pending
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: step_2_pending
+    name: Step 2 pending
+    category: in_review
+    position: 3
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 5
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: WorkplaceViolenceForm
   name: Workplace Violence
   page_count: 5
@@ -4762,6 +5909,27 @@ forms:
   - Incident Details Cont'd
   - Corrective Action Safety Officer Only
   submission_type: approval
+  description:
+  form_number:
+  form_type:
+  agency_id:
+  division_id:
+  department_id:
+  unit_id:
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - edit
+  - approve
+  - deny
+  - reassign
+  - take_back
+  - status_dropdown
+  tags: hca,safety
+  records_table: false
+  skip_code_generation: false
   fields:
   - field_name: date_of_incident
     field_type: date
@@ -5147,3 +6315,54 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  statuses:
+  - key: in_progress
+    name: In Progress
+    category: pending
+    position: 0
+    is_initial: true
+    is_end: false
+    auto_generated: false
+  - key: step_1_pending
+    name: Sent to HCA_HR
+    category: in_review
+    position: 1
+    is_initial: false
+    is_end: false
+    auto_generated: true
+  - key: approved
+    name: Approved
+    category: approved
+    position: 2
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: denied
+    name: Denied
+    category: denied
+    position: 3
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  - key: cancelled
+    name: Cancelled
+    category: cancelled
+    position: 4
+    is_initial: false
+    is_end: true
+    auto_generated: false
+  routing_steps:
+  - step_number: 1
+    routing_type: group
+    inbox_buttons:
+    - view_pdf
+    - edit
+    - approve
+    - deny
+    - reassign
+    - take_back
+    - status_dropdown
+    group: HCA_HR
+  emails: []
+  email_steps: []
+  copy_recipients: []

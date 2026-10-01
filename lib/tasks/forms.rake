@@ -1,16 +1,18 @@
 # frozen_string_literal: true
 
-# Mirrors the form definitions -- templates and the fields hanging off them --
-# across Paperboy_Dev / _Stage / _Prod:
+# Mirrors the form definitions -- templates, their fields and their workflow
+# (statuses, routing, emails, email rules, copy recipients) -- across
+# Paperboy_Dev / _Stage / _Prod, with dev as the source of truth:
 #
-#   dev$   bin/rails forms:dump MERGE=1    # add dev's forms and their fields
+#   dev$   bin/rails forms:dump MERGE=1    # add dev's forms to the file
 #   dev$   git commit db/forms.yml
 #   stage$ bin/rails forms:sync DRY_RUN=1  # read the plan
 #   stage$ bin/rails forms:sync            # apply it, then the same in prod
 #
-# The work lives in Paperboy::FormSeed (dump, merge) and its Sync half (apply).
+# The work lives in Paperboy::FormSeed (dump, merge), its Sync half (apply)
+# and FormSeed::Workflow (both, for the workflow rows).
 namespace :forms do
-  desc 'Dump this environment form templates and fields to db/forms.yml. MERGE=1 unions them into the existing file instead of overwriting'
+  desc 'Dump this environment form templates, fields and workflow to db/forms.yml. MERGE=1 unions them into the existing file instead of overwriting'
   task dump: :environment do
     merging = ENV['MERGE'].present? && Paperboy::FormSeed::PATH.exist?
     snapshot = Paperboy::FormSeed.snapshot
@@ -22,11 +24,10 @@ namespace :forms do
     puts "  #{snapshot['forms'].size} forms, #{fields} fields"
   end
 
-  desc 'Apply db/forms.yml to this environment (additive). DRY_RUN=1 previews; PRUNE=1 also removes fields missing from the file; CREATE_TEMPLATES=1 adds bare templates'
+  desc 'Apply db/forms.yml to this environment: creates missing forms, matches their workflow, adds fields. DRY_RUN=1 previews; PRUNE=1 also removes fields missing from the file'
   task sync: :environment do
     dry = ENV['DRY_RUN'].present?
     prune = ENV['PRUNE'].present?
-    templates = ENV['CREATE_TEMPLATES'].present?
     # Wired into bin/deploy under `set -e`, so a file that is not there yet is
     # a no-op with a note rather than the exception FormSeed.load_file raises.
     unless Paperboy::FormSeed::PATH.exist?
@@ -34,12 +35,14 @@ namespace :forms do
       next
     end
 
-    flags = [('prune on' if prune), ('creating templates' if templates)].compact
     puts "#{dry ? 'Previewing' : 'Applying'} #{Paperboy::FormSeed::PATH} → " \
-         "#{ActiveRecord::Base.connection.current_database}#{" (#{flags.join(', ')})" if flags.any?}"
+         "#{ActiveRecord::Base.connection.current_database}#{' (prune on)' if prune}"
 
-    log = ActiveRecord::Base.transaction do
-      Paperboy::FormSeed::Sync.call(dry: dry, prune: prune, create_templates: templates)
+    # A dry run writes nothing; the rollback makes that true whatever Sync does.
+    log = nil
+    ActiveRecord::Base.transaction do
+      log = Paperboy::FormSeed::Sync.call(dry: dry, prune: prune)
+      raise ActiveRecord::Rollback if dry
     end
     log.each { |line| puts "  #{line}" }
 
