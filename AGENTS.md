@@ -65,6 +65,14 @@ Create or locate the issue worktree with its issue number:
 cd "$(bin/wt 123)"
 ```
 
+For interactive shells, source `bin/shell-init` once and use `wt 123` to
+navigate directly:
+
+```bash
+source /path/to/Paperboy/bin/shell-init
+wt 123
+```
+
 The short command resolves the local `issue/123-*` branch, uses the shared
 checkout's `worktrees/123` directory even when invoked from a linked worktree,
 and copies the main checkout's `.env` when the worktree does not already have

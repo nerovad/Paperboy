@@ -67,6 +67,15 @@ bin/update-issue --issue 123 --add-label priority:normal
 bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
+For interactive shells, source `bin/shell-init` once to add the `wt` helper.
+Then `wt 123` changes directly to the issue worktree; `bin/wt 123` remains a
+path-producing command for scripts and command substitution:
+
+```bash
+source /path/to/Paperboy/bin/shell-init
+wt 123
+```
+
 For command options, prompting behavior, and safety rules, see
 [docs/gitea-automation.md](docs/gitea-automation.md).
 

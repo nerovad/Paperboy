@@ -317,6 +317,16 @@ the shared checkout's `worktrees/<number>` directory. New worktrees receive a
 copy of the main checkout's ignored `.env`; an existing `.env` is never
 overwritten. Use `bin/wt list` to see all worktrees.
 
+For interactive navigation, source the shell integration once:
+
+```bash
+source /path/to/Paperboy/bin/shell-init
+wt 123
+```
+
+The `wt` helper changes to the requested issue worktree. The executable
+`bin/wt` continues to print the path so scripts can use `cd "$(bin/wt 123)"`.
+
 At the start of a session, verify its target with:
 
 ```bash
