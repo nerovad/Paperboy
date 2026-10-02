@@ -15,7 +15,8 @@ find_processes() {
 
     command=$(tr '\0' ' ' < "$process_dir/cmdline" 2>/dev/null) || continue
     if [[ $command == *"bin/rails server"* || $command == puma\ * ||
-          $command == *"bin/jobs"* || $command == *"solid-queue"* ]]; then
+          $command == *"bin/jobs"* || $command == *"solid-queue"* ||
+          $command == *"dartsass:watch"* || $command == *"sass-embedded"* ]]; then
       printf '%s\n' "${process_dir##*/}"
     fi
   done
@@ -45,4 +46,6 @@ stop_servers() {
   kill -KILL "${pids[@]}" 2>/dev/null || true
 }
 
-stop_servers
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  stop_servers
+fi

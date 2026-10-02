@@ -159,6 +159,10 @@ module EtlHelpers
     source(cfg)[:location] || source(cfg)[:local]
   end
 
+  def source_file?(path)
+    File.file?(path)
+  end
+
   def source_format(cfg)
     source(cfg)[:format]&.to_sym
   end

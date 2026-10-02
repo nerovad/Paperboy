@@ -232,7 +232,7 @@ selected_entries.each do |name, cfg|
     end
 
     source_path = File.expand_path(location_s, DOWNLOAD_DIR)
-    unless DOWNLOAD_STORE.target_exists?(File.basename(source_path))
+    unless EtlHelpers.source_file?(source_path)
       puts "[FAIL] #{name}: copy source missing #{source_path}"
       stats.fail!
       next

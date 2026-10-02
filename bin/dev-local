@@ -1,17 +1,19 @@
-#!/bin/bash
-# Run Paperboy on this workstation: Puma + Solid Queue in one terminal.
+#!/usr/bin/env bash
+# Run Paperboy on this workstation: Puma + Solid Queue + Dart Sass.
 #
 # This is NOT a deploy script. bin/deploy-dev pulls master, precompiles assets
 # and restarts systemd units that only exist on the dev server; running it here
 # would reset your branch and leave stale assets shadowing your edits.
 #
-#   bin/dev-local            # Puma on :3001 + Solid Queue + Sass, schedule off
+#   bin/dev-local            # Puma on :3001 + Solid Queue + Sass
 #   bin/dev-local 3005       # different port
-#   bin/dev-local --cron     # also run the scheduled jobs (see warning below)
+#   bin/dev-local --cron     # also run the recurring schedule
 #   bin/dev-local --no-jobs  # Puma and Sass only
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+app_root=$(cd "$script_dir/.." && pwd)
+cd "$app_root"
 
 PORT="${PORT:-3001}"
 BIND="${BIND:-127.0.0.1}"
@@ -24,10 +26,13 @@ while [[ $# -gt 0 ]]; do
     --no-jobs)  RUN_JOBS=0; shift ;;
     -p|--port)  PORT="$2"; shift 2 ;;
     [0-9]*)     PORT="$1"; shift ;;
-    -h|--help)  sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help)  sed -n '2,11p' "$0"; exit 0 ;;
     *) echo "unknown option: $1 (try --help)" >&2; exit 1 ;;
   esac
 done
+
+mkdir -p "$app_root/log"
+exec 2> >(tee "$app_root/log/error.log" >&2)
 
 # --- Preflight -------------------------------------------------------------
 if [[ ! -f .env ]]; then
@@ -36,53 +41,42 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+# --- Shutdown --------------------------------------------------------------
+source "$script_dir/stopservers"
+stop_servers
+
 if ss -ltn 2>/dev/null | grep -qE "[:.]${PORT}[[:space:]]"; then
   echo "==> Port ${PORT} is already in use. Pass another: bin/dev-local 3002" >&2
   exit 1
 fi
 
-# --- Shutdown --------------------------------------------------------------
-PIDS=()
+# --- Assets -----------------------------------------------------------------
+{
+  bundle check || bundle install
+  bundle exec bin/rails assets:clobber
+  bundle exec bin/rails assets:precompile
+} 2>&1 | tee "$app_root/log/assets.log"
 
-cleanup() {
-  trap - INT TERM EXIT
-  echo
-  echo "==> Shutting down..."
-  for pid in "${PIDS[@]:-}"; do
-    kill "$pid" 2>/dev/null || true
-  done
-  wait 2>/dev/null || true
-}
-trap cleanup INT TERM EXIT
-
-# --- Dart Sass -------------------------------------------------------------
-# Compiles application.scss into app/assets/builds/application.css, which is
-# what Sprockets serves. Without it a saved .scss changes nothing in a browser.
+# --- Dart Sass --------------------------------------------------------------
 echo "==> Starting Dart Sass watcher..."
-bundle exec rails dartsass:watch \
-  > >(sed -u 's/^/[sass] /') 2>&1 &
-PIDS+=($!)
+nohup bundle exec rails dartsass:watch \
+  </dev/null >"$app_root/log/sass.log" 2>&1 &
 
 # --- Solid Queue -----------------------------------------------------------
 if [[ "$RUN_JOBS" -eq 1 ]]; then
   if [[ "$ENABLE_CRON" -ne 1 ]]; then
-    export SOLID_QUEUE_CONFIG="$PWD/config/queue.yml"
+    export SOLID_QUEUE_CONFIG="$app_root/config/queue.yml"
     export SOLID_QUEUE_SKIP_RECURRING=true
   fi
 
   echo "==> Starting Solid Queue..."
-  bundle exec bin/jobs \
-    > >(sed -u 's/^/[solid-queue] /') 2>&1 &
-  PIDS+=($!)
+  nohup bundle exec bin/jobs \
+    </dev/null >"$app_root/log/jobs.log" 2>&1 &
 fi
 
 # --- Puma ------------------------------------------------------------------
-# Both processes run in the background and the script blocks in `wait`: bash
-# defers traps while a foreground child runs, so a foreground Puma would make
-# `kill` on this script hang instead of shutting the pair down.
-echo "==> Starting Puma on http://localhost:${PORT} ..."
-bundle exec rails server -p "$PORT" -b "$BIND" &
-PIDS+=($!)
+echo "==> Starting Puma on http://${BIND}:${PORT} ..."
+nohup bundle exec rails server -p "$PORT" -b "$BIND" \
+  </dev/null >"$app_root/log/server.log" 2>&1 &
 
-# Returns as soon as either process exits, so one dying takes the other with it.
-wait -n
+echo "==> Paperboy started. Logs are under $app_root/log/"

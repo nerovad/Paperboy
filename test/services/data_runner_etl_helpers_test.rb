@@ -21,4 +21,14 @@ class DataRunnerEtlHelpersTest < ActiveSupport::TestCase
     assert_equal 'GSASQL16.GSA Scan.dbo.Universal_Data_import', source.label
     assert_equal 'TARGETSQL.Reporting.etl.UniversalData', target.label
   end
+
+  test 'checks copy sources at their configured filesystem path' do
+    Dir.mktmpdir do |directory|
+      source = Pathname(directory).join('source.csv')
+      source.write('source')
+
+      assert EtlHelpers.source_file?(source)
+      assert_not EtlHelpers.source_file?(source.sub_ext('.missing'))
+    end
+  end
 end
