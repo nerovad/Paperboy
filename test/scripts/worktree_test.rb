@@ -78,6 +78,17 @@ class WorktreeScriptTest < Minitest::Test
                  run_git('-C', expected_path, 'symbolic-ref', '--short', 'HEAD').strip
   end
 
+  def test_create_copies_env_from_the_common_checkout
+    File.write(File.join(@repository, '.env'), "PAPERBOY_TEST_VALUE=from-root\n")
+
+    output = run_script('create', 'issue/11-env-worktree')
+
+    expected_path = File.join(@repository, 'worktrees', '11')
+    assert_equal "#{expected_path}\n", output
+    assert_equal "PAPERBOY_TEST_VALUE=from-root\n",
+                 File.read(File.join(expected_path, '.env'))
+  end
+
   private
 
   def run_git(*arguments)
