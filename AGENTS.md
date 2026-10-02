@@ -1,32 +1,34 @@
 # AI Instructions
+## Ruby
 
 - Generated Ruby conforms to `.rubocop.yml`.
-- CI Pipeline requirements does not report errors:
-  * bundle exec rubocop
-  * bundle exec brakeman
-  * bundle exec bundle-audit check
-  * bundle exec rake test
+
+## CI Pipeline
+- run unit test and examine errors; f
+  ```bash
+     bin/unit-tests
   * Use 10.135.204.161 when GSASQL16 cannot be resolved
 - Tests use SQL Server, not SQLite. `config/database.yml` accepts
   `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
   unavailable; for example:
-  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 bundle exec rake test`
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test bundle exec rake test`
 - The configured test database is a scratch base. Rails test setup creates
   schema-loaded, per-worker databases with a run identifier and worker suffix
   for parallel tests, then drops them after the run. The test login therefore
   needs permission to create and drop databases and load the schema.
 - Never point tests at `Paperboy_Dev`, staging, or production data. If
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
+## Software Changes
+- Always use Workflow commands unless instructed otherwise
 - Propose git commit message.
   * Prose limited to 72 characters
+  * Prepend gitea issue number to the issue title
   * Blank Line
   * Description lines limited to 80 characters
   * Do not indent proposed commit
 - Git
   * use git mv when moving files
-
-## Gitea workflow commands
-
+## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
 implementation work. The commands below use the Gitea API and read
 `GITEA_TOKEN` from the environment or the ignored repository `.env` file.
