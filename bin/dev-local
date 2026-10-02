@@ -33,6 +33,8 @@ done
 
 mkdir -p "$app_root/log"
 exec 2> >(tee "$app_root/log/error.log" >&2)
+mkdir -p "$app_root/tmp/pids"
+pid_file="$app_root/tmp/pids/paperboy-dev-$PORT.pids"
 
 # --- Preflight -------------------------------------------------------------
 if [[ ! -f .env ]]; then
@@ -43,7 +45,8 @@ fi
 
 # --- Shutdown --------------------------------------------------------------
 source "$script_dir/stopservers"
-stop_servers
+stop_servers "$PORT"
+rm -f "$pid_file"
 
 if ss -ltn 2>/dev/null | grep -qE "[:.]${PORT}[[:space:]]"; then
   echo "==> Port ${PORT} is already in use. Pass another: bin/dev-local 3002" >&2
@@ -59,8 +62,9 @@ fi
 
 # --- Dart Sass --------------------------------------------------------------
 echo "==> Starting Dart Sass watcher..."
-nohup bundle exec rails dartsass:watch \
+nohup setsid bundle exec rails dartsass:watch \
   </dev/null >"$app_root/log/sass.log" 2>&1 &
+echo "$!" >>"$pid_file"
 
 # --- Solid Queue -----------------------------------------------------------
 if [[ "$RUN_JOBS" -eq 1 ]]; then
@@ -70,13 +74,15 @@ if [[ "$RUN_JOBS" -eq 1 ]]; then
   fi
 
   echo "==> Starting Solid Queue..."
-  nohup bundle exec bin/jobs \
+  nohup setsid bundle exec bin/jobs \
     </dev/null >"$app_root/log/jobs.log" 2>&1 &
+  echo "$!" >>"$pid_file"
 fi
 
 # --- Puma ------------------------------------------------------------------
 echo "==> Starting Puma on http://${BIND}:${PORT} ..."
-nohup bundle exec rails server -p "$PORT" -b "$BIND" \
+nohup setsid bundle exec rails server -p "$PORT" -b "$BIND" \
   </dev/null >"$app_root/log/server.log" 2>&1 &
+echo "$!" >>"$pid_file"
 
 echo "==> Paperboy started. Logs are under $app_root/log/"

@@ -5,47 +5,139 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd "$script_dir/.."
 
 app_root=$PWD
+pid_dir="$app_root/tmp/pids"
+
+usage() {
+  echo "Usage: bin/stopservers [PORT]" >&2
+}
+
+is_supported_process() {
+  local command=$1
+
+  [[ $command == *"rails server"* || $command == *puma* ||
+     $command == *"bin/jobs"* || $command == *"solid-queue"* ||
+     $command == *"dartsass:watch"* || $command == *"sass-embedded"* ]]
+}
+
+process_belongs_to_app() {
+  local pid=$1 process_cwd command
+
+  process_cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || return 1
+  [[ $process_cwd == "$app_root" ]] || return 1
+
+  command=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
+  is_supported_process "$command"
+}
+
+process_is_running() {
+  local pid=$1 state
+
+  kill -0 "$pid" 2>/dev/null || return 1
+  state=$(ps -o stat= -p "$pid" 2>/dev/null | tr -d ' ')
+  [[ $state != Z* ]]
+}
+
+process_is_shell() {
+  local pid=$1 executable
+
+  executable=$(basename "$(readlink "/proc/$pid/exe" 2>/dev/null)") || return 1
+  [[ $executable == bash || $executable == dash || $executable == fish ||
+     $executable == ksh || $executable == sh || $executable == zsh ]]
+}
+
+port_is_in_command() {
+  local command=$1 port=$2
+
+  [[ " $command " == *" -p $port "* ||
+    " $command " == *" --port $port "* ||
+    " $command " == *" --port=$port "* ]]
+}
 
 find_processes() {
-  local process_dir process_cwd command
+  local port=$1 command pid_file pid
+
+  pid_file="$pid_dir/paperboy-dev-$port.pids"
+  if [[ -f "$pid_file" ]]; then
+    while read -r pid; do
+      [[ $pid =~ ^[0-9]+$ ]] || continue
+      process_belongs_to_app "$pid" || continue
+      printf '%s\n' "$pid"
+    done < "$pid_file"
+  fi
+
+  while read -r pid; do
+    [[ $pid =~ ^[0-9]+$ ]] || continue
+    process_belongs_to_app "$pid" || continue
+    command=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || continue
+    is_supported_process "$command" || continue
+    [[ $command == *"rails server"* || $command == *puma* ]] || continue
+    printf '%s\n' "$pid"
+  done < <(
+    ss -ltnpH 2>/dev/null |
+      awk -v port=":$port" '$4 ~ port "$" { match($0, /pid=[0-9]+/); if (RSTART) print substr($0, RSTART + 4, RLENGTH - 4) }'
+  )
 
   for process_dir in /proc/[0-9]*; do
-    process_cwd=$(readlink "$process_dir/cwd" 2>/dev/null) || continue
-    [[ $process_cwd == "$app_root" ]] || continue
-
-    command=$(tr '\0' ' ' < "$process_dir/cmdline" 2>/dev/null) || continue
-    if [[ $command == *"bin/rails server"* || $command == puma\ * ||
-          $command == *"bin/jobs"* || $command == *"solid-queue"* ||
-          $command == *"dartsass:watch"* || $command == *"sass-embedded"* ]]; then
-      printf '%s\n' "${process_dir##*/}"
-    fi
+    pid=${process_dir##*/}
+    process_is_shell "$pid" && continue
+    process_belongs_to_app "$pid" || continue
+    command=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || continue
+    [[ $command == *"rails server"* || $command == *puma* ]] || continue
+    port_is_in_command "$command" "$port" || continue
+    printf '%s\n' "$pid"
   done
 }
 
 stop_servers() {
+  local port=${1:-3001}
   local -a pids=()
   local all_stopped
   local pid
 
-  mapfile -t pids < <(find_processes)
-  ((${#pids[@]} == 0)) && return
+  if [[ ! $port =~ ^[0-9]+$ ]]; then
+    usage
+    return 2
+  fi
 
-  kill -TERM "${pids[@]}" 2>/dev/null || true
+  mapfile -t pids < <(find_processes "$port" | sort -n -u)
+  if ((${#pids[@]} == 0)); then
+    rm -f "$pid_dir/paperboy-dev-$port.pids"
+    return
+  fi
+
+  for pid in "${pids[@]}"; do
+    local process_group
+
+    process_group=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+    if [[ $process_group == "$pid" ]]; then
+      kill -TERM -- "-$pid" 2>/dev/null || true
+    else
+      kill -TERM "$pid" 2>/dev/null || true
+    fi
+  done
+
   for _ in {1..50}; do
     all_stopped=true
     for pid in "${pids[@]}"; do
-      if kill -0 "$pid" 2>/dev/null; then
+      if process_is_running "$pid"; then
         all_stopped=false
         break
       fi
     done
-    $all_stopped && return
+    if $all_stopped; then
+      rm -f "$pid_dir/paperboy-dev-$port.pids"
+      return
+    fi
     sleep 0.1
   done
 
-  kill -KILL "${pids[@]}" 2>/dev/null || true
+  for pid in "${pids[@]}"; do
+    kill -KILL "$pid" 2>/dev/null || true
+  done
+
+  rm -f "$pid_dir/paperboy-dev-$port.pids"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-  stop_servers
+  stop_servers "${1:-}"
 fi
