@@ -7,6 +7,7 @@ require 'pathname'
 require 'shellwords'
 require 'tmpdir'
 
+# rubocop:disable-next Metrics/ClassLength
 class StopserversTest < Minitest::Test
   SCRIPT = Pathname.new(__dir__).join('../..', 'bin/stopservers').realpath
 
@@ -75,6 +76,20 @@ class StopserversTest < Minitest::Test
       stopped_stack.each { |pid| assert_process_stopped(pid) }
     ensure
       (stopped_stack || []).each { |pid| stop_process(pid) }
+    end
+  end
+
+  def test_succeeds_when_no_server_is_running
+    Dir.mktmpdir('paperboy-stopservers-empty') do |root|
+      root = Pathname.new(root)
+      bin = root.join('bin')
+      bin.mkpath
+      FileUtils.cp(SCRIPT, bin.join('stopservers'))
+      FileUtils.chmod(0o755, bin.join('stopservers'))
+
+      stdout, stderr, status = Open3.capture3(bin.join('stopservers').to_s, '3002', chdir: root.to_s)
+
+      assert status.success?, "stopservers failed: #{stdout}\n#{stderr}"
     end
   end
 
