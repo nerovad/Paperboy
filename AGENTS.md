@@ -1,32 +1,35 @@
 # AI Instructions
+## Ruby
 
 - Generated Ruby conforms to `.rubocop.yml`.
-- CI Pipeline requirements does not report errors:
-  * bundle exec rubocop
-  * bundle exec brakeman
-  * bundle exec bundle-audit check
-  * bundle exec rake test
+
+## CI Pipeline
+- run unit test and examine errors; f
+  ```bash
+     bin/unit-tests
   * Use 10.135.204.161 when GSASQL16 cannot be resolved
 - Tests use SQL Server, not SQLite. `config/database.yml` accepts
   `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
   unavailable; for example:
-  `PAPERBOY_TEST_DATABASE=Paperboy_Test0 bundle exec rake test`
+  `PAPERBOY_TEST_DATABASE=Paperboy_Test bundle exec rake test`
 - The configured test database is a scratch base. Rails test setup creates
   schema-loaded, per-worker databases with a run identifier and worker suffix
   for parallel tests, then drops them after the run. The test login therefore
   needs permission to create and drop databases and load the schema.
 - Never point tests at `Paperboy_Dev`, staging, or production data. If
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
+## Software Changes
+- Always use Workflow commands unless instructed otherwise
 - Propose git commit message.
   * Prose limited to 72 characters
+  * Prepend `#<issue-number>` to the issue title so Gitea links the commit
+    to its issue
   * Blank Line
   * Description lines limited to 80 characters
   * Do not indent proposed commit
 - Git
   * use git mv when moving files
-
-## Gitea workflow commands
-
+## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
 implementation work. The commands below use the Gitea API and read
 `GITEA_TOKEN` from the environment or the ignored repository `.env` file.
@@ -62,11 +65,18 @@ Create or locate the issue worktree with its issue number:
 cd "$(bin/wt 123)"
 ```
 
-The short command resolves the local `issue/123-*` branch, uses
-`worktrees/123`, and copies the main checkout's `.env` when the worktree does
-not already have one. Use `bin/wt list` to see worktrees and `bin/wt clean 123`
-to clean up a merged issue. The full `bin/worktree` branch-name commands
-remain available for scripts.
+The short command resolves the local `issue/123-*` branch, uses the shared
+checkout's `worktrees/123` directory even when invoked from a linked worktree,
+and copies the main checkout's `.env` when the worktree does not already have
+one. Use `bin/wt list` to see worktrees and `bin/wt clean 123` to clean up a
+merged issue. The full `bin/worktree` branch-name commands remain available
+for scripts.
+
+At the start of every coding session, run `bin/wt context` and verify that the
+reported current worktree and branch match the requested issue. Work only in
+that worktree; do not switch another shell's worktree or edit the shared
+checkout unless the task explicitly targets it. Multiple sessions are safe
+when each starts in its own linked worktree.
 
 The branch must match `issue/<number>-<lowercase-slug>`. After the pull
 request merges, update `master` and clean up the local worktree and branch:
@@ -87,12 +97,12 @@ missing labels, missing milestones, stale work, and unlinked pull requests:
 bin/status-report
 ```
 
-Use `bin/apply-updates` only for an explicit, approved issue update. It is
+Use `bin/update-issue` only for an explicit, approved issue update. It is
 dry-run by default:
 
 ```bash
-bin/apply-updates --issue 123 --add-label priority:normal
-bin/apply-updates --issue 123 --add-label priority:normal --apply
+bin/update-issue --issue 123 --add-label priority:normal
+bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
 See `docs/gitea-automation.md` for the complete workflow and project

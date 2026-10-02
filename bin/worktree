@@ -6,16 +6,19 @@ usage() {
 Usage:
   bin/wt <issue-number>
   bin/wt list
+  bin/wt context
   bin/wt clean <issue-number>
   bin/worktree create issue/<number>-<slug>
   bin/worktree switch issue/<number>-<slug>
   bin/worktree cleanup issue/<number>-<slug>
 
 The short form finds the local issue/<number>-<slug> branch and places its
-worktree in worktrees/<number>. It copies the common checkout's .env when the
-worktree does not already have one.
+worktree in the shared checkout's worktrees/<number> directory. It copies the
+common checkout's .env when the worktree does not already have one.
 
 Use: cd "$(bin/wt 123)"
+
+Use bin/wt context at the start of a session to verify its worktree and branch.
 
 Cleanup only removes a branch that is merged into the default branch and has
 no uncommitted changes. It refuses the current worktree.
@@ -32,6 +35,44 @@ fi
 if [[ "${command_name}" =~ ^[0-9]+$ && $# -eq 1 ]]; then
   command_name='open'
   branch_name="${1}"
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
+if [[ "${common_dir}" == */.git ]]; then
+  common_root="${common_dir%/.git}"
+else
+  common_root="${repo_root}"
+fi
+
+default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+default_branch="${default_branch#origin/}"
+default_branch="${default_branch:-master}"
+
+if [[ "${command_name}" == context ]]; then
+  [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+  current_branch="$(git symbolic-ref --short HEAD 2>/dev/null || echo detached)"
+  issue_number='none'
+  if [[ "${current_branch}" =~ ^issue/([0-9]+)- ]]; then
+    issue_number="${BASH_REMATCH[1]}"
+  fi
+  if [[ -z "$(git status --porcelain)" ]]; then
+    working_state='clean'
+  else
+    working_state='dirty'
+  fi
+  printf 'Repository: %s\n' "${common_root}"
+  printf 'Current worktree: %s\n' "${repo_root}"
+  printf 'Branch: %s\n' "${current_branch}"
+  printf 'Issue: %s\n' "${issue_number}"
+  printf 'Status: %s\n' "${working_state}"
+  printf 'Default branch: %s\n' "${default_branch}"
+  if [[ "${repo_root}" == "${common_root}" ]]; then
+    printf 'Session target: shared checkout (create or select a worktree before editing)\n'
+  else
+    printf 'Session target: linked worktree\n'
+  fi
+  exit 0
 fi
 
 resolve_issue_branch() {
@@ -59,6 +100,10 @@ case "${command_name}" in
     [[ $# -eq 1 ]] || { usage >&2; exit 2; }
     git worktree list
     exit 0
+    ;;
+  context)
+    usage >&2
+    exit 2
     ;;
   clean)
     if [[ "${branch_name}" =~ ^[0-9]+$ ]]; then
@@ -90,20 +135,14 @@ esac
   exit 2
 }
 
-repo_root="$(git rev-parse --show-toplevel)"
-worktree_root="${repo_root}/worktrees"
+worktree_root="${common_root}/worktrees"
 issue_number="${branch_name#issue/}"
 issue_number="${issue_number%%-*}"
 worktree_path="${worktree_root}/${issue_number}"
 branch_ref="refs/heads/${branch_name}"
-default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
-default_branch="${default_branch#origin/}"
-default_branch="${default_branch:-master}"
-
-common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
 env_source=''
-if [[ "${common_dir}" == */.git ]]; then
-  env_source="${common_dir%/.git}/.env"
+if [[ -f "${common_root}/.env" ]]; then
+  env_source="${common_root}/.env"
 fi
 
 copy_env_if_needed() {
@@ -167,6 +206,11 @@ if [[ -n "${existing_path}" ]]; then
   printf '%s\n' "${existing_path}"
   exit 0
 fi
+
+[[ ! -e "${worktree_path}" ]] || {
+  echo "Worktree path already exists but is not registered: ${worktree_path}" >&2
+  exit 1
+}
 
 if [[ "${command_name}" == switch ]] && ! git show-ref --verify --quiet "${branch_ref}"; then
   echo "Branch does not exist: ${branch_name}" >&2

@@ -59,12 +59,12 @@ git pull --ff-only
 bin/worktree cleanup issue/123-short-description
 ```
 
-`bin/apply-updates` can apply an explicitly approved label or milestone
+`bin/update-issue` can apply an explicitly approved label or milestone
 change. It previews changes unless `--apply` is supplied:
 
 ```bash
-bin/apply-updates --issue 123 --add-label priority:normal
-bin/apply-updates --issue 123 --add-label priority:normal --apply
+bin/update-issue --issue 123 --add-label priority:normal
+bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
 For command options, prompting behavior, and safety rules, see
