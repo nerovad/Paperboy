@@ -9,29 +9,29 @@
   </div>
 
   <!-- ===== Global Permissions ===== -->
-  <div class="acl-section">
+  <div id="global-permissions" class="acl-section">
     <div class="acl-section-header">
       <div class="acl-section-header-row">
         <h2>Global Permissions</h2>
-        <%= link_to "Manage Global Permissions", org_permissions_acl_index_path, class: "btn approve" %>
+        <%= link_to "Configure Global Permissions", org_permissions_acl_index_path, class: "btn approve" %>
       </div>
       <p class="acl-subtitle">Baseline permissions that apply to every user. Use this to set what everyone can see by default.</p>
     </div>
   </div>
 
   <!-- ===== DAM Access Rules ===== -->
-  <div class="acl-section">
+  <div id="dam-access-rules" class="acl-section">
     <div class="acl-section-header">
       <div class="acl-section-header-row">
         <h2>DAM Access Rules</h2>
-        <%= link_to "Manage DAM Access Rules", dam_access_rules_path, class: "btn approve" %>
+        <%= link_to "Open DAM Access Rules", dam_access_rules_path, class: "btn approve" %>
       </div>
       <p class="acl-subtitle">Which digital assets each person can see, by organization and metadata, and whether they may download, share, publish or edit them.</p>
     </div>
   </div>
 
   <!-- ===== Organization Permissions ===== -->
-  <div class="acl-section" data-controller="gsabss-selects org-permissions" data-org-permissions-url-value="<%= org_permissions_acl_index_path %>">
+  <div id="organization-permissions" class="acl-section" data-controller="gsabss-selects org-permissions" data-org-permissions-url-value="<%= org_permissions_acl_index_path %>">
     <div class="acl-section-header">
       <h2>Organization Permissions</h2>
       <p class="acl-subtitle">Set permissions by Agency, Division, Department, or Unit. These apply to all employees in the selected org level, on top of global permissions.</p>
@@ -81,14 +81,14 @@
 
       <div class="acl-org-actions">
         <button type="button" class="btn approve" data-action="click->org-permissions#navigate">
-          Manage Permissions
+          Configure Organization Permissions
         </button>
       </div>
     </div>
   </div>
 
   <!-- ===== Group Management ===== -->
-  <div class="acl-section">
+  <div id="group-management" class="acl-section">
     <div class="acl-section-header">
       <div class="acl-section-header-row">
         <h2>Group Management</h2>

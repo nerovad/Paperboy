@@ -19,6 +19,7 @@
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
 - Propose git commit message.
   * Prose limited to 72 characters
+  * Prepend gitea #issue number to the issue title
   * Blank Line
   * Description lines limited to 80 characters
   * Do not indent proposed commit

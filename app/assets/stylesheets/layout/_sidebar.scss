@@ -446,6 +446,19 @@
       text-align: left;
       word-break: break-word;
     }
+
+    .nav-group-nested {
+      margin: 6px 8px;
+
+      summary:not(.btn) {
+        padding: 9px 10px;
+        font-size: 0.95em;
+      }
+
+      .nav-link {
+        margin-left: 18px;
+      }
+    }
   }
 
   &.hsa-adoption-cards-sidebar {
