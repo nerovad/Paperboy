@@ -193,9 +193,10 @@ bin/dev-local --cron     # also run the scheduled jobs
 bin/dev-local --no-jobs  # Puma and Sass only
 ```
 
-It preflights `.env` and the port, prefixes each process's output with
-`[solid-queue]` or `[sass]`, and shuts them all down together on Ctrl-C. If
-one dies the rest are torn down with it.
+It preflights `.env` and the port, stops Paperboy processes already running
+from this checkout, prepares the asset build, and starts Puma, Solid Queue,
+and the Sass watcher in the background. Logs are written to `log/`:
+`assets.log`, `server.log`, `jobs.log`, `sass.log`, and `error.log`.
 
 `bin/dev` is the same script — it passes its arguments straight through, so
 either name starts the same three processes.
