@@ -4,13 +4,18 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
+  bin/wt <issue-number>
+  bin/wt list
+  bin/wt clean <issue-number>
   bin/worktree create issue/<number>-<slug>
   bin/worktree switch issue/<number>-<slug>
   bin/worktree cleanup issue/<number>-<slug>
 
-Create or locate a worktree for a branch following the issue-linked convention.
-The worktree is placed inside the repository in worktrees/<branch>.
-Use: cd "$(bin/worktree switch issue/123-short-description)"
+The short form finds the local issue/<number>-<slug> branch and places its
+worktree in worktrees/<number>. It copies the common checkout's .env when the
+worktree does not already have one.
+
+Use: cd "$(bin/wt 123)"
 
 Cleanup only removes a branch that is merged into the default branch and has
 no uncommitted changes. It refuses the current worktree.
@@ -24,6 +29,56 @@ if [[ "${command_name}" == '-h' || "${command_name}" == '--help' ]]; then
   exit 0
 fi
 
+if [[ "${command_name}" =~ ^[0-9]+$ && $# -eq 1 ]]; then
+  command_name='open'
+  branch_name="${1}"
+fi
+
+resolve_issue_branch() {
+  local issue_number="$1"
+  local matching_branches=()
+
+  mapfile -t matching_branches < <(
+    git for-each-ref --format='%(refname:short)' "refs/heads/issue/${issue_number}-*"
+  )
+  if [[ "${#matching_branches[@]}" -eq 0 ]]; then
+    echo "No local branch found for issue #${issue_number}" >&2
+    echo "Create it with: bin/new-issue --worktree ..." >&2
+    exit 1
+  fi
+  if [[ "${#matching_branches[@]}" -gt 1 ]]; then
+    printf 'Multiple local branches found for issue #%s:\n' "${issue_number}" >&2
+    printf '  %s\n' "${matching_branches[@]}" >&2
+    exit 1
+  fi
+  branch_name="${matching_branches[0]}"
+}
+
+case "${command_name}" in
+  list)
+    [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+    git worktree list
+    exit 0
+    ;;
+  clean)
+    if [[ "${branch_name}" =~ ^[0-9]+$ ]]; then
+      resolve_issue_branch "${branch_name}"
+    fi
+    command_name='cleanup'
+    ;;
+  open)
+    if [[ "${branch_name}" =~ ^[0-9]+$ ]]; then
+      resolve_issue_branch "${branch_name}"
+    fi
+    command_name='switch'
+    ;;
+  cleanup)
+    if [[ "${branch_name}" =~ ^[0-9]+$ ]]; then
+      resolve_issue_branch "${branch_name}"
+    fi
+    ;;
+esac
+
 [[ "${command_name}" == create ||
   "${command_name}" == switch ||
   "${command_name}" == cleanup ]] || {
@@ -36,13 +91,32 @@ fi
 }
 
 repo_root="$(git rev-parse --show-toplevel)"
-repo_name="$(basename "${repo_root}")"
 worktree_root="${repo_root}/worktrees"
-worktree_path="${worktree_root}/${branch_name//\//-}"
+issue_number="${branch_name#issue/}"
+issue_number="${issue_number%%-*}"
+worktree_path="${worktree_root}/${issue_number}"
 branch_ref="refs/heads/${branch_name}"
 default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
 default_branch="${default_branch#origin/}"
 default_branch="${default_branch:-master}"
+
+common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
+env_source=''
+if [[ "${common_dir}" == */.git ]]; then
+  env_source="${common_dir%/.git}/.env"
+fi
+
+copy_env_if_needed() {
+  local destination="$1/.env"
+
+  [[ -e "${destination}" ]] && return 0
+  if [[ -n "${env_source}" && -f "${env_source}" ]]; then
+    cp -p -- "${env_source}" "${destination}"
+    echo "Copied .env to ${1}" >&2
+  else
+    echo "Warning: no .env found in the common checkout" >&2
+  fi
+}
 
 existing_path="$(
   git worktree list --porcelain |
@@ -89,6 +163,7 @@ if [[ "${command_name}" == cleanup ]]; then
 fi
 
 if [[ -n "${existing_path}" ]]; then
+  copy_env_if_needed "${existing_path}"
   printf '%s\n' "${existing_path}"
   exit 0
 fi
@@ -106,4 +181,5 @@ else
   git worktree add -b "${branch_name}" "${worktree_path}" HEAD >/dev/null
 fi
 
+copy_env_if_needed "${worktree_path}"
 printf '%s\n' "${worktree_path}"

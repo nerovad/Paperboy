@@ -278,8 +278,10 @@ The current workflow commands are executable files under `bin/`:
 - `bin/apply-updates` — dry-run-first label and milestone updates for one issue.
 - `bin/new-issue` — create a typed issue with interactive templates or command
   line options.
-- `bin/worktree` — create, locate, or safely clean up an issue-linked
-  worktree.
+- `bin/wt` — open, list, or safely clean up issue worktrees using short issue
+  numbers.
+- `bin/worktree` — full branch-name implementation used by scripts and for
+  compatibility.
 
 Create an issue non-interactively:
 
@@ -290,33 +292,52 @@ bin/new-issue --type feature \
   --milestone "Gitea Workflow Bash CLI"
 ```
 
+Add `--worktree` to create the issue and its local worktree in one command:
+
+```bash
+bin/new-issue --type feature \
+  --title "Add example capability" \
+  --body-file /path/to/description.md \
+  --worktree
+```
+
 If `--type`, `--title`, or a body option is omitted, `bin/new-issue` prompts
 for it. Use `--no-milestone` to skip the optional milestone prompt. The command
-creates and labels the Gitea issue first, then prints the branch name to use.
+creates and labels the Gitea issue first, then prints the branch name or the
+created worktree, depending on whether `--worktree` was supplied.
 
-Create and locate its worktree using only the branch name:
+Open an existing issue worktree using only its issue number:
+
+```bash
+cd "$(bin/wt 123)"
+```
+
+`bin/wt` resolves the local `issue/<number>-<lowercase-slug>` branch and uses
+`worktrees/<number>` as the directory. New worktrees receive a copy of the
+main checkout's ignored `.env`; an existing `.env` is never overwritten.
+Use `bin/wt list` to see all worktrees.
+
+The full branch-name form remains available:
 
 ```bash
 bin/worktree create issue/123-add-example-capability
 cd "$(bin/worktree switch issue/123-add-example-capability)"
 ```
 
-`bin/worktree` accepts only `issue/<number>-<lowercase-slug>` branches and
-places new worktrees inside the repository under `worktrees/`.
-Existing worktrees in the former sibling `<repo>-worktrees/` location are not
-migrated automatically.
+Existing worktrees in the former sibling `<repo>-worktrees/` location, or
+with former long directory names, are not migrated automatically.
 
 After a pull request is merged, Gitea automatically deletes the remote source
 branch. To remove the corresponding local worktree and branch, run:
 
 ```bash
-bin/worktree cleanup issue/123-add-example-capability
+bin/wt clean 123
 ```
 
 Cleanup verifies that the branch is merged into the default branch, refuses
 the current or a dirty worktree, removes the worktree, and then deletes the
-local branch. It never force-removes a worktree or branch. Existing worktrees
-remain until this command is explicitly run.
+local branch. It never force-removes a worktree or branch. The full branch
+name is also accepted for compatibility.
 
 The repository setting `default_delete_branch_after_merge` is enabled so
 merged pull requests do not leave short-lived remote branches behind.
