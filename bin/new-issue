@@ -11,6 +11,7 @@ body=''
 body_file=''
 milestone_title=''
 no_milestone=false
+create_worktree=false
 extra_labels=()
 usage() {
   cat <<'EOF'
@@ -26,6 +27,7 @@ Options:
   --label NAME         Add a label (repeatable; type label is automatic)
   --milestone TITLE    Assign a milestone
   --no-milestone       Do not prompt for a milestone
+  --worktree            Create the issue worktree after creation
   --url URL            Override the Gitea base URL
   --owner NAME         Override the repository owner
   --repository NAME    Override the repository name
@@ -44,6 +46,7 @@ while (($#)); do
     --label) extra_labels+=("$2"); shift 2 ;;
     --milestone) milestone_title="$2"; shift 2 ;;
     --no-milestone) no_milestone=true; shift ;;
+    --worktree) create_worktree=true; shift ;;
     --url) GITEA_URL="$2"; shift 2 ;;
     --owner) GITEA_OWNER="$2"; shift 2 ;;
     --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
@@ -142,4 +145,10 @@ slug="$(tr '[:upper:]' '[:lower:]' <<<"${title}" | sed -E 's/[^a-z0-9]+/-/g; s/^
 branch_name="issue/${issue_number}-${slug}"
 echo "Created issue #${issue_number}: ${issue_url}"
 echo "Suggested branch: ${branch_name}"
-echo "Create its worktree with: bin/worktree create ${branch_name}"
+if [[ "${create_worktree}" == true ]]; then
+  worktree_path="$("${script_dir}/worktree" create "${branch_name}")"
+  echo "Created worktree: ${worktree_path}"
+  echo "Next: cd \"${worktree_path}\""
+else
+  echo "Open its worktree with: cd \"\$(bin/wt ${issue_number})\""
+fi

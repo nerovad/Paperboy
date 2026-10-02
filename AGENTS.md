@@ -56,13 +56,17 @@ The command supports `bug`, `feature`, `chore`, and `infrastructure` issue
 types. Missing required options are prompted. Use `--no-milestone` to skip
 the optional milestone prompt.
 
-Create or locate the issue worktree with the issue number and a lowercase
-slug:
+Create or locate the issue worktree with its issue number:
 
 ```bash
-bin/worktree create issue/123-short-description
-cd "$(bin/worktree switch issue/123-short-description)"
+cd "$(bin/wt 123)"
 ```
+
+The short command resolves the local `issue/123-*` branch, uses
+`worktrees/123`, and copies the main checkout's `.env` when the worktree does
+not already have one. Use `bin/wt list` to see worktrees and `bin/wt clean 123`
+to clean up a merged issue. The full `bin/worktree` branch-name commands
+remain available for scripts.
 
 The branch must match `issue/<number>-<lowercase-slug>`. After the pull
 request merges, update `master` and clean up the local worktree and branch:
@@ -70,7 +74,7 @@ request merges, update `master` and clean up the local worktree and branch:
 ```bash
 git switch master
 git pull --ff-only
-bin/worktree cleanup issue/123-short-description
+bin/wt clean 123
 ```
 
 Cleanup refuses the default branch, an unmerged branch, the current worktree,

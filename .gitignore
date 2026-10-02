@@ -12,6 +12,7 @@
 /storage/dam/
 
 .env
+/worktrees/
 *.png
 !app/assets/images/Billing*.png
 !app/assets/images/Admin*.png
