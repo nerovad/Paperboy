@@ -16,6 +16,7 @@ class WorktreeScriptTest < Minitest::Test
     File.write(File.join(@repository, 'README'), "test\n")
     run_git('add', 'README')
     run_git('commit', '-m', 'Initial commit')
+    run_git('remote', 'add', 'origin', 'https://example.test/paperboy.git')
     FileUtils.mkdir_p(File.join(@repository, 'worktrees'))
     run_git('worktree', 'add', '-b', 'issue/7-first-worktree',
             File.join(@repository, 'worktrees', '7'), 'HEAD')
@@ -43,6 +44,38 @@ class WorktreeScriptTest < Minitest::Test
     assert_equal "#{expected_path}\n", output
     assert Dir.exist?(expected_path)
     refute Dir.exist?(File.join(@repository, 'worktrees', '7', 'worktrees', '8'))
+  end
+
+  def test_create_from_an_origin_tracking_branch
+    run_git('commit', '--allow-empty', '-m', 'Remote issue commit')
+    remote_commit = run_git('rev-parse', 'HEAD').strip
+    run_git('update-ref', 'refs/remotes/origin/issue/9-remote-worktree', remote_commit)
+
+    output = run_script('create', 'issue/9-remote-worktree')
+
+    expected_path = File.join(@repository, 'worktrees', '9')
+    assert_equal "#{expected_path}\n", output
+    assert_equal 'issue/9-remote-worktree',
+                 run_git('-C', expected_path, 'symbolic-ref', '--short', 'HEAD').strip
+    assert_equal 'origin/issue/9-remote-worktree',
+                 run_git('config', '--get',
+                         'branch.issue/9-remote-worktree.remote').strip.then { |remote| \
+                           "#{remote}/#{run_git('config', '--get',
+                                                 'branch.issue/9-remote-worktree.merge').strip.delete_prefix('refs/heads/')}" \
+                         }
+  end
+
+  def test_open_by_issue_number_finds_an_origin_tracking_branch
+    run_git('commit', '--allow-empty', '-m', 'Remote issue commit')
+    remote_commit = run_git('rev-parse', 'HEAD').strip
+    run_git('update-ref', 'refs/remotes/origin/issue/10-remote-worktree', remote_commit)
+
+    output = run_script('10')
+
+    expected_path = File.join(@repository, 'worktrees', '10')
+    assert_equal "#{expected_path}\n", output
+    assert_equal 'issue/10-remote-worktree',
+                 run_git('-C', expected_path, 'symbolic-ref', '--short', 'HEAD').strip
   end
 
   private

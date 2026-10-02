@@ -312,10 +312,12 @@ Open an existing issue worktree using only its issue number:
 cd "$(bin/wt 123)"
 ```
 
-`bin/wt` resolves the local `issue/<number>-<lowercase-slug>` branch and uses
-the shared checkout's `worktrees/<number>` directory. New worktrees receive a
-copy of the main checkout's ignored `.env`; an existing `.env` is never
-overwritten. Use `bin/wt list` to see all worktrees.
+`bin/wt` resolves the local or origin-tracking
+`issue/<number>-<lowercase-slug>` branch and uses the shared checkout's
+`worktrees/<number>` directory. If only the origin-tracking branch exists, it
+creates the local tracking branch as part of creating the worktree. New
+worktrees receive a copy of the main checkout's ignored `.env`; an existing
+`.env` is never overwritten. Use `bin/wt list` to see all worktrees.
 
 For interactive navigation, source the shell integration once:
 

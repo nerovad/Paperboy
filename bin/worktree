@@ -12,9 +12,10 @@ Usage:
   bin/worktree switch issue/<number>-<slug>
   bin/worktree cleanup issue/<number>-<slug>
 
-The short form finds the local issue/<number>-<slug> branch and places its
-worktree in the shared checkout's worktrees/<number> directory. It copies the
-common checkout's .env when the worktree does not already have one.
+The short form finds the local or origin-tracking issue/<number>-<slug> branch
+and places its worktree in the shared checkout's worktrees/<number> directory.
+It copies the common checkout's .env when the worktree does not already have
+one.
 
 Use: cd "$(bin/wt 123)"
 
@@ -78,14 +79,28 @@ fi
 resolve_issue_branch() {
   local issue_number="$1"
   local matching_branches=()
+  local matching_remote_branches=()
 
   mapfile -t matching_branches < <(
     git for-each-ref --format='%(refname:short)' "refs/heads/issue/${issue_number}-*"
   )
   if [[ "${#matching_branches[@]}" -eq 0 ]]; then
-    echo "No local branch found for issue #${issue_number}" >&2
-    echo "Create it with: bin/new-issue --worktree ..." >&2
-    exit 1
+    mapfile -t matching_remote_branches < <(
+      git for-each-ref --format='%(refname:strip=3)' \
+        "refs/remotes/origin/issue/${issue_number}-*"
+    )
+    if [[ "${#matching_remote_branches[@]}" -eq 0 ]]; then
+      echo "No local or origin-tracking branch found for issue #${issue_number}" >&2
+      echo "Fetch it or create it with: bin/new-issue --worktree ..." >&2
+      exit 1
+    fi
+    if [[ "${#matching_remote_branches[@]}" -gt 1 ]]; then
+      printf 'Multiple origin-tracking branches found for issue #%s:\n' "${issue_number}" >&2
+      printf '  %s\n' "${matching_remote_branches[@]}" >&2
+      exit 1
+    fi
+    branch_name="${matching_remote_branches[0]}"
+    return
   fi
   if [[ "${#matching_branches[@]}" -gt 1 ]]; then
     printf 'Multiple local branches found for issue #%s:\n' "${issue_number}" >&2
@@ -213,14 +228,24 @@ fi
 }
 
 if [[ "${command_name}" == switch ]] && ! git show-ref --verify --quiet "${branch_ref}"; then
-  echo "Branch does not exist: ${branch_name}" >&2
-  echo "Create it first with: bin/worktree create ${branch_name}" >&2
-  exit 1
+  remote_branch_ref="refs/remotes/origin/${branch_name}"
+  if ! git show-ref --verify --quiet "${remote_branch_ref}"; then
+    echo "Branch does not exist locally or on origin: ${branch_name}" >&2
+    echo "Fetch it or create it first with: bin/worktree create ${branch_name}" >&2
+    exit 1
+  fi
 fi
 
 mkdir -p "${worktree_root}"
 if git show-ref --verify --quiet "${branch_ref}"; then
   git worktree add "${worktree_path}" "${branch_name}" >/dev/null
+elif git show-ref --verify --quiet "refs/remotes/origin/${branch_name}"; then
+  remote_commit="$(git rev-parse "refs/remotes/origin/${branch_name}^{commit}")"
+  git worktree add -b "${branch_name}" "${worktree_path}" \
+    "${remote_commit}" >/dev/null
+  if git config --get remote.origin.url >/dev/null; then
+    git branch --set-upstream-to="origin/${branch_name}" "${branch_name}" >/dev/null
+  fi
 else
   git worktree add -b "${branch_name}" "${worktree_path}" HEAD >/dev/null
 fi
