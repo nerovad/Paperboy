@@ -262,8 +262,8 @@ The Phase 4 updater is dry-run by default. It only targets one explicit issue
 and supports label additions and milestone assignment:
 
 ```bash
-bin/apply-updates --issue 10 --add-label priority:normal
-bin/apply-updates --issue 10 --milestone "Gitea Workflow Phase 3"
+bin/update-issue --issue 10 --add-label priority:normal
+bin/update-issue --issue 10 --milestone "Gitea Workflow Phase 3"
 ```
 
 Review the plan first, then repeat the command with `--apply` to make the
@@ -275,7 +275,7 @@ modifies Projects.
 The current workflow commands are executable files under `bin/`:
 
 - `bin/status-report` — read-only issue, pull request, and milestone report.
-- `bin/apply-updates` — dry-run-first label and milestone updates for one issue.
+- `bin/update-issue` — dry-run-first label and milestone updates for one issue.
 - `bin/new-issue` — create a typed issue with interactive templates or command
   line options.
 - `bin/wt` — open, list, or safely clean up issue worktrees using short issue
@@ -313,9 +313,18 @@ cd "$(bin/wt 123)"
 ```
 
 `bin/wt` resolves the local `issue/<number>-<lowercase-slug>` branch and uses
-`worktrees/<number>` as the directory. New worktrees receive a copy of the
-main checkout's ignored `.env`; an existing `.env` is never overwritten.
-Use `bin/wt list` to see all worktrees.
+the shared checkout's `worktrees/<number>` directory. New worktrees receive a
+copy of the main checkout's ignored `.env`; an existing `.env` is never
+overwritten. Use `bin/wt list` to see all worktrees.
+
+At the start of a session, verify its target with:
+
+```bash
+bin/wt context
+```
+
+The command reports the shared checkout, current worktree, branch, issue,
+cleanliness, and default branch.
 
 The full branch-name form remains available:
 

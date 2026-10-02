@@ -22,7 +22,8 @@
 - Always use Workflow commands unless instructed otherwise
 - Propose git commit message.
   * Prose limited to 72 characters
-  * Prepend gitea issue number to the issue title
+  * Prepend `#<issue-number>` to the issue title so Gitea links the commit
+    to its issue
   * Blank Line
   * Description lines limited to 80 characters
   * Do not indent proposed commit
@@ -64,11 +65,18 @@ Create or locate the issue worktree with its issue number:
 cd "$(bin/wt 123)"
 ```
 
-The short command resolves the local `issue/123-*` branch, uses
-`worktrees/123`, and copies the main checkout's `.env` when the worktree does
-not already have one. Use `bin/wt list` to see worktrees and `bin/wt clean 123`
-to clean up a merged issue. The full `bin/worktree` branch-name commands
-remain available for scripts.
+The short command resolves the local `issue/123-*` branch, uses the shared
+checkout's `worktrees/123` directory even when invoked from a linked worktree,
+and copies the main checkout's `.env` when the worktree does not already have
+one. Use `bin/wt list` to see worktrees and `bin/wt clean 123` to clean up a
+merged issue. The full `bin/worktree` branch-name commands remain available
+for scripts.
+
+At the start of every coding session, run `bin/wt context` and verify that the
+reported current worktree and branch match the requested issue. Work only in
+that worktree; do not switch another shell's worktree or edit the shared
+checkout unless the task explicitly targets it. Multiple sessions are safe
+when each starts in its own linked worktree.
 
 The branch must match `issue/<number>-<lowercase-slug>`. After the pull
 request merges, update `master` and clean up the local worktree and branch:
@@ -89,12 +97,12 @@ missing labels, missing milestones, stale work, and unlinked pull requests:
 bin/status-report
 ```
 
-Use `bin/apply-updates` only for an explicit, approved issue update. It is
+Use `bin/update-issue` only for an explicit, approved issue update. It is
 dry-run by default:
 
 ```bash
-bin/apply-updates --issue 123 --add-label priority:normal
-bin/apply-updates --issue 123 --add-label priority:normal --apply
+bin/update-issue --issue 123 --add-label priority:normal
+bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
 See `docs/gitea-automation.md` for the complete workflow and project
