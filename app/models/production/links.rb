@@ -15,7 +15,7 @@ module Production
     GROUP_LABELS = {
       paperboy: 'Paperboy Environments',
       production: 'Production Systems',
-      projects: 'Projects & Support',
+      projects: 'Powerpuf Girls',
       finance: 'Finance & Operations',
       people: 'Employee & Facilities'
     }.freeze
@@ -31,8 +31,11 @@ module Production
         url: 'https://indd.adobe.com/view/ea6cbcee-f331-4b4e-9ea7-c92a33f81239', group: :production,
         title: 'Creative Services Lookbook highlighting capabilities' },
       { label: 'DocuShare', url: 'http://docushare', group: :production, title: 'Document Management Catalog Items' },
-      { label: 'Gitea', url: 'http://gsa-gitea:3000/user/login', group: :projects, title: 'Business Support Services source code repositories' },
-      { label: 'GSA Service Desk', url: 'https://gsa-itportal', group: :projects, title: 'GSA Service Desk and Employee Portal' },
+      { label: 'Code', url: 'http://gsa-gitea:3000/BSS/Paperboy', group: :projects, title: 'Paperboy source code' },
+      { label: 'Issues', url: 'http://gsa-gitea:3000/BSS/Paperboy/issues', group: :projects, title: 'Paperboy issues' },
+      { label: 'Project', url: 'http://gsa-gitea:3000/BSS/Paperboy/projects/2', group: :projects, title: 'Paperboy project' },
+      { label: 'Pull Requests', url: 'http://gsa-gitea:3000/BSS/Paperboy/pulls', group: :projects, title: 'Paperboy pull requests' },
+      { label: 'GSA Service Desk', url: 'https://gsa-itportal', group: :people, title: 'GSA Service Desk and Employee Portal' },
       { label: 'Impress Automate', url: 'http://gsa-oms:690/local/#/login', group: :production, title: 'Print 2 Mail' },
       { label: 'Legacy e-Forms', url: 'http://docushare:99/jsp/login.jsp', group: :production, title: 'Liquid Office' },
       { label: 'Legacy PSI:Fusion', url: 'http://gsa-scan01:8080', group: :finance, title: 'AIM Automated Invoice Management' },
