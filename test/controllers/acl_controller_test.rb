@@ -44,15 +44,13 @@ class AclControllerTest < ActionController::TestCase
     assert_response :success
     assert_select '.admin-tools-sidebar > nav > details.nav-group' do
       assert_select '> summary', text: 'ACL'
-      assert_select 'details > summary', text: 'Permissions'
-      assert_select 'details > summary', text: 'Application Features'
-      assert_select 'a.nav-link', text: 'Applications', href: /#organization-permissions$/
-      assert_select 'a.nav-link', text: 'DAM Access Rules', href: /#dam-access-rules$/
-      assert_select 'a.nav-link', text: 'Group Management', href: /#group-management$/
-      assert_select 'details > summary', text: 'Group Management'
-      assert_select 'a.nav-link', text: 'Critical_Info_Admins'
-      assert_select 'a.nav-link', text: 'Critical_Info_Directors'
-      assert_select '.admin-tools-sidebar a.nav-link', text: 'Organization Permissions', count: 0
+      assert_select '> a.nav-link', text: 'Overview', href: acl_index_path
+      assert_select '> a.nav-link', text: 'Organization Permissions',
+                                    href: org_permissions_acl_index_path
+      assert_select '> a.nav-link', text: 'Group Management', href: /#group-management$/
+      assert_select '> a.nav-link', text: 'DAM Access Rules', href: dam_access_rules_path
+      assert_select 'details details', count: 0
+      assert_select 'a.nav-link', text: /Critical_Info_/, count: 0
     end
 
     assert_select '#global-permissions a.btn', text: 'Configure Global Permissions'

@@ -63,24 +63,4 @@ module AdminToolsHelper
   def current_admin_tool_key
     ADMIN_TOOLS.find { |tool| tool[:controllers].include?(controller_path) }&.fetch(:key)
   end
-
-  # The ACL screen is a small administration app of its own. Keep the dynamic
-  # application-feature links here so they remain available while visiting any
-  # ACL page, including DAM rules and an individual group's permissions.
-  def acl_sidebar_application_features
-    features = AclController::APPLICATION_ITEMS.filter_map do |app|
-      next if AppFeature.for(app[:key]).empty?
-
-      { label: app[:label], path: org_permissions_acl_index_path(anchor: "application-features-#{app[:key]}") }
-    end
-    features.sort_by { |item| item[:label].downcase }
-  end
-
-  def acl_sidebar_groups
-    Group.all.sort_by { |group| group.group_name.to_s.downcase }
-  end
-
-  def acl_sidebar_group_page?(group)
-    current_page?(acl_path(group)) || request.path.start_with?("#{acl_path(group)}/")
-  end
 end
