@@ -4,7 +4,6 @@
 
 <div class="form-wrapper acl-management dam-access-rules">
   <div class="acl-header">
-    <%= link_to "Back to rules", dam_access_rules_path, class: "btn" %>
     <%= button_to "Delete rule", dam_access_rule_path(@rule), method: :delete, class: "btn deny",
                   form: { data: { turbo_confirm: "Delete #{@rule.name}? Its assets become visible to everyone unless another rule covers them.",
                                   confirm_title: "Delete rule", confirm_label: "Delete" } } %>

@@ -538,6 +538,7 @@ Rails.application.routes.draw do
       post  :resend_contractor_welcome
     end
     collection do
+      get :organization_permissions
       get :org_permissions
       patch :update_org_permissions
     end

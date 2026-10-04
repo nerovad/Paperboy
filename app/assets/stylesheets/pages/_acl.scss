@@ -104,6 +104,62 @@
   }
 }
 
+/* Permission editors are divided by the authorization concept they control.
+   Native details provide disclosure without adding another controller or
+   changing the permission form's submission behavior. */
+.acl-permission-group {
+  margin-bottom: 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $surface-panel;
+  scroll-margin-top: 20px;
+
+  > summary {
+    padding: 16px 20px;
+    color: $text-color;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+    list-style-position: inside;
+  }
+
+  &[open] > summary {
+    border-bottom: 1px solid $border-color;
+  }
+
+  > .acl-permission-group__intro {
+    margin: 16px 20px 0;
+    color: $muted;
+  }
+
+  > .acl-permissions-section {
+    margin: 16px 20px 20px;
+  }
+}
+
+.acl-permission-subgroup {
+  margin: 16px 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $surface-base;
+
+  > summary {
+    padding: 13px 16px;
+    color: $text-color;
+    cursor: pointer;
+    font-weight: 600;
+    list-style-position: inside;
+  }
+
+  &[open] > summary {
+    border-bottom: 1px solid $border-color;
+  }
+
+  > .acl-feature-section {
+    margin: 16px;
+  }
+}
+
 /* Application Features: each app gets its own card so its Select All control
    and feature buttons are visually scoped together. */
 .acl-feature-section {
@@ -222,6 +278,34 @@
   background-color: $surface-subtle;
   border-radius: $radius-6;
   border: 1px solid $border-color;
+}
+
+/* Group-management pages use the same disclosure treatment as the permission
+   editors, while retaining their existing card contents. */
+.acl-management-group {
+  margin-bottom: 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $surface-panel;
+  scroll-margin-top: 20px;
+
+  > summary {
+    padding: 16px 20px;
+    color: $text-color;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+    list-style-position: inside;
+  }
+
+  &[open] > summary {
+    border-bottom: 1px solid $border-color;
+  }
+}
+
+.acl-management-group > .acl-search-section,
+.acl-management-group > .acl-members-section {
+  margin: 20px;
 }
 
 .acl-section-header {

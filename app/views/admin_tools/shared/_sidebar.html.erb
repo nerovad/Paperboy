@@ -12,12 +12,12 @@
       <% if tool[:key] == 'acl' %>
         <details class="nav-group" <%= "open" if active_key == 'acl' %>>
           <summary><span class="nav-group-label"><%= tool[:label] %></span></summary>
-          <%= link_to 'Overview', acl_index_path,
-                      class: "nav-link#{' active' if controller_path == 'acl' && action_name == 'index'}" %>
-          <%= link_to 'Organization Permissions', org_permissions_acl_index_path,
-                      class: "nav-link#{' active' if controller_path == 'acl' && action_name == 'org_permissions'}" %>
-          <%= link_to 'Group Management', acl_index_path(anchor: 'group-management'),
-                      class: "nav-link#{' active' if controller_path == 'acl' && action_name.in?(%w[show new edit permissions])}" %>
+          <%= link_to 'Global Permissions', org_permissions_acl_index_path,
+                      class: "nav-link#{' active' if acl_global_permissions_page?}" %>
+          <%= link_to 'Organizational Permissions', organization_permissions_acl_index_path,
+                      class: "nav-link#{' active' if acl_organizational_permissions_page?}" %>
+          <%= link_to 'Group Management', acl_index_path,
+                      class: "nav-link#{' active' if controller_path == 'acl' && action_name.in?(%w[index show new edit permissions])}" %>
           <%= link_to 'DAM Access Rules', dam_access_rules_path,
                       class: "nav-link#{' active' if controller_path == 'dam_access_rules'}" %>
         </details>

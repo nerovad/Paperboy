@@ -63,4 +63,19 @@ module AdminToolsHelper
   def current_admin_tool_key
     ADMIN_TOOLS.find { |tool| tool[:controllers].include?(controller_path) }&.fetch(:key)
   end
+
+  def acl_global_permissions_page?
+    controller_path == 'acl' && action_name == 'org_permissions' && !acl_organization_scope_selected?
+  end
+
+  def acl_organizational_permissions_page?
+    return false unless controller_path == 'acl'
+
+    action_name == 'organization_permissions' ||
+      (action_name == 'org_permissions' && acl_organization_scope_selected?)
+  end
+
+  def acl_organization_scope_selected?
+    %w[agency_id division_id department_id unit_id].any? { |key| params[key].present? }
+  end
 end
