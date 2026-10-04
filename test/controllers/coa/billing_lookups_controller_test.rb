@@ -35,6 +35,9 @@ class CoaBillingLookupsControllerTest < ActionController::TestCase
     assert_select '.coa-billing-string-grid .coa-billing-string-grid__field select', count: 6
     assert_select '#billing-account-string-title + .coa-lookup-card__body .coa-billing-string-grid', count: 1
     assert_select '.coa-billing-string-grid__heading', count: 10
+    %w[cobject cactivity cfunction cprogram cphase ctask].each do |target|
+      assert_select "select[name='billing_#{target}'][data-coa-billing-string-target='#{target}']", count: 1
+    end
     assert_select '.coa-sidebar a[href=?]', coa_billing_lookup_path, text: 'Billing Lookup'
     assert_select '.coa-sidebar a', text: 'Overview', count: 0
   end

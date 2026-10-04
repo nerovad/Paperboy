@@ -20,20 +20,16 @@
         <% %w[agency division department unit].each do |target| %>
           <code data-coa-billing-string-target="<%= target %>"></code>
         <% end %>
-        <% [
-          ["COBJECT", "cobject"],
-          ["CACTIVITY", "cactivity"],
-          ["CFUNCTION", "cfunction"],
-          ["CPROGRAM", "cprogram"],
-          ["CPHASE", "cphase"],
-          ["CTASK", "ctask"]
-        ].each do |label, target| %>
-          <div class="coa-billing-string-grid__field">
-            <%= select_tag "billing_#{target}", options_for_select([["Select an agency first", ""]]),
-                           disabled: true, aria: { label: label },
-                           data: { coa_billing_string_target: target } %>
-          </div>
-        <% end %>
+        <%= render partial: "coa/shared/billing_coding_field",
+                   collection: [
+                     { label: "COBJECT", target: "cobject" },
+                     { label: "CACTIVITY", target: "cactivity" },
+                     { label: "CFUNCTION", target: "cfunction" },
+                     { label: "CPROGRAM", target: "cprogram" },
+                     { label: "CPHASE", target: "cphase" },
+                     { label: "CTASK", target: "ctask" }
+                   ],
+                   as: :field %>
       </div>
     </div>
     <button type="button" class="btn approve compact coa-billing-copy"
