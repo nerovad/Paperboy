@@ -18,15 +18,20 @@ class ProductionSidebarTest < ActionController::TestCase
     assert_response :success
     assert_select '.production-sidebar details.nav-group', count: 5
     assert_sidebar_group 'Paperboy Environments', %w[Production Staging Development], open: true
+    assert_sidebar_group 'Powerpuf Girls', ['Asana', 'Code', 'Issues', 'Project', 'Pull Requests']
     assert_sidebar_group 'Production Systems',
                          ['Creative Service Lookbook', 'DocuShare', 'Impress Automate',
                           'Legacy e-Forms', 'USPS Gateway', 'VCPrint']
-    assert_sidebar_group 'Projects & Support', ['Asana', 'Gitea', 'GSA Service Desk']
     assert_sidebar_group 'Finance & Operations',
                          ['ACO', 'CalSAWS', 'Legacy PSI:Fusion', 'Purchase Order Status', 'VCFMS']
     assert_sidebar_group 'Employee & Facilities',
-                         %w[MainStar MyVCWeb TargetSolutions VCHRP VCLearning VCWorkplace]
-    assert_select '.production-sidebar a.nav-link[target="_blank"][rel="noopener"]', count: 23
+                         ['GSA Service Desk', 'MainStar', 'MyVCWeb', 'TargetSolutions', 'VCHRP', 'VCLearning', 'VCWorkplace']
+    assert_select '.production-sidebar a.nav-link[target="_blank"][rel="noopener"]', count: 26
+
+    assert_select '.production-sidebar a.nav-link', text: 'Code', href: 'http://gsa-gitea:3000/BSS/Paperboy'
+    assert_select '.production-sidebar a.nav-link', text: 'Issues', href: 'http://gsa-gitea:3000/BSS/Paperboy/issues'
+    assert_select '.production-sidebar a.nav-link', text: 'Project', href: 'http://gsa-gitea:3000/BSS/Paperboy/projects/2'
+    assert_select '.production-sidebar a.nav-link', text: 'Pull Requests', href: 'http://gsa-gitea:3000/BSS/Paperboy/pulls'
   end
 
   private

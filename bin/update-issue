@@ -11,7 +11,7 @@ apply=false
 label_names=()
 usage() {
   cat <<'EOF'
-Usage: bin/apply-updates --issue NUMBER [OPTIONS]
+Usage: bin/update-issue --issue NUMBER [OPTIONS]
 
 Plan explicit label and milestone updates for one Gitea issue. The default is
 dry-run; add --apply only after reviewing the plan.

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Source this file from an interactive Bash shell to get Paperboy helpers.
+# Executing it cannot change the caller's directory; sourcing it can.
+
+wt() {
+  local paperboy_bin_dir
+  paperboy_bin_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+  if [[ $# -eq 1 && "$1" =~ ^[0-9]+$ ]]; then
+    local worktree_path
+    worktree_path="$("${paperboy_bin_dir}/wt" "$@")" || return
+    cd -- "${worktree_path}"
+    return
+  fi
+
+  "${paperboy_bin_dir}/wt" "$@"
+}
