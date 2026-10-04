@@ -16,4 +16,27 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
     page.find('.pb-modal--startup-warning button', text: 'Continue').click
   end
+
+  def sign_in_as_employee(employee_id = 1)
+    visit root_path
+    page.execute_script(<<~JAVASCRIPT, employee_id)
+      const form = document.createElement('form')
+      form.method = 'post'
+      form.action = '/login'
+
+      const token = document.querySelector('meta[name="csrf-token"]').content
+      const authenticity = document.createElement('input')
+      authenticity.name = 'authenticity_token'
+      authenticity.value = token
+      form.appendChild(authenticity)
+
+      const employee = document.createElement('input')
+      employee.name = 'id'
+      employee.value = arguments[0]
+      form.appendChild(employee)
+
+      document.body.appendChild(form)
+      form.submit()
+    JAVASCRIPT
+  end
 end

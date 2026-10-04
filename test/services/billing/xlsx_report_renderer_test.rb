@@ -53,7 +53,7 @@ module Billing
       report = MonthlyReport.new(
         operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
       )
-      columns = %w[CUNIT COBJECT CACTIVTY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
+      columns = %w[CUNIT COBJECT CACTIVITY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
       result = ActiveRecord::Result.new(columns, [Array.new(columns.length, '001')])
 
       data = XlsxReportRenderer.new(report, { 'name' => 'Billing' }, result).call
