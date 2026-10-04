@@ -163,9 +163,24 @@ from another machine. `config/database.yml` uses `ENV.fetch` with no
 defaults, so Rails will not boot without it. At minimum:
 
 ```bash
-GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
-GSABSS_DATABASE=GSABSS
+# Define simple ROOTS alphabetically here. Define all other roots within their
+# respective sub-application locations using these roots.
+AIM_ROOT=/mnt/a
 GSABSS_ROOT=/mnt/i
+HSA_ADOPT_ROOT=/mnt/a
+P2M_ROOT=/mnt/o
+
+# Primary SQL Server connections
+#GSABSS_HOST=GSASQL16
+GSABSS_HOST=10.135.204.161
+GSABSS_PORT=1433
+GSABSS_USERNAME=
+GSABSS_PASSWORD=
+GSABSS_TIMEOUT=5
+GSABSS_DATABASE=GSABSS
+PAPERBOY_DATABASE=Paperboy_Dev
+
+# P2M
 P2M_DATARUNNER_ROOT=/mnt/o/Outputs/DataRunner
 P2M_SHIPPING_STATION=00_ShippingStation
 P2M_STAGING=01_Staging
@@ -176,13 +191,21 @@ P2M_PRINTERS=99_Printers
 SMB_USERNAME=
 SMB_PASSWORD=
 SMB_IP=
-AIM_ROOT=/mnt/a
 PAPERBOY_DATABASE=Paperboy_Dev
+
+# Active Record
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
 ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
-```
 
+# SMB Shortcut
+SMB_USERNAME='ENT\000000'
+SMB_PASSWORD='password'
+
+# GITEA
+GITEA_URL=http://10.135.204.125:3000
+GITEA_TOKEN=your-gitea-token
+```
 `PAPERBOY_DATABASE` is read in every environment, not just development —
 `config/database.yml` uses it as the database name for development, staging
 and production alike. The stage host overrides it back to `Paperboy_Stage`
@@ -659,6 +682,7 @@ also accepts no selector and then discovers every supported file in
 inbox in `.env`:
 
 ```dotenv
+
 DATARUNNER_INBOX=${GSABSS_ROOT}/BUSINESS_SUPPORT/DataRunner/00_Inbox
 ```
 
