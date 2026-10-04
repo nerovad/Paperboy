@@ -1,0 +1,10 @@
+<% options = local_assigns.fetch(:options, [["Select an agency first", ""]]) %>
+<% name_prefix = local_assigns.fetch(:name_prefix, "billing") %>
+<% stimulus_controller = local_assigns.fetch(:stimulus_controller, "coa_billing_string") %>
+<% disabled = local_assigns.fetch(:disabled, true) %>
+
+<div class="coa-billing-string-grid__field">
+  <%= select_tag "#{name_prefix}_#{field[:target]}", options_for_select(options),
+                 disabled: disabled, aria: { label: field[:label] },
+                 data: { "#{stimulus_controller}_target" => field[:target] } %>
+</div>
