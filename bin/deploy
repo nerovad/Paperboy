@@ -50,6 +50,19 @@ fi
 git checkout -q -- db/schema.rb
 git checkout --detach "refs/tags/$TAG"
 
+# .env is a verbatim copy of LockBox/Paperboy.env, refreshed here so a deploy
+# never runs on a stale one. What belongs to this host alone lives in
+# .env.local, which is never overwritten. Stops the deploy, before anything on
+# this box has changed, if LockBox cannot be pulled or the copy would lose a
+# variable. See bin/env-pull.
+#
+#   NO_ENV_PULL=1   deploy with the .env already here
+if [ -n "$NO_ENV_PULL" ]; then
+  echo "==> Skipping LockBox refresh of .env (NO_ENV_PULL set)"
+else
+  bin/env-pull
+fi
+
 echo "==> Installing gems..."
 # The full bundle, development and test groups included. config/application.rb
 # runs Bundler.require(*Rails.groups), so production loads neither group

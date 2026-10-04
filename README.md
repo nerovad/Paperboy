@@ -98,7 +98,7 @@ of every page.
 For packaged deployments that do not include `.git`, set `PAPERBOY_VERSION` to
 the full numeric version and optional commit suffix.
 
-The manual release command also updates `PAPERBOY_VERSION` in the local `.env`
+The manual release command also updates `PAPERBOY_VERSION` in `.env.local`
 when that file exists:
 
 ```bash
@@ -158,9 +158,43 @@ bundle install
 
 ### The .env file
 
-`.env` is gitignored, so it does not arrive with a fresh clone — copy it
-from another machine. `config/database.yml` uses `ENV.fetch` with no
-defaults, so Rails will not boot without it. At minimum:
+Environment variables come from two gitignored files:
+
+| File | Holds | Maintained by |
+|------|-------|---------------|
+| `.env` | a verbatim copy of `LockBox/Paperboy.env` | `bin/env-pull` — never edit it by hand |
+| `.env.local` | what belongs to this machine or to you | you; nothing ever overwrites it |
+
+dotenv reads `.env.local` first and the first value wins, so a name set in
+both takes its value from `.env.local`. If a value is the same for everyone
+it belongs in LockBox; otherwise it goes in `.env.local`.
+`.env.local.example` lists the usual candidates — `PAPERBOY_DATABASE`,
+`PAPERBOY_TEST_DATABASE`, `GSABSS_HOST`, `DEV_EMAIL`, `KRB5CCNAME`.
+
+```bash
+bin/env-pull             # pull ~/gitea/LockBox, replace .env
+bin/env-pull --check     # report what would change, write nothing
+bin/env-pull --no-pull   # copy from the LockBox checkout as it stands
+bin/env-pull --prune     # accept losing variables LockBox does not have
+```
+
+It prints the names of the variables added, changed and removed, never
+their values, and keeps the file it replaced as `.env.previous`. A variable
+that is in the current `.env` but in neither LockBox nor `.env.local` would
+vanish, so the copy is refused until you move it to `.env.local`, add it to
+LockBox, or pass `--prune`. The LockBox checkout is `--lockbox <dir>`, then
+`$LOCKBOX_DIR`, then `../LockBox`.
+
+`bin/deploy-dev`, `bin/deploy-stage` and `bin/deploy` run `bin/env-pull`
+right after checking out the code, so the hosts pick up LockBox changes on
+their own and a refused copy stops the deploy before anything has changed.
+`NO_ENV_PULL=1` deploys with the `.env` already there. The systemd units
+load `.env.local` ahead of `.env` the same way Rails does, and — unlike
+stock dotenv — so does the test environment, which is where
+`PAPERBOY_TEST_DATABASE` is read.
+
+`config/database.yml` uses `ENV.fetch` with no defaults, so Rails will not
+boot without `.env`. At minimum:
 
 ```bash
 GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=

@@ -116,6 +116,15 @@ bin/update-issue --issue 123 --add-label priority:normal --apply
 See `docs/gitea-automation.md` for the complete workflow and project
 conventions.
 
+## Environment files
+
+`.env` is a verbatim copy of `LockBox/Paperboy.env`, written by
+`bin/env-pull` and by every deploy. Never edit it: the next pull replaces
+it, and `bin/deploy-aim-workers` refuses one that differs from LockBox. A
+variable everyone needs is added to `LockBox/Paperboy.env`; one that belongs
+to a single machine or person goes in `.env.local`, which wins over `.env`
+and is never overwritten. `.env.local.example` lists the usual ones.
+
 ## Stylesheets
 
 SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).

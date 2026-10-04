@@ -1,33 +1,39 @@
 # shellcheck shell=bash
 
 gitea_load_config() {
-  local env_file="${GITEA_ENV_FILE:-}"
+  local file common_dir shared_root=""
+  local -a env_files=(.env .env.local)
 
-  if [[ -z "${env_file}" ]]; then
-    env_file=".env"
+  # .env.local is sourced second so this machine's values win, as they do
+  # under dotenv. A personal GITEA_TOKEN belongs there: .env is a copy of
+  # LockBox that bin/env-pull replaces.
+  if [[ -n "${GITEA_ENV_FILE:-}" ]]; then
+    env_files=("${GITEA_ENV_FILE}")
+  else
+    # A linked worktree without its own copy reads the shared checkout's.
+    common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+    [[ "${common_dir}" != */.git ]] || shared_root="${common_dir%/.git}"
+  fi
 
-    if [[ ! -f "${env_file}" ]]; then
-      local common_dir
-      common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
-      if [[ "${common_dir}" == */.git ]]; then
-        env_file="${common_dir%/.git}/.env"
-      fi
+  for file in "${env_files[@]}"; do
+    if [[ ! -f "${file}" && -n "${shared_root}" ]]; then
+      file="${shared_root}/${file}"
     fi
-  fi
 
-  if [[ -f "${env_file}" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    source "${env_file}"
-    set +a
-  fi
+    if [[ -f "${file}" ]]; then
+      set -a
+      # shellcheck disable=SC1090
+      source "${file}"
+      set +a
+    fi
+  done
 
   GITEA_URL="${GITEA_URL:-http://10.135.204.125:3000}"
   GITEA_OWNER="${GITEA_OWNER:-BSS}"
   GITEA_REPOSITORY="${GITEA_REPOSITORY:-Paperboy}"
   GITEA_API="${GITEA_URL%/}/api/v1/repos/${GITEA_OWNER}/${GITEA_REPOSITORY}"
 
-  : "${GITEA_TOKEN:?GITEA_TOKEN is required; set it in the environment or .env}"
+  : "${GITEA_TOKEN:?GITEA_TOKEN is required; set it in the environment or .env.local}"
 }
 
 gitea_require_commands() {

@@ -39,7 +39,7 @@ pid_file="$app_root/tmp/pids/paperboy-dev-$PORT.pids"
 # --- Preflight -------------------------------------------------------------
 if [[ ! -f .env ]]; then
   echo "==> .env is missing. Rails cannot boot without GSABSS_* and the" >&2
-  echo "    ACTIVE_RECORD_ENCRYPTION_* keys; copy it from another machine." >&2
+  echo "    ACTIVE_RECORD_ENCRYPTION_* keys; run bin/env-pull to copy it from LockBox." >&2
   exit 1
 fi
 

@@ -33,8 +33,10 @@ commit_id="${commit:0:9}"
 tag="v${base_version}-${commit_id}"
 release_version="${base_version}-${commit_id}"
 
+# .env.local, not .env: .env is a verbatim copy of LockBox that bin/env-pull
+# replaces, and bin/deploy-aim-workers refuses one that has drifted from it.
 update_env_version() {
-  local env_file="${PAPERBOY_ENV_FILE:-.env}"
+  local env_file="${PAPERBOY_ENV_FILE:-.env.local}"
   local temp_file
 
   [[ -f "${env_file}" ]] || return 0

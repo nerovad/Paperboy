@@ -11,8 +11,12 @@
 # Default DAM roots and watch folders (PAPERBOY_DAM_ROOTS)
 /storage/dam/
 
+# .env is a copy of LockBox/Paperboy.env (bin/env-pull); .env.local holds this
+# machine's own overrides; .env.previous is the copy env-pull replaced.
 .env
 /worktrees/
+.env.*
+!.env.local.example
 *.png
 !app/assets/images/Billing*.png
 !app/assets/images/Admin*.png

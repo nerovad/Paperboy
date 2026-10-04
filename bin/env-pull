@@ -1,0 +1,147 @@
+#!/bin/bash
+#
+# Refresh .env from LockBox.
+#
+# .env is a verbatim copy of LockBox/Paperboy.env and nobody edits it by hand.
+# Whatever belongs to one person or one machine -- a local database name, a
+# Kerberos cache, a personal token -- lives in .env.local, which this script
+# never writes. dotenv reads .env.local first and the first value wins, so it
+# overrides the shared file without the two ever being merged.
+#
+# Pulls the LockBox checkout, then copies Paperboy.env over .env. The file it
+# replaces is kept as .env.previous. Reports the names of the variables that
+# were added, changed or removed, never their values.
+#
+# A variable that is in the current .env but in neither LockBox nor .env.local
+# would simply disappear, so the copy is refused until it is moved to
+# .env.local, added to LockBox, or dropped on purpose with --prune.
+#
+#   bin/env-pull                 # pull LockBox, replace .env
+#   bin/env-pull --check         # pull LockBox, report, write nothing
+#   bin/env-pull --no-pull       # use the LockBox checkout as it stands
+#   bin/env-pull --prune         # accept losing variables LockBox lacks
+#   bin/env-pull --lockbox ~/src/LockBox
+#
+# The LockBox checkout is --lockbox, then $LOCKBOX_DIR, then the LockBox
+# directory beside this repo. bin/deploy-dev, bin/deploy-stage and bin/deploy
+# run this on every deploy; NO_ENV_PULL=1 skips it there.
+#
+set -euo pipefail
+
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LOCKBOX="${LOCKBOX_DIR:-$APP_DIR/../LockBox}"
+SOURCE_NAME="Paperboy.env"
+CHECK=0
+PULL=1
+PRUNE=0
+
+die() { echo "!!! $*" >&2; exit 1; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --check) CHECK=1; shift ;;
+    --no-pull) PULL=0; shift ;;
+    --prune) PRUNE=1; shift ;;
+    --lockbox) [ $# -ge 2 ] || die "--lockbox needs a directory"; LOCKBOX="$2"; shift 2 ;;
+    -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) die "unknown option: $1 (try --help)" ;;
+  esac
+done
+
+ENV_FILE="$APP_DIR/.env"
+LOCAL_FILE="$APP_DIR/.env.local"
+SOURCE="$LOCKBOX/$SOURCE_NAME"
+
+[ -d "$LOCKBOX/.git" ] || die "no LockBox checkout at $LOCKBOX
+!!! Clone it there, or name it with --lockbox or LOCKBOX_DIR."
+LOCKBOX="$(cd "$LOCKBOX" && pwd)"
+
+if [ "$PULL" -eq 1 ]; then
+  # A LockBox branch that has not been pushed has nothing to pull from; the
+  # checkout is then used as it stands, which is how AIM variables are
+  # developed before anyone else sees them.
+  if git -C "$LOCKBOX" rev-parse -q --verify '@{u}' >/dev/null 2>&1; then
+    echo "==> Pulling LockBox ($LOCKBOX)..."
+    git -C "$LOCKBOX" pull -q --ff-only ||
+      die "could not pull LockBox. Fix the checkout, or rerun with --no-pull
+!!! to use it as it stands."
+  else
+    echo "==> LockBox branch $(git -C "$LOCKBOX" rev-parse --abbrev-ref HEAD) has no upstream -- using it as it stands"
+  fi
+fi
+
+[ -f "$SOURCE" ] || die "no $SOURCE_NAME in $LOCKBOX"
+
+STAMP="$(git -C "$LOCKBOX" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+if [ -n "$(git -C "$LOCKBOX" status --porcelain -- "$SOURCE_NAME" 2>/dev/null)" ]; then
+  STAMP="$STAMP + uncommitted changes"
+fi
+
+# Variable names a file assigns, one per line, sorted.
+keys() {
+  [ -f "$1" ] || return 0
+  sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=.*/\2/p' "$1" | sort -u
+}
+
+# The last assignment of one variable, as written. Compared, never printed.
+assignment() {
+  grep -E "^[[:space:]]*(export[[:space:]]+)?$2=" "$1" | tail -n 1
+}
+
+list() { sed 's/^/      /'; }
+
+if [ -f "$ENV_FILE" ] && cmp -s "$SOURCE" "$ENV_FILE"; then
+  echo "==> .env already matches LockBox ($STAMP)"
+  exit 0
+fi
+
+if [ -f "$ENV_FILE" ]; then
+  ADDED="$(comm -13 <(keys "$ENV_FILE") <(keys "$SOURCE"))"
+  REMOVED="$(comm -23 <(keys "$ENV_FILE") <(keys "$SOURCE"))"
+  LOST="$(comm -23 <(echo "$REMOVED" | sed '/^$/d') <(keys "$LOCAL_FILE"))"
+  CHANGED=""
+  for key in $(comm -12 <(keys "$ENV_FILE") <(keys "$SOURCE")); do
+    [ "$(assignment "$ENV_FILE" "$key")" = "$(assignment "$SOURCE" "$key")" ] || CHANGED+="$key"$'\n'
+  done
+
+  echo "==> .env differs from LockBox ($STAMP)"
+  [ -z "$ADDED" ] || { echo "    added:"; echo "$ADDED" | list; }
+  [ -z "$CHANGED" ] || { echo "    changed:"; printf '%s' "$CHANGED" | list; }
+  [ -z "$REMOVED" ] || { echo "    removed:"; echo "$REMOVED" | list; }
+
+  if [ -n "$LOST" ] && [ "$PRUNE" -eq 0 ]; then
+    echo "!!! These are set in .env but in neither LockBox nor .env.local, so" >&2
+    echo "!!! replacing .env would lose them:" >&2
+    echo "$LOST" | list >&2
+    echo "!!! Move each to .env.local if it belongs to this machine, or add it" >&2
+    echo "!!! to LockBox/$SOURCE_NAME if everyone needs it. To drop them on" >&2
+    echo "!!! purpose, rerun with --prune." >&2
+    [ "$CHECK" -eq 1 ] || echo "!!! .env was not changed." >&2
+    exit 1
+  fi
+else
+  echo "==> No .env yet -- creating it from LockBox ($STAMP)"
+fi
+
+OVERRIDES="$(comm -12 <(keys "$LOCAL_FILE") <(keys "$SOURCE"))"
+[ -z "$OVERRIDES" ] || { echo "    still overridden by .env.local:"; echo "$OVERRIDES" | list; }
+
+if [ "$CHECK" -eq 1 ]; then
+  echo "==> --check: .env was not changed"
+  exit 0
+fi
+
+# Credentials: readable by the owner only, and swapped in whole so nothing
+# ever reads a half-written file.
+umask 077
+if [ -f "$ENV_FILE" ]; then
+  cp -- "$ENV_FILE" "$ENV_FILE.previous"
+  echo "    previous copy kept as .env.previous"
+fi
+TEMP_FILE="$(mktemp "$ENV_FILE.tmp.XXXXXX")"
+trap 'rm -f -- "$TEMP_FILE"' EXIT
+cp -- "$SOURCE" "$TEMP_FILE"
+mv -- "$TEMP_FILE" "$ENV_FILE"
+trap - EXIT
+
+echo "==> .env now matches LockBox ($STAMP). Restart anything already running."

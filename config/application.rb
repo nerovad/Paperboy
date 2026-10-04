@@ -8,6 +8,11 @@ require 'rails/all'
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# dotenv leaves .env.local out of the test environment. Here it is where a
+# machine names its own PAPERBOY_TEST_DATABASE, because .env is a verbatim copy
+# of LockBox (bin/env-pull), so the suite has to read it too.
+Dotenv::Rails.files.insert(1, '.env.local') if Rails.env.test?
+
 module FormsApp
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.

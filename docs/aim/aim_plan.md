@@ -219,8 +219,8 @@ for all Paperboy environment variables. The repo `.env` is a copy of
 
 **LockBox is shared across every Paperboy work area, and it is handled
 differently from normal code.** Other developers do not receive changes
-automatically — they have to pull LockBox by hand and refresh their local
-`.env`. Adding a variable therefore breaks other people's environments
+automatically — they get them the next time they run `bin/env-pull`, which
+pulls LockBox and replaces their local `.env`, or deploy. Adding a variable therefore breaks other people's environments
 until they do that.
 
 **Work on a LockBox branch.** LockBox is an ordinary git repository we hold
@@ -235,7 +235,8 @@ git checkout -b aim-config          # once, at the start of Phase 0
 ```
 
 While the branch is unmerged, keep the repo `.env` in step with it by
-copying `LockBox/Paperboy.env` over `Paperboy/.env` as usual. Development
+running `bin/env-pull`, which copies `LockBox/Paperboy.env` over
+`Paperboy/.env` and leaves an unpushed branch as it stands. Development
 and testing proceed normally.
 
 **Never push and never merge LockBox. Commit locally and stop.**
