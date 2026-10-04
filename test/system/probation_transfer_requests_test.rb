@@ -4,6 +4,7 @@ require 'application_system_test_case'
 
 class ProbationTransferRequestsTest < ApplicationSystemTestCase
   setup do
+    sign_in_as_employee
     @probation_transfer_request = probation_transfer_requests(:one)
   end
 

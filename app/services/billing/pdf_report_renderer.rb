@@ -23,7 +23,7 @@ module Billing
       left left left left left left left right left left left left left
       left left center center center center left left left left right right right
     ].freeze
-    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVTY
+    TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVITY
                       CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
 
     def initialize(report, definition, result, overlay: false)

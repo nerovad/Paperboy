@@ -41,7 +41,7 @@ module Billing
       report = MonthlyReport.new(
         operation: 'print', start_date: '2026-07-01', end_date: '2026-07-31'
       )
-      columns = %w[CUNIT COBJECT CACTIVTY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
+      columns = %w[CUNIT COBJECT CACTIVITY CFUNCTION CPROGRAM CPHASE SPHASE STASK]
       result = ActiveRecord::Result.new(columns, [%w[001 002 003 004 005 006 007 008]])
 
       data = PdfReportRenderer.new(report, { 'pdffile' => 'report.pdf' }, result).call
