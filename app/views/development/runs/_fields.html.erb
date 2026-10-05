@@ -1,0 +1,44 @@
+<% key = development_field(script) %>
+<% case key %>
+<% when 'start_local' %>
+  <%= label_tag :port, 'Port (optional)' %><%= number_field_tag :port, nil, min: 1, max: 65_535, class: 'form-control' %>
+  <%= label_tag :cron, class: 'checkbox-label' do %><%= check_box_tag :cron %> Run recurring jobs<% end %>
+  <%= label_tag :no_jobs, class: 'checkbox-label' do %><%= check_box_tag :no_jobs %> Start without Solid Queue<% end %>
+<% when 'stop_local' %>
+  <%= label_tag :port, 'Port' %><%= number_field_tag :port, 3001, min: 1, max: 65_535, class: 'form-control' %>
+<% when 'unit_test' %>
+  <%= label_tag :target, 'Test target (optional)' %><%= text_field_tag :target, nil, class: 'form-control', placeholder: 'test' %>
+<% when 'environment_check', 'environment_pull' %>
+  <%= label_tag :lockbox, 'LockBox checkout (optional)' %><%= text_field_tag :lockbox, nil, class: 'form-control' %>
+  <% if key == 'environment_pull' %>
+    <%= label_tag :no_pull, class: 'checkbox-label' do %><%= check_box_tag :no_pull %> Do not pull LockBox<% end %>
+    <%= label_tag :prune, class: 'checkbox-label' do %><%= check_box_tag :prune %> Accept removed variables<% end %>
+  <% end %>
+<% when 'status_report' %>
+  <%= label_tag :stale_days, 'Stale after days' %><%= number_field_tag :stale_days, 30, min: 0, class: 'form-control' %>
+<% when 'tag_commit' %>
+  <%= label_tag :commit, 'Commit (optional)' %><%= text_field_tag :commit, nil, class: 'form-control', placeholder: 'HEAD' %>
+<% when 'deploy_dev' %>
+  <%= label_tag :branch, 'Branch' %><%= text_field_tag :branch, 'master', required: true, class: 'form-control' %>
+<% when 'deploy_stage', 'deploy_production' %>
+  <%= label_tag :tag, 'Release tag' %><%= text_field_tag :tag, nil, required: true, class: 'form-control', placeholder: 'v2.1.0-a1a91a09e' %>
+<% when 'deploy_aim_workers' %>
+  <%= label_tag :lockbox, 'LockBox checkout (optional)' %><%= text_field_tag :lockbox, nil, class: 'form-control' %>
+  <%= label_tag :target, 'Target directory (optional)' %><%= text_field_tag :target, nil, class: 'form-control' %>
+  <%= label_tag :apply, class: 'checkbox-label' do %><%= check_box_tag :apply %> Apply changes (otherwise dry-run)<% end %>
+  <%= label_tag :v2, class: 'checkbox-label' do %><%= check_box_tag :v2 %> Deploy v2 workers<% end %>
+<% when 'generate_csr' %>
+  <%= label_tag :environment, 'Environment' %><%= text_field_tag :environment, nil, required: true, class: 'form-control', placeholder: 'dev' %>
+  <%= label_tag :server_ip, 'Server IP' %><%= text_field_tag :server_ip, nil, required: true, class: 'form-control' %>
+  <%= label_tag :extra_dns_names, 'Extra DNS names (space separated)' %><%= text_field_tag :extra_dns_names, nil, class: 'form-control' %>
+<% when 'create_issue' %>
+  <%= label_tag :issue_type, 'Type' %><%= select_tag :issue_type, options_for_select(%w[bug feature chore infrastructure]), class: 'form-control' %>
+  <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
+  <%= label_tag :body, 'Body' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
+  <%= label_tag :no_milestone, class: 'checkbox-label' do %><%= check_box_tag :no_milestone %> Do not prompt for milestone<% end %>
+<% when 'update_issue' %>
+  <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
+  <%= label_tag :labels, 'Labels (comma separated)' %><%= text_field_tag :labels, nil, class: 'form-control' %>
+  <%= label_tag :milestone, 'Milestone (optional)' %><%= text_field_tag :milestone, nil, class: 'form-control' %>
+  <%= label_tag :apply, class: 'checkbox-label' do %><%= check_box_tag :apply %> Apply changes (otherwise dry-run)<% end %>
+<% end %>

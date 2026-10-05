@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_000000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -829,6 +829,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
     t.datetime "updated_at", null: false
     t.index ["group_name", "status"], name: "index_data_runner_group_runs_on_group_name_and_status"
     t.index ["run_id"], name: "index_data_runner_group_runs_on_run_id", unique: true
+  end
+
+  create_table "development_runs", force: :cascade do |t|
+    t.text "command_json", null: false
+    t.datetime "created_at", null: false
+    t.integer "exit_status"
+    t.datetime "finished_at"
+    t.text "output"
+    t.string "requested_by", null: false
+    t.string "script_key", null: false
+    t.string "script_label", null: false
+    t.datetime "started_at"
+    t.string "status", default: "queued", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_development_runs_on_created_at"
+    t.index ["status"], name: "index_development_runs_on_status"
   end
 
   create_table "employee_union_codes", force: :cascade do |t|

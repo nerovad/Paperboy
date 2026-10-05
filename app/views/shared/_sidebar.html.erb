@@ -19,6 +19,8 @@
   <%= render "p2m/shared/sidebar" %>
 <% elsif controller_path.start_with?("hsa_adoption_cards/") %>
   <%= render "hsa_adoption_cards/shared/sidebar" %>
+<% elsif controller_path.start_with?("development/") %>
+  <%= render "development/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

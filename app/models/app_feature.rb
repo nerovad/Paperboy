@@ -18,6 +18,19 @@
 #
 # Not a database model — it is a registry, and lives in app/models because
 # that is where RegistryTable and the other catalogs live.
+DEVELOPMENT_APP_FEATURES = [
+  { key: 'local', label: 'Start and stop the local app' },
+  { key: 'tests', label: 'Run tests and quality checks' },
+  { key: 'environment', label: 'Inspect and refresh environment' },
+  { key: 'csr', label: 'Generate certificate requests' },
+  { key: 'deployments', label: 'Tag and deploy Paperboy' },
+  { key: 'deploy_dev', label: 'Deploy development' },
+  { key: 'deploy_stage', label: 'Deploy stage' },
+  { key: 'deploy_production', label: 'Deploy production' },
+  { key: 'deploy_aim', label: 'Deploy AIM workers' },
+  { key: 'gitea', label: 'Use Gitea workflow tools' }
+].freeze
+
 class AppFeature
   FEATURES = {
     'admin_tools' => [
@@ -94,7 +107,8 @@ class AppFeature
     # is appended by +for+.
     'data_runner' => [
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
-    ]
+    ],
+    'development' => DEVELOPMENT_APP_FEATURES
   }.freeze
 
   # A DSL's feature key. Prefixed so a DSL can never be named the same thing as
