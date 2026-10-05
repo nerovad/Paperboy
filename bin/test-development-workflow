@@ -1,0 +1,104 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+require 'open3'
+require 'timeout'
+
+options = {
+  script_key: 'status_report',
+  stale_days: '30',
+  timeout: 20,
+  enqueue: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = 'Usage: bin/test-development-workflow [OPTIONS]'
+  opts.on('--script KEY', 'Catalog key to test (default: status_report)') { |value| options[:script_key] = value }
+  opts.on('--stale-days DAYS', 'Status report age (default: 30)') { |value| options[:stale_days] = value }
+  opts.on('--timeout SECONDS', Integer, 'Queue wait limit (default: 20)') { |value| options[:timeout] = value }
+  opts.on('--enqueue', 'Create a Development::Run and exercise Solid Queue') { options[:enqueue] = true }
+  opts.on('-h', '--help', 'Show this help') do
+    puts opts
+    exit
+  end
+end
+parser.parse!
+
+abort 'Timeout must be positive.' unless options[:timeout].positive?
+abort 'stale-days must be a non-negative integer.' unless options[:stale_days].match?(/\A\d+\z/)
+
+require_relative '../config/environment'
+
+script = Development::ScriptCatalog.find(options[:script_key])
+abort "Unknown development script: #{options[:script_key]}" unless script
+
+arguments = if options[:script_key] == 'status_report'
+              ['--stale-days', options[:stale_days]]
+            else
+              abort 'Only status_report is supported by this diagnostic.'
+            end
+command = Development::CommandBuilder.new(script, arguments).to_a
+
+def print_result(label, output, status)
+  puts "#{label}: #{status.success? ? 'PASS' : 'FAIL'} (exit #{status.exitstatus || 'signal'})"
+  return if output.to_s.empty?
+
+  puts output.lines.last(12).join
+end
+
+puts "Development workflow diagnostic: #{script[:label]}"
+puts "Command: #{command.join(' ')}"
+
+begin
+  output, status = Timeout.timeout(options[:timeout]) do
+    Open3.capture2e(*command, chdir: Rails.root.to_s)
+  end
+  print_result('Direct script', output, status)
+  abort 'Direct script failed.' unless status.success?
+rescue Timeout::Error
+  abort "Direct script timed out after #{options[:timeout]} seconds."
+end
+
+unless options[:enqueue]
+  puts 'Queue test: skipped (rerun with --enqueue to test Solid Queue).'
+  exit 0
+end
+
+run = Development::Run.create!(
+  script_key: script[:key],
+  script_label: script[:label],
+  command_json: command.to_json,
+  requested_by: 'development-workflow-diagnostic',
+  status: 'queued'
+)
+job = Development::RunScriptJob.perform_later(run.id)
+puts "Enqueued run=#{run.id} job=#{job.provider_job_id || job.job_id}"
+
+deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + options[:timeout]
+loop do
+  run.reload
+  break if run.finished?
+  break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+  sleep 0.25
+end
+
+run.reload
+puts "Run: id=#{run.id} status=#{run.status} exit_status=#{run.exit_status.inspect}"
+puts "Finished: #{run.finished_at || 'no'}"
+puts "Output tail:\n#{run.output.to_s.lines.last(12).join}"
+
+queue_job = SolidQueue::Job.find_by(active_job_id: job.job_id)
+if queue_job
+  puts "Solid Queue job: id=#{queue_job.id} finished=#{queue_job.finished_at || 'no'}"
+  puts "Ready executions: #{SolidQueue::ReadyExecution.where(job_id: queue_job.id).count}"
+  puts "Claimed executions: #{SolidQueue::ClaimedExecution.where(job_id: queue_job.id).count}"
+else
+  puts 'Solid Queue job: not found (it may have been pruned).'
+end
+
+abort "Queue test did not finish within #{options[:timeout]} seconds." unless run.finished?
+abort 'Queued run failed.' unless run.status == 'succeeded'
+
+puts 'Queue test: PASS'
