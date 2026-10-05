@@ -1,6 +1,8 @@
 <div class="sidebar development-sidebar">
   <%= render "shared/app_switcher" %>
   <nav class="development-links">
+    <%= link_to 'Check Queue', development_queue_path,
+                class: "nav-link#{' active' if current_page?(development_queue_path)}" %>
     <% Development::ScriptCatalog.groups.each do |group| %>
       <% scripts = Development::ScriptCatalog.for_group(group).select { |script| can_use_app_feature?('development', script[:feature]) } %>
       <% next if scripts.empty? %>

@@ -17,3 +17,9 @@
 .development-status--queued, .development-status--running { color: $blue-action; }
 .development-output { min-height: 180px; overflow: auto; padding: 14px; background: $sidebar-navy; color: $surface-base; border-radius: 6px; white-space: pre-wrap; }
 .development-empty-state { padding: 28px; background: $surface-base; border-radius: 8px; border-top: 4px solid var(--development-sidebar-accent); box-shadow: $shadow-soft; }
+.development-queue-table-wrap { overflow-x: auto; background: $surface-base; border: 1px solid $border-color; border-radius: 8px; box-shadow: $shadow-soft; }
+.development-queue-table { width: 100%; border-collapse: collapse; }
+.development-queue-table th, .development-queue-table td { padding: 12px 14px; border-bottom: 1px solid $border-color; text-align: left; }
+.development-queue-table th { color: $brand-navy; background: $surface-subtle; }
+.development-queue-table tr:last-child td { border-bottom: 0; }
+.development-count { display: inline-block; min-width: 1.6em; padding: 2px 7px; border-radius: 999px; background: $blue-action; color: $surface-base; font-size: 0.75em; text-align: center; }

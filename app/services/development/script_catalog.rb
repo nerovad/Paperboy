@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module Development
+  # The catalog keeps the allowlisted scripts and their form argument
+  # builders together so adding a workflow cannot silently omit either half.
+  # rubocop:disable-next Metrics/ModuleLength
   module ScriptCatalog
     module_function
 
@@ -16,6 +19,7 @@ module Development
       scripts.find { |script| script[:key] == key.to_s }
     end
 
+    # rubocop:disable-next Metrics/MethodLength
     def scripts
       @scripts ||= [
         script('start_local', 'Start Local App', 'workstation', 'local', 'dev-local',
@@ -154,7 +158,7 @@ module Development
 
     def branch_value(value)
       value = value.to_s.strip
-      raise ArgumentError, 'Branch cannot be blank.' unless value.match?(/\A[A-Za-z0-9._\/-]+\z/)
+      raise ArgumentError, 'Branch cannot be blank.' unless value.match?(%r{\A[A-Za-z0-9._/-]+\z})
 
       value
     end

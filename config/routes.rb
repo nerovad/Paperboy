@@ -310,6 +310,7 @@ Rails.application.routes.draw do
 
   namespace :development do
     root 'dashboard#home'
+    get 'queue', to: 'queue#show', as: :queue
     resources :runs, only: %i[index show create]
   end
 
