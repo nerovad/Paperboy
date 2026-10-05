@@ -9,18 +9,22 @@
     One Select All per app rather than one for the whole section: these are
     unrelated applications that happen to share a heading, and "everything in
     Billing" is a thing an admin means, while "everything everywhere" is not. %>
-<div class="acl-permissions-section acl-feature-section">
-  <h3>Application Features</h3>
-  <p class="acl-subtitle">
-    Select which buttons inside each application are granted here. Access to
-    the application itself is granted above, and a user needs both: the
-    application to get in, and the button to use it. Applications with nothing
-    to split up are not listed.
-  </p>
+<details id="application-features" class="acl-permission-subgroup">
+  <summary>Application Features</summary>
+  <div class="acl-feature-section">
+    <p class="acl-subtitle">
+      Select which buttons inside each application are granted here. Access to
+      the application itself is granted above, and a user needs both: the
+      application to get in, and the button to use it. Applications with
+      nothing to split up are not listed.
+    </p>
+  </div>
 
   <% apps.each do |app| %>
-    <div class="acl-feature-app" data-controller="select-all">
-      <h4><%= app[:label] %></h4>
+    <div id="application-features-<%= app[:key] %>"
+         class="acl-permissions-section acl-feature-app"
+         data-controller="select-all">
+      <h3><%= app[:label] %></h3>
       <div class="permissions-grid">
         <label class="permission-checkbox select-all-checkbox">
           <%= check_box_tag "select_all_features_#{app[:key]}", "1",
@@ -40,4 +44,4 @@
       </div>
     </div>
   <% end %>
-</div>
+</details>

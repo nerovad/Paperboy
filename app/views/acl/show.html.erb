@@ -6,22 +6,21 @@
 <div class="form-wrapper acl-management" data-controller="confirm-modal">
   <div class="acl-header">
     <p class="acl-subtitle"><%= @group.description %></p>
-    <%= link_to "Back to Groups", acl_index_path, class: "btn" %>
   </div>
 
-  <!-- Add Member Search -->
-  <div class="acl-search-section">
-    <h3>Add Member</h3>
-    <%= form_tag acl_path(@group), method: :get, class: "acl-search-form" do %>
+  <details id="add-member" class="acl-management-group" open>
+    <summary>Add Member</summary>
+    <div class="acl-search-section">
+      <%= form_tag acl_path(@group), method: :get, class: "acl-search-form" do %>
       <div class="acl-search-row">
         <%= text_field_tag :search, params[:search],
               placeholder: "Search by name or employee ID...",
               class: "form-control acl-search-input" %>
         <%= submit_tag "Search", class: "btn approve" %>
       </div>
-    <% end %>
+      <% end %>
 
-    <% if @search_results&.any? %>
+      <% if @search_results&.any? %>
       <table class="submission-table acl-search-results">
         <thead>
           <tr>
@@ -51,14 +50,15 @@
           <% end %>
         </tbody>
       </table>
-    <% elsif params[:search].present? %>
-      <p class="acl-no-results">No employees found matching "<%= params[:search] %>".</p>
-    <% end %>
-  </div>
+      <% elsif params[:search].present? %>
+        <p class="acl-no-results">No employees found matching "<%= params[:search] %>".</p>
+      <% end %>
+    </div>
+  </details>
 
-  <!-- Add Contractor (non-Active-Directory user) -->
-  <div class="acl-search-section">
-    <h3>Add Contractor</h3>
+  <details id="add-contractor" class="acl-management-group">
+    <summary>Add Contractor</summary>
+    <div class="acl-search-section">
     <p class="form-intro">
       Contractors don't have a Microsoft (AD) account. Creating one here adds
       them to this group and emails them a link to set their password.
@@ -70,12 +70,14 @@
         <%= f.submit "Create Contractor & Send Invite", class: "btn approve" %>
       </div>
     <% end %>
-  </div>
+    </div>
+  </details>
 
   <!-- Contractor Members -->
   <% if @contractor_members.any? %>
-    <div class="acl-members-section">
-      <h3>Contractor Members (<%= @contractor_members.size %>)</h3>
+    <details id="contractor-members" class="acl-management-group">
+      <summary>Contractor Members (<%= @contractor_members.size %>)</summary>
+      <div class="acl-members-section">
       <table class="submission-table">
         <thead>
           <tr>
@@ -124,12 +126,14 @@
           <% end %>
         </tbody>
       </table>
-    </div>
+      </div>
+    </details>
   <% end %>
 
   <!-- Current Members -->
-  <div class="acl-members-section">
-    <h3>Members (<%= @members.size %>)</h3>
+  <details id="members" class="acl-management-group" open>
+    <summary>Members (<%= @members.size %>)</summary>
+    <div class="acl-members-section">
 
     <% if @members.any? %>
       <table class="submission-table">
@@ -167,7 +171,8 @@
         <p class="empty-state-hint">Use the search above to find and add employees.</p>
       </div>
     <% end %>
-  </div>
+    </div>
+  </details>
 
   <%= render "shared/confirm_modal" %>
 </div>

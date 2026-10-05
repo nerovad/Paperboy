@@ -71,6 +71,9 @@ class AclController < ApplicationController
   def index
     @groups = Group.all.order(:group_name)
     @group_member_counts = EmployeeGroup.group(:group_id).count
+  end
+
+  def organization_permissions
     @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 

@@ -6,7 +6,6 @@
 <div class="form-wrapper">
   <div class="acl-header">
     <p class="acl-subtitle"><%= @contractor.full_name %> &middot; <%= @contractor.email %></p>
-    <%= link_to "Back to #{@group.group_name}", acl_path(@group), class: "btn" %>
   </div>
 
   <%= form_with model: @contractor, url: update_contractor_acl_path(@group, contractor_id: @contractor.id),
