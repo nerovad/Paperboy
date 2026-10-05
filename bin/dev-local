@@ -35,6 +35,20 @@ mkdir -p "$app_root/log"
 exec 2> >(tee "$app_root/log/error.log" >&2)
 mkdir -p "$app_root/tmp/pids"
 pid_file="$app_root/tmp/pids/paperboy-dev-$PORT.pids"
+startup_complete=0
+
+on_startup_failure() {
+  local status=$?
+
+  if [[ "$startup_complete" -eq 0 ]]; then
+    echo "==> Paperboy startup failed; stopping children" >&2
+    stop_servers "$PORT" || true
+    rm -f "$pid_file"
+  fi
+  exit "$status"
+}
+
+trap on_startup_failure EXIT
 
 # --- Preflight -------------------------------------------------------------
 if [[ ! -f .env ]]; then
@@ -53,6 +67,42 @@ if ss -ltn 2>/dev/null | grep -qE "[:.]${PORT}[[:space:]]"; then
   exit 1
 fi
 
+start_component() {
+  local label=$1 log_file=$2
+  shift 2
+
+  echo "==> Starting ${label}..."
+  nohup setsid "$@" </dev/null >>"$log_file" 2>&1 &
+  local pid=$!
+  echo "$pid" >>"$pid_file"
+
+  for _ in {1..25}; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "==> ${label} exited during startup; see ${log_file}" >&2
+      tail -20 "$log_file" >&2 || true
+      return 1
+    fi
+    sleep 0.2
+  done
+
+  echo "==> ${label} started (pid ${pid}); see ${log_file}"
+}
+
+wait_for_port() {
+  local label=$1 port=$2
+
+  for _ in {1..25}; do
+    if ss -ltn 2>/dev/null | grep -qE "[:.]${port}[[:space:]]"; then
+      return
+    fi
+    sleep 0.2
+  done
+
+  echo "==> ${label} did not open port ${port}; see ${app_root}/log/server.log" >&2
+  tail -20 "$app_root/log/server.log" >&2 || true
+  return 1
+}
+
 # --- Assets -----------------------------------------------------------------
 {
   bundle check || bundle install
@@ -62,9 +112,8 @@ fi
 
 # --- Dart Sass --------------------------------------------------------------
 echo "==> Starting Dart Sass watcher..."
-nohup setsid bundle exec rails dartsass:watch \
-  </dev/null >"$app_root/log/sass.log" 2>&1 &
-echo "$!" >>"$pid_file"
+start_component 'Dart Sass' "$app_root/log/sass.log" \
+  bundle exec rails dartsass:watch
 
 # --- Solid Queue -----------------------------------------------------------
 if [[ "$RUN_JOBS" -eq 1 ]]; then
@@ -73,16 +122,15 @@ if [[ "$RUN_JOBS" -eq 1 ]]; then
     export SOLID_QUEUE_SKIP_RECURRING=true
   fi
 
-  echo "==> Starting Solid Queue..."
-  nohup setsid bundle exec bin/jobs \
-    </dev/null >"$app_root/log/jobs.log" 2>&1 &
-  echo "$!" >>"$pid_file"
+  start_component 'Solid Queue' "$app_root/log/jobs.log" \
+    bundle exec bin/jobs
 fi
 
 # --- Puma ------------------------------------------------------------------
 echo "==> Starting Puma on http://${BIND}:${PORT} ..."
-nohup setsid bundle exec rails server -p "$PORT" -b "$BIND" \
-  </dev/null >"$app_root/log/server.log" 2>&1 &
-echo "$!" >>"$pid_file"
+start_component 'Puma' "$app_root/log/server.log" \
+  bundle exec rails server -p "$PORT" -b "$BIND"
+wait_for_port 'Puma' "$PORT"
 
+startup_complete=1
 echo "==> Paperboy started. Logs are under $app_root/log/"
