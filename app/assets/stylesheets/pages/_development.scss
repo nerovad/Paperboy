@@ -1,9 +1,9 @@
 @use "base/tokens" as *;
 
-.development-page { max-width: 1180px; margin: 0 auto; padding: 24px; }
+.development-page { --development-sidebar-accent: #{$blue-action}; max-width: 1180px; margin: 0 auto; padding: 24px; }
 .development-section { margin: 28px 0; }
 .development-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-.development-card, .development-run-detail { background: $surface-base; border: 1px solid $border-color; border-radius: 8px; padding: 18px; box-shadow: $shadow-soft; }
+.development-card, .development-run-detail { background: $surface-base; border: 1px solid $border-color; border-top: 4px solid var(--development-sidebar-accent); border-radius: 8px; padding: 18px; box-shadow: $shadow-soft; }
 .development-card h3 { margin-top: 0; color: $brand-navy; }
 .development-card p { min-height: 42px; color: $text-muted; }
 .development-form { display: grid; gap: 8px; }
@@ -16,3 +16,4 @@
 .development-status--failed { color: $danger; }
 .development-status--queued, .development-status--running { color: $blue-action; }
 .development-output { min-height: 180px; overflow: auto; padding: 14px; background: $sidebar-navy; color: $surface-base; border-radius: 6px; white-space: pre-wrap; }
+.development-empty-state { padding: 28px; background: $surface-base; border-radius: 8px; border-top: 4px solid var(--development-sidebar-accent); box-shadow: $shadow-soft; }

@@ -36,6 +36,12 @@
   <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
   <%= label_tag :body, 'Body' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
   <%= label_tag :no_milestone, class: 'checkbox-label' do %><%= check_box_tag :no_milestone %> Do not prompt for milestone<% end %>
+<% when 'create_pull_request' %>
+  <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
+  <%= label_tag :body, 'Body (optional)' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
+  <%= label_tag :head, 'Head branch (optional)' %><%= text_field_tag :head, nil, class: 'form-control', placeholder: 'Current branch' %>
+  <%= label_tag :base, 'Base branch (optional)' %><%= text_field_tag :base, 'master', class: 'form-control' %>
+  <%= label_tag :issue, 'Issue number (optional)' %><%= number_field_tag :issue, nil, min: 1, class: 'form-control' %>
 <% when 'update_issue' %>
   <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
   <%= label_tag :labels, 'Labels (comma separated)' %><%= text_field_tag :labels, nil, class: 'form-control' %>

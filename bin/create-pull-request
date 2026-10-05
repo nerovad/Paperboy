@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+title=''
+body=''
+body_file=''
+head=''
+base='master'
+issue=''
+
+usage() {
+  cat <<'EOF'
+Usage: bin/create-pull-request [OPTIONS]
+
+Open a Gitea pull request for a branch.
+
+Options:
+  --title TITLE        Pull request title (required)
+  --body TEXT          Markdown body
+  --body-file PATH     Read the Markdown body from PATH
+  --head BRANCH        Source branch (default: current branch)
+  --base BRANCH        Target branch (default: master)
+  --issue NUMBER       Add a reference to an issue
+  --url URL            Override the Gitea base URL
+  --owner NAME         Override the repository owner
+  --repository NAME    Override the repository name
+  -h, --help           Show this help
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --title) title="$2"; shift 2 ;;
+    --body) body="$2"; shift 2 ;;
+    --body-file) body_file="$2"; shift 2 ;;
+    --head) head="$2"; shift 2 ;;
+    --base) base="$2"; shift 2 ;;
+    --issue) issue="$2"; shift 2 ;;
+    --url) GITEA_URL="$2"; shift 2 ;;
+    --owner) GITEA_OWNER="$2"; shift 2 ;;
+    --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+if [[ -n "${body}" && -n "${body_file}" ]]; then
+  echo 'Use only one of --body or --body-file' >&2
+  exit 2
+fi
+if [[ -n "${body_file}" ]]; then
+  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
+  body="$(<"${body_file}")"
+fi
+
+[[ -n "${title}" ]] || { echo '--title is required' >&2; exit 2; }
+if [[ -z "${head}" ]]; then
+  head="$(git symbolic-ref --quiet --short HEAD)" || {
+    echo 'The current checkout is not on a branch; use --head.' >&2
+    exit 2
+  }
+fi
+[[ -n "${head}" && -n "${base}" ]] || { echo 'Branches are required' >&2; exit 2; }
+if [[ -n "${issue}" && ! "${issue}" =~ ^[0-9]+$ ]]; then
+  echo '--issue must be a number' >&2
+  exit 2
+fi
+
+gitea_require_commands
+gitea_load_config
+
+if [[ -n "${issue}" ]]; then
+  body="${body}
+
+Refs #${issue}"
+fi
+payload="$(jq -nc --arg title "${title}" --arg body "${body}" \
+  --arg head "${head}" --arg base "${base}" \
+  '{title: $title, body: $body, head: $head, base: $base}')"
+pull_request="$(gitea_json POST 'pulls' "${payload}")"
+echo "Created pull request #$(jq -r '.number' <<<"${pull_request}"): $(jq -r '.html_url' <<<"${pull_request}")"

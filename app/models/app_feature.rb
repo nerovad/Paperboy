@@ -22,7 +22,7 @@ DEVELOPMENT_APP_FEATURES = [
   { key: 'local', label: 'Start and stop the local app' },
   { key: 'tests', label: 'Run tests and quality checks' },
   { key: 'environment', label: 'Inspect and refresh environment' },
-  { key: 'csr', label: 'Generate certificate requests' },
+  { key: 'csr', label: 'Generate TLS certificate requests' },
   { key: 'deployments', label: 'Tag and deploy Paperboy' },
   { key: 'deploy_dev', label: 'Deploy development' },
   { key: 'deploy_stage', label: 'Deploy stage' },

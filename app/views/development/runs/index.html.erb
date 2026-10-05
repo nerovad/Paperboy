@@ -4,41 +4,33 @@
     <p>Run approved Paperboy development scripts with recorded output.</p>
   </div>
 
-  <% @groups.each do |group, scripts| %>
-    <section class="development-section">
-      <h2><%= development_group_label(group) %></h2>
+  <% if @selected_script %>
+    <section class="development-section development-section--selected">
+      <h2><%= development_group_label(@selected_script[:group]) %></h2>
       <div class="development-cards">
-        <% scripts.each do |script| %>
-          <article class="development-card" id="<%= script[:key] %>">
-            <h3><%= script[:label] %></h3>
-            <p><%= script[:description] %></p>
-            <%= form_with url: development_runs_path, method: :post, class: "development-form" do |form| %>
-              <%= hidden_field_tag :script_key, script[:key] %>
-              <%= render "development/runs/fields", script: script, form: form %>
-              <div class="form-actions">
-                <%= form.submit "Run #{script[:label]}", class: "btn #{development_button_class(script)}",
-                                data: { turbo_confirm: script[:feature].start_with?('deploy') ? "Run #{script[:label]}? This may change a shared environment." : nil } %>
-              </div>
-            <% end %>
-          </article>
-        <% end %>
+        <%= render "development/runs/card", script: @selected_script %>
       </div>
     </section>
-  <% end %>
-
-  <section class="development-section">
-    <h2>Recent Runs</h2>
-    <% if @recent_runs.any? %>
-      <div class="development-runs">
-        <% @recent_runs.each do |run| %>
-          <%= link_to development_run_path(run), class: "development-run" do %>
-            <span><%= run.script_label %></span>
-            <span class="development-status development-status--<%= run.status %>"><%= run.status.humanize %></span>
+  <% elsif @show_recent_runs %>
+    <section class="development-section">
+      <h2>Recent Runs</h2>
+      <% if @recent_runs.any? %>
+        <div class="development-runs">
+          <% @recent_runs.each do |run| %>
+            <%= link_to development_run_path(run), class: "development-run" do %>
+              <span><%= run.script_label %></span>
+              <span class="development-status development-status--<%= run.status %>"><%= run.status.humanize %></span>
+            <% end %>
           <% end %>
-        <% end %>
-      </div>
-    <% else %>
-      <p>No workflow runs yet.</p>
-    <% end %>
-  </section>
+        </div>
+      <% else %>
+        <p>No workflow runs yet.</p>
+      <% end %>
+    </section>
+  <% else %>
+    <section class="development-section development-empty-state">
+      <h2>Select a workflow</h2>
+      <p>Choose a workflow from the sidebar to open its form.</p>
+    </section>
+  <% end %>
 </div>

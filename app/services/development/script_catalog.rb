@@ -49,12 +49,15 @@ module Development
         script('deploy_aim_workers', 'Deploy AIM Workers', 'deployments', 'deploy_aim', 'deploy-aim-workers',
                'Dry-run or apply the AIM worker deployment.',
                ->(params) { deploy_aim_args(params) }),
-        script('generate_csr', 'Generate CSR', 'environment', 'csr', 'gen-csr',
-               'Generate an environment certificate signing request.',
+        script('generate_csr', 'Generate TLS Certificate Request', 'environment', 'csr', 'gen-csr',
+               'Create a private key and certificate request for GSA IT.',
                ->(params) { csr_args(params) }),
         script('create_issue', 'Create Gitea Issue', 'collaboration', 'gitea', 'new-issue',
                'Create a typed, labeled Paperboy issue.',
                ->(params) { issue_args(params) }),
+        script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
+               'create-pull-request', 'Open a pull request for the current branch.',
+               ->(params) { pull_request_args(params) }),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
                'Preview or apply labels and milestone changes to an issue.',
                ->(params) { update_issue_args(params) })
@@ -108,6 +111,15 @@ module Development
       args
     end
 
+    def pull_request_args(params)
+      args = ['--title', required_value(params[:title], 'Title')]
+      args += ['--body', params[:body].to_s] if params[:body].present?
+      args += ['--head', branch_value(params[:head])] if params[:head].present?
+      args += ['--base', branch_value(params[:base])] if params[:base].present?
+      args += ['--issue', integer(params[:issue], required: 'Issue')] if params[:issue].present?
+      args
+    end
+
     def update_issue_args(params)
       args = ['--issue', integer(params[:issue], required: 'Issue')]
       params[:labels].to_s.split(',').map(&:strip).reject(&:blank?).each { |label| args += ['--add-label', label] }
@@ -136,6 +148,13 @@ module Development
 
     def dns_name(value)
       raise ArgumentError, "Invalid DNS name: #{value}" unless value.match?(/\A[A-Za-z0-9][A-Za-z0-9.-]*\z/)
+
+      value
+    end
+
+    def branch_value(value)
+      value = value.to_s.strip
+      raise ArgumentError, 'Branch cannot be blank.' unless value.match?(/\A[A-Za-z0-9._\/-]+\z/)
 
       value
     end

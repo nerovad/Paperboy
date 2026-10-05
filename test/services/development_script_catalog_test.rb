@@ -31,4 +31,13 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
 
     assert_equal 'Release tag is required.', error.message
   end
+
+  test 'pull request catalog entry builds explicit Gitea arguments' do
+    script = Development::ScriptCatalog.find('create_pull_request')
+
+    assert_equal ['--title', 'Improve docs', '--body', 'Details', '--head', 'feature/docs',
+                  '--base', 'master', '--issue', '41'],
+                 script[:arguments].call(title: 'Improve docs', body: 'Details',
+                                         head: 'feature/docs', base: 'master', issue: '41')
+  end
 end

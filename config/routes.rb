@@ -309,7 +309,7 @@ Rails.application.routes.draw do
   end
 
   namespace :development do
-    root 'runs#index'
+    root 'dashboard#home'
     resources :runs, only: %i[index show create]
   end
 

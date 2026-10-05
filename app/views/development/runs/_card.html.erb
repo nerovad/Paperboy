@@ -1,0 +1,12 @@
+<article class="development-card" id="<%= script[:key] %>">
+  <h3><%= script[:label] %></h3>
+  <p><%= script[:description] %></p>
+  <%= form_with url: development_runs_path, method: :post, class: "development-form" do |form| %>
+    <%= hidden_field_tag :script_key, script[:key] %>
+    <%= render "development/runs/fields", script: script, form: form %>
+    <div class="form-actions">
+      <%= form.submit script[:label], class: "btn #{development_button_class(script)}",
+                      data: { turbo_confirm: script[:feature].start_with?('deploy') ? "Run #{script[:label]}? This may change a shared environment." : nil } %>
+    </div>
+  <% end %>
+</article>

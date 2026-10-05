@@ -9,6 +9,9 @@ module Development
         scripts = ScriptCatalog.for_group(group).select { |script| feature?(script[:feature]) }
         [group, scripts] if scripts.any?
       end
+      @selected_script = ScriptCatalog.find(params[:script_key])
+      @selected_script = nil unless @selected_script && feature?(@selected_script[:feature])
+      @show_recent_runs = params[:recent].present?
       @recent_runs = Development::Run.order(created_at: :desc).limit(12)
     end
 

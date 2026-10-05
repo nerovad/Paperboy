@@ -179,7 +179,8 @@ class NavigationCatalog
     Development::ScriptCatalog.scripts.filter_map do |script|
       next unless view.can_use_app_feature?('development', script[:feature])
 
-      { label: script[:label], path: development_root_path, keywords: script[:description] }
+      { label: script[:label], path: development_runs_path(script_key: script[:key]),
+        keywords: script[:description] }
     end
   end
 
