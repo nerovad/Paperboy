@@ -44,9 +44,9 @@ module Dam
         with_source_file do |path, size|
           log("Sending #{ActiveSupport::NumberHelper.number_to_human_size(size)} to page #{account_ref!}")
           response = expect!(http.post_multipart("#{VIDEO_GRAPH}/#{account_ref!}/videos", file: path,
-                                                                                         file_field: 'source', filename: filename, content_type: content_type,
-                                                                                         fields: { 'title' => publication.title.to_s, 'description' => description },
-                                                                                         headers: page_bearer(page_token)),
+                                                                                          file_field: 'source', filename: filename, content_type: content_type,
+                                                                                          fields: { 'title' => publication.title.to_s, 'description' => description },
+                                                                                          headers: page_bearer(page_token)),
                              'video post')
           identify(response)
         end
@@ -55,9 +55,9 @@ module Dam
       def post_photo(page_token)
         with_source_file do |path, _size|
           response = expect!(http.post_multipart("#{GRAPH}/#{account_ref!}/photos", file: path,
-                                                                                   file_field: 'source', filename: filename, content_type: content_type,
-                                                                                   fields: { 'caption' => caption, 'published' => 'true' },
-                                                                                   headers: page_bearer(page_token)),
+                                                                                    file_field: 'source', filename: filename, content_type: content_type,
+                                                                                    fields: { 'caption' => caption, 'published' => 'true' },
+                                                                                    headers: page_bearer(page_token)),
                              'photo post')
           identify(response)
         end
