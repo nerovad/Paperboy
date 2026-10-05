@@ -22,13 +22,8 @@
 - Always use Workflow commands unless instructed otherwise
 - Propose git commit message.
   * Prose limited to 72 characters
-<<<<<<< HEAD
-  * Prepend gitea #issue number to the issue title
-||||||| 873db88e
-=======
   * Prepend `#<issue-number>` to the issue title so Gitea links the commit
     to its issue
->>>>>>> master
   * Blank Line
   * Description lines limited to 80 characters
   * Do not indent proposed commit
