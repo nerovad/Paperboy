@@ -39,10 +39,30 @@ done
 
 gitea_require_commands
 gitea_load_config
-stale_before="$(date -d "-${stale_days} days" --iso-8601=seconds)"
-issues="$(gitea_get 'issues?state=open&type=issues&limit=100')"
-pull_requests="$(gitea_get 'pulls?state=open&limit=100')"
-milestones="$(gitea_get 'milestones?state=all&limit=100')"
+stale_before="$(date -d "-${stale_days} days" +%s)"
+[[ "${stale_before}" =~ ^[0-9]+$ ]] || { echo 'Could not compute the stale cutoff' >&2; exit 1; }
+
+# This jq build accepts only Zulu timestamps. GNU date accepts the offset
+# Gitea sends, such as 2026-10-06T10:17:53-07:00.
+with_updated_epoch() {
+  local json="$1"
+  local item updated epoch
+
+  if [[ "$(jq 'length' <<<"${json}")" -eq 0 ]]; then
+    printf '%s\n' '[]'
+    return
+  fi
+
+  while IFS= read -r item; do
+    updated="$(jq -r '.updated_at' <<<"${item}")"
+    epoch="$(date -d "${updated}" +%s)"
+    jq -c --argjson epoch "${epoch}" '. + {updated_epoch: $epoch}' <<<"${item}"
+  done < <(jq -c '.[]' <<<"${json}") | jq -s '.'
+}
+
+issues="$(with_updated_epoch "$(gitea_get_all 'issues?state=open&type=issues')")"
+pull_requests="$(with_updated_epoch "$(gitea_get_all 'pulls?state=open')")"
+milestones="$(gitea_get_all 'milestones?state=all')"
 
 echo 'Paperboy Gitea status report'
 echo "Generated: $(date --iso-8601=seconds)"
@@ -65,20 +85,86 @@ print_items() {
   fi
 }
 
-missing_labels="$(jq '[.[] | select((.labels // []) | length == 0)]' <<<"${issues}")"
-missing_milestones="$(jq '[.[] | select(.milestone == null)]' <<<"${issues}")"
-blocked="$(jq '[.[] | select((.labels // []) | map(.name) | index("blocked"))]' <<<"${issues}")"
-stale_issues="$(jq --arg cutoff "${stale_before}" '[.[] | select(.updated_at < $cutoff)]' <<<"${issues}")"
-stale_pull_requests="$(jq --arg cutoff "${stale_before}" '[.[] | select(.updated_at < $cutoff)]' <<<"${pull_requests}")"
-unlinked_pull_requests="$(jq '[.[] | select(((.title // "") + " " + (.body // "")) | test("(#|issues? )([0-9]+)"; "i") | not)]' <<<"${pull_requests}")"
+print_group() {
+  local title="$1"
+  local json="$2"
+  local key="$3"
 
-print_items 'Issues needing labels' "${missing_labels}"
-print_items 'Issues needing milestones' "${missing_milestones}"
-print_items 'Blocked issues' "${blocked}"
-print_items 'Stale issues' "${stale_issues}"
-print_items 'Stale pull requests' "${stale_pull_requests}"
-print_items 'Pull requests without a linked issue' "${unlinked_pull_requests}"
-print_items 'Open pull requests needing attention' "${pull_requests}"
+  print_items "${title}" "$(jq --arg key "${key}" '.[$key]' <<<"${json}")"
+}
+
+issue_groups="$(jq --argjson cutoff "${stale_before}" '
+  def names: (.labels // []) | map(.name);
+  def project_count:
+    if .projects == null then 0
+    elif (.projects | type) == "array" then (.projects | length)
+    else 0 end;
+  def has_type: names | any(. == "bug" or . == "feature" or . == "chore" or . == "infrastructure" or . == "security");
+  {
+    missing_type: [.[] | select(has_type | not)],
+    missing_priority: [.[] | select(names | any(startswith("priority:")) | not)],
+    missing_area: [.[] | select(names | any(startswith("area:")) | not)],
+    missing_milestone: [.[] | select(.milestone == null)],
+    off_project: [.[] | select(project_count == 0)],
+    blocked: [.[] | select(names | any(. == "blocked"))],
+    stale: [.[] | select(.updated_epoch < $cutoff)]
+  }
+' <<<"${issues}")"
+
+pull_groups="$(jq --argjson cutoff "${stale_before}" '
+  def text: ((.title // "") + "\n" + (.body // ""));
+  def linked: text | test("(#|/issues/)[0-9]+");
+  def closing: text | test("(?i)\\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\\s+(?:[A-Za-z0-9_.-]+/)?(?:#|/issues/)[0-9]+");
+  {
+    stale: [.[] | select(.updated_epoch < $cutoff)],
+    unlinked: [.[] | select(linked | not)],
+    no_closing: [.[] | select(linked and (closing | not))],
+    draft: [.[] | select(.draft == true)],
+    not_mergeable: [.[] | select(.mergeable == false)],
+    reviewers: [.[] | select((.requested_reviewers // []) | length > 0)]
+  }
+' <<<"${pull_requests}")"
+
+print_group 'Issues missing a type label' "${issue_groups}" missing_type
+print_group 'Issues missing a priority label' "${issue_groups}" missing_priority
+print_group 'Issues missing an area label' "${issue_groups}" missing_area
+print_group 'Issues needing milestones' "${issue_groups}" missing_milestone
+print_group 'Issues not on a project' "${issue_groups}" off_project
+print_group 'Blocked issues' "${issue_groups}" blocked
+
+dependency_lines=()
+while IFS= read -r number; do
+  [[ -n "${number}" ]] || continue
+  deps="$(gitea_get_all "issues/${number}/dependencies")"
+  line="$(jq -rn \
+    --argjson issue "${number}" \
+    --argjson issues "${issues}" \
+    --argjson deps "${deps}" '
+      ($deps | map("#\(.number)") | join(", ")) as $list |
+      if $list == "" then empty else
+        "- #\($issue): \($issues | map(select(.number == $issue))[0].title) (depends on \($list))"
+      end
+    ')"
+  if [[ -n "${line}" ]]; then
+    dependency_lines+=("${line}")
+  fi
+done < <(jq -r '.[].number' <<<"${issues}")
+
+echo
+echo "Issues with dependency blockers: ${#dependency_lines[@]}"
+if ((${#dependency_lines[@]} == 0)); then
+  echo '- none'
+else
+  printf '%s\n' "${dependency_lines[@]}"
+fi
+
+print_group 'Stale issues' "${issue_groups}" stale
+print_group 'Stale pull requests' "${pull_groups}" stale
+print_group 'Pull requests without a linked issue' "${pull_groups}" unlinked
+print_group 'Pull requests with a link and no closing keyword' "${pull_groups}" no_closing
+print_group 'Draft pull requests' "${pull_groups}" draft
+print_group 'Pull requests that are not mergeable' "${pull_groups}" not_mergeable
+print_group 'Pull requests with requested reviewers' "${pull_groups}" reviewers
 
 echo
 echo 'Milestones'
@@ -87,7 +173,7 @@ if [[ "$(jq 'length' <<<"${milestones}")" -eq 0 ]]; then
 else
   jq -r '.[] | (.open_issues + .closed_issues) as $total |
     (if $total == 0 then 0 else ((.closed_issues * 100) / $total) end) as $completion |
-    "- \(.title): \($completion)% complete (\(.open_issues) open, \(.closed_issues) closed)"' \
+    "- \(.title) [\(.state)]: \($completion)% complete (\(.open_issues) open, \(.closed_issues) closed)"' \
     <<<"${milestones}"
 fi
 

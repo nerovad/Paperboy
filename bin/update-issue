@@ -7,24 +7,35 @@ source "${script_dir}/gitea-common"
 
 issue_number=''
 milestone_title=''
+project_title=''
+column_title=''
 apply=false
 label_names=()
+remove_labels=()
 usage() {
   cat <<'EOF'
 Usage: bin/update-issue --issue NUMBER [OPTIONS]
 
-Plan explicit label and milestone updates for one Gitea issue. The default is
-dry-run; add --apply only after reviewing the plan.
+Plan explicit updates for one Gitea issue. The default is dry-run; add
+--apply only after reviewing the plan.
 
 Options:
   --issue NUMBER       Issue number to update (required)
   --add-label NAME     Add a repository label (repeatable)
+  --remove-label NAME  Remove a repository label (repeatable)
   --milestone TITLE    Assign the named milestone
+  --project TITLE      Replace the issue's project list with this project
+  --column TITLE       Move the issue to this column on its project
   --apply              Apply the planned remote changes
   --url URL            Override the Gitea base URL
   --owner NAME         Override the repository owner
   --repository NAME    Override the repository name
   -h, --help           Show this help
+
+--column uses the issue's global id. Gitea's move API does not take the
+issue number. The issue must already be on the project, or --project must
+name that project in the same command. This command never closes an issue,
+merges a pull request, or deletes a branch.
 EOF
 }
 
@@ -32,7 +43,10 @@ while (($#)); do
   case "$1" in
     --issue) issue_number="$2"; shift 2 ;;
     --add-label) label_names+=("$2"); shift 2 ;;
+    --remove-label) remove_labels+=("$2"); shift 2 ;;
     --milestone) milestone_title="$2"; shift 2 ;;
+    --project) project_title="$2"; shift 2 ;;
+    --column) column_title="$2"; shift 2 ;;
     --apply) apply=true; shift ;;
     --url) GITEA_URL="$2"; shift 2 ;;
     --owner) GITEA_OWNER="$2"; shift 2 ;;
@@ -43,7 +57,7 @@ while (($#)); do
 done
 
 [[ "${issue_number}" =~ ^[0-9]+$ ]] || { echo '--issue requires a number' >&2; exit 2; }
-(( ${#label_names[@]} > 0 || ${#milestone_title} > 0 )) || {
+(( ${#label_names[@]} > 0 || ${#remove_labels[@]} > 0 || ${#milestone_title} > 0 || ${#project_title} > 0 || ${#column_title} > 0 )) || {
   echo 'At least one update is required' >&2
   exit 2
 }
@@ -51,10 +65,13 @@ done
 gitea_require_commands
 gitea_load_config
 issue="$(gitea_get "issues/${issue_number}")"
+issue_global_id="$(jq -r '.id' <<<"${issue}")"
+[[ "${issue_global_id}" =~ ^[0-9]+$ ]] || { echo "Issue #${issue_number} has no global id" >&2; exit 1; }
 current_labels="$(jq -r '(.labels // [])[] | .name' <<<"${issue}")"
+current_project_ids="$(jq -c '[(.projects // [])[] | if type == "object" then .id else . end]' <<<"${issue}")"
+
 label_ids=()
 new_labels=()
-
 for label_name in "${label_names[@]}"; do
   label_id="$(gitea_label_id "${label_name}")" || {
     echo "Unknown label: ${label_name}" >&2
@@ -63,6 +80,19 @@ for label_name in "${label_names[@]}"; do
   if ! grep -Fxq "${label_name}" <<<"${current_labels}"; then
     label_ids+=("${label_id}")
     new_labels+=("${label_name}")
+  fi
+done
+
+remove_ids=()
+removed_labels=()
+for label_name in "${remove_labels[@]}"; do
+  label_id="$(gitea_label_id "${label_name}")" || {
+    echo "Unknown label: ${label_name}" >&2
+    exit 1
+  }
+  if grep -Fxq "${label_name}" <<<"${current_labels}"; then
+    remove_ids+=("${label_id}")
+    removed_labels+=("${label_name}")
   fi
 done
 
@@ -77,27 +107,101 @@ if [[ -n "${milestone_title}" ]]; then
   [[ "${current_milestone_id}" == "${milestone_id}" ]] || milestone_change=true
 fi
 
+project_id=''
+project_change=false
+project_replaces=false
+if [[ -n "${project_title}" ]]; then
+  project_id="$(gitea_project_id "${project_title}")" || {
+    echo "Unknown project: ${project_title}" >&2
+    exit 1
+  }
+  desired_project_ids="$(jq -nc --argjson id "${project_id}" '[$id]')"
+  if [[ "${current_project_ids}" != "${desired_project_ids}" ]]; then
+    project_change=true
+    [[ "${current_project_ids}" == "[]" ]] || project_replaces=true
+  fi
+fi
+
+column_id=''
+column_project_id=''
+if [[ -n "${column_title}" ]]; then
+  if [[ -n "${project_id}" ]]; then
+    column_project_id="${project_id}"
+  elif [[ "$(jq 'length' <<<"${current_project_ids}")" -eq 1 ]]; then
+    column_project_id="$(jq -r '.[0]' <<<"${current_project_ids}")"
+  else
+    echo 'Pass --project to choose the board for --column.' >&2
+    exit 1
+  fi
+  column_id="$(gitea_project_column_id "${column_project_id}" "${column_title}")" || {
+    echo "Unknown column: ${column_title}" >&2
+    exit 1
+  }
+fi
+
 echo 'Gitea update plan'
 echo "Issue: #${issue_number} — $(jq -r '.title' <<<"${issue}")"
+for label_name in "${removed_labels[@]}"; do echo "- remove label: ${label_name}"; done
 for label_name in "${new_labels[@]}"; do echo "- add label: ${label_name}"; done
 if [[ "${milestone_change}" == true ]]; then echo "- assign milestone: ${milestone_title}"; fi
-if (( ${#new_labels[@]} == 0 )) && [[ "${milestone_change}" == false ]]; then echo '- no changes required'; fi
+if [[ "${project_change}" == true ]]; then
+  if [[ "${project_replaces}" == true ]]; then
+    echo "- assign project: ${project_title} (replaces other projects)"
+  else
+    echo "- assign project: ${project_title}"
+  fi
+fi
+if [[ -n "${column_id}" ]]; then echo "- move to column: ${column_title}"; fi
+if (( ${#removed_labels[@]} == 0 && ${#new_labels[@]} == 0 )) \
+  && [[ "${milestone_change}" == false && "${project_change}" == false && -z "${column_id}" ]]; then
+  echo '- no changes required'
+fi
 
 if [[ "${apply}" != true ]]; then
   echo 'Dry run only: no Gitea state was changed. Use --apply to execute this plan.'
   exit 0
 fi
 
-if (( ${#label_ids[@]} > 0 )); then
+if ((${#remove_ids[@]} > 0)); then
+  for label_id in "${remove_ids[@]}"; do
+    gitea_json DELETE "issues/${issue_number}/labels/${label_id}" >/dev/null
+  done
+  echo "Removed labels: $(IFS=', '; echo "${removed_labels[*]}")"
+fi
+
+if ((${#label_ids[@]} > 0)); then
   label_payload="$(printf '%s\n' "${label_ids[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | tonumber) | {labels: .}')"
   gitea_json POST "issues/${issue_number}/labels" "${label_payload}" >/dev/null
   echo "Applied labels: $(IFS=', '; echo "${new_labels[*]}")"
 fi
 
+milestone_json='null'
+project_json='null'
 if [[ "${milestone_change}" == true ]]; then
-  milestone_payload="$(jq -nc --argjson id "${milestone_id}" '{milestone: $id}')"
-  gitea_json PATCH "issues/${issue_number}" "${milestone_payload}" >/dev/null
-  echo "Applied milestone: ${milestone_title}"
+  milestone_json="${milestone_id}"
+fi
+if [[ "${project_change}" == true ]]; then
+  project_json="$(jq -nc --argjson id "${project_id}" '[$id]')"
+fi
+if [[ "${milestone_change}" == true || "${project_change}" == true ]]; then
+  patch_payload="$(jq -nc \
+    --argjson milestone_change "${milestone_change}" \
+    --argjson milestone "${milestone_json}" \
+    --argjson project_change "${project_change}" \
+    --argjson projects "${project_json}" \
+    '{}
+     + (if $milestone_change then {milestone: $milestone} else {} end)
+     + (if $project_change then {projects: $projects} else {} end)')"
+  gitea_json PATCH "issues/${issue_number}" "${patch_payload}" >/dev/null
+  if [[ "${milestone_change}" == true ]]; then echo "Applied milestone: ${milestone_title}"; fi
+  if [[ "${project_change}" == true ]]; then echo "Applied project: ${project_title}"; fi
+fi
+
+if [[ -n "${column_id}" ]]; then
+  # The move path takes the issue's global id, not its repository number.
+  move_payload="$(jq -nc --argjson id "${column_id}" '{column_id: $id}')"
+  gitea_json POST "projects/${column_project_id}/issues/${issue_global_id}/move" "${move_payload}" >/dev/null
+  echo "Moved to column: ${column_title}"
 fi
 
 echo "Audit: issue #${issue_number} updated by explicit --apply request."

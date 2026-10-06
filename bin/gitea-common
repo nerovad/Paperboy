@@ -1,12 +1,18 @@
 # shellcheck shell=bash
 
+# Gitea 28 caps a response at 50 rows (GET /api/v1/settings/api
+# max_response_items). Callers that ask for more silently lose the rest.
+gitea_page_limit() {
+  printf '%s' "${GITEA_PAGE_LIMIT:-50}"
+}
+
 gitea_load_config() {
   local file common_dir shared_root=""
   local -a env_files=(.env .env.local)
 
-  # .env.local is sourced second so this machine's values win, as they do
-  # under dotenv. A personal GITEA_TOKEN belongs there: .env is a copy of
-  # LockBox that bin/env-pull replaces.
+  # .env.local is loaded second so this machine's values win. A personal
+  # GITEA_TOKEN belongs there: .env is a copy of LockBox that bin/env-pull
+  # replaces, and LockBox keeps GITEA_TOKEN empty.
   if [[ -n "${GITEA_ENV_FILE:-}" ]]; then
     env_files=("${GITEA_ENV_FILE}")
   else
@@ -21,10 +27,7 @@ gitea_load_config() {
     fi
 
     if [[ -f "${file}" ]]; then
-      set -a
-      # shellcheck disable=SC1090
-      source "${file}"
-      set +a
+      gitea_load_env_file "${file}"
     fi
   done
 
@@ -34,6 +37,28 @@ gitea_load_config() {
   GITEA_API="${GITEA_URL%/}/api/v1/repos/${GITEA_OWNER}/${GITEA_REPOSITORY}"
 
   : "${GITEA_TOKEN:?GITEA_TOKEN is required; set it in the environment or .env.local}"
+}
+
+# Source a dotenv file, then keep only GITEA_* in this process. The files
+# also hold database passwords and webhook URLs.
+gitea_load_env_file() {
+  local file="$1"
+  local snapshot
+
+  snapshot="$(
+    set -a
+    # shellcheck disable=SC1090
+    source "${file}"
+    set +a
+    for name in "${!GITEA_@}"; do
+      printf 'export %q=%q\n' "${name}" "${!name}"
+    done
+  )"
+  # export assigns the global shell variable. declare would stay local to
+  # this function and the caller would not see the token.
+  if [[ -n "${snapshot}" ]]; then
+    eval "${snapshot}"
+  fi
 }
 
 gitea_require_commands() {
@@ -47,49 +72,153 @@ gitea_require_commands() {
   done
 }
 
+gitea_request() {
+  local method="$1"
+  local endpoint="$2"
+  local payload="${3-}"
+  local body_file header_file http_code
+  local connect_timeout="${GITEA_CONNECT_TIMEOUT:-10}"
+  local max_time="${GITEA_MAX_TIME:-60}"
+
+  body_file="$(mktemp)"
+  header_file="$(mktemp)"
+
+  local curl_args=(
+    --silent
+    --show-error
+    --connect-timeout "${connect_timeout}"
+    --max-time "${max_time}"
+    -o "${body_file}"
+    -D "${header_file}"
+    -w '%{http_code}'
+    -H "Authorization: token ${GITEA_TOKEN}"
+    -H 'Accept: application/json'
+  )
+
+  if [[ "${method}" != GET ]]; then
+    curl_args+=(-X "${method}" -H 'Content-Type: application/json')
+    if [[ -n "${payload}" ]]; then
+      curl_args+=(--data-binary "${payload}")
+    fi
+  fi
+
+  if ! http_code="$(curl "${curl_args[@]}" "${GITEA_API}/${endpoint}")"; then
+    echo "Gitea ${method} ${endpoint} failed before a response." >&2
+    if [[ -s "${body_file}" ]]; then
+      cat "${body_file}" >&2
+    fi
+    rm -f "${body_file}" "${header_file}"
+    return 1
+  fi
+
+  if [[ ! "${http_code}" =~ ^2[0-9][0-9]$ ]]; then
+    echo "Gitea ${method} ${endpoint} failed: HTTP ${http_code}" >&2
+    cat "${body_file}" >&2
+    rm -f "${body_file}" "${header_file}"
+    return 1
+  fi
+
+  # Callers often capture stdout in a subshell. A variable set there would
+  # disappear, so the body stays in this shell and the wrappers print it.
+  GITEA_LAST_BODY="$(cat "${body_file}")"
+  GITEA_LAST_TOTAL="$(
+    awk 'BEGIN { IGNORECASE = 1 } /^X-Total-Count:/ { value = $2 } END { print value }' \
+      "${header_file}" | tr -d '\r'
+  )"
+  rm -f "${body_file}" "${header_file}"
+}
+
 gitea_get() {
   local endpoint="$1"
-  shift
 
-  curl --fail-with-body --silent --show-error \
-    -H "Authorization: token ${GITEA_TOKEN}" \
-    -H 'Accept: application/json' \
-    "${GITEA_API}/${endpoint}" "$@"
+  gitea_request GET "${endpoint}"
+  printf '%s\n' "${GITEA_LAST_BODY}"
 }
 
 gitea_json() {
   local method="$1"
   local endpoint="$2"
-  local payload="${3:-}"
-  local curl_args=(
-    --fail-with-body
-    --silent
-    --show-error
-    -X "${method}"
-    -H "Authorization: token ${GITEA_TOKEN}"
-    -H 'Accept: application/json'
-    -H 'Content-Type: application/json'
-  )
+  local payload="${3-}"
 
-  if [[ -n "${payload}" ]]; then
-    curl_args+=(--data-binary "${payload}")
+  gitea_request "${method}" "${endpoint}" "${payload}"
+  printf '%s\n' "${GITEA_LAST_BODY}"
+}
+
+# Follow page until a short page or X-Total-Count says the list is done.
+gitea_get_all() {
+  local endpoint="$1"
+  local page=1
+  local limit combined='[]' chunk total count separator
+  local max_pages=200
+
+  limit="$(gitea_page_limit)"
+  while (( page <= max_pages )); do
+    separator='?'
+    [[ "${endpoint}" == *'?'* ]] && separator='&'
+    gitea_request GET "${endpoint}${separator}limit=${limit}&page=${page}"
+    chunk="${GITEA_LAST_BODY}"
+    jq -e 'type == "array"' >/dev/null <<<"${chunk}" || {
+      echo "Gitea list was not an array: ${endpoint}" >&2
+      return 1
+    }
+    total="${GITEA_LAST_TOTAL-}"
+    count="$(jq 'length' <<<"${chunk}")"
+    combined="$(jq -n --argjson acc "${combined}" --argjson page "${chunk}" '$acc + $page')"
+    if (( count < limit )); then
+      break
+    fi
+    if [[ -n "${total}" ]] && (( $(jq 'length' <<<"${combined}") >= total )); then
+      break
+    fi
+    page=$((page + 1))
+  done
+
+  if (( page > max_pages )); then
+    echo "Gitea list did not end after ${max_pages} pages: ${endpoint}" >&2
+    return 1
   fi
+  printf '%s\n' "${combined}"
+}
 
-  curl "${curl_args[@]}" "${GITEA_API}/${endpoint}"
+gitea_find_id() {
+  local json="$1"
+  local field="$2"
+  local value="$3"
+
+  jq -er --arg field "${field}" --arg value "${value}" \
+    'first(.[] | select(.[$field] == $value) | .id) // empty' <<<"${json}"
+}
+
+gitea_labels() {
+  if [[ -z "${GITEA_LABELS_JSON:-}" ]]; then
+    GITEA_LABELS_JSON="$(gitea_get_all 'labels')"
+  fi
+  printf '%s\n' "${GITEA_LABELS_JSON}"
 }
 
 gitea_label_id() {
   local label_name="$1"
 
-  gitea_get 'labels?limit=100' |
-    jq -er --arg name "${label_name}" '.[] | select(.name == $name) | .id' |
-    head -n 1
+  gitea_find_id "$(gitea_labels)" name "${label_name}"
 }
 
 gitea_milestone_id() {
   local milestone_title="$1"
+  local encoded
 
-  gitea_get 'milestones?state=all&limit=100' |
-    jq -er --arg title "${milestone_title}" '.[] | select(.title == $title) | .id' |
-    head -n 1
+  encoded="$(jq -rn --arg title "${milestone_title}" '$title | @uri')"
+  gitea_find_id "$(gitea_get_all "milestones?state=all&name=${encoded}")" title "${milestone_title}"
+}
+
+gitea_project_id() {
+  local project_title="$1"
+
+  gitea_find_id "$(gitea_get_all 'projects?state=all')" title "${project_title}"
+}
+
+gitea_project_column_id() {
+  local project_id="$1"
+  local column_title="$2"
+
+  gitea_find_id "$(gitea_get_all "projects/${project_id}/columns")" title "${column_title}"
 }

@@ -31,8 +31,9 @@ pull request.
 
 ### Command-line workflow
 
-Set `GITEA_TOKEN` in the environment or in the ignored repository `.env` file.
-Never commit the token. Create an issue before starting implementation:
+Set `GITEA_TOKEN` in the environment or in the ignored `.env.local` file.
+Never commit the token. `bin/env-pull` replaces `.env` from LockBox, which
+keeps that token empty. Create an issue before starting implementation:
 
 ```bash
 bin/new-issue --type feature \
@@ -62,8 +63,10 @@ git pull --ff-only
 bin/worktree cleanup issue/123-short-description
 ```
 
-`bin/update-issue` can apply an explicitly approved label or milestone
-change. It previews changes unless `--apply` is supplied:
+`bin/update-issue` can apply an explicitly approved label, milestone,
+project, or column change. It previews changes unless `--apply` is supplied.
+`--project` replaces the issue's project list. `--column` moves the card
+with the issue's global id:
 
 ```bash
 bin/update-issue --issue 123 --add-label priority:normal
@@ -242,7 +245,6 @@ SMB_PASSWORD='password'
 
 # GITEA
 GITEA_URL=http://10.135.204.125:3000
-GITEA_TOKEN=your-gitea-token
 ```
 `PAPERBOY_DATABASE` is read in every environment, not just development —
 `config/database.yml` uses it as the database name for development, staging
