@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # Mail for people following a form type rather than owning a submission — see
-# Forms::Subscription. Two shapes of the same information: `activity` for
-# immediate subscribers, one message per event, and `daily_digest` for the rest,
-# one message per day.
+# Forms::Subscription. Two shapes of the same information: `activity` and
+# `comment` for immediate subscribers, one message per event, and
+# `daily_digest` for the rest, one message per day.
 #
 # Everything resolves by id so async delivery sees committed data.
 class FormSubscriptionMailer < ApplicationMailer
@@ -35,6 +35,23 @@ class FormSubscriptionMailer < ApplicationMailer
     @form_name = FormEmailRenderer.form_name(@submission)
     @body_html = email.render_body(@submission, context)
     mail(to: @employee.email, subject: email.render_subject(@submission, context))
+  end
+
+  # Somebody commented on a submission. Its own layout rather than one of the
+  # form's customizable emails: the message is the comment, not the form.
+  def comment(comment_id, employee_id)
+    @employee = Employee.find_by(id: employee_id.to_s)
+    return if @employee.nil? || @employee.email.blank?
+
+    @comment = SubmissionComment.find_by(id: comment_id)
+    @submission = @comment&.commentable
+    return if @submission.nil?
+
+    @form_name = FormEmailRenderer.form_name(@submission)
+    @reference = Forms::Reference.reference_for(@submission).presence || "##{@submission.id}"
+    @submission_url = FormEmailRenderer.submission_url(@submission)
+
+    mail(to: @employee.email, subject: "New comment on #{@form_name} #{@reference}")
   end
 
   def daily_digest(employee_id, since, through)

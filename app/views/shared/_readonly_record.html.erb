@@ -60,3 +60,15 @@
     </section>
   <% end %>
 <% end %>
+
+<%# Comment thread: notes and files people have left on the submission. Shown
+    on every submission detail page that renders this partial, to whoever may
+    open the record -- the same check SubmissionCommentsController applies. %>
+<% if commentable_submission?(record) && can_view_submission?(record) %>
+  <section class="submission-comments" style="margin-top: 24px;">
+    <h3>Comments</h3>
+    <%= render partial: "submission_comments/thread",
+               locals: { record: record,
+                         comments: SubmissionComment.on(record).chronological.with_attached_files.to_a } %>
+  </section>
+<% end %>

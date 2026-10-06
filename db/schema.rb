@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_141000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -987,6 +987,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_130000) do
     t.string "form_type", null: false
     t.string "grantee_type", null: false
     t.integer "group_id"
+    t.boolean "notify_comment_added", default: false, null: false
     t.boolean "notify_created", default: false, null: false
     t.boolean "notify_edited", default: false, null: false
     t.boolean "notify_status_changed", default: false, null: false
@@ -1855,6 +1856,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_130000) do
     t.bigint "trackable_id", null: false
     t.string "trackable_type", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "submission_comments", force: :cascade do |t|
+    t.string "author_id"
+    t.string "author_name"
+    t.text "body"
+    t.bigint "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["commentable_type", "commentable_id", "created_at"], name: "index_submission_comments_on_commentable"
+    t.index ["commentable_type", "created_at"], name: "index_submission_comments_on_commentable_type_and_created_at"
   end
 
   create_table "task_reassignments", force: :cascade do |t|

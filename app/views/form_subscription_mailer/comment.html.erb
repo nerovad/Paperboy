@@ -1,0 +1,35 @@
+<p>Hello <%= @employee.first_name %>,</p>
+
+<p>
+  <strong><%= @comment.author_label %></strong> commented on
+  <%= @form_name %> <strong><%= @reference %></strong>.
+</p>
+
+<% if @comment.body.present? %>
+  <blockquote style="margin: 0 0 16px; padding: 8px 14px; border-left: 3px solid #004976; background: #f8f9fa;">
+    <%= simple_format(@comment.body, {}, wrapper_tag: "div") %>
+  </blockquote>
+<% end %>
+
+<% if @comment.files.any? %>
+  <p style="margin-bottom: 4px;">Attached:</p>
+  <ul style="padding-left: 18px;">
+    <% @comment.files.each do |file| %>
+      <li><%= file.filename %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @submission_url.present? %>
+  <p>
+    <a href="<%= @submission_url %>"
+       style="display: inline-block; padding: 10px 20px; background-color: #004976; color: #ffffff; text-decoration: none; border-radius: 4px;">
+      Open the submission
+    </a>
+  </p>
+<% end %>
+
+<p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+  You are receiving this because you are subscribed to <%= @form_name %> activity.
+  Manage your subscriptions under <a href="<%= settings_url %>" style="color: #004976;">Settings</a>.
+</p>

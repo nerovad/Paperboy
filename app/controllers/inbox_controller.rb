@@ -103,6 +103,9 @@ class InboxController < ApplicationController
     # Paginate the final sorted array
     @pagy, @submissions = pagy(:offset, @submissions, count: @submissions.size)
 
+    # Comment counts for the Comments button on each row of this page.
+    @comment_counts = SubmissionComment.counts_for(@submissions)
+
     # Reassignment modal needs every employee regardless of filter scope.
     @employees = Employee.order(:last_name, :first_name)
 

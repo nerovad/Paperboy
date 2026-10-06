@@ -66,6 +66,24 @@ module Forms
       assert_equal [transition.id], digest.status_changes.map(&:id)
     end
 
+    test 'comments are collected for forms followed for that event, less the subscriber\'s own' do
+      subscribe(notify_edited: false, notify_comment_added: true)
+      theirs = SubmissionComment.create!(commentable: @record, author_id: '1234', author_name: 'A', body: 'One')
+      SubmissionComment.create!(commentable: @record, author_id: @employee_id, author_name: 'Me', body: 'Mine')
+      SubmissionComment.create!(commentable: @record, author_id: '1234', body: 'Old', created_at: 3.days.ago)
+
+      assert_equal [theirs.id], digest.comments.map(&:id)
+      assert_predicate digest, :any?
+      assert_equal 1, digest.total_events
+    end
+
+    test 'comments are left out for a subscriber who does not follow them' do
+      subscribe
+      SubmissionComment.create!(commentable: @record, author_id: '1234', body: 'One')
+
+      assert_empty digest.comments
+    end
+
     test 'immediate subscriptions are never part of a digest' do
       subscribe(delivery_mode: Forms::Subscription::IMMEDIATE)
       edit_row

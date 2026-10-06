@@ -78,6 +78,8 @@
               <!-- DYNAMIC FORM BUTTONS (based on form template configuration) -->
               <%= render 'inbox/dynamic_buttons', submission: submission %>
 
+              <%= render 'inbox/comments_button', submission: submission %>
+
               <button type="button" class="btn close-panel" data-action="click->task-selection#closePanel">
                 Close
               </button>
@@ -184,6 +186,8 @@
                       class: "btn take-back",
                       form: { data: { turbo: false } } %>
               <% end %>
+
+              <%= render 'inbox/comments_button', submission: submission %>
 
               <button type="button" class="btn close-panel" data-action="click->task-selection#closePanel">
                 Close

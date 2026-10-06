@@ -419,6 +419,38 @@ Rules:
   lookup crosses to GSABSS and falls back to the raw value, so it must stay
   best-effort.
 
+## Submission comments
+
+Every submission has one comment thread (`SubmissionComment`, table
+`submission_comments`, polymorphic). A comment is text, attachments, or both.
+`SubmissionCommentsController` renders the thread as one fragment,
+`submission_comments/_thread`, which carries its own form; the
+`comment-thread` Stimulus controller posts it and swaps in the answer.
+
+**Comments is not a configurable button.** `inbox/_comments_button` sits in
+every inbox action panel, copies included, and `shared/_readonly_record`
+shows the thread on every submission page. Do not add `comments` to
+`Forms::Template::INBOX_BUTTON_TYPES`.
+
+Rules:
+
+- **Visibility follows view access.** Reading, posting and downloading all
+  ask `Forms::SubmissionAccess` (`can_view_submission?`). There are no
+  internal-only comments: whatever is posted, the submitter can read.
+- **Never link a comment's file with `url_for` or `rails_blob_path`.** Use
+  `submission_comment_attachment_path`, which checks the viewer and streams
+  the file as a download.
+- A comment is not an edit. It writes nothing to `record_edits` or
+  `status_changes` and must not touch the submission.
+- An author may delete their own comment and a system admin any; nobody
+  edits one.
+- A new comment is the `comment_added` form subscription event. Immediate
+  subscribers are mailed from `SubmissionComment`'s `after_create_commit`;
+  digest subscribers are found by `Forms::SubscriptionDigest#comments`. The
+  author is never mailed about their own comment.
+- Allowed file types and limits live in `SubmissionComment::FILE_TYPES`,
+  `MAX_FILES` and `MAX_FILE_SIZE`, not in the view.
+
 ## Publishing
 
 An asset leaves the library through a **publish target** — one account on one

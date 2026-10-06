@@ -2,10 +2,11 @@
 
 # One subscriber's day of form activity, assembled for the daily digest.
 #
-# There is no event table behind this. The three things a subscription can
+# There is no event table behind this. The four things a subscription can
 # follow are already recorded as a side effect of normal work -- submissions
-# carry created_at, RecordEdit rows carry every field that moved, and
-# StatusChange rows carry every transition -- so a digest is a time-boxed read
+# carry created_at, RecordEdit rows carry every field that moved, StatusChange
+# rows carry every transition, and SubmissionComment rows are the comments
+# themselves -- so a digest is a time-boxed read
 # over data that already exists. Nothing has to be written at event time for a
 # digest to be complete, and a digest can be rebuilt for any past window.
 #
@@ -21,7 +22,7 @@ module Forms
       @through = through
     end
 
-    def any? = created_submissions.any? || edits.any? || status_changes.any?
+    def any? = created_submissions.any? || edits.any? || status_changes.any? || comments.any?
 
     def window = @since..@through
 
@@ -61,13 +62,28 @@ module Forms
       end
     end
 
+    # Comments over the form types followed for 'comment_added', less the
+    # subscriber's own: nobody needs telling what they wrote themselves.
+    def comments
+      @comments ||= begin
+        types = form_types_for('comment_added')
+        if types.empty?
+          []
+        else
+          SubmissionComment.where(commentable_type: types, created_at: window)
+                           .with_attached_files.order(:created_at)
+                           .reject { |comment| comment.authored_by?(@employee_id) }
+        end
+      end
+    end
+
     # Edits grouped by the record they belong to, so the mail can show one block
     # per submission rather than a flat list of columns.
     def edits_by_record
       edits.group_by { |edit| [edit.record_type, edit.record_id] }
     end
 
-    def total_events = created_submissions.size + edits.size + status_changes.size
+    def total_events = created_submissions.size + edits.size + status_changes.size + comments.size
 
     private
 

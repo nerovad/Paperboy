@@ -57,6 +57,27 @@
   <% end %>
 <% end %>
 
+<% if @digest.comments.any? %>
+  <h3 style="font-size: 1em; color: #004976; border-bottom: 2px solid #004976; padding-bottom: 4px;">
+    Comments (<%= @digest.comments.size %>)
+  </h3>
+  <ul style="padding-left: 18px;">
+    <% @digest.comments.each do |comment| %>
+      <li style="margin-bottom: 6px;">
+        <strong><%= link_to_if (url = reference_url(comment.commentable_type, comment.commentable_id)),
+                               reference_label(comment.commentable_type, comment.commentable_id), url, style: "color: #004976;" %></strong>
+        <span style="color: #666;">— <%= comment.author_label %></span>
+        <% if comment.body.present? %>
+          : <%= truncate(comment.body, length: 200) %>
+        <% end %>
+        <% if comment.files.any? %>
+          <span style="color: #666;">(<%= pluralize(comment.files.size, "attachment") %>)</span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
 <p>
   <a href="<%= inbox_queue_url %>"
      style="display: inline-block; padding: 10px 20px; background-color: #004976; color: #ffffff; text-decoration: none; border-radius: 4px;">
