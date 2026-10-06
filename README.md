@@ -18,13 +18,16 @@ with a modernized workflow. It integrates with Microsoft SQL Server and uses
 Solid Queue for background jobs, Solid Cache for Rails.cache, and Solid Cable
 for Action Cable.
 
-For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
+For the product story / sales pitch, see the
+[Pitch](http://10.135.204.125:3000/BSS/Paperboy/wiki/Pitch) wiki page.
 
 ## Gitea workflow
 
 Paperboy's issue, pull request, milestone, Project, and automation conventions
-are documented in [docs/gitea-automation.md](docs/gitea-automation.md). Use the
-repository's Gitea templates when opening an issue or pull request.
+are documented on the
+[Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page. Use the repository's Gitea templates when opening an issue or
+pull request.
 
 ### Command-line workflow
 
@@ -76,8 +79,9 @@ source /path/to/Paperboy/bin/shell-init
 wt 123
 ```
 
-For command options, prompting behavior, and safety rules, see
-[docs/gitea-automation.md](docs/gitea-automation.md).
+For command options, prompting behavior, and safety rules, see the
+[Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page.
 
 ---
 

@@ -3,7 +3,8 @@
 # AIM v2: the row is the invoice. What the workers and the review screens used
 # to keep in queue folders and sidecar files -- what to do next, why a person
 # is needed, the split manifest, the raw extraction, the reviewer's notes --
-# becomes columns. See docs/aim/aim_plan.md, "AIM v2 -- The Row-First Rebuild".
+# becomes columns. See the AIM Plan wiki page, "AIM v2 -- The Row-First Rebuild":
+# http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan
 #
 # Additive: every existing column stays. Existing rows' states are mapped from
 # the v1 queue names to the v2 states below.

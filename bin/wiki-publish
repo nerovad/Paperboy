@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+# Publish the Markdown allowlist in config/wiki_pages.yml to the Gitea wiki.
+# Dry-run is the default. --apply pushes one commit to the wiki repository.
+
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+apply=false
+
+usage() {
+  cat <<'EOF'
+Usage: bin/wiki-publish [OPTIONS]
+
+Publish config/wiki_pages.yml to the Gitea wiki. The default is dry-run.
+Add --apply only after reviewing the plan.
+
+Pages with keep: true are refreshed from git. Pages whose source file has
+been removed stay on the wiki. A wiki page without the publisher marker is
+left alone. README.md is never published.
+
+Options:
+  --apply              Create or update the wiki and push
+  --url URL            Override the Gitea base URL
+  --owner NAME         Override the repository owner
+  --repository NAME    Override the repository name
+  -h, --help           Show this help
+EOF
+}
+
+wiki_git() {
+  GIT_TERMINAL_PROMPT=0 git \
+    -c "http.extraHeader=Authorization: token ${GITEA_TOKEN}" \
+    "$@"
+}
+
+wiki_clone() {
+  local dest="$1"
+  wiki_git clone --quiet --depth 1 \
+    "${GITEA_URL%/}/${GITEA_OWNER}/${GITEA_REPOSITORY}.wiki.git" \
+    "${dest}"
+}
+
+wiki_initialize() {
+  local source_sha="$1"
+  local home_file="$2"
+  local content_base64 payload
+
+  content_base64="$(base64 -w 0 "${home_file}")"
+  payload="$(jq -nc --arg title 'Home' --arg content "${content_base64}" \
+    --arg message "Initialize wiki from ${source_sha}" \
+    '{title: $title, content_base64: $content, message: $message}')"
+  gitea_json POST 'wiki/new' "${payload}" >/dev/null
+}
+
+wiki_copy_plan() {
+  local checkout="$1"
+  local stage_dir="$2"
+  local name
+
+  while IFS= read -r name; do
+    [[ -n "${name}" ]] || continue
+    cp "${stage_dir}/${name}" "${checkout}/${name}"
+  done < <(jq -r '.write[]' "${stage_dir}/plan.json")
+
+  while IFS= read -r name; do
+    [[ -n "${name}" ]] || continue
+    rm -f "${checkout}/${name}"
+  done < <(jq -r '.delete[]' "${stage_dir}/plan.json")
+}
+
+wiki_apply_plan() {
+  local checkout="$1"
+  local stage_dir="$2"
+  local repo_root="$3"
+  local source_sha="$4"
+  local branch
+
+  wiki_copy_plan "${checkout}" "${stage_dir}"
+  git -C "${checkout}" config user.name "$(git -C "${repo_root}" config user.name)"
+  git -C "${checkout}" config user.email "$(git -C "${repo_root}" config user.email)"
+  git -C "${checkout}" add -A
+  if git -C "${checkout}" diff --cached --quiet; then
+    echo 'Wiki already matches this tree. Nothing to push.'
+    return 0
+  fi
+
+  git -C "${checkout}" commit -m "Publish wiki from ${source_sha}"
+  branch="$(git -C "${checkout}" rev-parse --abbrev-ref HEAD)"
+  wiki_git -C "${checkout}" push origin "HEAD:${branch}"
+  echo "Pushed wiki from ${source_sha}"
+}
+
+while (($#)); do
+  case "$1" in
+    --apply) apply=true; shift ;;
+    --url) GITEA_URL="$2"; shift 2 ;;
+    --owner) GITEA_OWNER="$2"; shift 2 ;;
+    --repository) GITEA_REPOSITORY="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+gitea_require_commands
+command -v ruby >/dev/null 2>&1 || { echo 'Required command not found: ruby' >&2; exit 1; }
+command -v git >/dev/null 2>&1 || { echo 'Required command not found: git' >&2; exit 1; }
+gitea_load_config
+
+root="$(git rev-parse --show-toplevel)"
+catalog="${root}/config/wiki_pages.yml"
+ruby_cli="${root}/lib/paperboy/wiki_publish.rb"
+repo_url="$(
+  curl --fail-with-body --silent --show-error \
+    -H "Authorization: token ${GITEA_TOKEN}" \
+    -H 'Accept: application/json' \
+    "${GITEA_API}" | jq -er '.html_url'
+)"
+
+stage="$(mktemp -d)"
+work="$(mktemp -d)"
+cleanup() { rm -rf "${stage}" "${work}"; }
+trap cleanup EXIT
+
+ruby -I"${root}/lib" "${ruby_cli}" stage \
+  --catalog "${catalog}" \
+  --root "${root}" \
+  --out "${stage}" \
+  --repo-url "${repo_url}"
+
+pages_file="${work}/pages.json"
+pages_code="$(
+  curl --silent --show-error --output "${pages_file}" --write-out '%{http_code}' \
+    -H "Authorization: token ${GITEA_TOKEN}" \
+    -H 'Accept: application/json' \
+    "${GITEA_API}/wiki/pages?limit=1"
+)"
+
+wiki_checkout=''
+if [[ "${pages_code}" == '200' ]]; then
+  wiki_checkout="${work}/wiki"
+  wiki_clone "${wiki_checkout}"
+elif [[ "${pages_code}" != '404' ]]; then
+  echo "Wiki page list failed: HTTP ${pages_code}" >&2
+  cat "${pages_file}" >&2
+  exit 1
+fi
+
+echo 'Wiki publish plan'
+echo "Wiki: ${repo_url}/wiki"
+ruby -I"${root}/lib" "${ruby_cli}" plan \
+  --catalog "${catalog}" \
+  --out "${stage}" \
+  --wiki "${wiki_checkout}"
+
+sha="$(git -C "${root}" rev-parse --short=12 HEAD)"
+if [[ -n "$(git -C "${root}" status --porcelain)" ]]; then
+  echo "Source: working tree at ${sha} (uncommitted changes)"
+else
+  echo "Source: ${sha}"
+fi
+if [[ "${pages_code}" == '404' ]]; then
+  echo 'Wiki repository is not initialized.'
+fi
+
+if [[ "${apply}" != true ]]; then
+  echo 'Dry run. Re-run with --apply to push.'
+  exit 0
+fi
+
+if [[ "${pages_code}" == '404' ]]; then
+  wiki_initialize "${sha}" "${stage}/Home.md"
+  wiki_checkout="${work}/wiki"
+  wiki_clone "${wiki_checkout}"
+fi
+
+wiki_apply_plan "${wiki_checkout}" "${stage}" "${root}" "${sha}"
