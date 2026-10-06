@@ -116,9 +116,39 @@ bin/update-issue --issue 123 --add-label priority:normal --apply
 See the [Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
 wiki page for the complete workflow and project conventions.
 
+## Wiki
+
+Design notes live on the Gitea wiki, not under `docs/`:
+
+`http://10.135.204.125:3000/BSS/Paperboy/wiki/`
+
+`config/wiki_pages.yml` maps a repository path to a page slug. The page
+address is that base URL plus the slug. A `keep: true` page is still read
+from the checkout. A `keep: false` page is read from the wiki.
+
+Before creating or changing a feature, read the wiki pages for that area.
+Use Architecture for framework work. Use AIM Plan, AIM Handoff, and AIM Todo
+for AIM. Use the OMS pages for OMS. Use Authentication Gem for
+authentication. Use the map for any other area.
+
+Fetch the Markdown with the wiki API. `content_base64` is the page body.
+Read `GITEA_TOKEN` from the environment or `.env`. Do not print the token.
+
+```bash
+curl --fail-with-body --silent \
+  -H "Authorization: token ${GITEA_TOKEN}" \
+  -H 'Accept: application/json' \
+  "${GITEA_URL%/}/api/v1/repos/BSS/Paperboy/wiki/page/Architecture"
+```
+
+A restart prompt names those wiki URLs and tells the next session to read
+`AGENTS.md` from the checkout. It does not name a `docs/*.md` path, and it
+is not saved as a new file under `docs/`.
+
 `bin/wiki-publish` refreshes the wiki from the Markdown that stays in git.
 It prints a plan unless `--apply` is given. Pages that moved out of `docs/`
-are edited on the wiki.
+are edited on the wiki. The rules in this file stay here. The Agents wiki
+page is refreshed from this file.
 
 ## Environment files
 
