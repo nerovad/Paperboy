@@ -571,6 +571,13 @@ Rails.application.routes.draw do
   # always been served from; see SubmissionHistoriesController.
   get '/inbox/status_history/:type/:id', to: 'submission_histories#status', as: 'inbox_status_history'
   get '/inbox/edit_history/:type/:id', to: 'submission_histories#edits', as: 'inbox_edit_history'
+  # A submission's comment thread, addressed the same way; see
+  # SubmissionCommentsController. Deleting and downloading go by comment id.
+  get '/inbox/comments/:type/:id', to: 'submission_comments#index', as: 'inbox_comments'
+  post '/inbox/comments/:type/:id', to: 'submission_comments#create'
+  delete '/submission_comments/:id', to: 'submission_comments#destroy', as: 'submission_comment'
+  get '/submission_comments/:id/attachments/:attachment_id', to: 'submission_comments#attachment',
+                                                             as: 'submission_comment_attachment'
   get '/submissions', to: 'submissions#index', as: :submissions
   get '/submissions/status_options', to: 'submissions#status_options', as: :submissions_status_options
   # Reference number typed into the quick search ("PLS-845") -> that submission.

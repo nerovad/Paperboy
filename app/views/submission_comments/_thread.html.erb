@@ -1,0 +1,86 @@
+<%# One submission's comment thread and the form that adds to it. Locals:
+    record, comments (SubmissionComment, oldest first). Optional: draft, a
+    comment that failed to save, so what was typed is not lost.
+    Rendered inline on a submission's page and fetched into the history modal,
+    so it must stand on its own with no surrounding chrome. The comment-thread
+    controller posts the forms in here and replaces this whole element with
+    the fragment SubmissionCommentsController answers with. %>
+<% draft = local_assigns[:draft] %>
+<% thread_key = "#{record.class.name}-#{record.id}" %>
+<div class="comment-thread"
+     id="comment-thread-<%= thread_key.parameterize %>"
+     data-controller="comment-thread"
+     data-comment-thread-key-value="<%= thread_key %>"
+     data-comment-thread-count-value="<%= comments.size %>">
+  <% if comments.empty? %>
+    <p class="timeline-empty">No comments yet.</p>
+  <% else %>
+    <ol class="comment-list">
+      <% comments.each do |comment| %>
+        <li class="comment">
+          <div class="comment__meta">
+            <span class="comment__author"><%= comment.author_label %></span>
+            <span class="comment__date"><%= l(comment.created_at, format: :long) %></span>
+            <% if can_delete_comment?(comment) %>
+              <%= button_to "Delete", submission_comment_path(comment),
+                    method: :delete,
+                    class: "btn deny compact",
+                    form: { class: "comment__delete",
+                            data: { turbo: false,
+                                    action: "submit->comment-thread#submit",
+                                    comment_thread_confirm: "Delete this comment and its attachments?" } } %>
+            <% end %>
+          </div>
+
+          <% if comment.body.present? %>
+            <div class="comment__body"><%= simple_format(comment.body) %></div>
+          <% end %>
+
+          <% if comment.files.any? %>
+            <ul class="comment__files">
+              <% comment.files.each do |file| %>
+                <li>
+                  <%= link_to file.filename.to_s,
+                        submission_comment_attachment_path(comment, file.id),
+                        data: { turbo: false } %>
+                  <span class="comment__file-size"><%= number_to_human_size(file.byte_size) %></span>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+
+  <%= form_with url: inbox_comments_path(type: record.class.name, id: record.id),
+                scope: :submission_comment,
+                multipart: true,
+                class: "comment-form",
+                data: { turbo: false, action: "submit->comment-thread#submit" } do |f| %>
+    <% if draft && draft.errors.any? %>
+      <p class="comment-form__error" role="alert"><%= draft.errors.full_messages.to_sentence %></p>
+    <% end %>
+
+    <%= f.label :body, "Add a comment", for: "comment-body-#{thread_key.parameterize}" %>
+    <%= f.text_area :body,
+          value: draft&.body,
+          id: "comment-body-#{thread_key.parameterize}",
+          rows: 3,
+          maxlength: SubmissionComment::MAX_BODY_LENGTH,
+          class: "form-control" %>
+
+    <div class="comment-form__row">
+      <%= f.file_field :files,
+            multiple: true,
+            include_hidden: false,
+            accept: SubmissionComment.file_accept,
+            "aria-label": "Attach files" %>
+      <button type="submit" class="btn approve compact" data-comment-thread-target="submit">Post Comment</button>
+    </div>
+    <p class="comment-form__hint">
+      Up to <%= SubmissionComment::MAX_FILES %> files, 10MB each.
+      Everyone who can open this submission can read comments.
+    </p>
+  <% end %>
+</div>

@@ -74,6 +74,36 @@ module SubmissionsHelper
     )
   end
 
+  # Whether this record carries a comment thread -- every form does, hardcoded
+  # or generated. Memoized per class so a page of rows asks once per form.
+  def commentable_submission?(record)
+    @commentable_classes ||= {}
+    @commentable_classes.fetch(record.class) do |klass|
+      @commentable_classes[klass] = SubmissionComment.commentable_class?(klass)
+    end
+  end
+
+  # How many comments a submission has. Reads the page's preloaded counts
+  # (InboxController) when there are any, and counts for itself otherwise.
+  def comment_count_for(record)
+    return SubmissionComment.on(record).count unless @comment_counts
+
+    @comment_counts.fetch([record.class.name, record.id], 0)
+  end
+
+  # Kept in step with the comment-thread Stimulus controller, which rewrites
+  # the button after a comment is posted or removed.
+  def comments_button_label(count)
+    count.positive? ? "Comments (#{count})" : 'Comments'
+  end
+
+  # An author may remove their own comment; a system admin may remove any.
+  # Enforced for real by SubmissionCommentsController#destroy.
+  def can_delete_comment?(comment)
+    current_user_group_names.include?('system_admins') ||
+      comment.authored_by?(session.dig(:user, 'employee_id'))
+  end
+
   # Both buttons above ask Forms::SubmissionPolicy the same question the
   # endpoints ask, so a button a viewer can see is one they can use, and one
   # they can't see is refused if the URL is typed by hand.

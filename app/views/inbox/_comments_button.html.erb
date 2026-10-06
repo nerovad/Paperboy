@@ -1,0 +1,16 @@
+<%# Opens a submission's comment thread in the shared history modal. Not a
+    configurable inbox button: every row gets one, copies included, because
+    anyone who can open a submission can read and add to its thread.
+    Usage: render 'inbox/comments_button', submission: submission %>
+<% if commentable_submission?(submission) %>
+  <% thread_key = "#{submission.class.name}-#{submission.id}" %>
+  <button type="button"
+          class="btn info"
+          data-action="click->history-modal#open"
+          data-history-url="<%= inbox_comments_path(type: submission.class.name, id: submission.id) %>"
+          data-history-label="Comments"
+          data-record-title="<%= "#{submission.class.name.demodulize.titleize} #{inbox_reference(submission)}" %>"
+          data-comment-count-key="<%= thread_key %>">
+    <%= comments_button_label(comment_count_for(submission)) %>
+  </button>
+<% end %>
