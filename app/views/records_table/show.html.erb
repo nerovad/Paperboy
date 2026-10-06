@@ -4,8 +4,13 @@
   <% toolbar = render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
                       columns: @columns, filter_options: @filter_options %>
 
+  <%# The 300A Summary totals the 300 Log, so it is reached from that table. %>
+  <% if @table.slug == OshaReport.registry_slug && osha_300a_visible? %>
+    <% actions = link_to 'OSHA 300A Summary', osha_300a_path, class: 'btn secondary' %>
+  <% end %>
+
   <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records,
-             title: @table.label, toolbar: toolbar, exportable: true,
+             title: @table.label, toolbar: toolbar, actions: actions, exportable: true,
              highlights: @highlights, highlight_counts: @highlight_counts, view_params: @view_params %>
 
   <%= render 'records/export_modal', table: @table, rows: @records,
