@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_141000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_150000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -1026,11 +1026,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_141000) do
     t.string "approve_button_label"
     t.string "authorization_service_type"
     t.boolean "complete_on_edit", default: false, null: false
+    t.string "completion_rule", default: "all", null: false
     t.string "condition_field_name"
     t.string "condition_operator"
     t.string "condition_value"
     t.datetime "created_at", null: false
     t.string "deny_button_label"
+    t.string "deny_rule", default: "form", null: false
     t.string "display_name"
     t.integer "employee_id"
     t.bigint "form_template_id", null: false
@@ -1054,6 +1056,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_141000) do
     t.string "name", null: false
     t.integer "position", default: 0
     t.datetime "updated_at", null: false
+  end
+
+  create_table "form_template_step_routes", force: :cascade do |t|
+    t.string "authorization_service_type"
+    t.datetime "created_at", null: false
+    t.integer "employee_id"
+    t.bigint "form_template_routing_step_id", null: false
+    t.integer "group_id"
+    t.string "label"
+    t.string "org_filter_level"
+    t.integer "position", default: 0, null: false
+    t.string "routing_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["form_template_routing_step_id"], name: "idx_on_form_template_routing_step_id_6d4edb9b74"
   end
 
   create_table "form_templates", force: :cascade do |t|
@@ -1823,6 +1839,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_141000) do
     t.datetime "updated_at", null: false
     t.index ["commentable_type", "commentable_id", "created_at"], name: "index_submission_comments_on_commentable"
     t.index ["commentable_type", "created_at"], name: "index_submission_comments_on_commentable_type_and_created_at"
+  end
+
+  create_table "submission_step_tasks", force: :cascade do |t|
+    t.datetime "acted_at"
+    t.string "acted_by_id"
+    t.string "acted_by_name"
+    t.string "assignee_id"
+    t.string "authorization_service_type"
+    t.datetime "created_at", null: false
+    t.integer "employee_id"
+    t.integer "group_id"
+    t.string "label", null: false
+    t.text "notes"
+    t.string "org_filter_level"
+    t.integer "position", default: 0, null: false
+    t.string "routing_type", null: false
+    t.string "state", default: "pending", null: false
+    t.integer "step_number", null: false
+    t.bigint "submission_id", null: false
+    t.string "submission_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["submission_type", "state", "assignee_id"], name: "index_submission_step_tasks_on_open_assignee"
+    t.index ["submission_type", "submission_id", "step_number"], name: "index_submission_step_tasks_on_submission"
   end
 
   create_table "task_reassignments", force: :cascade do |t|

@@ -24,6 +24,11 @@ module Paperboy
     #
     # form_template_routing_steps.form_template_status_id is not carried:
     # nothing in the app writes it.
+    #
+    # A routing step with several routes carries them under its own `routes`
+    # key, in order, each with its group dumped by name like the step's own.
+    # They are replaced as a list whenever they differ: a route has no key of
+    # its own, and nothing points at one (a submission's tasks copy theirs).
     module Workflow
       PARTS = {
         'statuses' => { label: 'status', key: 'key', order: %i[position id],
@@ -31,7 +36,9 @@ module Paperboy
         'routing_steps' => { label: 'routing step', key: 'step_number', order: %i[step_number id], group: true,
                              columns: %w[routing_type employee_id org_filter_level authorization_service_type
                                          display_name approve_button_label deny_button_label condition_field_name
-                                         condition_operator condition_value inbox_buttons complete_on_edit] },
+                                         condition_operator condition_value inbox_buttons complete_on_edit
+                                         completion_rule deny_rule],
+                             routes: true },
         'emails' => { label: 'email', key: 'kind', order: %i[kind id], columns: %w[subject body] },
         'email_steps' => { label: 'email rule', order: %i[position id], group: true,
                            columns: %w[trigger_event recipient_type employee_id authorization_service_type
@@ -55,7 +62,14 @@ module Paperboy
       def dump_row(record, part, groups)
         row = record.slice(*[part[:key], *part[:columns]].compact).to_h
         row['group'] = groups[record.group_id] if part[:group]
+        row['routes'] = record.routes.map { |route| dump_route(route, groups) }.presence if part[:routes]
         FormSeed.plain(row).compact
+      end
+
+      # group_id travels as the group's name; the rest mean the same everywhere.
+      def dump_route(route, groups)
+        route.slice(*Forms::TemplateStepRoute::COLUMNS - ['group_id']).to_h
+             .merge('group' => groups[route.group_id]).compact
       end
 
       def records(template, name, part)
@@ -76,7 +90,9 @@ module Paperboy
         existing = template ? index(records(template, name, part), part) : {}
         wanted = index(rows, part)
         log = wanted.flat_map do |key, row|
-          upsert(template, name, existing[key], row, "#{class_name} #{part[:label]} #{key}", part.merge(name: name), dry: dry)
+          title = "#{class_name} #{part[:label]} #{key}"
+          lines = upsert(template, name, existing[key], row, title, part.merge(name: name), dry: dry)
+          part[:routes] ? lines + sync_routes(template, key, row, title, dry: dry) : lines
         end
         log + (existing.keys - wanted.keys).map do |key|
           existing[key].destroy! unless dry
@@ -104,6 +120,34 @@ module Paperboy
         record ||= template.public_send(name).build
         record.assign_attributes(changed)
         Sync.save(record) ? [line] : ["! #{title}: #{record.errors.full_messages.join('; ')}"]
+      end
+
+      # Makes a routing step's routes match the file's. The step is looked up
+      # again rather than handed over, since upsert may only just have made it.
+      def sync_routes(template, step_number, row, title, dry:)
+        wanted, refusal = route_rows(Array(row['routes']))
+        return ["! #{title} routes: #{refusal} -- held back"] if refusal
+
+        step = template&.routing_steps&.find_by(step_number: step_number)
+        current = step ? step.routes.map { |route| route.slice(*Forms::TemplateStepRoute::COLUMNS).to_h } : []
+        return [] if current == wanted
+        return ["~ #{title}: routes"] if dry
+        return [] unless step
+
+        step.routes.destroy_all
+        wanted.each_with_index { |attrs, position| step.routes.create!(attrs.merge('position' => position)) }
+        ["~ #{title}: routes"]
+      end
+
+      def route_rows(rows)
+        missing = nil
+        attrs = rows.map do |row|
+          name = row['group']
+          group = Group.find_by(group_name: name) if name.present?
+          missing ||= name if name.present? && group.nil?
+          Forms::TemplateStepRoute::COLUMNS.index_with { |column| row[column] }.merge('group_id' => group&.id)
+        end
+        [attrs, missing && "group #{missing} is not a group in this database"]
       end
 
       # Every column the part carries, so one the file leaves out goes back to

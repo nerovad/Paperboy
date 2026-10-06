@@ -9,28 +9,34 @@ module Forms
 
     belongs_to :form_template, class_name: 'Forms::Template'
 
-    ROUTING_TYPES = %w[supervisor employee group authorization].freeze
+    # The routes a 'multiple' step fans out to. Empty for every other type,
+    # whose single target is the step's own columns.
+    has_many :routes, -> { order(:position, :id) }, class_name: 'Forms::TemplateStepRoute',
+                                                    foreign_key: :form_template_routing_step_id,
+                                                    inverse_of: :routing_step, dependent: :destroy
+
+    include Forms::RouteTarget
+
+    # 'multiple' sends the submission to every route at once; each becomes a
+    # task (Forms::SubmissionStepTask) checked off on its own, and the step is
+    # finished when completion_rule is met.
+    MULTIPLE = 'multiple'
+    ROUTING_TYPES = [*TARGET_TYPES, MULTIPLE].freeze
     CONDITION_OPERATORS = %w[equals not_equals].freeze
-    ORG_FILTER_LEVELS = %w[agency division department unit].freeze
-    ORG_FILTER_LABELS = {
-      'agency' => 'Agency',
-      'division' => 'Division',
-      'department' => 'Department',
-      'unit' => 'Unit'
-    }.freeze
+
+    # all: every route must approve. any: the first approval finishes the step.
+    COMPLETION_RULES = %w[all any].freeze
+    # form: one deny denies the submission there and then. task: the deny is
+    # recorded on that route alone and the others still get to answer.
+    DENY_RULES = %w[form task].freeze
 
     validates :step_number, presence: true, numericality: { greater_than: 0 }
     validates :routing_type, presence: true, inclusion: { in: ROUTING_TYPES }
-    validates :employee_id, presence: true, if: :routes_to_employee?
-    validates :group_id, presence: true, if: :routes_to_group?
-    validates :authorization_service_type, presence: true,
-                                           inclusion: { in: ->(_step) { AuthorizationConsole.routing_keys } },
-                                           if: :routes_to_authorization?
     validates :step_number, uniqueness: { scope: :form_template_id }
     validates :condition_operator, inclusion: { in: CONDITION_OPERATORS }, allow_blank: true
     validates :condition_operator, presence: true, if: -> { condition_field_name.present? }
-    validates :org_filter_level, inclusion: { in: ORG_FILTER_LEVELS }, allow_blank: true
-    validate :org_filter_only_for_group_routing
+    validates :completion_rule, inclusion: { in: COMPLETION_RULES }
+    validates :deny_rule, inclusion: { in: DENY_RULES }
 
     scope :ordered, -> { order(:step_number) }
 
@@ -62,63 +68,14 @@ module Forms
       deny_button_label.presence || 'Deny'
     end
 
-    def routes_to_employee?
-      routing_type == 'employee'
-    end
-
-    def routes_to_group?
-      routing_type == 'group'
-    end
-
-    def routes_to_authorization?
-      routing_type == 'authorization'
-    end
-
-    # Human label for the chosen authorization option (e.g. "Parking Permits",
-    # "HCA Safety Officer"), resolved through the console registry.
-    def authorization_service_type_label
-      AuthorizationConsole.routing_label(authorization_service_type)
+    def multiple?
+      routing_type == MULTIPLE
     end
 
     def routing_label
-      case routing_type
-      when 'supervisor'
-        'Supervisor'
-      when 'employee'
-        employee_name || "Employee ##{employee_id}"
-      when 'group'
-        base = group_name || "Group ##{group_id}"
-        org_filtered? ? "#{base} (submitter's #{org_filter_label})" : base
-      when 'authorization'
-        "Authorized approver — #{authorization_service_type_label}"
-      end
-    end
+      return routes.map(&:target_label).to_sentence if multiple?
 
-    # True when this is a group-routed step that's narrowed to members who
-    # share the submitter's value at the configured org level.
-    def org_filtered?
-      routes_to_group? && org_filter_level.present?
-    end
-
-    def org_filter_label
-      ORG_FILTER_LABELS[org_filter_level]
-    end
-
-    def employee_name
-      return nil unless employee_id
-
-      employee = Employee.find_by(employee_id: employee_id)
-      employee&.full_name
-    rescue StandardError
-      nil
-    end
-
-    def group_name
-      return nil unless group_id
-
-      Group.find_by(GroupID: group_id)&.group_name
-    rescue StandardError
-      nil
+      target_label
     end
 
     # Default display name for the pending status at this step
@@ -180,26 +137,27 @@ module Forms
     # Centralizes the per-type resolution so the runtime guard (and anyone else)
     # can tell when a step would route to nobody. Mirrors how approver_id is set
     # in TrackableStatus and how the inbox surfaces group/authorization steps.
+    #
+    # A multi-route step answers with whoever still owes a task: someone whose
+    # task is closed is no longer an approver here, though the step is open.
     def eligible_approver_ids(submission)
-      case routing_type
-      when 'supervisor'
-        # Single-approver steps follow the same away redirect that
-        # TrackableStatus#approver_id_for_routing_step applies, so the person
-        # notified is the person the form was actually handed to. Pool steps
-        # below are left alone — the rest of the group is already the cover.
-        sup = step_submitter_employee(submission)&.supervisor_id
-        sup.present? ? [AwayPeriod.assignee_for(sup.to_s)] : []
-      when 'employee'
-        employee_id.present? ? [AwayPeriod.assignee_for(employee_id.to_s)] : []
-      when 'group'
-        group_eligible_ids(submission)
-      when 'authorization'
-        authorization_eligible_ids(submission)
-      else
-        []
-      end
+      return target_approver_ids(submission) unless multiple?
+
+      tasks = step_tasks_for(submission)
+      return routes.flat_map { |route| route.target_approver_ids(submission) }.uniq if tasks.empty?
+
+      tasks.select(&:pending?).flat_map { |task| task.eligible_approver_ids(submission) }.uniq
     rescue StandardError
       []
+    end
+
+    # True when `submission`, sitting at this step, has work nobody can pick
+    # up: the step's target resolves to no one, or one of its routes does.
+    def unstaffed?(submission)
+      return eligible_approver_ids(submission).blank? unless multiple?
+
+      tasks = step_tasks_for(submission).select(&:pending?)
+      tasks.empty? || tasks.any? { |task| task.eligible_approver_ids(submission).blank? }
     end
 
     # Human-readable summary of the condition for badges/display.
@@ -215,51 +173,12 @@ module Forms
 
     private
 
-    def step_submitter_employee(submission)
-      eid = submission.respond_to?(:employee_id) ? submission.employee_id : nil
-      # Employee or Contractor — both expose supervisor_id/unit for routing.
-      eid.present? ? Submitter.resolve(eid) : nil
-    end
+    # The tasks `submission` carries for this step, in any state. Empty for a
+    # submission that has never stood here.
+    def step_tasks_for(submission)
+      return [] unless submission.respond_to?(:step_tasks) && submission.persisted?
 
-    # Group members, narrowed to those sharing the submitter's value at the
-    # configured org level when org filtering is on.
-    def group_eligible_ids(submission)
-      return [] unless group_id
-
-      member_ids = EmployeeGroup.member_ids(group_id).map(&:to_s)
-      return member_ids unless org_filtered?
-
-      submitter_value = (submission.public_send(org_filter_level) if submission.respond_to?(org_filter_level))
-      return [] if submitter_value.blank?
-
-      members = Employee.where(id: member_ids).to_a
-      if org_filter_level == 'unit'
-        members.select { |e| e.unit.to_s == submitter_value.to_s }.map { |e| e.id.to_s }
-      else
-        unit_ids = members.map(&:unit).compact.uniq
-        units = unit_ids.any? ? Coa::Unit.where(unit_id: unit_ids).index_by { |u| u.unit_id.to_s } : {}
-        col = "#{org_filter_level}_id"
-        members.select do |e|
-          u = units[e.unit.to_s]
-          u && u.public_send(col).to_s == submitter_value.to_s
-        end.map { |e| e.id.to_s }
-      end
-    end
-
-    # Everyone holding this authorization over the submission. Each console in
-    # the registry scopes it its own way — AuthorizedApprover by budget unit,
-    # Safety Reporting by HCA org node.
-    def authorization_eligible_ids(submission)
-      return [] if authorization_service_type.blank?
-
-      AuthorizationConsole.approver_ids_for(authorization_service_type, submission)
-    end
-
-    def org_filter_only_for_group_routing
-      return if org_filter_level.blank?
-      return if routes_to_group?
-
-      errors.add(:org_filter_level, 'is only valid for group routing steps')
+      submission.step_tasks.where(step_number: step_number).to_a
     end
   end
 end

@@ -41,7 +41,8 @@
     <section class="workflow-history" style="margin-top: 24px;">
       <h3>Workflow History</h3>
       <%= render partial: "submissions/status_timeline",
-                 locals: { status_changes: timeline, item_id: record.id } %>
+                 locals: { status_changes: timeline, item_id: record.id,
+                           step_tasks: record.respond_to?(:current_step_tasks) ? record.current_step_tasks : [] } %>
     </section>
   <% end %>
 <% end %>

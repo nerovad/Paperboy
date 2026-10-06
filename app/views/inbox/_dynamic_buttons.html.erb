@@ -35,6 +35,15 @@
 <% else %>
 <% button_source = current_step || template %>
 
+<%# A step with several routes: say who the form is still waiting on. The full
+    checklist is in Status History. %>
+<% if current_step&.multiple? %>
+  <% open_tasks = submission.current_step_tasks.select(&:pending?) %>
+  <% if open_tasks.any? %>
+    <span class="step-tasks-summary">Waiting on: <%= open_tasks.map(&:label).to_sentence %></span>
+  <% end %>
+<% end %>
+
 <!-- View PDF -->
 <% if button_source.inbox_button?('view_pdf') %>
   <% pdf_path = inbox_pdf_path(submission) %>
@@ -114,7 +123,9 @@
 <% end %>
 
 <!-- Reassign -->
-<% if button_source.inbox_button?('reassign') %>
+<%# Not offered at a step with several routes: Reassign hands over the form's
+    one assignee, and there the work belongs to a task, not to the form. %>
+<% if button_source.inbox_button?('reassign') && !current_step&.multiple? %>
   <button type="button"
           class="btn reassign"
           data-action="click->reassign-modal#open"

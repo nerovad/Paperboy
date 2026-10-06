@@ -141,6 +141,9 @@ module Forms
                   authorization_routing_scopes(template, model_class, @scoped_employee_ids).each do |s|
                     parts << s
                   end
+                  step_task_scopes(model_class, scoped_group_ids, submitter_org_filter).each do |s|
+                    parts << s
+                  end
                   parts << model_class.where(id: copy_ids) if copy_ids.any?
                   parts.reduce(:or)
                 end
@@ -206,6 +209,59 @@ module Forms
 
         model_class.where(status: "step_#{step.step_number}_pending").where(conditions)
       end
+    end
+
+    # AR scopes for submissions standing at a multi-route step, where the work
+    # is a checklist of tasks (Forms::SubmissionStepTask) rather than one
+    # approver_id. A submission is in someone's inbox while a task of theirs is
+    # still open: one naming them, or a pool task whose group or authorization
+    # they belong to -- narrowed the same way the single-route scopes above are.
+    def step_task_scopes(model_class, scoped_group_ids, submitter_org_filter)
+      return [] unless step_task_types.include?(model_class.name)
+
+      open = Forms::SubmissionStepTask.pending.where(submission_type: model_class.name)
+      named = open.where(assignee_id: @scoped_employee_ids.map(&:to_s))
+      pools = open.where(assignee_id: nil)
+                  .distinct.pluck(:routing_type, :group_id, :org_filter_level, :authorization_service_type)
+
+      [model_class.where(id: named.select(:submission_id))] +
+        pools.filter_map do |routing_type, group_id, level, authorization|
+          holders = open.where(assignee_id: nil, routing_type: routing_type, group_id: group_id,
+                               org_filter_level: level, authorization_service_type: authorization)
+          scope = model_class.where(id: holders.select(:submission_id))
+
+          case routing_type
+          when 'group' then group_task_scope(scope, model_class, group_id, level, scoped_group_ids,
+                                             submitter_org_filter)
+          when 'authorization' then authorization_task_scope(scope, model_class, authorization)
+          end
+        end
+    end
+
+    # Form types with any open task at all, looked up once: most have none, and
+    # their inbox query is then exactly what it was before tasks existed.
+    def step_task_types
+      @step_task_types ||= Forms::SubmissionStepTask.pending.distinct.pluck(:submission_type)
+    end
+
+    def group_task_scope(scope, model_class, group_id, level, scoped_group_ids, submitter_org_filter)
+      return nil if scoped_group_ids && !scoped_group_ids.include?(group_id)
+      return scope unless level.present? && submitter_org_filter
+
+      values = submitter_org_filter[level.to_sym]
+      return nil if values.blank? || !model_class.column_names.include?(level)
+
+      scope.where(level => values)
+    end
+
+    def authorization_task_scope(scope, model_class, routing_key)
+      return nil if routing_key.blank?
+
+      conditions = AuthorizationConsole.inbox_conditions_for(routing_key, @scoped_employee_ids)
+      return nil if conditions.blank?
+      return nil unless conditions.keys.all? { |col| model_class.column_names.include?(col.to_s) }
+
+      scope.where(conditions)
     end
 
     # Builds the set of submitter-org values that "match" the given scoped

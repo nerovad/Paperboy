@@ -1,0 +1,51 @@
+@use "base/tokens" as *;
+
+/* Checklist of a multi-route routing step (submissions/_step_tasks). */
+.step-tasks {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid $neutral-border-light;
+  border-radius: 6px;
+}
+
+.step-tasks__header {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: $text-color;
+}
+
+.step-tasks__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-tasks__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.step-tasks__label {
+  font-weight: 600;
+  color: $text-color;
+}
+
+.step-tasks__who,
+.step-tasks__notes {
+  color: $neutral-500;
+  font-size: 0.875rem;
+}
+
+.step-tasks__notes {
+  flex-basis: 100%;
+}
+
+/* One-line form of the same checklist, beside the inbox action buttons. */
+.step-tasks-summary {
+  margin-right: 0.5rem;
+  color: $neutral-500;
+  font-size: 0.8125rem;
+}

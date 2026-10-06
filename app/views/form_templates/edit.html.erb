@@ -217,6 +217,7 @@
                           <option value="employee" <%= 'selected' if step.routing_type == 'employee' %>>Specific Employee</option>
                           <option value="group" <%= 'selected' if step.routing_type == 'group' %>>Group</option>
                           <option value="authorization" <%= 'selected' if step.routing_type == 'authorization' %>>Authorization Console</option>
+                          <option value="multiple" <%= 'selected' if step.routing_type == 'multiple' %>>Multiple routes</option>
                         </select>
                       </div>
 
@@ -317,6 +318,8 @@
                       </div>
                     </div>
 
+                    <%= render "form_templates/step_routes", step: step %>
+
                     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
                       <div class="step-inbox-buttons-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
@@ -389,6 +392,7 @@
                         <option value="employee" <%= 'selected' if @form_template.approval_routing_to == 'employee' %>>Specific Employee</option>
                         <option value="group">Group</option>
                         <option value="authorization">Authorization Console</option>
+                        <option value="multiple">Multiple routes</option>
                       </select>
                     </div>
 
@@ -441,6 +445,8 @@
                       Remove
                     </button>
                   </div>
+
+                  <%= render "form_templates/step_routes", step: nil %>
 
                   <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
                     <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>
@@ -1964,6 +1970,70 @@
   </div>
 </template>
 
+<!-- Route row of a "Multiple routes" step (hidden, used for cloning) -->
+<template id="step-route-template">
+  <div class="step-route-row" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px;">
+    <select class="form-control form-control-sm step-route-type"
+            data-action="change->form-builder#changeStepRoute"
+            style="flex: 1; min-width: 150px;"
+            required>
+      <option value="">Select...</option>
+      <option value="supervisor">Supervisor</option>
+      <option value="employee">Specific Employee</option>
+      <option value="group">Group</option>
+      <option value="authorization">Authorization Console</option>
+    </select>
+
+    <select class="form-control form-control-sm step-route-employee"
+            data-action="change->form-builder#changeStepRoute"
+            style="flex: 1; min-width: 200px; display: none;">
+      <option value="">Select employee...</option>
+      <% @employees.each do |emp| %>
+        <option value="<%= emp[1] %>"><%= emp[0] %></option>
+      <% end %>
+    </select>
+
+    <select class="form-control form-control-sm step-route-group"
+            data-action="change->form-builder#changeStepRoute"
+            style="flex: 1; min-width: 200px; display: none;">
+      <option value="">Select group...</option>
+      <% @acl_groups.each do |grp| %>
+        <option value="<%= grp[1] %>"><%= grp[0] %></option>
+      <% end %>
+    </select>
+
+    <select class="form-control form-control-sm step-route-org-filter"
+            data-action="change->form-builder#changeStepRoute"
+            title="Restrict group members to those matching the submitter at this org level"
+            style="flex: 1; min-width: 200px; display: none;">
+      <option value="">Filter by submitter's…</option>
+      <% Forms::TemplateRoutingStep::ORG_FILTER_LEVELS.each do |lvl| %>
+        <option value="<%= lvl %>">Filter by submitter's <%= Forms::TemplateRoutingStep::ORG_FILTER_LABELS[lvl] %></option>
+      <% end %>
+    </select>
+
+    <select class="form-control form-control-sm step-route-authorization"
+            data-action="change->form-builder#changeStepRoute"
+            title="Route to whoever holds this authorization over the submitter's org"
+            style="flex: 1; min-width: 220px; display: none;">
+      <option value="">Select authorization…</option>
+      <%= grouped_options_for_select(AuthorizationConsole.routing_option_groups) %>
+    </select>
+
+    <input type="text"
+           class="form-control form-control-sm step-route-label"
+           data-action="input->form-builder#changeStepRoute"
+           placeholder="Label while open, e.g. Waiting on Vendor Approval"
+           style="flex: 1; min-width: 220px;">
+
+    <button type="button"
+            class="btn deny compact"
+            data-action="click->form-builder#removeStepRoute">
+      Remove
+    </button>
+  </div>
+</template>
+
 <!-- Routing Step Template (hidden, used for cloning) -->
 <template id="routing-step-template">
   <div class="routing-step-item" data-form-builder-target="routingStepItem" style="background: #f0f4f8; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 3px solid #007bff;">
@@ -1983,6 +2053,7 @@
           <option value="employee">Specific Employee</option>
           <option value="group">Group</option>
           <option value="authorization">Authorization Console</option>
+          <option value="multiple">Multiple routes</option>
         </select>
       </div>
 
@@ -2071,6 +2142,8 @@
         </span>
       </div>
     </div>
+
+    <%= render "form_templates/step_routes", step: nil %>
 
     <div class="step-inbox-buttons-row" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #007bff;">
       <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Inbox queue buttons at this step</div>

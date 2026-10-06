@@ -1,5 +1,11 @@
 <%# app/views/status/_status_timeline.html.erb %>
+<%# `step_tasks` is optional: the checklist of the multi-route step the
+    submission stands at, shown above the history it will become part of. %>
+<% step_tasks = local_assigns[:step_tasks] || [] %>
 <div class="status-timeline" id="timeline-content-<%= item_id %>">
+  <% if step_tasks.any? %>
+    <%= render partial: "submissions/step_tasks", locals: { tasks: step_tasks } %>
+  <% end %>
   <div class="timeline-header">Status History</div>
   <div class="timeline-items">
     <% status_changes.each_with_index do |change, index| %>

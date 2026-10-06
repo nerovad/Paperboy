@@ -1,0 +1,31 @@
+<%# The checklist of a multi-route routing step: one row per route, with its
+    own label and state. `tasks` are Forms::SubmissionStepTask rows for the step
+    the submission stands at (TrackableStatus#current_step_tasks). %>
+<% outstanding = tasks.count(&:pending?) %>
+<div class="step-tasks">
+  <div class="step-tasks__header">
+    <% if outstanding.positive? %>
+      Waiting on <%= outstanding %> of <%= tasks.size %>
+    <% else %>
+      All <%= tasks.size %> answered
+    <% end %>
+  </div>
+  <ul class="step-tasks__list">
+    <% tasks.each do |task| %>
+      <li class="step-tasks__item">
+        <span class="badge is-<%= task.state %>"><%= task.state_label %></span>
+        <span class="step-tasks__label"><%= task.label %></span>
+        <span class="step-tasks__who">
+          <% if task.pending? %>
+            <%= task.waiting_on %>
+          <% elsif task.acted_by_name.present? %>
+            <%= task.acted_by_name %>, <%= l(task.acted_at, format: :long) %>
+          <% end %>
+        </span>
+        <% if task.notes.present? %>
+          <span class="step-tasks__notes"><%= task.notes %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</div>

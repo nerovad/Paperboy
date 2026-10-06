@@ -77,6 +77,19 @@ module Forms
       assert_equal %w[view_pdf edit], copy.enabled_inbox_buttons
     end
 
+    test 'copies the routes of a step that has several' do
+      step = @source.routing_steps.create!(step_number: 1, routing_type: 'multiple', completion_rule: 'any')
+      step.routes.create!(position: 0, routing_type: 'supervisor', label: 'Pending Manager Approval')
+      step.routes.create!(position: 1, routing_type: 'employee', employee_id: 501)
+      @source.update!(submission_type: 'approval')
+
+      copy = duplicator.call.template.routing_steps.sole
+
+      assert_equal 'any', copy.completion_rule
+      assert_equal [['supervisor', nil], ['employee', 501]], copy.routes.pluck(:routing_type, :employee_id)
+      assert_equal 2, step.routes.count
+    end
+
     test 'copies ACL grants and visibility grants under the copy’s own keys' do
       GroupPermission.create!(GroupID: @group.GroupID, Permission_Type: 'form', Permission_Key: @source.id.to_s)
       GroupPermission.create!(GroupID: @group.GroupID, Permission_Type: 'submission_action',
