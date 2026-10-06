@@ -14,6 +14,8 @@
             highlight_counts + view_params (optional; given, a legend above the
             grid counts each rule's rows and filters to them, and editors get a
             Highlights button for the records-highlights dialog).
+            actions (optional; markup for buttons of the table's own, placed
+            ahead of the shared ones in the title row).
             Viewers with the edit grant also get the table's change log and a
             History button per row (see RecordsHistoriesController). %>
 <% edit_path = local_assigns.fetch(:edit_path, nil) %>
@@ -34,6 +36,7 @@
       <h1 class="records-title"><%= title %></h1>
       <div class="records-bar__toolbar"><%= local_assigns[:toolbar] %></div>
       <div class="records-bar__actions">
+        <%= local_assigns[:actions] %>
         <% if editable %>
           <%= link_to 'Changes', records_table_changes_path(table.slug), class: 'btn status-history' %>
         <% end %>

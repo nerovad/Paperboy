@@ -81,6 +81,26 @@ class RecordsTableControllerTest < ActionController::TestCase
     assert_redirected_to root_path
   end
 
+  # The 300A Summary totals the 300 Log, so that table alone links to it.
+  test 'the OSHA 300 Log offers the 300A Summary ahead of Changes' do
+    sign_in(groups: %w[system_admins], record_edit: [])
+
+    get :show, params: { slug: 'osha-300-log' }
+
+    assert_response :success
+    assert_select '.records-bar__actions a:first-child', text: 'OSHA 300A Summary'
+    assert_select '.records-bar__actions a:first-child + a', text: 'Changes'
+  end
+
+  test 'other tables do not offer the 300A Summary' do
+    sign_in(groups: %w[system_admins], record_edit: [])
+
+    get :show, params: { slug: 'fleet' }
+
+    assert_response :success
+    assert_select '.records-bar__actions a', text: 'OSHA 300A Summary', count: 0
+  end
+
   test 'an unknown table is not found' do
     sign_in(groups: %w[system_admins], record_edit: [])
 
