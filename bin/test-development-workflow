@@ -17,7 +17,9 @@ parser = OptionParser.new do |opts|
   opts.on('--script KEY', 'Catalog key to test (default: status_report)') { |value| options[:script_key] = value }
   opts.on('--stale-days DAYS', 'Status report age (default: 30)') { |value| options[:stale_days] = value }
   opts.on('--timeout SECONDS', Integer, 'Queue wait limit (default: 20)') { |value| options[:timeout] = value }
-  opts.on('--enqueue', 'Create a Development::Run and exercise Solid Queue') { options[:enqueue] = true }
+  opts.on('--enqueue', 'Create a Development::Run and wait for this process to finish it') do
+    options[:enqueue] = true
+  end
   opts.on('-h', '--help', 'Show this help') do
     puts opts
     exit
@@ -61,7 +63,7 @@ rescue Timeout::Error
 end
 
 unless options[:enqueue]
-  puts 'Queue test: skipped (rerun with --enqueue to test Solid Queue).'
+  puts 'Queued run: skipped (rerun with --enqueue to run it in this process).'
   exit 0
 end
 
@@ -73,7 +75,7 @@ run = Development::Run.create!(
   status: 'queued'
 )
 job = Development::RunScriptJob.perform_later(run.id)
-puts "Enqueued run=#{run.id} job=#{job.provider_job_id || job.job_id}"
+puts "Started run=#{run.id} in this process job=#{job.job_id}"
 
 deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + options[:timeout]
 loop do
@@ -89,16 +91,7 @@ puts "Run: id=#{run.id} status=#{run.status} exit_status=#{run.exit_status.inspe
 puts "Finished: #{run.finished_at || 'no'}"
 puts "Output tail:\n#{run.output.to_s.lines.last(12).join}"
 
-queue_job = SolidQueue::Job.find_by(active_job_id: job.job_id)
-if queue_job
-  puts "Solid Queue job: id=#{queue_job.id} finished=#{queue_job.finished_at || 'no'}"
-  puts "Ready executions: #{SolidQueue::ReadyExecution.where(job_id: queue_job.id).count}"
-  puts "Claimed executions: #{SolidQueue::ClaimedExecution.where(job_id: queue_job.id).count}"
-else
-  puts 'Solid Queue job: not found (it may have been pruned).'
-end
-
-abort "Queue test did not finish within #{options[:timeout]} seconds." unless run.finished?
+abort "Queued run did not finish within #{options[:timeout]} seconds." unless run.finished?
 abort 'Queued run failed.' unless run.status == 'succeeded'
 
-puts 'Queue test: PASS'
+puts 'Queued run: PASS'

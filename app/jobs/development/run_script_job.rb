@@ -4,6 +4,15 @@ require 'open3'
 
 module Development
   class RunScriptJob < ApplicationJob
+    # The shared Solid Queue database is claimed by other workstations.
+    # Tests keep the queue adapter; everywhere else the submitting process runs
+    # the command so the script and its checkout stay on this machine.
+    def self.perform_later(run_id, ...)
+      return super if Rails.env.test?
+
+      RunLauncher.enqueue(run_id)
+    end
+
     def perform(run_id)
       run = Development::Run.find(run_id)
       run.update!(status: 'running', started_at: Time.current)
