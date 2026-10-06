@@ -515,7 +515,7 @@ export default class extends Controller {
     if (item) item.remove()
   }
 
-  // Show the employee/group picker (or neither, for supervisor) when the
+  // Show the employee/group/authorization picker (or none, for supervisor) when the
   // recipient type changes. The controller filters fields by recipient_type
   // server-side, so we don't need to disable the hidden inputs.
   toggleCopyRecipientTarget(event) {
@@ -528,6 +528,11 @@ export default class extends Controller {
 
     if (employeeBlock) employeeBlock.style.display = type === 'employee' ? 'block' : 'none'
     if (groupBlock) groupBlock.style.display = type === 'group' ? 'block' : 'none'
+
+    const authorizationBlock = item.querySelector('.copy-recipient-authorization')
+    if (authorizationBlock) authorizationBlock.style.display = type === 'authorization' ? 'block' : 'none'
+    const authorizationSelect = item.querySelector('.copy-recipient-authorization-select')
+    if (authorizationSelect) authorizationSelect.required = type === 'authorization'
   }
 
   // --- Email Notifications ---
@@ -607,12 +612,16 @@ export default class extends Controller {
     const blocks = {
       employee: item.querySelector('.email-step-employee'),
       group: item.querySelector('.email-step-group'),
+      authorization: item.querySelector('.email-step-authorization'),
       custom_email: item.querySelector('.email-step-custom'),
       form_field: item.querySelector('.email-step-field')
     }
     Object.entries(blocks).forEach(([key, el]) => {
       if (el) el.style.display = key === type ? 'block' : 'none'
     })
+
+    const authorizationSelect = item.querySelector('.email-step-authorization-select')
+    if (authorizationSelect) authorizationSelect.required = type === 'authorization'
   }
 
   // Toggle employee/group select for a specific routing step

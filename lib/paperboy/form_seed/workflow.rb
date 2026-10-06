@@ -34,10 +34,12 @@ module Paperboy
                                          condition_operator condition_value inbox_buttons complete_on_edit] },
         'emails' => { label: 'email', key: 'kind', order: %i[kind id], columns: %w[subject body] },
         'email_steps' => { label: 'email rule', order: %i[position id], group: true,
-                           columns: %w[trigger_event recipient_type employee_id custom_email recipient_field_name
-                                       routing_step_number attach_pdf attach_media position] },
+                           columns: %w[trigger_event recipient_type employee_id authorization_service_type
+                                       custom_email recipient_field_name routing_step_number attach_pdf
+                                       attach_media position] },
         'copy_recipients' => { label: 'copy recipient', order: %i[position id], group: true,
-                               columns: %w[recipient_type trigger_event employee_id position] }
+                               columns: %w[recipient_type trigger_event employee_id authorization_service_type
+                                           position] }
       }.freeze
 
       module_function

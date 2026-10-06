@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 20_261_006_120_000) do
+ActiveRecord::Schema[8.1].define(version: 20_261_006_130_000) do
   create_schema 'aim'
 
   create_table 'Employee_Groups', force: :cascade do |t|
@@ -981,6 +981,7 @@ ActiveRecord::Schema[8.1].define(version: 20_261_006_120_000) do
   end
 
   create_table 'form_template_copy_recipients', force: :cascade do |t|
+    t.string 'authorization_service_type'
     t.datetime 'created_at', null: false
     t.integer 'employee_id'
     t.bigint 'form_template_id', null: false
@@ -995,6 +996,7 @@ ActiveRecord::Schema[8.1].define(version: 20_261_006_120_000) do
   create_table 'form_template_email_steps', force: :cascade do |t|
     t.boolean 'attach_media', default: false, null: false
     t.boolean 'attach_pdf', default: false, null: false
+    t.string 'authorization_service_type'
     t.datetime 'created_at', null: false
     t.string 'custom_email'
     t.integer 'employee_id'
