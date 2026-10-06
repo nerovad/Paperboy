@@ -1,0 +1,127 @@
+# Maps repository Markdown onto the BSS/Paperboy Gitea wiki.
+# README.md is intentionally absent. keep: true pages stay in git and are
+# refreshed by bin/wiki-publish. keep: false pages are published once and then
+# edited on the wiki.
+sections:
+  - Start
+  - Workflow
+  - Operations
+  - AIM
+  - OMS
+  - Proposals
+
+pages:
+  - source: docs/PITCH.md
+    slug: Pitch
+    section: Start
+    keep: false
+  - source: docs/PAPERBOY_FRAMEWORK_ARCHITECTURE.md
+    slug: Architecture
+    section: Start
+    keep: false
+
+  - source: docs/gitea-automation.md
+    slug: Gitea-Workflow
+    section: Workflow
+    keep: false
+  - source: AGENTS.md
+    slug: Agents
+    section: Workflow
+    keep: true
+  - source: CLAUDE.md
+    slug: Claude
+    section: Workflow
+    keep: true
+  - source: .gitea/issue_template/bug_report.md
+    slug: Issue-Template-Bug-Report
+    section: Workflow
+    keep: true
+    strip_front_matter: true
+  - source: .gitea/issue_template/chore.md
+    slug: Issue-Template-Chore
+    section: Workflow
+    keep: true
+    strip_front_matter: true
+  - source: .gitea/issue_template/feature_request.md
+    slug: Issue-Template-Feature-Request
+    section: Workflow
+    keep: true
+    strip_front_matter: true
+  - source: .gitea/issue_template/infrastructure.md
+    slug: Issue-Template-Infrastructure
+    section: Workflow
+    keep: true
+    strip_front_matter: true
+  - source: .gitea/pull_request_template.md
+    slug: Pull-Request-Template
+    section: Workflow
+    keep: true
+    strip_front_matter: true
+
+  - source: docs/FILE_STORE_SHORTCUTS.md
+    slug: File-Store-Shortcuts
+    section: Operations
+    keep: false
+  - source: docs/POWERBI_AUTH_INTEGRATION.md
+    slug: Power-BI-Authentication
+    section: Operations
+    keep: false
+  - source: docs/PAPERBOY_AUTH_GEM_REQUIREMENT.md
+    slug: Authentication-Gem
+    section: Operations
+    keep: false
+  - source: docs/PAPERBOY_AUTH_GEM_RESTART.md
+    slug: Authentication-Gem-Restart
+    section: Operations
+    keep: false
+  - source: config/data_runner/dsl/README.md
+    slug: Data-Runner-DSL
+    section: Operations
+    keep: true
+
+  - source: docs/aim/aim_plan.md
+    slug: AIM-Plan
+    section: AIM
+    keep: false
+  - source: docs/aim/aim_handoff.md
+    slug: AIM-Handoff
+    section: AIM
+    keep: false
+  - source: docs/aim/aim_todo.md
+    slug: AIM-Todo
+    section: AIM
+    keep: false
+  - source: script/python/aim/README.md
+    slug: AIM-Scan-Center
+    section: AIM
+    keep: true
+  - source: script/python/aim/v2/README.md
+    slug: AIM-v2-Worker
+    section: AIM
+    keep: true
+
+  - source: docs/OMS_BACKFILE_README.md
+    slug: OMS-Backfile
+    section: OMS
+    keep: false
+  - source: docs/OMS_DESKTOP.md
+    slug: OMS-Desktop
+    section: OMS
+    keep: false
+  - source: docs/OMS_ORCHESTRATION_README.md
+    slug: OMS-Orchestration
+    section: OMS
+    keep: false
+  - source: docs/OMS_STATUS.md
+    slug: OMS-Status
+    section: OMS
+    keep: false
+
+  - source: docs/CGSA_EXECUTIVE_DRAFT.md
+    slug: CGSA-Executive-Draft
+    section: Proposals
+    keep: false
+  - source: docs/unit-test-proposed-solutions.md
+    slug: Unit-Test-Proposed-Solutions
+    section: Proposals
+    keep: false

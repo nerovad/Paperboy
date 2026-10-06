@@ -14,7 +14,8 @@ require_relative 'configuration_scanner'
 # guess is how an invoice ends up in a folder nobody is watching. Moving AIM to
 # a different database server must be a LockBox edit and nothing else.
 #
-# Phase 0 of docs/aim/aim_plan.md removed every such literal. This test is what
+# Phase 0 of the AIM Plan wiki page removed every such literal
+# (http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan). This test is what
 # stops them coming back: a hardcoded path is a red build here rather than
 # something discovered months later on the share.
 module Aim

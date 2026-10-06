@@ -113,8 +113,12 @@ bin/update-issue --issue 123 --add-label priority:normal
 bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
-See `docs/gitea-automation.md` for the complete workflow and project
-conventions.
+See the [Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page for the complete workflow and project conventions.
+
+`bin/wiki-publish` refreshes the wiki from the Markdown that stays in git.
+It prints a plan unless `--apply` is given. Pages that moved out of `docs/`
+are edited on the wiki.
 
 ## Environment files
 
