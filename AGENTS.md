@@ -31,21 +31,22 @@
   * use git mv when moving files
 ## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
-implementation work. The commands below use the Gitea API and read
-`GITEA_TOKEN` from the environment or the ignored repository `.env` file.
-The shared `.env` in the main checkout is also discovered automatically when
-the command runs from a linked worktree. Never commit the token.
+implementation work. The commands below use the Gitea API and read `GITEA_TOKEN` from the
+environment or the ignored `.env.local` file. `.env` is a LockBox copy and
+keeps that token empty; `.env.local` is loaded second and wins. A linked
+worktree without its own copy reads the shared checkout's files. Never
+commit the token.
 
-The local Gitea service is reached by IP from the sandbox. The ignored `.env`
-should contain:
+The local Gitea service is reached by IP from the sandbox. The ignored
+`.env.local` should contain:
 
 ```dotenv
 GITEA_URL=http://10.135.204.125:3000
 GITEA_TOKEN=<local token value>
 ```
 
-Keep the actual token value only in `.env` or the process environment; do not
-replace the placeholder above in tracked documentation.
+Keep the actual token value only in `.env.local` or the process environment;
+do not replace the placeholder above in tracked documentation.
 
 Create an issue before creating its branch:
 
@@ -132,7 +133,7 @@ for AIM. Use the OMS pages for OMS. Use Authentication Gem for
 authentication. Use the map for any other area.
 
 Fetch the Markdown with the wiki API. `content_base64` is the page body.
-Read `GITEA_TOKEN` from the environment or `.env`. Do not print the token.
+Read `GITEA_TOKEN` from the environment or `.env.local`. Do not print the token.
 
 ```bash
 curl --fail-with-body --silent \
