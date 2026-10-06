@@ -1,0 +1,15 @@
+<%# app/views/itp/shared/_sidebar.html.erb
+    Sidebar for the IP Portal app. The app switcher header is shared with
+    every other app; everything below it is this app's own navigation. %>
+<div class="sidebar itp-sidebar">
+  <%= render "shared/app_switcher" %>
+
+  <nav class="itp-links">
+    <%# The root path is the slideshow landing page; the working dashboard is
+        one level in, matching how AIM splits home from dashboard. %>
+    <%= link_to "Home", itp_root_path,
+                class: "nav-link#{' active' if current_page?(itp_root_path)}" %>
+    <%= link_to "Hello World", itp_dashboard_path,
+                class: "nav-link#{' active' if current_page?(itp_dashboard_path)}" %>
+  </nav>
+</div>
