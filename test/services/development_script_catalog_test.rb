@@ -32,6 +32,18 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
     assert_equal 'Release tag is required.', error.message
   end
 
+  test 'create issue skips the milestone prompt unless a milestone is given' do
+    script = Development::ScriptCatalog.find('create_issue')
+
+    assert_equal ['--type', 'feature', '--title', 'Add portal', '--body', 'Details', '--no-milestone'],
+                 script[:arguments].call(issue_type: 'feature', title: 'Add portal', body: 'Details')
+    assert_equal ['--type', 'bug', '--title', 'Fix report', '--body', 'Details', '--milestone', '2026.10'],
+                 script[:arguments].call(issue_type: 'bug', title: 'Fix report', body: 'Details',
+                                         milestone: '2026.10')
+    error = assert_raises(ArgumentError) { script[:arguments].call(issue_type: 'bug', title: 'Fix report') }
+    assert_equal 'Body is required.', error.message
+  end
+
   test 'pull request catalog entry builds explicit Gitea arguments' do
     script = Development::ScriptCatalog.find('create_pull_request')
 

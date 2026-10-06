@@ -109,9 +109,16 @@ module Development
     end
 
     def issue_args(params)
-      args = ['--type', required_value(params[:issue_type], 'Issue type'), '--title', required_value(params[:title], 'Title')]
-      args += ['--body', params[:body].to_s] if params[:body].present?
-      args << '--no-milestone' if truthy?(params[:no_milestone])
+      args = ['--type', required_value(params[:issue_type], 'Issue type'),
+              '--title', required_value(params[:title], 'Title')]
+      # The runner has no terminal. bin/new-issue prompts for a missing body
+      # and for a milestone unless --no-milestone is set, and that read exits 1.
+      args += ['--body', required_value(params[:body], 'Body')]
+      if params[:milestone].present?
+        args += ['--milestone', required_value(params[:milestone], 'Milestone')]
+      else
+        args << '--no-milestone'
+      end
       args
     end
 

@@ -34,8 +34,8 @@
 <% when 'create_issue' %>
   <%= label_tag :issue_type, 'Type' %><%= select_tag :issue_type, options_for_select(%w[bug feature chore infrastructure]), class: 'form-control' %>
   <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
-  <%= label_tag :body, 'Body' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
-  <%= label_tag :no_milestone, class: 'checkbox-label' do %><%= check_box_tag :no_milestone %> Do not prompt for milestone<% end %>
+  <%= label_tag :body, 'Body' %><%= text_area_tag :body, nil, rows: 4, required: true, class: 'form-control' %>
+  <%= label_tag :milestone, 'Milestone (optional)' %><%= text_field_tag :milestone, nil, class: 'form-control' %>
 <% when 'create_pull_request' %>
   <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
   <%= label_tag :body, 'Body (optional)' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
