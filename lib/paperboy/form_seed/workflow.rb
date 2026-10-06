@@ -31,7 +31,7 @@ module Paperboy
         'routing_steps' => { label: 'routing step', key: 'step_number', order: %i[step_number id], group: true,
                              columns: %w[routing_type employee_id org_filter_level authorization_service_type
                                          display_name approve_button_label deny_button_label condition_field_name
-                                         condition_operator condition_value inbox_buttons] },
+                                         condition_operator condition_value inbox_buttons complete_on_edit] },
         'emails' => { label: 'email', key: 'kind', order: %i[kind id], columns: %w[subject body] },
         'email_steps' => { label: 'email rule', order: %i[position id], group: true,
                            columns: %w[trigger_event recipient_type employee_id custom_email recipient_field_name

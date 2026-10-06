@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -1022,6 +1022,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_170000) do
   create_table "form_template_routing_steps", force: :cascade do |t|
     t.string "approve_button_label"
     t.string "authorization_service_type"
+    t.boolean "complete_on_edit", default: false, null: false
     t.string "condition_field_name"
     t.string "condition_operator"
     t.string "condition_value"
