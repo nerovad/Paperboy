@@ -1109,7 +1109,8 @@ class FormTemplatesController < ApplicationController
         condition_field_name: step.condition_field_name,
         condition_operator: step.condition_operator,
         condition_value: step.condition_value,
-        inbox_buttons: step.inbox_buttons.sort
+        inbox_buttons: step.inbox_buttons.sort,
+        complete_on_edit: step.complete_on_edit?
       }
     end
 
@@ -1127,7 +1128,8 @@ class FormTemplatesController < ApplicationController
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step[:condition_value].presence : nil,
-        inbox_buttons: extract_step_inbox_buttons(step).sort
+        inbox_buttons: extract_step_inbox_buttons(step).sort,
+        complete_on_edit: step[:complete_on_edit] == '1'
       }
     end.reject { |s| s[:routing_type].blank? }
 
@@ -1244,6 +1246,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
+        complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
         deny_button_label: step_data[:deny_button_label].presence
       )
@@ -1554,6 +1557,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
+        complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
         deny_button_label: step_data[:deny_button_label].presence
       )
