@@ -275,6 +275,11 @@ Rails.application.routes.draw do
     post 'maintenance/rebuild', to: 'maintenance#rebuild', as: :maintenance_rebuild
   end
 
+  namespace :itp do
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 
