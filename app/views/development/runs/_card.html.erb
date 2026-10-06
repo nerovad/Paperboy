@@ -5,8 +5,16 @@
     <%= hidden_field_tag :script_key, script[:key] %>
     <%= render "development/runs/fields", script: script, form: form %>
     <div class="form-actions">
-      <%= form.submit script[:label], class: "btn #{development_button_class(script)}",
-                      data: { turbo_confirm: script[:feature].start_with?('deploy') ? "Run #{script[:label]}? This may change a shared environment." : nil } %>
+      <% if script[:confirm_when] == 'apply' %>
+        <%= form.submit 'Preview changes', class: 'btn secondary' %>
+        <%= form.button 'Apply changes', name: 'apply', value: '1', type: 'submit', class: 'btn warning',
+                        data: { turbo_confirm: script[:confirm],
+                                confirm_title: 'Apply issue update',
+                                confirm_label: 'Apply' } %>
+      <% else %>
+        <%= form.submit script[:label], class: "btn #{development_button_class(script)}",
+                        data: development_confirm_data(script) %>
+      <% end %>
     </div>
   <% end %>
 </article>

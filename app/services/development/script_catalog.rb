@@ -7,80 +7,95 @@ module Development
   module ScriptCatalog
     module_function
 
+    # Locked off the Development menu. A future local start stays a different bin.
+    OFF_MENU_BINS = %w[dev setup stopservers].freeze
+
     def groups
-      %w[workstation quality environment deployments collaboration]
+      %w[quality environment deployments collaboration]
     end
 
     def for_group(group)
-      scripts.select { |script| script[:group] == group }
+      scripts.select { |script| script[:group] == group && menu?(script) }
     end
 
     def find(key)
       scripts.find { |script| script[:key] == key.to_s }
     end
 
+    def menu?(script)
+      script.fetch(:menu, true)
+    end
+
     # rubocop:disable-next Metrics/MethodLength
     def scripts
       @scripts ||= [
-        script('start_local', 'Start Local App', 'workstation', 'local', 'dev-local',
-               'Start Puma, Solid Queue, and Dart Sass on a workstation.',
-               port_args(cron: true, no_jobs: true)),
-        script('stop_local', 'Stop Local App', 'workstation', 'local', 'stopservers',
-               'Stop Paperboy processes for a port.', port_args),
-        script('unit_test', 'Run Unit Tests', 'quality', 'tests', 'unit-test',
+        script('unit_test', 'Run Unit Tests', 'quality', 'local', 'unit-test',
                'Run RuboCop, Brakeman, bundle-audit, and Rails tests.',
                ->(params) { optional_target(params[:target]) }),
         script('environment_check', 'Check Environment', 'environment', 'environment', 'env-pull',
                'Compare .env with LockBox without changing files.',
                lockbox_args(check: true)),
         script('environment_pull', 'Pull Environment', 'environment', 'environment', 'env-pull',
-               'Refresh .env from LockBox.', lockbox_args),
+               'Refresh .env from LockBox.', lockbox_args,
+               confirm: 'Refresh .env from LockBox? This replaces the environment file.'),
         script('status_report', 'Gitea Status Report', 'collaboration', 'gitea', 'status-report',
                'Read the current issues, pull requests, and milestones.',
                ->(params) { ['--stale-days', integer(params[:stale_days], default: 30)] }),
-        script('tag_commit', 'Tag Checked Commit', 'deployments', 'deployments', 'tag-master-commit',
+        script('tag_commit', 'Tag Checked Commit', 'deployments', 'deploy', 'tag-master-commit',
                'Create and push the annotated release tag.',
-               ->(params) { optional_value(params[:commit]) }),
-        script('deploy_dev', 'Deploy Development', 'deployments', 'deploy_dev', 'deploy-dev',
+               ->(params) { optional_value(params[:commit]) },
+               confirm: 'Tag this commit and push the release tag?'),
+        script('deploy_dev', 'Deploy Development', 'deployments', 'deploy', 'deploy-dev',
                'Pull a branch, test it, sync definitions, and restart development.',
-               ->(params) { [required_value(params[:branch], 'Branch')] }),
-        script('deploy_stage', 'Deploy Stage', 'deployments', 'deploy_stage', 'deploy-stage',
+               ->(params) { [required_value(params[:branch], 'Branch')] },
+               confirm: 'Deploy this branch to the development server? This changes the shared development environment.'),
+        # Kept for a later release. Hidden so the menu stays on the dev server.
+        script('deploy_stage', 'Deploy Stage', 'deployments', 'deploy', 'deploy-stage',
                'Deploy a checked release tag to stage.',
-               ->(params) { [required_value(params[:tag], 'Release tag')] }),
-        script('deploy_production', 'Deploy Production', 'deployments', 'deploy_production', 'deploy',
+               ->(params) { [required_value(params[:tag], 'Release tag')] },
+               menu: false,
+               confirm: 'Run Deploy Stage? This may change a shared environment.'),
+        script('deploy_production', 'Deploy Production', 'deployments', 'deploy', 'deploy',
                'Deploy a checked release tag to production.',
-               ->(params) { [required_value(params[:tag], 'Release tag')] }),
-        script('deploy_aim_workers', 'Deploy AIM Workers', 'deployments', 'deploy_aim', 'deploy-aim-workers',
+               ->(params) { [required_value(params[:tag], 'Release tag')] },
+               menu: false,
+               confirm: 'Run Deploy Production? This may change a shared environment.'),
+        script('deploy_aim_workers', 'Deploy AIM Workers', 'deployments', 'deploy', 'deploy-aim-workers',
                'Dry-run or apply the AIM worker deployment.',
-               ->(params) { deploy_aim_args(params) }),
+               ->(params) { deploy_aim_args(params) },
+               menu: false,
+               confirm: 'Run Deploy AIM Workers? This may change a shared environment.'),
         script('generate_csr', 'Generate TLS Certificate Request', 'environment', 'csr', 'gen-csr',
                'Create a private key and certificate request for GSA IT.',
-               ->(params) { csr_args(params) }),
+               ->(params) { csr_args(params) },
+               confirm: 'Generate a TLS certificate request? This creates a private key.'),
         script('create_issue', 'Create Gitea Issue', 'collaboration', 'gitea', 'new-issue',
                'Create a typed, labeled Paperboy issue.',
-               ->(params) { issue_args(params) }),
+               ->(params) { issue_args(params) },
+               confirm: 'Create this Gitea issue?'),
         script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
                'create-pull-request', 'Open a pull request for the current branch.',
-               ->(params) { pull_request_args(params) }),
+               ->(params) { pull_request_args(params) },
+               confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
                'Preview or apply labels and milestone changes to an issue.',
-               ->(params) { update_issue_args(params) })
+               ->(params) { update_issue_args(params) },
+               confirm: 'Apply these changes to the Gitea issue?',
+               confirm_when: 'apply'),
+        script('clean_worktree', 'Clean Worktree', 'collaboration', 'gitea', 'wt',
+               'Remove a merged issue worktree and its local branch.',
+               ->(params) { clean_worktree_args(params) },
+               confirm: 'Clean this issue worktree? This removes the local worktree and branch.')
       ]
     end
 
-    def script(key, label, group, feature, bin, description, arguments)
-      { key: key, label: label, group: group, feature: feature, bin: bin,
-        description: description, arguments: arguments }
-    end
+    def script(key, label, group, feature, bin, description, arguments, **options)
+      raise ArgumentError, "#{key} uses off-menu bin #{bin}" if OFF_MENU_BINS.include?(bin.to_s)
 
-    def port_args(cron: false, no_jobs: false)
-      lambda do |params|
-        port = optional_integer(params[:port])
-        args = port ? [port] : []
-        args << '--cron' if cron && truthy?(params[:cron])
-        args << '--no-jobs' if no_jobs && truthy?(params[:no_jobs])
-        args
-      end
+      { key: key, label: label, group: group, feature: feature, bin: bin,
+        description: description, arguments: arguments,
+        menu: options.fetch(:menu, true), confirm: options[:confirm],
+        confirm_when: options[:confirm_when] }
     end
 
     def lockbox_args(check: false)
@@ -139,6 +154,10 @@ module Development
       args
     end
 
+    def clean_worktree_args(params)
+      ['clean', integer(params[:issue], required: 'Issue')]
+    end
+
     def optional_target(value)
       value.present? ? [path_value(value)] : []
     end
@@ -168,12 +187,6 @@ module Development
       raise ArgumentError, 'Branch cannot be blank.' unless value.match?(%r{\A[A-Za-z0-9._/-]+\z})
 
       value
-    end
-
-    def optional_integer(value)
-      return if value.blank?
-
-      integer(value)
     end
 
     def integer(value, default: nil, required: nil)

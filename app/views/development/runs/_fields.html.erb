@@ -1,11 +1,5 @@
 <% key = development_field(script) %>
 <% case key %>
-<% when 'start_local' %>
-  <%= label_tag :port, 'Port (optional)' %><%= number_field_tag :port, nil, min: 1, max: 65_535, class: 'form-control' %>
-  <%= label_tag :cron, class: 'checkbox-label' do %><%= check_box_tag :cron %> Run recurring jobs<% end %>
-  <%= label_tag :no_jobs, class: 'checkbox-label' do %><%= check_box_tag :no_jobs %> Start without Solid Queue<% end %>
-<% when 'stop_local' %>
-  <%= label_tag :port, 'Port' %><%= number_field_tag :port, 3001, min: 1, max: 65_535, class: 'form-control' %>
 <% when 'unit_test' %>
   <%= label_tag :target, 'Test target (optional)' %><%= text_field_tag :target, nil, class: 'form-control', placeholder: 'test' %>
 <% when 'environment_check', 'environment_pull' %>
@@ -46,5 +40,6 @@
   <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
   <%= label_tag :labels, 'Labels (comma separated)' %><%= text_field_tag :labels, nil, class: 'form-control' %>
   <%= label_tag :milestone, 'Milestone (optional)' %><%= text_field_tag :milestone, nil, class: 'form-control' %>
-  <%= label_tag :apply, class: 'checkbox-label' do %><%= check_box_tag :apply %> Apply changes (otherwise dry-run)<% end %>
+<% when 'clean_worktree' %>
+  <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
 <% end %>

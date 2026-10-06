@@ -10,7 +10,7 @@ module Development
         [group, scripts] if scripts.any?
       end
       @selected_script = ScriptCatalog.find(params[:script_key])
-      @selected_script = nil unless @selected_script && feature?(@selected_script[:feature])
+      @selected_script = nil unless available?(@selected_script)
       @show_recent_runs = params[:recent].present?
       @recent_runs = Development::Run.order(created_at: :desc).limit(12)
     end
@@ -19,7 +19,7 @@ module Development
 
     def create
       script = ScriptCatalog.find(params[:script_key])
-      return redirect_with_alert('That workflow is not available.') unless script && feature?(script[:feature])
+      return redirect_with_alert('That workflow is not available.') unless available?(script)
 
       arguments = script.fetch(:arguments).call(params)
       run = Development::Run.create!(
@@ -39,9 +39,14 @@ module Development
 
     def set_run
       @run = Development::Run.find(params[:id])
-      return if feature?(ScriptCatalog.find(@run.script_key).fetch(:feature))
+      script = ScriptCatalog.find(@run.script_key)
+      return if script.nil? || feature?(script[:feature])
 
       redirect_to development_root_path, alert: 'You do not have access to that workflow.'
+    end
+
+    def available?(script)
+      script && ScriptCatalog.menu?(script) && feature?(script[:feature])
     end
 
     def feature?(key)

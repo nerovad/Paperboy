@@ -18,17 +18,15 @@
 #
 # Not a database model — it is a registry, and lives in app/models because
 # that is where RegistryTable and the other catalogs live.
+# Five grants for the Development sub-application. Tag, deploy-dev, and the
+# hidden stage, production, and AIM deploys share Deploy. Unit tests sit on
+# Local. Nothing in git stored the older per-script keys.
 DEVELOPMENT_APP_FEATURES = [
-  { key: 'local', label: 'Start and stop the local app' },
-  { key: 'tests', label: 'Run tests and quality checks' },
-  { key: 'environment', label: 'Inspect and refresh environment' },
-  { key: 'csr', label: 'Generate TLS certificate requests' },
-  { key: 'deployments', label: 'Tag and deploy Paperboy' },
-  { key: 'deploy_dev', label: 'Deploy development' },
-  { key: 'deploy_stage', label: 'Deploy stage' },
-  { key: 'deploy_production', label: 'Deploy production' },
-  { key: 'deploy_aim', label: 'Deploy AIM workers' },
-  { key: 'gitea', label: 'Use Gitea workflow tools' }
+  { key: 'local', label: 'Local' },
+  { key: 'environment', label: 'Environment' },
+  { key: 'gitea', label: 'Gitea' },
+  { key: 'deploy', label: 'Deploy' },
+  { key: 'csr', label: 'Certificates' }
 ].freeze
 
 class AppFeature
