@@ -60,7 +60,7 @@ class DevelopmentHelperTest < ActionView::TestCase
   test 'issue forms use gitea names when the lookup succeeds' do
     script = Development::ScriptCatalog.find('update_issue')
     choices = {
-      'labels' => [{ 'name' => 'area:forms' }],
+      'labels' => [{ 'name' => 'area:forms' }, { 'name' => 'bug' }, { 'name' => 'feature' }],
       'milestones' => [{ 'title' => 'Phase' }],
       'projects' => [{ 'title' => 'Powerpuff Girls', 'columns' => [{ 'title' => 'In Progress' }] }]
     }
@@ -69,6 +69,9 @@ class DevelopmentHelperTest < ActionView::TestCase
 
     assert_select 'select[name="add_labels[]"] option', text: 'area:forms'
     assert_select 'select[name="remove_labels[]"] option', text: 'area:forms'
+    assert_select 'select[name="add_labels[]"] option', text: 'bug', count: 0
+    assert_select 'select[name="remove_labels[]"] option', text: 'feature', count: 0
+    assert_select 'p.issue-field-help', text: 'Type labels stay with the template above.'
     assert_select 'select[name=milestone] option', text: 'Phase'
     assert_select 'select[name=project] option', text: 'Powerpuff Girls'
     assert_select 'select[name=column] option', text: 'Powerpuff Girls — In Progress'
@@ -138,5 +141,15 @@ class DevelopmentIssueLoadHelperTest < ActionView::TestCase
     assert_select 'select[name=project] option[selected]', text: 'Powerpuff Girls'
     assert_select 'select[name=column] option[selected]', text: 'Powerpuff Girls — In Progress'
     assert_select 'select[name=column] option[selected]', text: 'Other — In Progress', count: 0
+  end
+
+  test 'create form still offers type labels as extra labels' do
+    script = Development::ScriptCatalog.find('create_issue')
+    choices = { 'labels' => [{ 'name' => 'bug' }, { 'name' => 'area:forms' }] }
+
+    render partial: 'development/runs/card', locals: { script: script, gitea_choices: choices }
+
+    assert_select 'select[name="extra_labels[]"] option', text: 'bug'
+    assert_select 'select[name="extra_labels[]"] option', text: 'area:forms'
   end
 end

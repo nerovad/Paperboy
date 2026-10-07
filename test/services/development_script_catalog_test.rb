@@ -147,11 +147,13 @@ class DevelopmentIssueArgumentTest < ActiveSupport::TestCase
   test 'update issue plans labels milestone project and column' do
     script = Development::ScriptCatalog.find('update_issue')
 
-    assert_equal ['--issue', '41', '--add-label', 'area:forms', '--remove-label', 'bug', '--milestone', 'Phase',
-                  '--project', 'Powerpuff Girls', '--column', 'In Progress', '--apply'],
-                 script[:arguments].call(issue: '41', add_labels: ['area:forms'], remove_labels: 'bug',
-                                         milestone: 'Phase', project: 'Powerpuff Girls',
-                                         column: 'In Progress', apply: '1')
+    assert_equal ['--issue', '41', '--add-label', 'area:forms', '--remove-label', 'priority:low',
+                  '--milestone', 'Phase', '--project', 'Powerpuff Girls', '--column', 'In Progress', '--apply'],
+                 script[:arguments].call(issue: '41', add_labels: ['feature', 'area:forms'],
+                                         remove_labels: 'bug, priority:low', milestone: 'Phase',
+                                         project: 'Powerpuff Girls', column: 'In Progress', apply: '1')
+    error = assert_raises(ArgumentError) { script[:arguments].call(issue: '41', add_labels: ['bug']) }
+    assert_includes error.message, 'At least one update is required.'
   end
 
   test 'update issue can revise the title and template body' do

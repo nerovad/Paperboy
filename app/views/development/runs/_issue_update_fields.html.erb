@@ -49,8 +49,9 @@
     <p class="issue-field-help">Current column: <%= issue[:column] %></p>
   <% end %>
 <% end %>
-<% labels = development_label_names(choices) %>
-<% if labels.any? %>
+<% labels = development_update_label_names(choices) %>
+<% if development_label_names(choices).any? %>
+  <p class="issue-field-help">Type labels stay with the template above.</p>
   <%= label_tag :add_labels, 'Add labels' %>
   <%= select_tag 'add_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
   <%= label_tag :remove_labels, 'Remove labels' %>

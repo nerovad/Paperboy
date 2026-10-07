@@ -79,7 +79,7 @@ module Development
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
-               'Preview or apply label, milestone, project, column, title, and body changes. Load issue fills the current values. A template body also sets the type label.',
+               'Preview or apply label, milestone, project, column, title, and body changes. Load issue fills current values. Menus omit type labels.',
                ->(params) { update_issue_args(params) },
                confirm: 'Apply these changes to the Gitea issue?',
                confirm_when: 'apply'),
@@ -197,8 +197,8 @@ module Development
     end
 
     def update_issue_args(params)
-      added = label_list(params[:labels], params[:add_labels])
-      removed = label_list(params[:remove_labels])
+      added = ordinary_labels(label_list(params[:labels], params[:add_labels]))
+      removed = ordinary_labels(label_list(params[:remove_labels]))
       milestone = params[:milestone].to_s.strip
       project = params[:project].to_s.strip
       project = '' if project == '__none__'
@@ -229,6 +229,10 @@ module Development
 
     def label_list(*values)
       values.flatten.compact.flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?)
+    end
+
+    def ordinary_labels(names)
+      names.reject { |name| Paperboy::Gitea::IssueTemplate::TYPE_ORDER.include?(name) }
     end
 
     def clean_worktree_args(params)
