@@ -2,7 +2,7 @@
 
 # Generated controllers use the compact spelling so this template can preserve
 # the established action indentation without a second formatting pass.
-# rubocop:disable Style/ClassAndModuleChildren
+# rubocop:disable-next Style/ClassAndModuleChildren
 class Forms::TextbookAndTuitionReimbursementFormsController < Forms::BaseController
   # Generated controller for TextbookAndTuitionReimbursementForm form
   before_action :set_textbook_and_tuition_reimbursement_form, only: %i[show edit update pdf approve deny update_status]
@@ -217,4 +217,3 @@ class Forms::TextbookAndTuitionReimbursementFormsController < Forms::BaseControl
     )
   end
 end
-# rubocop:enable Style/ClassAndModuleChildren

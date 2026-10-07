@@ -29,7 +29,7 @@ module AimSql16Copy
     source = client(dataserver: source_server, database: 'GSA_Scan')
     target = client(host: ENV.fetch('GSABSS_HOST'), database: 'GSA Scan')
     target.execute(File.read(SCHEMA_FILE)).do unless check_only
-    ok = TABLES.map { |table, spec| copy_table(source, target, table, spec, check_only) }.all?
+    ok = TABLES.map { |table, spec| table_matches_after_copy?(source, target, table, spec, check_only) }.all?
     puts ok ? 'ALL TABLES MATCH' : 'MISMATCH -- see above'
     exit(1) unless ok
   ensure
@@ -47,7 +47,7 @@ module AimSql16Copy
                    .tap { _1.execute(SESSION).do }
   end
 
-  def copy_table(source, target, table, spec, check_only)
+  def table_matches_after_copy?(source, target, table, spec, check_only)
     columns = writable_columns(source, table, spec)
     key = spec[:key]
     from = rows(source, table, key)
@@ -59,7 +59,7 @@ module AimSql16Copy
       changed.each { |k| update(target, table, columns, key, from[k]) }
       puts "#{table}: inserted #{missing.size}, updated #{changed.size}"
     end
-    verify(table, key, from, rows(target, table, key), columns + spec.fetch(:computed, []))
+    verified?(table, key, from, rows(target, table, key), columns + spec.fetch(:computed, []))
   end
 
   def writable_columns(client, table, spec)
@@ -102,7 +102,7 @@ module AimSql16Copy
 
   def comparable(value) = value.is_a?(Time) ? value.strftime('%Y-%m-%dT%H:%M:%S.%L') : value
 
-  def verify(table, key, from, to, columns)
+  def verified?(table, key, from, to, columns)
     missing = from.keys - to.keys
     differ = (from.keys & to.keys).reject { |k| same?(from[k], to[k], columns) }
     extra = to.keys - from.keys

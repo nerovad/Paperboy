@@ -19,9 +19,7 @@ module P2m
       @report = nil
       render_invalid_date_range(:show)
     rescue StandardError => e
-      flash.now[:alert] = "Mail.dat search failed: #{e.message}"
-      @report = nil
-      render :show, status: :unprocessable_content
+      render_search_error(e)
     end
 
     def details

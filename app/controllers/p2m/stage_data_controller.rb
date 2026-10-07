@@ -117,14 +117,6 @@ module P2m
       OmsUploadLedger.new(staging_path: source).validate!(oms_number: parameters.fetch(:oms_number))
     end
 
-    def render_search_error(error)
-      flash.now[:alert] = "Mail.dat search failed: #{error.message}"
-      @report = nil
-      render :show, status: :unprocessable_content
-    end
-
-    def date_range_param_key
-      :stage_data
-    end
+    def date_range_param_key = :stage_data
   end
 end

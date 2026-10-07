@@ -27,5 +27,11 @@ module P2m
       flash.now[:alert] = 'Start date must be on or before end date.'
       render template, status: :unprocessable_content
     end
+
+    def render_search_error(error)
+      flash.now[:alert] = "Mail.dat search failed: #{error.message}"
+      @report = nil
+      render :show, status: :unprocessable_content
+    end
   end
 end
