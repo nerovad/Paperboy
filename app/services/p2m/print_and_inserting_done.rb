@@ -12,10 +12,6 @@ module P2m
     REPORT_DIRECTORY = DATA_RUNNER_ROOT.join('p2m_search_reports')
     SCRIPT_PATH = Rails.root.join('script/ruby/p2m/print_and_inserting_done.rb')
 
-    def self.call(start_date:, end_date:, report_directory: nil)
-      run(start_date: start_date, end_date: end_date, report_directory: report_directory)
-    end
-
     def self.scan(start_date:, end_date:, cancellation_token: nil, report_directory: nil)
       run(start_date: start_date, end_date: end_date, scan_only: true,
           cancellation_token: cancellation_token, report_directory: report_directory)
@@ -70,6 +66,6 @@ module P2m
     rescue JSON::ParserError
       nil
     end
-    private_class_method :allocate_report_path, :read_report
+    private_class_method :run, :allocate_report_path, :read_report
   end
 end
