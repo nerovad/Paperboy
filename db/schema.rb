@@ -334,7 +334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_130000) do
     t.string "employee_id", null: false
     t.text "scope_after"
     t.text "scope_before"
-    t.index ["department_id", "created_at"], name: "index_authorized_approver_changes_on_department_id_and_created_at"
+    t.index ["department_id", "created_at"], name: "idx_on_department_id_created_at_2976d118e9"
   end
 
   create_table "authorized_approvers", force: :cascade do |t|
