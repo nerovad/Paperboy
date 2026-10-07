@@ -230,7 +230,6 @@ Rails.application.routes.draw do
 
   namespace :p2m do
     root 'dashboard#home'
-    get 'dashboard', to: 'dashboard#index', as: :dashboard
     resource :pre_production, only: :show do
       get :details
       post :send_to_printer
