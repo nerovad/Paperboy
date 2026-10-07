@@ -1,15 +1,8 @@
----
-include_toc: true
-gitea: none
----
-
 # Gitea Windows CI
 
 `.github/workflows/ci.yml` on this branch is the Gitea Actions workflow
 for a Windows runner. Placeholders stay until Gary answers the questions
 at the end.
-
-<!-- paperboy-wiki-source: docs/GITEA_WINDOWS_CI.md -->
 
 ## Intent
 
