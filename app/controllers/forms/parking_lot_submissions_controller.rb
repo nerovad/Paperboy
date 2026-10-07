@@ -29,10 +29,6 @@ module Forms
       emp_record = Employee.find_by(employee_id: employee_id)
       is_mb3 = (EmployeeUnionCode.code_for(employee_id) == 'MB3')
 
-      # Get employee's department for authorized approver lookup
-      unit = Coa::Unit.resolve_for_employee(emp_record)
-      department = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
-
       # Build the submission early so we can access the submitted unit
       @parking_lot_submission = ParkingLotSubmission.new(parking_lot_submission_params)
       @parking_lot_submission.employee_id = employee_id
@@ -49,12 +45,10 @@ module Forms
       # if no one holds the Parking Permits authorization for their budget unit, so
       # the request never routes into a dead end. MB3 employees skip that step.
       unless is_mb3
-        authorized_approvers = if department && submitted_unit.present?
-                                 AuthorizedApprover.approver_for_unit(
-                                   department_id: department.department_id,
-                                   service_type: 'P',
-                                   unit_id: submitted_unit
-                                 )
+        # Same lookup the routing step and the inbox use, so the form cannot
+        # turn away a request that routing would have delivered.
+        authorized_approvers = if submitted_unit.present?
+                                 AuthorizedApprover.approver_ids_covering_unit(service_type: 'P', unit_id: submitted_unit)
                                else
                                  []
                                end
