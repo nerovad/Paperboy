@@ -106,7 +106,11 @@ class AppFeature
     'data_runner' => [
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
     ],
-    'development' => DEVELOPMENT_APP_FEATURES
+    'development' => DEVELOPMENT_APP_FEATURES,
+    # #43 spike 1 — Support summary / deep-link inside the IT Portal shell.
+    'itp' => [
+      { key: 'support', label: 'Support' }
+    ]
   }.freeze
 
   # A DSL's feature key. Prefixed so a DSL can never be named the same thing as

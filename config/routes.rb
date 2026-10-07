@@ -278,6 +278,7 @@ Rails.application.routes.draw do
   namespace :itp do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    get 'support', to: 'support#index', as: :support
   end
 
   namespace :data_runner do

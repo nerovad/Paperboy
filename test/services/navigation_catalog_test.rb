@@ -156,4 +156,15 @@ class NavigationCatalogTest < ActiveSupport::TestCase
 
     assert_equal ['Data Runner'], labels(catalog(apps: apps))
   end
+
+  test 'IT Portal Support is offered only with the feature grant' do
+    apps = [{ key: 'itp', label: 'IT Portal', path: '/itp' }]
+
+    assert_equal ['IT Portal'], labels(catalog(apps: apps))
+
+    subject = catalog(apps: apps, features: ['itp:support'])
+
+    assert_equal ['IT Portal', 'Support'], labels(subject)
+    assert_equal itp_support_path, subject.destinations.last.path
+  end
 end

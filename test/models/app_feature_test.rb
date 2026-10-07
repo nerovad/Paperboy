@@ -40,6 +40,11 @@ class AppFeatureTest < ActiveSupport::TestCase
                  AppFeature.for('coa').map { |feature| feature[:key] }
   end
 
+  test 'IT Portal Support is grantable' do
+    assert_equal [{ key: 'support', label: 'Support' }], AppFeature.for('itp')
+    assert_equal %w[itp:support], AppFeature.permission_keys_for('itp')
+  end
+
   test 'only Admin Tools carries legacy dropdown keys' do
     assert_equal 'acl', AppFeature.legacy_key('admin_tools', 'acl')
     assert_nil AppFeature.legacy_key('billing', 'view_billing')

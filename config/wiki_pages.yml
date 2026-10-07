@@ -126,6 +126,11 @@ pages:
     slug: CGSA-Executive-Draft
     section: Proposals
     keep: false
+
+  - source: docs/ITPORTAL_TO_PAPERBOY.md
+    slug: ITPortal-to-Paperboy
+    section: Proposals
+    keep: true
   - source: docs/unit-test-proposed-solutions.md
     slug: Unit-Test-Proposed-Solutions
     section: Proposals

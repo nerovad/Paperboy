@@ -40,7 +40,8 @@ class NavigationCatalog
     'admin_tools' => 'admin administration tools',
     'print_production' => 'production shop bookmarks links',
     'hsa_adoption_cards' => 'hsa adoption cards scanned records case search',
-    'development' => 'dev development scripts workflows deployment testing'
+    'development' => 'dev development scripts workflows deployment testing',
+    'itp' => 'it portal itportal support service desk tickets'
   }.freeze
 
   # An app's fixed sidebar links, each behind the ACL > Application Features
@@ -67,6 +68,9 @@ class NavigationCatalog
       { key: 'search', label: 'Search', route: :hsa_adoption_cards_search_path },
       { key: 'browse', label: 'Browse', route: :hsa_adoption_cards_browse_path },
       { key: 'maintenance', label: 'Maintenance', route: :hsa_adoption_cards_maintenance_path }
+    ],
+    'itp' => [
+      { key: 'support', label: 'Support', route: :itp_support_path }
     ]
   }.freeze
 
@@ -93,7 +97,7 @@ class NavigationCatalog
            when 'admin_tools' then admin_tools_rows
            when 'billing' then billing_rows
            when 'coa' then coa_rows
-           when 'digital_asset_management', 'p2m', 'hsa_adoption_cards' then feature_rows(app[:key])
+           when 'digital_asset_management', 'p2m', 'hsa_adoption_cards', 'itp' then feature_rows(app[:key])
            when 'aim' then aim_rows
            when 'data_runner' then data_runner_rows
            when 'print_production' then production_rows
