@@ -40,6 +40,23 @@ class DevelopmentHelperTest < ActionView::TestCase
     assert_select 'input[name=title][required]'
   end
 
+  test 'create pull request form follows the repository template' do
+    script = Development::ScriptCatalog.find('create_pull_request')
+
+    render partial: 'development/runs/card', locals: { script: script }
+
+    assert_select 'input[name=title][required]'
+    assert_select 'input[name=head][required]'
+    assert_select 'input[name=base][value=master]'
+    assert_select 'textarea[name="answers[summary]"]'
+    assert_select 'input[name="answers[issue]"]'
+    assert_select 'textarea[name="answers[implementation_notes]"]'
+    assert_select 'input[name="answers[verification][checks][]"]'
+    assert_select 'textarea[name="answers[verification][checks_run]"]'
+    assert_select 'textarea[name="answers[follow_up_work]"]'
+    assert_select 'textarea[name=body]', count: 0
+  end
+
   test 'issue forms use gitea names when the lookup succeeds' do
     script = Development::ScriptCatalog.find('update_issue')
     choices = {

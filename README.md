@@ -44,6 +44,16 @@ bin/new-issue --type feature \
   --answers-file /path/to/answers.json
 ```
 
+A pull request body follows `.gitea/pull_request_template.md`.
+`--answers-file` uses the section ids from `bin/create-pull-request --fields`.
+
+```bash
+bin/create-pull-request \
+  --title "Short imperative description (#123)" \
+  --head issue/123-short-description \
+  --answers-file /path/to/answers.json
+```
+
 Create the issue-linked branch and worktree:
 
 ```bash

@@ -74,7 +74,8 @@ module Development
                ->(params) { issue_args(params) },
                confirm: 'Create this Gitea issue?'),
         script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
-               'create-pull-request', 'Open a pull request for the current branch.',
+               'create-pull-request',
+               'Open a pull request whose body follows the repository pull request template.',
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
@@ -158,12 +159,41 @@ module Development
     end
 
     def pull_request_args(params)
-      args = ['--title', required_value(params[:title], 'Title')]
-      args += ['--body', params[:body].to_s] if params[:body].present?
-      args += ['--head', branch_value(params[:head])] if params[:head].present?
-      args += ['--base', branch_value(params[:base])] if params[:base].present?
-      args += ['--issue', integer(params[:issue], required: 'Issue')] if params[:issue].present?
-      args
+      raise ArgumentError, 'Head branch is required.' if params[:head].blank?
+
+      body = pull_request_body(params)
+      args = ['--title', pull_request_title(required_value(params[:title], 'Title'), pull_request_issue(body)),
+              '--body', body, '--head', branch_value(params[:head])]
+      base = params[:base].to_s.strip
+      args + (base.present? ? ['--base', branch_value(base)] : [])
+    end
+
+    def pull_request_body(params)
+      if params[:answers].present?
+        Paperboy::Gitea::PullRequestTemplate.render(params[:answers])
+      else
+        body = params[:body].to_s
+        errors = Paperboy::Gitea::PullRequestTemplate.body_errors(body)
+        raise ArgumentError, errors.join(' ') if errors.any?
+
+        body
+      end
+    rescue Paperboy::Gitea::PullRequestTemplate::Invalid => e
+      raise ArgumentError, e.message
+    end
+
+    def pull_request_issue(body)
+      section = Paperboy::Gitea::IssueTemplate::Sections.section_map(body)['Issue'].to_s
+      match = section.match(/\ACloses #(\d+)\z/)
+      raise ArgumentError, 'Issue is required.' unless match
+
+      match[1]
+    end
+
+    def pull_request_title(title, number)
+      return title if title.match?(/\(##{Regexp.escape(number)}\)\s*\z/)
+
+      "#{title} (##{number})"
     end
 
     def update_issue_args(params)

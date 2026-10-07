@@ -1,0 +1,24 @@
+<% case field.kind %>
+<% when 'issue' %>
+  <%= label_tag 'answers[issue]', field.heading %>
+  <p class="issue-field-help">Required. <%= field.hint %></p>
+  <%= number_field_tag 'answers[issue]', nil, min: 1, class: 'form-control' %>
+<% when 'verification' %>
+  <fieldset class="issue-template-group">
+    <legend><%= field.heading %></legend>
+    <p class="issue-field-help"><%= field.hint %></p>
+    <% field.options.each_with_index do |option, index| %>
+      <label class="checkbox-label" for="pull_request_verification_<%= index %>">
+        <%= check_box_tag 'answers[verification][checks][]', option, false, id: "pull_request_verification_#{index}" %>
+        <%= option %>
+      </label>
+    <% end %>
+    <%= label_tag 'answers[verification][checks_run]', field.log_label %>
+    <p class="issue-field-help">Required. List the commands and results.</p>
+    <%= text_area_tag 'answers[verification][checks_run]', nil, rows: 4, class: 'form-control' %>
+  </fieldset>
+<% else %>
+  <%= label_tag "answers[#{field.id}]", field.heading %>
+  <p class="issue-field-help"><%= "#{'Required. ' if field.content_required}#{field.hint}" %></p>
+  <%= text_area_tag "answers[#{field.id}]", nil, rows: 4, class: 'form-control' %>
+<% end %>

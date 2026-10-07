@@ -7,6 +7,7 @@ require 'open3'
 require 'shellwords'
 require 'tmpdir'
 require_relative '../../lib/paperboy/gitea/issue_template'
+require_relative '../../lib/paperboy/gitea/pull_request_template'
 
 # Exercises the Gitea workflow scripts against a fake curl. Nothing here
 # talks to SQL Server or the live Gitea server.
@@ -487,5 +488,104 @@ class GiteaLookupsScriptTest < Minitest::Test
     assert_equal ['Phase'], milestone_titles
     assert_equal 'Powerpuff Girls', project['title']
     assert_equal ['In Progress'], column_titles
+  end
+end
+
+class GiteaCreatePullRequestScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_answers_file_posts_closes_without_refs
+    write_pull_fixture
+    path = File.join(@root, 'answers.json')
+    File.write(path, JSON.generate(pull_answers))
+
+    stdout, stderr, status = run_script(
+      'create-pull-request', '--title', 'Align pull requests (#64)',
+      '--head', 'issue/64-align', '--answers-file', path
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    assert_includes stdout, 'Created pull request #70'
+    payload = JSON.parse(requests.last.fetch('data'))
+    assert_equal 'issue/64-align', payload['head']
+    assert_equal 'master', payload['base']
+    assert_includes payload['body'], 'Closes #64'
+    refute_includes payload['body'], 'Refs #'
+  end
+
+  def test_issue_flag_fills_a_blank_closes_line
+    write_pull_fixture
+    body = Paperboy::Gitea::PullRequestTemplate.render(pull_answers).sub('Closes #64', 'Closes #')
+
+    stdout, stderr, status = run_script(
+      'create-pull-request', '--title', 'Align pull requests (#64)',
+      '--head', 'issue/64-align', '--body', body, '--issue', '64'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    posted = JSON.parse(requests.last.fetch('data'))['body']
+    assert_includes posted, 'Closes #64'
+    refute_includes posted, 'Refs #'
+  end
+
+  def test_a_different_issue_number_is_refused
+    body = Paperboy::Gitea::PullRequestTemplate.render(pull_answers)
+
+    _stdout, stderr, status = run_script(
+      'create-pull-request', '--title', 'Align pull requests (#64)',
+      '--head', 'issue/64-align', '--body', body, '--issue', '65'
+    )
+
+    refute status.success?
+    assert_includes stderr, 'not #65'
+    assert_empty requests
+  end
+
+  def test_omitted_body_and_the_empty_template_are_refused
+    _stdout, stderr, status = run_script(
+      'create-pull-request', '--title', 'Align pull requests', '--head', 'issue/64-align'
+    )
+
+    refute status.success?
+    assert_includes stderr, 'summary'
+    assert_empty requests
+    _stdout, stderr, status = run_script(
+      'create-pull-request', '--title', 'Align pull requests', '--head', 'issue/64-align',
+      '--body', Paperboy::Gitea::PullRequestTemplate.skeleton
+    )
+    refute status.success?
+    assert_includes stderr, 'Summary is required.'
+    assert_empty requests
+  end
+
+  def test_fields_lists_section_ids_without_calling_gitea
+    stdout, stderr, status = run_script('create-pull-request', '--fields')
+
+    assert status.success?, stderr
+    assert_includes stdout, 'checks_run'
+    assert_empty requests
+  end
+
+  private
+
+  def write_pull_fixture
+    write_fixture('POST pulls page=1', { 'number' => 70, 'html_url' => 'http://gitea.test/pulls/70' })
+  end
+
+  def pull_answers
+    {
+      'summary' => 'Share one pull request body.',
+      'issue' => '64',
+      'implementation_notes' => 'Bash still posts the request.',
+      'verification' => { 'checks_run' => 'ruby gitea_workflow_test.rb' }
+    }
   end
 end

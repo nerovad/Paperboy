@@ -65,17 +65,6 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
     assert_equal 'Release tag is required.', error.message
   end
 
-  test 'pull request catalog entry builds explicit Gitea arguments' do
-    script = Development::ScriptCatalog.find('create_pull_request')
-
-    assert_equal 'gitea', script[:feature]
-    assert script[:confirm].present?
-    assert_equal ['--title', 'Improve docs', '--body', 'Details', '--head', 'feature/docs',
-                  '--base', 'master', '--issue', '41'],
-                 script[:arguments].call(title: 'Improve docs', body: 'Details',
-                                         head: 'feature/docs', base: 'master', issue: '41')
-  end
-
   test 'gitea writes stay on the menu behind the gitea grant' do
     %w[create_issue update_issue clean_worktree create_pull_request status_report].each do |key|
       script = Development::ScriptCatalog.find(key)
@@ -181,5 +170,33 @@ class DevelopmentIssueArgumentTest < ActiveSupport::TestCase
 
   def bug_body
     Paperboy::Gitea::IssueTemplate.render('bug', bug_answers.fetch('bug'))
+  end
+end
+
+class DevelopmentPullRequestArgumentTest < ActiveSupport::TestCase
+  self.fixture_table_names = []
+
+  test 'pull request catalog renders the template and requires the head branch' do
+    script = Development::ScriptCatalog.find('create_pull_request')
+    answers = {
+      'summary' => 'Document the workflow.', 'issue' => '41',
+      'implementation_notes' => 'No schema change.',
+      'verification' => { 'checks_run' => 'bin/unit-tests' }, 'follow_up_work' => 'None.'
+    }
+    args = script[:arguments].call(title: 'Improve docs', head: 'issue/41-improve-docs', base: 'master',
+                                   answers: answers)
+    body = args[args.index('--body') + 1]
+
+    assert_equal 'gitea', script[:feature]
+    assert script[:confirm].present?
+    assert_equal ['--title', 'Improve docs (#41)'], args.first(2)
+    assert_includes body, 'Closes #41'
+    assert_includes body, '## Follow-up work'
+    refute_includes args, '--issue'
+    assert_equal ['--head', 'issue/41-improve-docs', '--base', 'master'], args.last(4)
+    titled = script[:arguments].call(title: 'Improve docs (#41)', head: 'issue/41-improve-docs', answers: answers)
+    assert_equal 'Improve docs (#41)', titled[1]
+    error = assert_raises(ArgumentError) { script[:arguments].call(title: 'Improve docs', answers: answers) }
+    assert_equal 'Head branch is required.', error.message
   end
 end
