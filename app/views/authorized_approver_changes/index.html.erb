@@ -1,0 +1,70 @@
+<!-- app/views/authorized_approver_changes/index.html.erb -->
+<div class="form-header">
+  <h1>Authorization Console Change Log</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <div class="department-header">
+    <%= link_to "Back to Console", authorization_console_index_path(department_id: @department_ids), class: "btn" %>
+    <%= link_to "Export CSV", authorized_approver_changes_path(format: :csv, department_id: @department_ids),
+          class: "btn pdf", data: { turbo: false } %>
+  </div>
+
+  <% if @truncated %>
+    <p class="help-text">
+      Showing the <%= AuthorizedApproverChangesController::PAGE_LIMIT %> most recent changes.
+      Export CSV for the full log.
+    </p>
+  <% end %>
+
+  <% if @changes.any? %>
+    <div class="approvers-list">
+      <% @changes.each do |change| %>
+        <div class="approver-card">
+          <div class="approver-header">
+            <h3>
+              <%= change.action.capitalize %>:
+              <%= @names[change.employee_id] || "Employee #{change.employee_id}" %>
+              <span class="employee-id">(<%= change.employee_id %>)</span>
+            </h3>
+          </div>
+
+          <div class="approvals-list">
+            <div class="approval-item">
+              <div class="approval-details">
+                <div class="detail-row">
+                  <span class="label">When:</span>
+                  <span class="value"><%= change.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">By:</span>
+                  <span class="value"><%= @names[change.changed_by] || "Employee #{change.changed_by}" %> (<%= change.changed_by %>)</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Department:</span>
+                  <span class="value"><%= change.department_id %></span>
+                </div>
+                <% change.differences.each do |(heading, before, after)| %>
+                  <div class="detail-row">
+                    <span class="label"><%= heading %>:</span>
+                    <span class="value">
+                      <% if change.action == "edited" %>
+                        <%= before.presence || "None" %> &rarr; <%= after.presence || "None" %>
+                      <% else %>
+                        <%= before.presence || after %>
+                      <% end %>
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No changes have been recorded yet.</p>
+    </div>
+  <% end %>
+</div>

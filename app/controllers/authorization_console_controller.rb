@@ -108,7 +108,10 @@ class AuthorizationConsoleController < ApplicationController
     approvers.each { |a| resolve_department_from_units(a) }
 
     if approvers.all?(&:valid?)
-      AuthorizedApprover.transaction { approvers.each(&:save!) }
+      AuthorizedApprover.transaction do
+        approvers.each(&:save!)
+        AuthorizedApproverChange.record!(action: 'added', changed_by: authorized_by, after: approvers)
+      end
       count = approvers.size
       noun = count == 1 ? 'authorization' : 'authorizations'
       redirect_to authorization_console_index_path(department_id: approvers.first.department_id),
@@ -154,8 +157,13 @@ class AuthorizationConsoleController < ApplicationController
     @selected_key_types     = key_types
     @original_ids           = records.map(&:id)
 
-    approvers = build_approvers(raw, service_types, key_types, authorized_by)
-    approvers.each { |a| resolve_department_from_units(a) }
+    # An edit replaces the rows, but it is still the same authorization: keep
+    # who first granted it and when. Who edited it is in the change log.
+    approvers = build_approvers(raw, service_types, key_types, records.first.authorized_by)
+    approvers.each do |a|
+      resolve_department_from_units(a)
+      a.created_at = records.map(&:created_at).min
+    end
 
     saved = false
     if service_types.any?
@@ -163,6 +171,8 @@ class AuthorizationConsoleController < ApplicationController
         AuthorizedApprover.transaction do
           records.each(&:destroy!)
           approvers.each(&:save!)
+          AuthorizedApproverChange.record!(action: 'edited', changed_by: authorized_by,
+                                           before: records, after: approvers)
         end
         saved = true
       rescue ActiveRecord::RecordInvalid
@@ -185,7 +195,12 @@ class AuthorizationConsoleController < ApplicationController
   def group_destroy
     records = scoped_group(params[:ids], 'delete')
     dept = records.first&.department_id
-    AuthorizedApprover.where(id: records.map(&:id)).destroy_all
+    AuthorizedApprover.transaction do
+      records.group_by { |a| [a.employee_id, a.department_id] }.each_value do |rows|
+        AuthorizedApproverChange.record!(action: 'removed', changed_by: current_employee_id, before: rows)
+      end
+      AuthorizedApprover.where(id: records.map(&:id)).destroy_all
+    end
     redirect_to authorization_console_index_path(department_id: dept),
                 notice: 'Authorization removed.'
   end

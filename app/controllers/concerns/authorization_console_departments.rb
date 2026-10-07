@@ -77,6 +77,11 @@ module AuthorizationConsoleDepartments
     Coa::Department.where(department_id: department_ids).order(:department_id).to_a.uniq(&:department_id)
   end
 
+  # Employee id => full name, for lists that name people by stored id.
+  def employee_names_by_id(employee_ids)
+    Employee.where(id: employee_ids.uniq).to_h { |employee| [employee.id.to_s, employee.full_name] }
+  end
+
   # Everyone working in a unit of the given departments, as picker rows.
   def employees_in_departments(department_ids)
     return [] if department_ids.empty?

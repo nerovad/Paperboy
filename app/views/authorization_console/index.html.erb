@@ -63,6 +63,8 @@
       <% if manager_admin_departments.any? %>
         <%= link_to "Managers", authorization_managers_path, class: "btn" %>
       <% end %>
+      <%= link_to "Change Log", authorized_approver_changes_path(department_id: @department_ids),
+            class: "btn status-history" %>
       <%= link_to "Export CSV",
             authorization_console_index_path(format: :csv, department_id: @department_ids,
               employee_id: @employee_id_filter, service_type: @service_type_filter, location: @location_filter),

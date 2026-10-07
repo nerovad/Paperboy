@@ -511,6 +511,10 @@ Rails.application.routes.draw do
   resources :authorization_managers, only: %i[index create destroy],
                                      path: 'authorization_console/managers'
 
+  # Every authorization added, edited or removed in that console. Read only.
+  resources :authorized_approver_changes, only: %i[index],
+                                          path: 'authorization_console/changes'
+
   # Safety Reporting authorization console (HCA safety officers by org node).
   resources :safety_authorizations, only: %i[index new create edit update destroy],
                                     path: 'authorization_console/safety'
