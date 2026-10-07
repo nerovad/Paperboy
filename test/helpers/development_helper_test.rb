@@ -143,13 +143,25 @@ class DevelopmentIssueLoadHelperTest < ActionView::TestCase
     assert_select 'select[name=column] option[selected]', text: 'Other — In Progress', count: 0
   end
 
-  test 'create form still offers type labels as extra labels' do
+  test 'create form omits type labels from extra labels' do
     script = Development::ScriptCatalog.find('create_issue')
     choices = { 'labels' => [{ 'name' => 'bug' }, { 'name' => 'area:forms' }] }
 
     render partial: 'development/runs/card', locals: { script: script, gitea_choices: choices }
 
-    assert_select 'select[name="extra_labels[]"] option', text: 'bug'
+    assert_select 'select[name="extra_labels[]"] option', text: 'bug', count: 0
     assert_select 'select[name="extra_labels[]"] option', text: 'area:forms'
+    assert_select 'p.issue-field-help', text: 'Type labels stay with the template above.'
+    assert_select 'input[name=extra_labels]', count: 0
+  end
+
+  test 'create form keeps the extra-label select when every label is a type' do
+    script = Development::ScriptCatalog.find('create_issue')
+    choices = { 'labels' => [{ 'name' => 'bug' }, { 'name' => 'feature' }] }
+
+    render partial: 'development/runs/card', locals: { script: script, gitea_choices: choices }
+
+    assert_select 'select[name="extra_labels[]"] option', count: 0
+    assert_select 'input[name=extra_labels]', count: 0
   end
 end

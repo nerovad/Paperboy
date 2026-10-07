@@ -52,7 +52,9 @@ Create an issue before creating its branch. The body follows the issue
 template for that type (`.gitea/issue_template/`). `--answers-file` is JSON
 whose keys are the section ids from `bin/new-issue --type feature --fields`.
 Prompt sections are objects. `--body-file` still works when the markdown
-contains those sections. An empty template is refused.
+contains those sections. An empty template is refused. The Create form's
+extra-label menu omits bug, feature, chore, and infrastructure. The type
+radio sets that label. A direct `--label` still accepts a type name.
 
 ```bash
 bin/new-issue --type feature \

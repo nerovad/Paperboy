@@ -70,7 +70,7 @@ module Development
                ->(params) { csr_args(params) },
                confirm: 'Generate a TLS certificate request? This creates a private key.'),
         script('create_issue', 'Create Gitea Issue', 'collaboration', 'gitea', 'new-issue',
-               'Create a typed, labeled Paperboy issue from the repository issue template.',
+               'Create a typed issue from the repository template. Extra labels omit type labels.',
                ->(params) { issue_args(params) },
                confirm: 'Create this Gitea issue?'),
         script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
@@ -127,7 +127,7 @@ module Development
     def issue_args(params)
       type = required_value(params[:issue_type], 'Issue type')
       args = ['--type', type, '--title', required_value(params[:title], 'Title'), '--body', issue_body(type, params)]
-      label_list(params[:extra_labels]).each { |label| args += ['--label', label] }
+      ordinary_labels(label_list(params[:extra_labels])).each { |label| args += ['--label', label] }
       # The runner has no terminal. bin/new-issue prompts for a milestone
       # unless --no-milestone is set, and that read exits 1.
       if params[:milestone].present?

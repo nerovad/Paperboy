@@ -41,7 +41,7 @@ module DevelopmentHelper
   end
 
   # The template radio owns bug, feature, chore, and infrastructure.
-  def development_update_label_names(choices)
+  def development_ordinary_label_names(choices)
     development_label_names(choices).reject { |name| Paperboy::Gitea::IssueTemplate::TYPE_ORDER.include?(name) }
   end
 

@@ -49,7 +49,7 @@
     <p class="issue-field-help">Current column: <%= issue[:column] %></p>
   <% end %>
 <% end %>
-<% labels = development_update_label_names(choices) %>
+<% labels = development_ordinary_label_names(choices) %>
 <% if development_label_names(choices).any? %>
   <p class="issue-field-help">Type labels stay with the template above.</p>
   <%= label_tag :add_labels, 'Add labels' %>

@@ -142,6 +142,14 @@ class DevelopmentIssueArgumentTest < ActiveSupport::TestCase
                                          milestone: '2026.10', project: '__none__')
     error = assert_raises(ArgumentError) { script[:arguments].call(issue_type: 'bug', title: 'Fix report') }
     assert_includes error.message, 'Problem is required.'
+    labeled = script[:arguments].call(issue_type: 'feature', title: 'Add portal', answers: answers,
+                                      extra_labels: 'bug, area:forms, feature')
+    assert_equal 1, labeled.count('--label')
+    assert_equal 'area:forms', labeled[labeled.index('--label') + 1]
+    type_only = script[:arguments].call(issue_type: 'feature', title: 'Add portal', answers: answers,
+                                        extra_labels: %w[bug feature])
+    refute_includes type_only, '--label'
+    assert_equal 'feature', type_only[type_only.index('--type') + 1]
   end
 
   test 'update issue plans labels milestone project and column' do
