@@ -19,6 +19,20 @@ module P2m
           cancellation_token: cancellation_token)
     end
 
+    def self.historical_jobs(start_date:, end_date:, report_path:)
+      command = [
+        RbConfig.ruby, SCRIPT_PATH.to_s,
+        '--start-date', start_date.iso8601,
+        '--end-date', end_date.iso8601,
+        '--report', report_path.to_s,
+        '--historical-jobs'
+      ]
+      output, status = Open3.capture2e(*command, chdir: Rails.root.to_s)
+      raise output.strip unless status.success?
+
+      JSON.parse(report_path.read).fetch('rows')
+    end
+
     def self.run(start_date:, end_date:, scan_only: false, cancellation_token: nil)
       command = [
         RbConfig.ruby, SCRIPT_PATH.to_s,

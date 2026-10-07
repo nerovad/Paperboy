@@ -240,7 +240,7 @@ Rails.application.routes.draw do
     resource :production, only: :show do
       get :preview
     end
-    resource :data_reset, only: %i[show create]
+    resource :data_reset, only: %i[show create], controller: 'post_testing_archives'
     resource :quality_control, only: :show do
       get :details
     end
