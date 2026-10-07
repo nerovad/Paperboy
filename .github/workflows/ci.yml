@@ -8,25 +8,14 @@ on:
 permissions:
   contents: write
 
+# CI_RUNNER_LABEL is a placeholder until Gary names the Windows runner.
+# uses: resolves against the Gitea server's [actions] DEFAULT_ACTIONS_URL;
+# a mirror is that server setting or an absolute uses: https://... URL.
+
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-
-    services:
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: Y
-          MSSQL_SA_PASSWORD: Paperboy-CI-Password-2026!
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P
-          Paperboy-CI-Password-2026! -C -Q 'SELECT 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
+  lint:
+    name: Lint and security
+    runs-on: ${{ vars.CI_RUNNER_LABEL || 'windows' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,41 +27,64 @@ jobs:
           bundler-cache: true
 
       - name: Lint Ruby
+        shell: bash
         run: bundle exec rubocop
 
       - name: Scan Rails security
+        shell: bash
         run: bundle exec brakeman
 
       - name: Audit Ruby dependencies
+        shell: bash
         run: bundle exec bundle-audit check
 
-      - name: Install system test packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable
+  test:
+    name: Tests
+    needs: lint
+    # The test job stays skipped until Gary sets CI_SQL_HOST.
+    if: ${{ vars.CI_SQL_HOST != '' }}
+    runs-on: ${{ vars.CI_RUNNER_LABEL || 'windows' }}
+    env:
+      RAILS_ENV: test
+      GSABSS_HOST: ${{ vars.CI_SQL_HOST }}
+      GSABSS_PORT: ${{ vars.CI_SQL_PORT || '1433' }}
+      GSABSS_USERNAME: ${{ secrets.CI_SQL_USERNAME }}
+      GSABSS_PASSWORD: ${{ secrets.CI_SQL_PASSWORD }}
+      GSABSS_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_Test' }}
+      PAPERBOY_TEST_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_Test' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
 
       - name: Run tests
-        env:
-          RAILS_ENV: test
-          GSABSS_HOST: localhost
-          GSABSS_PORT: 1433
-          GSABSS_USERNAME: sa
-          GSABSS_PASSWORD: Paperboy-CI-Password-2026!
-          GSABSS_DATABASE: Paperboy_Test
-          PAPERBOY_TEST_DATABASE: Paperboy_Test
-        run: bundle exec rake test
+        shell: bash
+        run: bundle exec rails test
+
+      # CI_SYSTEM_TESTS gates system tests; Chrome must be on the runner.
+      - name: Run system tests
+        if: ${{ vars.CI_SYSTEM_TESTS == 'true' }}
+        shell: bash
+        run: bundle exec rails test:system
 
       - name: Keep screenshots from failed system tests
+        if: ${{ failure() && vars.CI_SYSTEM_TESTS == 'true' }}
         uses: actions/upload-artifact@v4
-        if: failure()
         with:
           name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
+          path: tmp/screenshots
           if-no-files-found: ignore
 
   tag-master-commit:
     name: Tag master commit
-    needs: ci
+    needs: [lint, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER_LABEL || 'windows' }}
     steps:
       - name: Checkout full history
         uses: actions/checkout@v4
@@ -80,4 +92,5 @@ jobs:
           fetch-depth: 0
 
       - name: Create commit tag
-        run: bin/tag-master-commit
+        shell: bash
+        run: bash bin/tag-master-commit

@@ -6,7 +6,8 @@ usage() {
 Usage: bin/tag-master-commit [COMMIT]
 
 Create and push the annotated Paperboy version tag for COMMIT. If COMMIT is
-omitted, GITHUB_SHA is used when set; otherwise the current HEAD is tagged.
+omitted, GITEA_SHA or GITHUB_SHA is used when set; otherwise the current HEAD
+is tagged.
 EOF
 }
 
@@ -20,7 +21,7 @@ if (( $# > 1 )); then
   exit 2
 fi
 
-target="${1:-${GITHUB_SHA:-HEAD}}"
+target="${1:-${GITEA_SHA:-${GITHUB_SHA:-HEAD}}}"
 base_version="$(tr -d '[:space:]' < VERSION)"
 
 if [[ ! "${base_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -41,7 +42,8 @@ update_env_version() {
 
   [[ -f "${env_file}" ]] || return 0
 
-  temp_file="$(mktemp "${env_file}.tmp.XXXXXX")"
+  temp_file="${env_file}.tmp.$$"
+  cp -p -- "${env_file}" "${temp_file}"
   awk -v version="${release_version}" '
     BEGIN { updated = 0 }
     /^PAPERBOY_VERSION=/ {
@@ -56,7 +58,6 @@ update_env_version() {
       if (!updated) print "PAPERBOY_VERSION=" version
     }
   ' "${env_file}" > "${temp_file}"
-  chmod --reference="${env_file}" "${temp_file}"
   mv -- "${temp_file}" "${env_file}"
   echo "Updated ${env_file}: PAPERBOY_VERSION=${release_version}"
 }
@@ -79,12 +80,14 @@ if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; t
   exit 0
 fi
 
-if [[ "${GITHUB_ACTIONS:-}" == 'true' ]]; then
-  tagger_name='github-actions[bot]'
-  tagger_email='41898282+github-actions[bot]@users.noreply.github.com'
-else
-  tagger_name="$(git config user.name || true)"
-  tagger_email="$(git config user.email || true)"
+tagger_name="$(git config user.name || true)"
+tagger_email="$(git config user.email || true)"
+
+if [[ -z "${tagger_name}" || -z "${tagger_email}" ]]; then
+  if [[ "${GITEA_ACTIONS:-}" == 'true' || "${GITHUB_ACTIONS:-}" == 'true' ]]; then
+    tagger_name='Paperboy CI'
+    tagger_email='paperboy-ci@noreply.invalid'
+  fi
 fi
 
 if [[ -z "${tagger_name}" || -z "${tagger_email}" ]]; then

@@ -1,0 +1,8 @@
+# Bash scripts run under Git Bash on the Windows runner and break on CRLF.
+*.sh text eol=lf
+bin/* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
