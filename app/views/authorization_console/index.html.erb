@@ -50,6 +50,13 @@
                 class: "form-control",
                 data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Locations" } %>
         </div>
+
+        <%# Off by default: the list is for finding holes, not for everyday use.
+            The count is there so a hole is noticed without opening it. %>
+        <label class="filter-toggle">
+          <%= check_box_tag :show_gaps, "1", @show_gaps, data: { action: "change->auto-submit#submit" } %>
+          Show units with no approvers (<%= @gap_count %>)
+        </label>
       <% end %>
     </div>
 
@@ -63,8 +70,6 @@
       <% if manager_admin_departments.any? %>
         <%= link_to "Managers", authorization_managers_path, class: "btn" %>
       <% end %>
-      <%= link_to "Coverage", authorization_coverage_index_path(department_id: @department_ids),
-            class: "btn info" %>
       <%= link_to "Change Log", authorized_approver_changes_path(department_id: @department_ids),
             class: "btn status-history" %>
       <%= link_to "Export CSV",
@@ -74,6 +79,9 @@
     </div>
 
     <div class="approvers-scroll">
+    <% if @show_gaps %>
+      <%= render "coverage_gaps" %>
+    <% end %>
     <% if @groups_by_employee.any? %>
       <div class="approvers-list">
         <% @groups_by_employee.each do |employee_id, groups| %>

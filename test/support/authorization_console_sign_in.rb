@@ -41,6 +41,10 @@ module AuthorizationConsoleSignIn
   def stub_gsabss_units
     return unless @controller.is_a?(AuthorizationConsoleController)
 
+    stub_console(:units_by_department) do |ids|
+      UNITS.select { |_unit, department| ids.include?(department) }
+           .group_by(&:last).transform_values { |pairs| pairs.map(&:first) }
+    end
     stub_console(:fetch_managed_budget_units) do
       UNITS.select { |_unit, department| department_ids_with('write').include?(department) }
            .keys.map { |unit| [unit, unit] }

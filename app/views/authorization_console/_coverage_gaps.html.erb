@@ -1,0 +1,42 @@
+<%# Budget units with nobody authorized to approve a service type, shown above
+    the approvers when "Show units with no approvers" is ticked. A request from
+    one of these units has no one to route to. %>
+<div class="approvers-list coverage-gaps">
+  <% gaps_by_department = @gaps_by_department.reject { |_department_id, gaps| gaps.empty? } %>
+  <% if gaps_by_department.empty? %>
+    <div class="empty-state">
+      <p>Every budget unit has an approver for every service type.</p>
+    </div>
+  <% end %>
+
+  <% @managed_departments.each do |department| %>
+    <% gaps = gaps_by_department[department.department_id.to_s] %>
+    <% next unless gaps %>
+    <div class="approver-card">
+      <div class="approver-header">
+        <h3>No approvers: <%= department.department_id %> - <%= department.long_name %></h3>
+      </div>
+      <div class="approvals-list">
+        <% gaps.each do |(unit_id, missing)| %>
+          <div class="approval-item">
+            <div class="approval-details">
+              <strong>Budget Unit <%= unit_id %></strong>
+              <div class="detail-row">
+                <span class="label">No approver for:</span>
+                <span class="value"><%= missing.map { |s| AuthorizedApprover::SERVICE_TYPES[s] }.join(", ") %></span>
+              </div>
+            </div>
+            <% if department_right?(department.department_id, "write") %>
+              <div class="approval-actions">
+                <%= link_to "Add Approver",
+                      new_authorization_console_path(department_id: department.department_id,
+                                                     budget_unit: unit_id, service_type: missing),
+                      class: "btn approve" %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

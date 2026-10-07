@@ -68,7 +68,11 @@ class AuthorizationConsoleController < ApplicationController
     @groups_by_employee   = build_groups(scoped)
 
     respond_to do |format|
-      format.html
+      format.html do
+        @show_gaps = truthy(params[:show_gaps])
+        @gaps_by_department = coverage_gaps
+        @gap_count = @gaps_by_department.values.sum(&:size)
+      end
       format.csv do
         send_data authorized_approvers_csv(scoped),
                   filename: "authorized_approvers_#{@department_ids.presence&.join('-') || 'all'}_#{Date.current}.csv",
@@ -79,7 +83,7 @@ class AuthorizationConsoleController < ApplicationController
 
   def new
     @department_id = params[:department_id]
-    # The coverage screen links here with the gap it found already filled in.
+    # A unit listed as having no approver links here with the gap filled in.
     @authorized_approver = AuthorizedApprover.new(department_id: @department_id,
                                                   budget_units: params[:budget_unit].to_s)
     @selected_service_types = Array(params[:service_type]) & AuthorizedApprover::SERVICE_TYPES.keys
@@ -211,6 +215,24 @@ class AuthorizationConsoleController < ApplicationController
 
   # Collapse per-(service_type, key_type) rows into one group per real
   # authorization (same employee/dept/budget/locations) for display.
+  # Budget units nobody can approve for, by department, for the "Show units
+  # with no approvers" list and the count beside its checkbox. Follows the
+  # Budget Unit and Service Type filters; Employee and Location describe an
+  # approver, and a gap has none.
+  def coverage_gaps
+    readable = department_ids_with('read')
+    shown = (@department_ids.map(&:to_s) & readable).presence || readable
+
+    AuthorizedApprover.coverage_gaps(units_by_department(shown)).transform_values do |gaps|
+      next gaps if @service_type_filter.empty?
+
+      gaps.filter_map do |(unit_id, missing)|
+        missing &= @service_type_filter
+        [unit_id, missing] if missing.any?
+      end
+    end
+  end
+
   def build_groups(approvers)
     approvers.group_by(&:employee_id).transform_values do |recs|
       recs.group_by { |a| [a.department_id, a.all_budget_units?, a.budget_units, a.all_locations?, Array(a.locations).sort] }.values.map do |g|
