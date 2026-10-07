@@ -42,6 +42,7 @@ class AppFeature
     ],
     'p2m' => [
       { key: 'stage_data', label: 'Post Production' },
+      { key: 'change_job', label: 'Change Job' },
       { key: 'oms_status', label: 'OMS Status' },
       { key: 'data_refresh', label: 'Upload Billing Data' },
       { key: 'quality_control', label: 'Quality Control' },
