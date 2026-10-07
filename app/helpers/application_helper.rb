@@ -115,7 +115,7 @@ module ApplicationHelper
     apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
     apps << { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search', path: hsa_adoption_cards_root_path } if can_access_app?('hsa_adoption_cards')
     apps << { key: 'development', label: 'Development', path: development_root_path } if can_access_app?('development')
-    apps << { key: 'itp', label: 'IP Portal', path: itp_root_path } if can_access_app?('itp')
+    apps << { key: 'itp', label: 'IT Portal', path: itp_root_path } if can_access_app?('itp')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
