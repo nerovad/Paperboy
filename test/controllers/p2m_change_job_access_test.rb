@@ -164,6 +164,24 @@ class P2mStageDataChangeJobTest < ActionController::TestCase
     assert_equal '%PDF', response.body
   end
 
+  test 'single job shipping and staging ask before they run' do
+    grant_p2m('p2m:stage_data', 'p2m:change_job')
+    files = Object.new
+    files.define_singleton_method(:call) { |**| ['Mail.dat_51780767.zip', 'tray-labels.pdf'] }
+
+    P2m::OmsAssociatedFiles.stub(:new, files) do
+      get :details, params: job_params
+    end
+
+    assert_response :success
+    assert_job_confirmation 'Send to Shipping Station', 'reassign', P2m::Paths::SHIPPING_STATION,
+                            'Copy one Mail.dat file for OMS 51780767',
+                            'Associated files will not be copied.'
+    assert_job_confirmation 'Move to Staging', 'approve', P2m::Paths::STAGING,
+                            'Validate and copy 2 associated files for OMS 51780767',
+                            'A successful move removes this OMS from the grid.'
+  end
+
   test 'shipping and staging are refused without the change grant' do
     grant_p2m('p2m:stage_data')
     refuse(P2m::OmsStaging, :post, :move_to_staging)
@@ -193,6 +211,18 @@ class P2mStageDataChangeJobTest < ActionController::TestCase
 
     assert_response :success
     assert_match '4 files copied', response.parsed_body.fetch('message')
+  end
+
+  private
+
+  def assert_job_confirmation(label, variant, destination, *fragments)
+    assert_select 'button', text: label, count: 1 do |buttons|
+      message = buttons.first['data-confirm-message']
+      assert_includes message, destination
+      fragments.each { |fragment| assert_includes message, fragment }
+      assert_equal 'Continue', buttons.first['data-confirm-label']
+      assert_equal variant, buttons.first['data-confirm-variant']
+    end
   end
 end
 
