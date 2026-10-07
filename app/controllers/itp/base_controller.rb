@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Itp
-  # Base controller for the IP Portal app. Every IP Portal controller should
+  # Base controller for the IT Portal app. Every IT Portal controller should
   # inherit from this so the ACL gate below is applied consistently.
   class BaseController < ApplicationController
     before_action :require_app_access
@@ -9,7 +9,7 @@ module Itp
     private
 
     # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it IP Portal would stay reachable by
+    # this is the real gate: without it IT Portal would stay reachable by
     # typing the URL. Access is granted per group or org level under
     # ACL > Applications; system admins bypass it.
     #
@@ -19,7 +19,7 @@ module Itp
     def require_app_access
       return if current_user.present? && helpers.can_access_app?('itp')
 
-      redirect_to root_path, alert: 'You do not have access to IP Portal.'
+      redirect_to root_path, alert: 'You do not have access to IT Portal.'
     end
   end
 end
