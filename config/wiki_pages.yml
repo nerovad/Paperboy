@@ -24,6 +24,10 @@ pages:
     slug: Gitea-Workflow
     section: Workflow
     keep: false
+  - source: docs/GITEA_WINDOWS_CI.md
+    slug: Gitea-Windows-CI
+    section: Workflow
+    keep: true
   - source: AGENTS.md
     slug: Agents
     section: Workflow
