@@ -255,6 +255,7 @@ Rails.application.routes.draw do
     end
     post 'search/cancel', to: 'searches#cancel', as: :search_cancel
     get 'oms_status', to: 'oms_uploads#index', as: :oms_status
+    post 'oms_status/reconcile', to: 'oms_uploads#reconcile', as: :oms_status_reconcile
     resource :data_refresh, only: %i[show update] do
       post :restart
     end
