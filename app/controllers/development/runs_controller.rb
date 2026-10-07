@@ -12,6 +12,7 @@ module Development
       @selected_script = ScriptCatalog.find(params[:script_key])
       @selected_script = nil unless available?(@selected_script)
       @gitea_choices = gitea_choices_for(@selected_script)
+      @gitea_issue = gitea_issue_for(@selected_script)
       @show_recent_runs = params[:recent].present?
       @recent_runs = Development::Run.order(created_at: :desc).limit(12)
     end
@@ -54,6 +55,13 @@ module Development
       return unless script && %w[create_issue update_issue].include?(script[:key])
 
       Development::GiteaChoices.fetch
+    end
+
+    def gitea_issue_for(script)
+      return unless script && script[:key] == 'update_issue'
+      return unless params[:issue].to_s.match?(/\A\d+\z/)
+
+      Development::GiteaIssue.for_form(params[:issue])
     end
 
     def feature?(key)

@@ -8,7 +8,8 @@
     <section class="development-section development-section--selected">
       <h2><%= development_group_label(@selected_script[:group]) %></h2>
       <div class="development-cards">
-        <%= render "development/runs/card", script: @selected_script, gitea_choices: @gitea_choices %>
+        <%= render "development/runs/card", script: @selected_script, gitea_choices: @gitea_choices,
+                   gitea_issue: @gitea_issue %>
       </div>
     </section>
   <% elsif @show_recent_runs %>

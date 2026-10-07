@@ -126,10 +126,14 @@ bin/status-report
 ```
 
 Use `bin/update-issue` only for an explicit, approved issue update. It is
-dry-run by default:
+dry-run by default. `--title` replaces the title. `--type` with
+`--answers-file` or `--body` replaces the body through the same issue
+template. The command does not close the issue.
 
 ```bash
 bin/update-issue --issue 123 --add-label priority:normal
+bin/update-issue --issue 123 --title "Short imperative title" \
+  --type feature --answers-file /path/to/answers.json
 bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 

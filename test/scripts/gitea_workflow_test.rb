@@ -359,6 +359,115 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   end
 end
 
+class GiteaUpdateIssueContentScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_issue
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_dry_run_plans_a_title_and_body
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', feature_body
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- set title: Better widgets'
+    assert_includes stdout, '- replace body:'
+    assert_includes stdout, 'Widgets are missing.'
+    assert_includes stdout, 'Dry run only'
+    refute(requests.any? { |request| request['method'] == 'PATCH' })
+  end
+
+  def test_apply_patches_title_and_body_without_closing
+    write_fixture('PATCH issues/10 page=1', {})
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', feature_body, '--apply'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
+    assert_equal 'Better widgets', patch['title']
+    assert_includes patch['body'], 'Widgets are missing.'
+    refute patch.key?('state')
+    assert_includes stdout, 'Audit:'
+  end
+
+  def test_apply_patches_only_the_title_when_the_body_matches
+    body = feature_body
+    write_issue(body: body)
+    write_fixture('PATCH issues/10 page=1', {})
+
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', body, '--apply'
+    )
+
+    assert status.success?, stderr
+    patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
+    assert_equal 'Better widgets', patch['title']
+    refute patch.key?('body')
+    refute patch.key?('state')
+  end
+
+  def test_apply_skips_an_unchanged_title_and_body
+    body = feature_body
+    write_issue(body: body)
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', ' Widgets ', '--type', 'feature', '--body', "#{body}\n", '--apply'
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- no changes required'
+    assert_includes stdout, 'No Gitea state was changed.'
+    refute_includes stdout, 'Audit:'
+    assert_empty(requests.select { |request| request['method'] == 'PATCH' })
+  end
+
+  def test_invalid_body_is_refused_before_a_request
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--type', 'feature', '--body', "## Problem or opportunity\n\nOnly one section.\n"
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Proposed capability is required.'
+    assert_empty requests
+  end
+
+  def test_empty_title_is_refused
+    _stdout, stderr, status = run_script('update-issue', '--issue', '10', '--title', '   ')
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Title cannot be empty'
+    assert_empty requests
+  end
+
+  private
+
+  def feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+
+  def write_issue(body: nil, title: 'Widgets')
+    write_fixture('GET issues/10 page=1', {
+                    'id' => 200, 'number' => 10, 'title' => title, 'body' => body,
+                    'labels' => [{ 'id' => 1, 'name' => 'bug' }], 'milestone' => nil, 'projects' => []
+                  })
+  end
+end
+
 class GiteaStatusReportScriptTest < Minitest::Test
   include GiteaScriptFixture
 

@@ -1,6 +1,39 @@
 <% choices = local_assigns[:gitea_choices] %>
+<% issue = local_assigns[:gitea_issue] || {} %>
+<% selected_type = issue[:type].to_s %>
+<% answers = issue[:answers] || {} %>
 <%= label_tag :issue, 'Issue number' %>
-<%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
+<%= number_field_tag :issue, issue[:number], required: true, min: 1, class: 'form-control' %>
+<button type="submit" class="btn" formmethod="get" formaction="<%= development_runs_path %>">Load issue</button>
+<%= label_tag :title, 'Title' %>
+<%= text_field_tag :title, issue[:title], class: 'form-control',
+                   placeholder: 'Leave blank to keep the current title' %>
+<% if issue[:body_error].present? %>
+  <p class="issue-field-help"><%= issue[:body_error] %></p>
+<% end %>
+<div class="issue-type-picker" role="radiogroup" aria-label="Issue body">
+  <%= label_tag 'issue_type_unchanged', class: 'issue-type-option' do %>
+    <%= radio_button_tag :issue_type, 'unchanged', selected_type.blank? %>
+    <span><strong>Leave body unchanged</strong></span>
+  <% end %>
+  <% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
+    <%= label_tag "issue_type_#{type.key}", class: 'issue-type-option' do %>
+      <%= radio_button_tag :issue_type, type.key, selected_type == type.key %>
+      <span>
+        <strong><%= type.name %></strong>
+        <small><%= type.about %></small>
+      </span>
+    <% end %>
+  <% end %>
+</div>
+<% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
+  <fieldset class="issue-template-fields issue-template-fields--<%= type.key %>">
+    <% loaded = answers[type.key] || {} %>
+    <% type.fields.each do |field| %>
+      <%= render 'development/runs/issue_field', type: type, field: field, value: loaded[field.id] %>
+    <% end %>
+  </fieldset>
+<% end %>
 <% labels = development_label_names(choices) %>
 <% if labels.any? %>
   <%= label_tag :add_labels, 'Add labels' %>

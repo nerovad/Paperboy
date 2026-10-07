@@ -73,4 +73,35 @@ class DevelopmentHelperTest < ActionView::TestCase
     assert_select 'select[name=project] option', text: 'Powerpuff Girls'
     assert_select 'select[name=column] option', text: 'Powerpuff Girls — In Progress'
   end
+
+  test 'update issue form loads the template fields for the issue' do
+    script = Development::ScriptCatalog.find('update_issue')
+    issue = {
+      number: 41, title: 'Revise widgets', type: 'feature', body_error: nil,
+      answers: { 'feature' => { 'problem_or_opportunity' => 'People need one shape.',
+                                'scope_considerations' => { 'forms_workflows_or_users_affected' => 'Editors' } } }
+    }
+
+    render partial: 'development/runs/card', locals: { script: script, gitea_issue: issue }
+
+    assert_select 'input[name=issue][value="41"]'
+    assert_select 'input[name=title][value="Revise widgets"]'
+    assert_select 'input#issue_type_feature[type=radio][checked]'
+    assert_select 'input#issue_type_unchanged[checked]', count: 0
+    assert_select 'button.btn[type=submit][formmethod=get]', text: 'Load issue'
+    assert_select 'textarea[name="answers[feature][problem_or_opportunity]"]', text: 'People need one shape.'
+    assert_select 'input[name="answers[feature][scope_considerations][forms_workflows_or_users_affected]"][value=Editors]'
+  end
+
+  test 'update issue form keeps the title when the body does not match' do
+    script = Development::ScriptCatalog.find('update_issue')
+    issue = { number: 41, title: 'Revise widgets', type: nil, answers: {},
+              body_error: 'Unexpected section: Notes.' }
+
+    render partial: 'development/runs/card', locals: { script: script, gitea_issue: issue }
+
+    assert_select 'p.issue-field-help', text: 'Unexpected section: Notes.'
+    assert_select 'input#issue_type_unchanged[type=radio][checked]'
+    assert_select 'input[name=title][value="Revise widgets"]'
+  end
 end

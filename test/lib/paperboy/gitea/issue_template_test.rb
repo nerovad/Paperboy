@@ -128,3 +128,59 @@ class IssueTemplateTest < Minitest::Test
     }
   end
 end
+
+class IssueTemplateAnswersTest < Minitest::Test
+  TEMPLATE = Paperboy::Gitea::IssueTemplate
+
+  def test_answers_round_trip_through_render
+    rendered = TEMPLATE.render('infrastructure', infrastructure_answers)
+    again = TEMPLATE.render('infrastructure', TEMPLATE.answers_for('infrastructure', rendered))
+
+    assert_equal rendered, again
+    assert_equal ['GSA coordination'], TEMPLATE.answers_for('infrastructure', rendered)['required_coordination']
+  end
+
+  def test_a_checked_criterion_stays_checked
+    rendered = TEMPLATE.render('feature', feature_answers)
+    checked = rendered.sub('- [ ] The form shows the feature sections.',
+                           '- [x] The form shows the feature sections.')
+
+    parsed = TEMPLATE.answers_for('feature', checked)
+
+    assert_includes parsed['acceptance_criteria'], '- [x] The form shows the feature sections.'
+    assert_equal checked, TEMPLATE.render('feature', parsed)
+  end
+
+  def test_an_unexpected_section_is_refused
+    rendered = TEMPLATE.render('feature', feature_answers)
+    error = assert_raises(TEMPLATE::Invalid) { TEMPLATE.answers_for('feature', "#{rendered}\n## Notes\n\nKeep this.\n") }
+
+    assert_includes error.message, 'Unexpected section: Notes.'
+  end
+
+  def test_type_for_labels_uses_the_template_order
+    assert_equal 'bug', TEMPLATE.type_for_labels(%w[feature bug])
+    assert_nil TEMPLATE.type_for_labels(['area:forms'])
+  end
+
+  private
+
+  def feature_answers
+    {
+      'problem_or_opportunity' => 'Three paths file different issues.',
+      'proposed_capability' => 'One template fills the form and the script.',
+      'acceptance_criteria' => 'The form shows the feature sections.'
+    }
+  end
+
+  def infrastructure_answers
+    {
+      'request' => 'Open the port.',
+      'reason_and_outcome' => 'The app can be reached.',
+      'environment' => { 'host_or_service' => 'app-01' },
+      'required_coordination' => ['GSA coordination'],
+      'acceptance_criteria' => 'The port is open.',
+      'constraints_and_risks' => 'Do this in the maintenance window.'
+    }
+  end
+end

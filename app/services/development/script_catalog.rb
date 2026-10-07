@@ -79,7 +79,7 @@ module Development
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
-               'Preview or apply label, milestone, project, and column changes.',
+               'Preview or apply label, milestone, project, column, title, and body changes.',
                ->(params) { update_issue_args(params) },
                confirm: 'Apply these changes to the Gitea issue?',
                confirm_when: 'apply'),
@@ -203,10 +203,14 @@ module Development
       project = params[:project].to_s.strip
       project = '' if project == '__none__'
       column = params[:column].to_s.strip
-      unchanged = added.empty? && removed.empty? && milestone.empty? && project.empty? && column.empty?
+      title = params[:title].to_s.strip
+      body_args = update_issue_body_args(params)
+      unchanged = [added, removed, body_args].all?(&:empty?) && [milestone, project, column, title].all?(&:empty?)
       raise ArgumentError, 'At least one update is required.' if unchanged
 
       args = ['--issue', integer(params[:issue], required: 'Issue')]
+      args += ['--title', title] if title.present?
+      args += body_args
       added.each { |label| args += ['--add-label', label] }
       removed.each { |label| args += ['--remove-label', label] }
       args += ['--milestone', milestone] if milestone.present?
@@ -214,6 +218,13 @@ module Development
       args += ['--column', column] if column.present?
       args << '--apply' if truthy?(params[:apply])
       args
+    end
+
+    def update_issue_body_args(params)
+      type = params[:issue_type].to_s.strip
+      return [] if type.blank? || type == 'unchanged'
+
+      ['--type', type, '--body', issue_body(type, params)]
     end
 
     def label_list(*values)

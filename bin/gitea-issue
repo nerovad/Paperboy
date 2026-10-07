@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Print one issue as JSON for the Update Gitea Issue form.
+# The Development page calls this. It is not a workflow action.
+
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+[[ "${1:-}" =~ ^[0-9]+$ ]] || { echo 'Usage: bin/gitea-issue NUMBER' >&2; exit 2; }
+
+gitea_require_commands
+gitea_load_config
+issue="$(gitea_get "issues/${1}")"
+jq -c '{number, title, body, labels: [(.labels // [])[] | .name]}' <<<"${issue}"
