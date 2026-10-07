@@ -7,8 +7,10 @@ module Forms
     def self.model_name = ActiveModel::Name.new(self, nil, 'FormSubmissionCopy')
     belongs_to :submission, polymorphic: true
 
-    # submit/approval = configured copy recipients; pool_action = the read-only
-    # tracking row left for an approver who cleared a multi-approver pool step.
+    # submit/approval = configured copy recipients. pool_action rows are no
+    # longer written: they kept a form in the inbox of an approver who had
+    # cleared a pool step, and Submissions lists what someone acted on instead.
+    # The value stays valid for the rows already stored.
     DELIVERY_EVENTS = %w[submit approval pool_action].freeze
 
     validates :recipient_employee_id, presence: true

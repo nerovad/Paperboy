@@ -229,7 +229,7 @@ class SubmissionsController < ApplicationController
           end
 
     grants = Forms::VisibilityGrant.for_viewer(employee_id, current_user_group_ids).for_submissions.to_a
-    Forms::VisibilityGrant.widen(own, grants, model_class)
+    Forms::VisibilityGrant.widen(with_acted_on(own, model_class, employee_id), grants, model_class)
   end
 
   # The submission's own page, so a status change lands back where it started.
@@ -398,7 +398,22 @@ class SubmissionsController < ApplicationController
   def submission_scope_for(model_class)
     own = @scoped_employee_ids ? model_class.where(employee_id: @scoped_employee_ids) : model_class.all
 
+    viewer = session.dig(:user, 'employee_id').to_s
+    own = with_acted_on(own, model_class, viewer) if @scoped_employee_ids&.include?(viewer)
+
     Forms::VisibilityGrant.widen(own, @viewer_grants, model_class)
+  end
+
+  # +scope+ plus every submission the viewer has acted on: a status change in
+  # their name. An approver's work leaves their Inbox the moment the form moves
+  # on, and this is where they find it afterwards. It is theirs alone -- a
+  # supervisor is not shown what their reports approved, because
+  # Forms::SubmissionAccess would not let them open it.
+  def with_acted_on(scope, model_class, employee_id)
+    return scope if employee_id.blank? || !model_class.reflect_on_association(:status_changes)
+
+    acted = StatusChange.where(trackable_type: model_class.polymorphic_name, changed_by_id: employee_id)
+    scope.or(model_class.where(id: acted.select(:trackable_id)))
   end
 
   # SQL-level date filter config (applied per-table before combining)

@@ -8,10 +8,10 @@
   current_step = current_routing_step_for(submission, template)
   approver_id_match = submission.respond_to?(:approver_id) && submission.approver_id.to_s == viewer_id && viewer_id.present?
   copy_row = approver_id_match ? nil : copy_row_for(submission)
-  # A tracking copy left behind by an earlier pool step shouldn't mask the
-  # approve button when the viewer is once again a live approver at the step the
-  # form is currently sitting at — e.g. two consecutive group steps routed to the
-  # same group, where approver_id stays nil so approver_id_match can't catch it.
+  # A copy shouldn't mask the approve button when the viewer is also a live
+  # approver at the step the form is currently sitting at — e.g. a "Send a Copy
+  # To" recipient who belongs to the group the step routes to, where approver_id
+  # stays nil so approver_id_match can't catch it.
   # Gated behind copy_row so the eligibility lookup only runs for the few rows
   # that actually have a copy to suppress.
   if copy_row && current_step && viewer_id.present? &&

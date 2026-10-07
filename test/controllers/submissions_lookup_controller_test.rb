@@ -90,4 +90,18 @@ class SubmissionsLookupControllerTest < ActionController::TestCase
 
     assert_redirected_to submissions_path(filter_reference: "PTR-#{request.id}")
   end
+
+  # An approver's work leaves their Inbox once the form moves on; Submissions
+  # is where they find it again, so the lookup opens it for them too.
+  test 'a submission the viewer acted on is opened' do
+    sign_in_as(groups: [])
+    request = probation_transfer_requests(:one)
+    request.status_changes.create!(to_status: 'Approved', changed_by_id: '102989')
+
+    Employee.stub(:subordinate_ids, []) do
+      get :lookup, params: { reference: "PTR-#{request.id}" }
+    end
+
+    assert_redirected_to probation_transfer_request_path(request)
+  end
 end

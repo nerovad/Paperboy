@@ -58,6 +58,24 @@ class SubmissionsEmployeeFilterTest < ActionController::TestCase
     assert_equal [ME], scope_for(nil, subordinates: [])
   end
 
+  # What the viewer approved is listed with their own, and only with their own:
+  # filtered to a report, the list is that report's submissions.
+  test 'forms the viewer acted on are listed on All and Me, not under a report' do
+    sign_in_as
+    request = probation_transfer_requests(:one)
+    request.update_columns(employee_id: '999001')
+    request.status_changes.create!(to_status: 'Approved', changed_by_id: ME)
+
+    listed = lambda do |filter|
+      scope_for(filter)
+      @controller.send(:submission_scope_for, ProbationTransferRequest).exists?(id: request.id)
+    end
+
+    assert listed.call(nil)
+    assert listed.call('me')
+    assert_not listed.call(REPORT)
+  end
+
   test 'All is listed first and selected, with Me just below it' do
     sign_in_as
     report = Employee.new(id: REPORT, first_name: 'Ana', last_name: 'Ruiz')

@@ -73,12 +73,13 @@ class TrackableStatusStepTasksTest < ActiveSupport::TestCase
     assert_equal VENDOR, change.changed_by_id
   end
 
-  test 'whoever answered keeps a tracking copy' do
+  # The form leaves the inbox of whoever answered; Submissions lists it for
+  # them instead, so no copy is left behind.
+  test 'answering a task leaves no copy in the inbox' do
     start
     approve(VENDOR)
 
-    assert Forms::SubmissionCopy.active.exists?(submission_type: 'IdBadgeRequestForm', submission_id: @form.id,
-                                                recipient_employee_id: VENDOR.to_i)
+    assert_not Forms::SubmissionCopy.exists?(submission_type: 'IdBadgeRequestForm', submission_id: @form.id)
   end
 
   test 'under the any rule the first approval finishes the step' do
