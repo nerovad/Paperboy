@@ -68,8 +68,9 @@ Git for Windows, with its `bash.exe` ahead of
 `C:\Windows\System32\bash.exe` (WSL) on `PATH`. `shell: bash` must be
 that Git Bash.
 
-Ruby comes from `ruby/setup-ruby`, or from RubyInstaller+DevKit when
-that action cannot be fetched.
+Ruby comes from `ruby/setup-ruby`, or from RubyInstaller+DevKit
+(MSYS2) when that action cannot be fetched. That DevKit is needed
+to build native gems.
 `bundler-cache: true` needs the act_runner cache server enabled;
 without it every run installs gems from scratch.
 
@@ -111,15 +112,22 @@ have `contents: write`. The workflow already sets that permission.
 so the file was inert. Renovate is a self-hosted option and is not
 chosen.
 
+## Locked platforms
+
+`Gemfile.lock` locks `x64-mingw-ucrt` for the Windows runner. Ruby 4.0.6 on
+Windows is a UCRT build. `x64-mingw32` is only Ruby 3.0 and older, so it is
+not locked. No darwin platform was added. Windows builds of `google-protobuf`
+4.36.2, `nokogiri` 1.19.4, and `sass-embedded` 1.105.0 were added at the same
+versions as the Linux builds. No gem version changed. `tzinfo-data` 1.2026.5 is
+locked; the Gemfile lists it for `platforms: %i[windows jruby]`.
+
+Native gems with no Windows build compile with the RubyInstaller DevKit (MSYS2):
+`tiny_tds` (also needs FreeTDS; it is `force_ruby_platform`), bcrypt,
+bcrypt_pbkdf, bigdecimal, bootsnap, date, debug, ed25519, erb, io-console, json,
+msgpack, nio4r, prism, puma, racc, rbs, strscan, websocket-driver, and bindex.
+`thruster` has no Windows build. The production server uses it, not CI.
+
 ## Known gaps
-
-`Gemfile.lock` `PLATFORMS` has no `x64-mingw-ucrt`. `setup-ruby` and
-Bundler on Windows need this follow-up before `bundle install` can
-resolve Windows gems:
-
-```bash
-bundle lock --add-platform x64-mingw-ucrt
-```
 
 `runs-on` with `vars` needs a Gitea that evaluates expressions in
 `runs-on`. This host reports version `28.0.0`; confirm on the first
