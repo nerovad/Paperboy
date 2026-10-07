@@ -1,7 +1,6 @@
 ---
 name: Chore or maintenance
 about: Track maintenance, refactoring, documentation, or tooling work
-title: "[CHORE] "
 labels: "chore"
 assignees: ""
 ---

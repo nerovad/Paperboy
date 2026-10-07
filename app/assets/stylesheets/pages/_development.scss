@@ -23,3 +23,18 @@
 .development-queue-table th { color: $brand-navy; background: $surface-subtle; }
 .development-queue-table tr:last-child td { border-bottom: 0; }
 .development-count { display: inline-block; min-width: 1.6em; padding: 2px 7px; border-radius: 999px; background: $blue-action; color: $surface-base; font-size: 0.75em; text-align: center; }
+.issue-type-picker { display: grid; gap: 8px; }
+.issue-type-option { display: flex; gap: 8px; align-items: flex-start; }
+.issue-type-option small { display: block; color: $text-muted; }
+.issue-template-fields,
+.issue-template-group { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.issue-template-fields { display: none; }
+.issue-template-group legend { font-weight: 700; color: $brand-navy; }
+.issue-field-help { margin: 0; color: $text-muted; }
+.development-form:has(#issue_type_bug:checked) .issue-template-fields--bug,
+.development-form:has(#issue_type_feature:checked) .issue-template-fields--feature,
+.development-form:has(#issue_type_chore:checked) .issue-template-fields--chore,
+.development-form:has(#issue_type_infrastructure:checked) .issue-template-fields--infrastructure { display: grid; }
+@supports not selector(:has(*)) {
+  .issue-template-fields { display: grid; }
+}

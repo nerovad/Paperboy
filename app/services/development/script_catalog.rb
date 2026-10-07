@@ -70,7 +70,7 @@ module Development
                ->(params) { csr_args(params) },
                confirm: 'Generate a TLS certificate request? This creates a private key.'),
         script('create_issue', 'Create Gitea Issue', 'collaboration', 'gitea', 'new-issue',
-               'Create a typed, labeled Paperboy issue.',
+               'Create a typed, labeled Paperboy issue from the repository issue template.',
                ->(params) { issue_args(params) },
                confirm: 'Create this Gitea issue?'),
         script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
@@ -78,7 +78,7 @@ module Development
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
-               'Preview or apply labels and milestone changes to an issue.',
+               'Preview or apply label, milestone, project, and column changes.',
                ->(params) { update_issue_args(params) },
                confirm: 'Apply these changes to the Gitea issue?',
                confirm_when: 'apply'),
@@ -124,17 +124,37 @@ module Development
     end
 
     def issue_args(params)
-      args = ['--type', required_value(params[:issue_type], 'Issue type'),
-              '--title', required_value(params[:title], 'Title')]
-      # The runner has no terminal. bin/new-issue prompts for a missing body
-      # and for a milestone unless --no-milestone is set, and that read exits 1.
-      args += ['--body', required_value(params[:body], 'Body')]
+      type = required_value(params[:issue_type], 'Issue type')
+      args = ['--type', type, '--title', required_value(params[:title], 'Title'), '--body', issue_body(type, params)]
+      label_list(params[:extra_labels]).each { |label| args += ['--label', label] }
+      # The runner has no terminal. bin/new-issue prompts for a milestone
+      # unless --no-milestone is set, and that read exits 1.
       if params[:milestone].present?
-        args += ['--milestone', required_value(params[:milestone], 'Milestone')]
+        args += ['--milestone', params[:milestone].to_s.strip]
       else
         args << '--no-milestone'
       end
-      args
+      args + issue_project_args(params)
+    end
+
+    def issue_body(type, params)
+      Paperboy::Gitea::IssueTemplate.render(type, issue_answers(params, type))
+    rescue Paperboy::Gitea::IssueTemplate::Invalid => e
+      raise ArgumentError, e.message
+    end
+
+    def issue_answers(params, type)
+      raw = params[:answers]
+      return {} if raw.blank?
+
+      raw[type] || raw[type.to_sym] || {}
+    end
+
+    def issue_project_args(params)
+      return ['--no-project'] if truthy?(params[:no_project]) || params[:project].to_s.strip == '__none__'
+
+      project = params[:project].to_s.strip
+      project.present? ? ['--project', project] : []
     end
 
     def pull_request_args(params)
@@ -147,11 +167,27 @@ module Development
     end
 
     def update_issue_args(params)
+      added = label_list(params[:labels], params[:add_labels])
+      removed = label_list(params[:remove_labels])
+      milestone = params[:milestone].to_s.strip
+      project = params[:project].to_s.strip
+      project = '' if project == '__none__'
+      column = params[:column].to_s.strip
+      unchanged = added.empty? && removed.empty? && milestone.empty? && project.empty? && column.empty?
+      raise ArgumentError, 'At least one update is required.' if unchanged
+
       args = ['--issue', integer(params[:issue], required: 'Issue')]
-      params[:labels].to_s.split(',').map(&:strip).reject(&:blank?).each { |label| args += ['--add-label', label] }
-      args += ['--milestone', params[:milestone].to_s] if params[:milestone].present?
+      added.each { |label| args += ['--add-label', label] }
+      removed.each { |label| args += ['--remove-label', label] }
+      args += ['--milestone', milestone] if milestone.present?
+      args += ['--project', project] if project.present?
+      args += ['--column', column] if column.present?
       args << '--apply' if truthy?(params[:apply])
       args
+    end
+
+    def label_list(*values)
+      values.flatten.compact.flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?)
     end
 
     def clean_worktree_args(params)

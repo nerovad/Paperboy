@@ -65,18 +65,6 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
     assert_equal 'Release tag is required.', error.message
   end
 
-  test 'create issue skips the milestone prompt unless a milestone is given' do
-    script = Development::ScriptCatalog.find('create_issue')
-
-    assert_equal ['--type', 'feature', '--title', 'Add portal', '--body', 'Details', '--no-milestone'],
-                 script[:arguments].call(issue_type: 'feature', title: 'Add portal', body: 'Details')
-    assert_equal ['--type', 'bug', '--title', 'Fix report', '--body', 'Details', '--milestone', '2026.10'],
-                 script[:arguments].call(issue_type: 'bug', title: 'Fix report', body: 'Details',
-                                         milestone: '2026.10')
-    error = assert_raises(ArgumentError) { script[:arguments].call(issue_type: 'bug', title: 'Fix report') }
-    assert_equal 'Body is required.', error.message
-  end
-
   test 'pull request catalog entry builds explicit Gitea arguments' do
     script = Development::ScriptCatalog.find('create_pull_request')
 
@@ -105,8 +93,8 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
     assert update_issue[:confirm].present?
     assert_equal ['--issue', '41', '--add-label', 'area:forms'],
                  update_issue[:arguments].call(issue: '41', labels: 'area:forms')
-    assert_equal ['--issue', '41', '--apply'],
-                 update_issue[:arguments].call(issue: '41', apply: '1')
+    error = assert_raises(ArgumentError) { update_issue[:arguments].call(issue: '41', apply: '1') }
+    assert_equal 'At least one update is required.', error.message
     assert_nil Development::ScriptCatalog.find('status_report')[:confirm]
   end
 
@@ -136,5 +124,62 @@ class DevelopmentScriptCatalogTest < ActiveSupport::TestCase
     assert_equal 'csr', Development::ScriptCatalog.find('generate_csr')[:feature]
     assert Development::ScriptCatalog.find('generate_csr')[:confirm].present?
     assert Development::ScriptCatalog.find('deploy_dev')[:confirm].present?
+  end
+end
+
+class DevelopmentIssueArgumentTest < ActiveSupport::TestCase
+  self.fixture_table_names = []
+
+  test 'create issue renders the selected template and can skip the project' do
+    script = Development::ScriptCatalog.find('create_issue')
+    answers = {
+      'feature' => {
+        'problem_or_opportunity' => 'People need one issue shape.',
+        'proposed_capability' => 'The form follows the template.',
+        'acceptance_criteria' => 'Form sections match the template.'
+      }
+    }
+
+    args = script[:arguments].call(issue_type: 'feature', title: 'Add portal', answers: answers)
+    body = args[args.index('--body') + 1]
+
+    assert_equal ['--type', 'feature', '--title', 'Add portal'], args.first(4)
+    assert_includes body, '## Problem or opportunity'
+    assert_includes body, 'People need one issue shape.'
+    assert_includes args, '--no-milestone'
+    assert_equal ['--type', 'bug', '--title', 'Fix report', '--body', bug_body, '--milestone', '2026.10',
+                  '--no-project'],
+                 script[:arguments].call(issue_type: 'bug', title: 'Fix report', answers: bug_answers,
+                                         milestone: '2026.10', project: '__none__')
+    error = assert_raises(ArgumentError) { script[:arguments].call(issue_type: 'bug', title: 'Fix report') }
+    assert_includes error.message, 'Problem is required.'
+  end
+
+  test 'update issue plans labels milestone project and column' do
+    script = Development::ScriptCatalog.find('update_issue')
+
+    assert_equal ['--issue', '41', '--add-label', 'area:forms', '--remove-label', 'bug', '--milestone', 'Phase',
+                  '--project', 'Powerpuff Girls', '--column', 'In Progress', '--apply'],
+                 script[:arguments].call(issue: '41', add_labels: ['area:forms'], remove_labels: 'bug',
+                                         milestone: 'Phase', project: 'Powerpuff Girls',
+                                         column: 'In Progress', apply: '1')
+  end
+
+  private
+
+  def bug_answers
+    {
+      'bug' => {
+        'problem' => 'The report is blank.',
+        'steps_to_reproduce' => 'Open the report.',
+        'expected_behavior' => 'Rows appear.',
+        'actual_behavior' => 'The page is empty.',
+        'acceptance_criteria' => 'Rows appear again.'
+      }
+    }
+  end
+
+  def bug_body
+    Paperboy::Gitea::IssueTemplate.render('bug', bug_answers.fetch('bug'))
   end
 end

@@ -11,6 +11,7 @@ module Development
       end
       @selected_script = ScriptCatalog.find(params[:script_key])
       @selected_script = nil unless available?(@selected_script)
+      @gitea_choices = gitea_choices_for(@selected_script)
       @show_recent_runs = params[:recent].present?
       @recent_runs = Development::Run.order(created_at: :desc).limit(12)
     end
@@ -47,6 +48,12 @@ module Development
 
     def available?(script)
       script && ScriptCatalog.menu?(script) && feature?(script[:feature])
+    end
+
+    def gitea_choices_for(script)
+      return unless script && %w[create_issue update_issue].include?(script[:key])
+
+      Development::GiteaChoices.fetch
     end
 
     def feature?(key)

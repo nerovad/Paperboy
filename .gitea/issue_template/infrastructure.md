@@ -1,7 +1,6 @@
 ---
 name: Infrastructure request
 about: Request infrastructure, access, hosting, deployment, or CI work
-title: "[INFRA] "
 labels: "infrastructure"
 assignees: ""
 ---

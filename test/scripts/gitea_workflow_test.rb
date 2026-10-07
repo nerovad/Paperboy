@@ -6,6 +6,7 @@ require 'minitest/autorun'
 require 'open3'
 require 'shellwords'
 require 'tmpdir'
+require_relative '../../lib/paperboy/gitea/issue_template'
 
 # Exercises the Gitea workflow scripts against a fake curl. Nothing here
 # talks to SQL Server or the live Gitea server.
@@ -176,36 +177,77 @@ class GiteaNewIssueScriptTest < Minitest::Test
 
     stdout, stderr, status = run_script(
       'new-issue', '--type', 'feature', '--title', 'Add widgets',
-      '--body', 'Body text', '--milestone', 'Phase'
+      '--body', valid_feature_body, '--milestone', 'Phase'
     )
 
     assert status.success?, "#{stdout}\n#{stderr}"
     assert_includes stdout, 'Created issue #50'
     payload = JSON.parse(create_request.fetch('data'))
     assert_equal 'Add widgets', payload['title']
-    assert_equal 'Body text', payload['body']
+    assert_includes payload['body'], '## Problem or opportunity'
+    assert_includes payload['body'], 'Widgets are missing.'
     assert_equal [5], payload['labels']
     assert_equal 9, payload['milestone']
     assert_equal [2], payload['projects']
     refute(requests.any? { |request| request['url'].include?('/labels') && request['method'] == 'POST' })
+    refute(requests.any? { |request| request['url'].include?('issue_templates') })
   end
 
-  def test_omitted_body_comes_from_the_issue_template
+  def test_answers_file_renders_the_template_sections
     write_create_fixtures
+    path = File.join(@root, 'answers.json')
+    File.write(path, JSON.generate(
+                       'problem_or_opportunity' => 'Widgets are missing.',
+                       'proposed_capability' => 'Add widgets.',
+                       'acceptance_criteria' => 'A widget can be added.'
+                     ))
 
+    stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--answers-file', path, '--no-project'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    payload = JSON.parse(create_request.fetch('data'))
+    assert_includes payload['body'], '## Scope considerations'
+    assert_includes payload['body'], '- Forms, workflows, or users affected:'
+    refute payload.key?('projects')
+  end
+
+  def test_omitted_body_is_refused
     _stdout, stderr, status = run_script('new-issue', '--type', 'feature', '--title', 'Add widgets', '--no-project')
 
+    refute status.success?
+    assert_includes stderr, '--answers-file'
+    assert_includes stderr, 'problem_or_opportunity'
+    refute(requests.any? { |request| request['method'] == 'POST' })
+  end
+
+  def test_untouched_template_body_is_refused
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', Paperboy::Gitea::IssueTemplate.skeleton('feature'), '--no-project'
+    )
+
+    refute status.success?
+    assert_includes stderr, 'Problem or opportunity is required.'
+    refute(requests.any? { |request| request['method'] == 'POST' })
+  end
+
+  def test_fields_lists_section_ids_without_calling_gitea
+    stdout, stderr, status = run_script('new-issue', '--type', 'chore', '--fields')
+
     assert status.success?, stderr
-    payload = JSON.parse(create_request.fetch('data'))
-    assert_equal '## Proposed capability', payload['body']
-    refute payload.key?('projects')
+    assert_includes stdout, 'work_to_perform'
+    assert_empty requests
   end
 
   def test_missing_label_does_not_create_the_issue
     write_create_fixtures(labels: [{ 'id' => 1, 'name' => 'bug' }])
 
     _stdout, stderr, status = run_script(
-      'new-issue', '--type', 'feature', '--title', 'Add widgets', '--body', 'Body text', '--no-project'
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--no-project'
     )
 
     refute status.success?
@@ -215,11 +257,15 @@ class GiteaNewIssueScriptTest < Minitest::Test
 
   private
 
+  def valid_feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+
   def write_create_fixtures(labels: [{ 'id' => 5, 'name' => 'feature' }])
-    write_fixture('GET issue_templates page=1', [
-                    { 'name' => 'Feature request', 'labels' => ['feature'], 'body' => '',
-                      'content' => '## Proposed capability' }
-                  ])
     write_fixture('GET labels page=1', labels)
     write_fixture('GET milestones name=Phase&state=all page=1', [{ 'id' => 9, 'title' => 'Phase' }])
     write_fixture('GET projects state=all page=1', [{ 'id' => 2, 'title' => 'Powerpuff Girls' }])
@@ -410,5 +456,36 @@ class GiteaStatusReportScriptTest < Minitest::Test
       'requested_reviewers' => reviewers.map { |login| { 'login' => login } },
       'updated_at' => stale ? '2001-09-09T01:46:39Z' : '2001-09-09T01:46:41Z'
     }
+  end
+end
+
+class GiteaLookupsScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_fixture('GET labels page=1', [{ 'id' => 26, 'name' => 'bug' }])
+    write_fixture('GET milestones state=open page=1', [{ 'id' => 1, 'title' => 'Phase' }])
+    write_fixture('GET projects state=all page=1', [{ 'id' => 2, 'title' => 'Powerpuff Girls' }])
+    write_fixture('GET projects/2/columns page=1', [{ 'id' => 7, 'title' => 'In Progress' }])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_prints_labels_milestones_and_project_columns
+    stdout, stderr, status = run_script('gitea-lookups')
+
+    assert status.success?, stderr
+    payload = JSON.parse(stdout)
+    label_names = payload['labels'].map { |row| row['name'] }
+    milestone_titles = payload['milestones'].map { |row| row['title'] }
+    project = payload['projects'].first
+    column_titles = project['columns'].map { |column| column['title'] }
+    assert_equal ['bug'], label_names
+    assert_equal ['Phase'], milestone_titles
+    assert_equal 'Powerpuff Girls', project['title']
+    assert_equal ['In Progress'], column_titles
   end
 end

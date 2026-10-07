@@ -1,0 +1,36 @@
+<% choices = local_assigns[:gitea_choices] %>
+<%= label_tag :issue, 'Issue number' %>
+<%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
+<% labels = development_label_names(choices) %>
+<% if labels.any? %>
+  <%= label_tag :add_labels, 'Add labels' %>
+  <%= select_tag 'add_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
+  <%= label_tag :remove_labels, 'Remove labels' %>
+  <%= select_tag 'remove_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
+<% else %>
+  <%= label_tag :labels, 'Labels to add (comma separated)' %>
+  <%= text_field_tag :labels, nil, class: 'form-control' %>
+  <%= label_tag :remove_labels, 'Labels to remove (comma separated)' %>
+  <%= text_field_tag :remove_labels, nil, class: 'form-control' %>
+<% end %>
+<% milestones = development_milestone_titles(choices) %>
+<%= label_tag :milestone, 'Milestone' %>
+<% if milestones.any? %>
+  <%= select_tag :milestone, options_for_select(milestones), include_blank: 'Leave unchanged', class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :milestone, nil, class: 'form-control' %>
+<% end %>
+<% projects = development_project_titles(choices) %>
+<%= label_tag :project, 'Project' %>
+<% if projects.any? %>
+  <%= select_tag :project, options_for_select(projects), include_blank: 'Leave unchanged', class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :project, nil, class: 'form-control' %>
+<% end %>
+<% columns = development_column_choices(choices) %>
+<%= label_tag :column, 'Column' %>
+<% if columns.any? %>
+  <%= select_tag :column, options_for_select(columns), include_blank: 'Leave unchanged', class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :column, nil, class: 'form-control' %>
+<% end %>
