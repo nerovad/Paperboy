@@ -113,7 +113,7 @@ Thin seams only. Ranked for **learning value / risk**, not for shipping full Sup
 
 ### Recommendation (one)
 
-**Do spike #1 first:** a read-only Support summary (or outbound deep-link) card inside the existing Paperboy `itp` shell, ACL-gated, with tests for route + authorization, and **zero** production ITPortal deploys. Stop after the spike issue is filed from this wiki; do not expand into ticket CRUD in the same change.
+**Do the first-ranked spike first:** a read-only Support summary (or outbound deep-link) card inside the existing Paperboy `itp` shell, ACL-gated, with tests for route + authorization, and **zero** production ITPortal deploys. Stop after the spike issue is filed from this wiki; do not expand into ticket CRUD in the same change.
 
 ## PR hygiene (later steps)
 
