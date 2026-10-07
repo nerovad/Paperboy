@@ -115,6 +115,14 @@ Thin seams only. Ranked for **learning value / risk**, not for shipping full Sup
 
 **Do the first-ranked spike first:** a read-only Support summary (or outbound deep-link) card inside the existing Paperboy `itp` shell, ACL-gated, with tests for route + authorization, and **zero** production ITPortal deploys. Stop after the spike issue is filed from this wiki; do not expand into ticket CRUD in the same change.
 
+### Spike 1 status (draft on issue/43)
+
+Branch `issue/43-itportal-to-paperboy` adds an ACL-gated Support summary card
+inside the existing `itp` shell: feature key `itp:support`, route
+`/itp/support`, outbound deep-link via `ITPORTAL_SUPPORT_URL` (default
+`https://gsa-itportal/tickets`). No Service Desk API/SQL from Paperboy, no
+production ITPortal deploy, no new repo. Awaiting accept before commit.
+
 ## PR hygiene (later steps)
 
 When implementation branches exist:

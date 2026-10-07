@@ -1,6 +1,8 @@
 <%# app/views/itp/shared/_sidebar.html.erb
     Sidebar for the IT Portal app. The app switcher header is shared with
-    every other app; everything below it is this app's own navigation. %>
+    every other app; everything below it is this app's own navigation.
+    Support is behind the ACL > Application Features grant its controller
+    checks (#43 spike 1). %>
 <div class="sidebar itp-sidebar">
   <%= render "shared/app_switcher" %>
 
@@ -11,5 +13,10 @@
                 class: "nav-link#{' active' if current_page?(itp_root_path)}" %>
     <%= link_to "Hello World", itp_dashboard_path,
                 class: "nav-link#{' active' if current_page?(itp_dashboard_path)}" %>
+    <% if can_use_app_feature?("itp", "support") %>
+      <%= link_to "Support", itp_support_path,
+                  class: "nav-link#{' active' if current_page?(itp_support_path)}" %>
+    <% end %>
   </nav>
+  <%= render "shared/sidebar_footer" %>
 </div>

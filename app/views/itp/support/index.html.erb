@@ -1,0 +1,34 @@
+<%# app/views/itp/support/index.html.erb
+    #43 spike 1 — read-only Support summary + outbound deep-link into live
+    ITPortal Support. No ticket CRUD, no Service Desk API calls from here. %>
+<div class="form-header">
+  <h1>Support</h1>
+</div>
+
+<div class="form-wrapper">
+  <section class="itp-support-summary" aria-labelledby="itp-support-summary-title">
+    <h2 id="itp-support-summary-title">ITPortal Support</h2>
+    <p>
+      Open the live Service Desk Support surface for tickets, dashboard,
+      knowledge base, and related desk tools. This Paperboy page is a thin
+      seam only — ticket work still runs on ITPortal until a later cutover.
+    </p>
+    <ul>
+      <li>Tickets — create and track service requests</li>
+      <li>Dashboard — Support overview</li>
+      <li>Knowledge base, reports, notifications, scheduler, projects</li>
+    </ul>
+    <p>
+      <%= link_to "Open Support in ITPortal", @support_url,
+                  class: "btn secondary",
+                  target: "_blank",
+                  rel: "noopener noreferrer" %>
+    </p>
+    <p class="text-muted">
+      Destination:
+      <code><%= @support_url %></code>
+      (override with <code>ITPORTAL_SUPPORT_URL</code> in
+      <code>.env.local</code> when needed).
+    </p>
+  </section>
+</div>
