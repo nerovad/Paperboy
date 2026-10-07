@@ -284,13 +284,19 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   def setup
     prepare_gitea_fixture
     write_issue
-    write_fixture('GET labels page=1', [{ 'id' => 1, 'name' => 'bug' }, { 'id' => 5, 'name' => 'feature' }])
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 6, 'name' => 'priority:normal' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
     write_fixture('GET milestones name=Phase&state=all page=1', [{ 'id' => 9, 'title' => 'Phase' }])
     write_fixture('GET projects state=all page=1', [
                     { 'id' => 2, 'title' => 'Powerpuff Girls' },
                     { 'id' => 3, 'title' => 'Other' }
                   ])
     write_fixture('GET projects/2/columns page=1', [{ 'id' => 7, 'title' => 'In Progress' }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [])
   end
 
   def teardown
@@ -301,8 +307,8 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
     stdout, stderr, status = run_script('update-issue', *update_args)
 
     assert status.success?, stderr
-    assert_includes stdout, '- remove label: bug'
-    assert_includes stdout, '- add label: feature'
+    assert_includes stdout, '- remove label: area:forms'
+    assert_includes stdout, '- add label: priority:normal'
     assert_includes stdout, '- assign milestone: Phase'
     assert_includes stdout, '- assign project: Powerpuff Girls (replaces other projects)'
     assert_includes stdout, '- move to column: In Progress'
@@ -311,7 +317,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   end
 
   def test_apply_uses_the_issue_global_id_for_the_column_move
-    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('DELETE issues/10/labels/8 page=1', nil, status: 204)
     write_fixture('POST issues/10/labels page=1', [])
     write_fixture('PATCH issues/10 page=1', {})
     write_fixture('POST projects/2/issues/200/move page=1', {})
@@ -320,7 +326,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
 
     assert status.success?, "#{stdout}\n#{stderr}"
     deleted = requests.find { |request| request['method'] == 'DELETE' }
-    assert_includes deleted.fetch('url'), '/issues/10/labels/1'
+    assert_includes deleted.fetch('url'), '/issues/10/labels/8'
     patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
     assert_equal 9, patch['milestone']
     assert_equal [2], patch['projects']
@@ -329,6 +335,21 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
     assert_includes move.fetch('url'), '/projects/2/issues/200/move'
     refute_includes move.fetch('url'), '/issues/10/move'
     assert_equal({ 'column_id' => 7 }, JSON.parse(move.fetch('data')))
+  end
+
+  def test_same_column_is_left_unchanged
+    write_issue(projects: [{ 'id' => 2, 'title' => 'Powerpuff Girls' }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [{ 'id' => 200, 'number' => 10 }])
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--project', 'Powerpuff Girls', '--column', 'In Progress'
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- no changes required'
+    refute_includes stdout, '- move to column'
+    refute_includes stdout, 'Audit:'
+    assert_empty(requests.select { |request| %w[POST PATCH DELETE].include?(request['method']) })
   end
 
   def test_column_without_a_project_is_refused
@@ -343,7 +364,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   private
 
   def update_args
-    ['--issue', '10', '--add-label', 'feature', '--remove-label', 'bug',
+    ['--issue', '10', '--add-label', 'priority:normal', '--remove-label', 'area:forms',
      '--milestone', 'Phase', '--project', 'Powerpuff Girls', '--column', 'In Progress']
   end
 
@@ -352,9 +373,262 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
                     'id' => 200,
                     'number' => 10,
                     'title' => 'Widgets',
-                    'labels' => [{ 'id' => 1, 'name' => 'bug' }],
+                    'labels' => [{ 'id' => 8, 'name' => 'area:forms' }],
                     'milestone' => nil,
                     'projects' => projects
+                  })
+  end
+end
+
+class GiteaNewIssueTypeLabelScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_type_name_on_label_is_refused
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'bug', '--label', 'area:forms', '--no-project'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: bug'
+    assert_empty requests
+  end
+
+  def test_matching_type_name_on_label_is_refused
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'feature', '--no-project'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: feature'
+    assert_empty requests
+  end
+
+  def test_ordinary_label_is_sent_with_the_template_label
+    write_fixture('GET labels page=1', [
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
+    write_fixture('POST issues page=1', { 'number' => 50, 'id' => 300, 'html_url' => 'http://gitea.test/issues/50' })
+
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'area:forms', '--no-milestone', '--no-project'
+    )
+
+    assert status.success?, stderr
+    payload = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [8, 5], payload['labels']
+  end
+
+  private
+
+  def valid_feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+end
+
+class GiteaUpdateIssueContentScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_issue
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_dry_run_plans_a_title_and_body
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', feature_body
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- set title: Better widgets'
+    assert_includes stdout, '- remove label: bug'
+    assert_includes stdout, '- add label: feature'
+    assert_includes stdout, '- replace body:'
+    assert_includes stdout, 'Widgets are missing.'
+    assert_includes stdout, 'Dry run only'
+    refute(requests.any? { |request| request['method'] == 'PATCH' })
+  end
+
+  def test_apply_patches_title_and_body_without_closing
+    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('POST issues/10/labels page=1', [])
+    write_fixture('PATCH issues/10 page=1', {})
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', feature_body, '--apply'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
+    assert_equal 'Better widgets', patch['title']
+    assert_includes patch['body'], 'Widgets are missing.'
+    refute patch.key?('state')
+    deleted = requests.find { |request| request['method'] == 'DELETE' }
+    assert_includes deleted.fetch('url'), '/issues/10/labels/1'
+    added = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [5], added['labels']
+    assert_includes stdout, 'Audit:'
+  end
+
+  def test_apply_patches_only_the_title_when_the_body_matches
+    body = feature_body
+    write_issue(body: body, labels: [{ 'id' => 5, 'name' => 'feature' }])
+    write_fixture('PATCH issues/10 page=1', {})
+
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', 'Better widgets', '--type', 'feature', '--body', body, '--apply'
+    )
+
+    assert status.success?, stderr
+    patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
+    assert_equal 'Better widgets', patch['title']
+    refute patch.key?('body')
+    refute patch.key?('state')
+  end
+
+  def test_apply_skips_an_unchanged_title_and_body
+    body = feature_body
+    write_issue(body: body, labels: [{ 'id' => 5, 'name' => 'feature' }])
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--title', ' Widgets ', '--type', 'feature', '--body', "#{body}\n", '--apply'
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- no changes required'
+    assert_includes stdout, 'No Gitea state was changed.'
+    refute_includes stdout, 'Audit:'
+    assert_empty(requests.select { |request| request['method'] == 'PATCH' })
+  end
+
+  private
+
+  def feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+
+  def write_issue(body: nil, title: 'Widgets', labels: [{ 'id' => 1, 'name' => 'bug' }])
+    write_fixture('GET issues/10 page=1', {
+                    'id' => 200, 'number' => 10, 'title' => title, 'body' => body,
+                    'labels' => labels, 'milestone' => nil, 'projects' => []
+                  })
+  end
+end
+
+class GiteaUpdateIssueTypeLabelScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_issue
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_apply_moves_the_type_label_when_the_body_already_matches
+    body = feature_body
+    write_issue(body: body)
+    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('POST issues/10/labels page=1', [])
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--type', 'feature', '--body', body,
+      '--add-label', 'bug', '--add-label', 'area:forms', '--apply'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    assert_includes stdout, '- remove label: bug'
+    assert_includes stdout, '- add label: feature'
+    assert_includes stdout, '- add label: area:forms'
+    refute_includes stdout, '- replace body:'
+    assert_empty(requests.select { |request| request['method'] == 'PATCH' })
+    added = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [8, 5], added['labels']
+  end
+
+  def test_type_label_without_type_is_refused
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--add-label', 'feature', '--remove-label', 'bug'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: feature'
+    assert_includes stderr, 'Type labels come from --type: bug'
+    assert_empty requests
+  end
+
+  def test_invalid_body_is_refused_before_a_request
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--type', 'feature', '--body', "## Problem or opportunity\n\nOnly one section.\n"
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Proposed capability is required.'
+    assert_empty requests
+  end
+
+  def test_empty_title_is_refused
+    _stdout, stderr, status = run_script('update-issue', '--issue', '10', '--title', '   ')
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Title cannot be empty'
+    assert_empty requests
+  end
+
+  private
+
+  def feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+
+  def write_issue(body: nil, title: 'Widgets', labels: [{ 'id' => 1, 'name' => 'bug' }])
+    write_fixture('GET issues/10 page=1', {
+                    'id' => 200, 'number' => 10, 'title' => title, 'body' => body,
+                    'labels' => labels, 'milestone' => nil, 'projects' => []
                   })
   end
 end
@@ -586,6 +860,69 @@ class GiteaCreatePullRequestScriptTest < Minitest::Test
       'issue' => '64',
       'implementation_notes' => 'Bash still posts the request.',
       'verification' => { 'checks_run' => 'ruby gitea_workflow_test.rb' }
+    }
+  end
+end
+
+class GiteaIssueScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_fixture('GET issues/69 page=1', issue_payload)
+    write_fixture('GET projects/2/columns page=1', [
+                    { 'id' => 5, 'title' => 'Backlog' },
+                    { 'id' => 7, 'title' => 'In Progress' }
+                  ])
+    write_fixture('GET projects/2/columns/5/issues page=1', [{ 'id' => 1, 'number' => 1 }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [{ 'id' => 690, 'number' => 69 }])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_prints_labels_milestone_project_and_column
+    stdout, stderr, status = run_script('gitea-issue', '69')
+
+    assert status.success?, stderr
+    payload = JSON.parse(stdout)
+    assert_equal %w[feature area:forms], payload['labels']
+    assert_equal 'Phase', payload['milestone']
+    assert_equal ['Powerpuff Girls'], payload['projects']
+    assert_equal 'In Progress', payload['column']
+    assert_equal 'Revise widgets', payload['title']
+  end
+
+  def test_column_is_blank_without_exactly_one_project
+    write_fixture(
+      'GET issues/69 page=1',
+      issue_payload.merge(
+        'milestone' => nil,
+        'projects' => [{ 'id' => 2, 'title' => 'One' }, { 'id' => 3, 'title' => 'Two' }]
+      )
+    )
+
+    stdout, stderr, status = run_script('gitea-issue', '69')
+
+    assert status.success?, stderr
+    payload = JSON.parse(stdout)
+    assert_nil payload['milestone']
+    assert_nil payload['column']
+    assert_equal %w[One Two], payload['projects']
+  end
+
+  private
+
+  def issue_payload
+    {
+      'id' => 690,
+      'number' => 69,
+      'title' => 'Revise widgets',
+      'body' => 'text',
+      'labels' => [{ 'id' => 5, 'name' => 'feature' }, { 'id' => 8, 'name' => 'area:forms' }],
+      'milestone' => { 'id' => 9, 'title' => 'Phase' },
+      'projects' => [{ 'id' => 2, 'title' => 'Powerpuff Girls' }]
     }
   end
 end

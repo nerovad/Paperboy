@@ -76,13 +76,20 @@ git pull --ff-only
 bin/worktree cleanup issue/123-short-description
 ```
 
-`bin/update-issue` can apply an explicitly approved label, milestone,
-project, or column change. It previews changes unless `--apply` is supplied.
-`--project` replaces the issue's project list. `--column` moves the card
-with the issue's global id:
+`bin/update-issue` can apply an explicitly approved title, body, label,
+milestone, project, or column change. It previews changes unless `--apply`
+is supplied. A body uses the same `--type` and `--answers-file` as
+`bin/new-issue`, and `--type` sets that type label. `--label`,
+`--add-label`, and `--remove-label` refuse bug, feature, chore, and
+infrastructure. `--project` replaces
+the issue's project list. `--column` moves the card with the issue's
+global id. The same milestone, project, or column is left unchanged.
+The command does not close the issue.
 
 ```bash
 bin/update-issue --issue 123 --add-label priority:normal
+bin/update-issue --issue 123 --title "Short imperative title" \
+  --type feature --answers-file /path/to/answers.json
 bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 

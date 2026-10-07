@@ -70,7 +70,7 @@ module Development
                ->(params) { csr_args(params) },
                confirm: 'Generate a TLS certificate request? This creates a private key.'),
         script('create_issue', 'Create Gitea Issue', 'collaboration', 'gitea', 'new-issue',
-               'Create a typed, labeled Paperboy issue from the repository issue template.',
+               'Create a typed issue from the repository template. Extra labels omit type labels.',
                ->(params) { issue_args(params) },
                confirm: 'Create this Gitea issue?'),
         script('create_pull_request', 'Create Pull Request', 'collaboration', 'gitea',
@@ -79,7 +79,7 @@ module Development
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
-               'Preview or apply label, milestone, project, and column changes.',
+               'Preview or apply label, milestone, project, column, title, and body changes. Load issue fills current values. Menus omit type labels.',
                ->(params) { update_issue_args(params) },
                confirm: 'Apply these changes to the Gitea issue?',
                confirm_when: 'apply'),
@@ -127,7 +127,7 @@ module Development
     def issue_args(params)
       type = required_value(params[:issue_type], 'Issue type')
       args = ['--type', type, '--title', required_value(params[:title], 'Title'), '--body', issue_body(type, params)]
-      label_list(params[:extra_labels]).each { |label| args += ['--label', label] }
+      ordinary_labels(label_list(params[:extra_labels])).each { |label| args += ['--label', label] }
       # The runner has no terminal. bin/new-issue prompts for a milestone
       # unless --no-milestone is set, and that read exits 1.
       if params[:milestone].present?
@@ -197,16 +197,20 @@ module Development
     end
 
     def update_issue_args(params)
-      added = label_list(params[:labels], params[:add_labels])
-      removed = label_list(params[:remove_labels])
+      added = ordinary_labels(label_list(params[:labels], params[:add_labels]))
+      removed = ordinary_labels(label_list(params[:remove_labels]))
       milestone = params[:milestone].to_s.strip
       project = params[:project].to_s.strip
       project = '' if project == '__none__'
       column = params[:column].to_s.strip
-      unchanged = added.empty? && removed.empty? && milestone.empty? && project.empty? && column.empty?
+      title = params[:title].to_s.strip
+      body_args = update_issue_body_args(params)
+      unchanged = [added, removed, body_args].all?(&:empty?) && [milestone, project, column, title].all?(&:empty?)
       raise ArgumentError, 'At least one update is required.' if unchanged
 
       args = ['--issue', integer(params[:issue], required: 'Issue')]
+      args += ['--title', title] if title.present?
+      args += body_args
       added.each { |label| args += ['--add-label', label] }
       removed.each { |label| args += ['--remove-label', label] }
       args += ['--milestone', milestone] if milestone.present?
@@ -216,8 +220,19 @@ module Development
       args
     end
 
+    def update_issue_body_args(params)
+      type = params[:issue_type].to_s.strip
+      return [] if type.blank? || type == 'unchanged'
+
+      ['--type', type, '--body', issue_body(type, params)]
+    end
+
     def label_list(*values)
       values.flatten.compact.flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?)
+    end
+
+    def ordinary_labels(names)
+      names.reject { |name| Paperboy::Gitea::IssueTemplate::TYPE_ORDER.include?(name) }
     end
 
     def clean_worktree_args(params)

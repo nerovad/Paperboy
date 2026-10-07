@@ -3,7 +3,8 @@
   <p><%= script[:description] %></p>
   <%= form_with url: development_runs_path, method: :post, class: "development-form" do |form| %>
     <%= hidden_field_tag :script_key, script[:key] %>
-    <%= render "development/runs/fields", script: script, form: form, gitea_choices: local_assigns[:gitea_choices] %>
+    <%= render "development/runs/fields", script: script, form: form, gitea_choices: local_assigns[:gitea_choices],
+               gitea_issue: local_assigns[:gitea_issue] %>
     <div class="form-actions">
       <% if script[:confirm_when] == 'apply' %>
         <%= form.submit 'Preview changes', class: 'btn secondary' %>

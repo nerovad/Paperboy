@@ -142,19 +142,56 @@ class DevelopmentIssueArgumentTest < ActiveSupport::TestCase
                                          milestone: '2026.10', project: '__none__')
     error = assert_raises(ArgumentError) { script[:arguments].call(issue_type: 'bug', title: 'Fix report') }
     assert_includes error.message, 'Problem is required.'
+    labeled = script[:arguments].call(issue_type: 'feature', title: 'Add portal', answers: answers,
+                                      extra_labels: 'bug, area:forms, feature')
+    assert_equal 1, labeled.count('--label')
+    assert_equal 'area:forms', labeled[labeled.index('--label') + 1]
+    type_only = script[:arguments].call(issue_type: 'feature', title: 'Add portal', answers: answers,
+                                        extra_labels: %w[bug feature])
+    refute_includes type_only, '--label'
+    assert_equal 'feature', type_only[type_only.index('--type') + 1]
   end
 
   test 'update issue plans labels milestone project and column' do
     script = Development::ScriptCatalog.find('update_issue')
 
-    assert_equal ['--issue', '41', '--add-label', 'area:forms', '--remove-label', 'bug', '--milestone', 'Phase',
-                  '--project', 'Powerpuff Girls', '--column', 'In Progress', '--apply'],
-                 script[:arguments].call(issue: '41', add_labels: ['area:forms'], remove_labels: 'bug',
-                                         milestone: 'Phase', project: 'Powerpuff Girls',
-                                         column: 'In Progress', apply: '1')
+    assert_equal ['--issue', '41', '--add-label', 'area:forms', '--remove-label', 'priority:low',
+                  '--milestone', 'Phase', '--project', 'Powerpuff Girls', '--column', 'In Progress', '--apply'],
+                 script[:arguments].call(issue: '41', add_labels: ['feature', 'area:forms'],
+                                         remove_labels: 'bug, priority:low', milestone: 'Phase',
+                                         project: 'Powerpuff Girls', column: 'In Progress', apply: '1')
+    error = assert_raises(ArgumentError) { script[:arguments].call(issue: '41', add_labels: ['bug']) }
+    assert_includes error.message, 'At least one update is required.'
+  end
+
+  test 'update issue can revise the title and template body' do
+    script = Development::ScriptCatalog.find('update_issue')
+    args = script[:arguments].call(issue: '41', issue_type: 'feature', title: 'Revise widgets', answers: feature_answers)
+    body = args[args.index('--body') + 1]
+
+    assert_equal 'Revise widgets', args[args.index('--title') + 1]
+    assert_equal 'feature', args[args.index('--type') + 1]
+    assert_includes body, '## Problem or opportunity'
+    assert_includes body, 'People need one issue shape.'
+    label_only = script[:arguments].call(issue: '41', labels: 'area:forms', issue_type: 'unchanged', title: '  ')
+    refute_includes label_only, '--title'
+    refute_includes label_only, '--type'
+    refute_includes label_only, '--body'
+    error = assert_raises(ArgumentError) { script[:arguments].call(issue: '41', issue_type: 'feature') }
+    assert_includes error.message, 'Problem or opportunity is required.'
   end
 
   private
+
+  def feature_answers
+    {
+      'feature' => {
+        'problem_or_opportunity' => 'People need one issue shape.',
+        'proposed_capability' => 'The form follows the template.',
+        'acceptance_criteria' => 'Form sections match the template.'
+      }
+    }
+  end
 
   def bug_answers
     {

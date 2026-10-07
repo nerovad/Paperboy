@@ -2,6 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(cd -- "${script_dir}/.." && pwd -P)"
 # shellcheck disable=SC1091
 source "${script_dir}/gitea-common"
 
@@ -9,18 +10,122 @@ issue_number=''
 milestone_title=''
 project_title=''
 column_title=''
+title=''
+title_set=false
+issue_type=''
+body=''
+body_file=''
+answers_file=''
 apply=false
 label_names=()
 remove_labels=()
+
+issue_template() {
+  command -v ruby >/dev/null 2>&1 || {
+    echo 'Required command not found: ruby' >&2
+    return 1
+  }
+  ruby "${repo_root}/lib/paperboy/gitea/issue_template.rb" "$@"
+}
+
+strip_edges() {
+  local value="$1"
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s' "${value}"
+}
+
+is_type_label() {
+  case "$1" in
+    bug|feature|chore|infrastructure) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# The template type owns the type label. Other labels stay under
+# --add-label and --remove-label.
+refuse_type_labels_without_type() {
+  local label_name refused=false
+  if ((body_sources > 0)); then
+    return 0
+  fi
+  for label_name in "${label_names[@]+"${label_names[@]}"}" "${remove_labels[@]+"${remove_labels[@]}"}"; do
+    if is_type_label "${label_name}"; then
+      echo "Type labels come from --type: ${label_name}" >&2
+      refused=true
+    fi
+  done
+  [[ "${refused}" == false ]] || exit 2
+}
+
+sync_type_label() {
+  local template_label label_name other seen=false
+  local -a kept_adds=()
+  local -a kept_removes=()
+  template_label="$(issue_template label --type "${issue_type}")"
+
+  for label_name in "${label_names[@]+"${label_names[@]}"}"; do
+    if is_type_label "${label_name}" && [[ "${label_name}" != "${template_label}" ]]; then
+      continue
+    fi
+    kept_adds+=("${label_name}")
+  done
+  for label_name in "${remove_labels[@]+"${remove_labels[@]}"}"; do
+    if is_type_label "${label_name}"; then
+      continue
+    fi
+    kept_removes+=("${label_name}")
+  done
+
+  for label_name in "${kept_adds[@]+"${kept_adds[@]}"}"; do
+    [[ "${label_name}" == "${template_label}" ]] && seen=true
+  done
+  if [[ "${seen}" == false ]] && ! grep -Fxq "${template_label}" <<<"${current_labels}"; then
+    kept_adds+=("${template_label}")
+  fi
+  for other in bug feature chore infrastructure; do
+    [[ "${other}" == "${template_label}" ]] && continue
+    if grep -Fxq "${other}" <<<"${current_labels}"; then
+      kept_removes+=("${other}")
+    fi
+  done
+
+  label_names=()
+  if ((${#kept_adds[@]})); then
+    label_names=("${kept_adds[@]}")
+  fi
+  remove_labels=()
+  if ((${#kept_removes[@]})); then
+    remove_labels=("${kept_removes[@]}")
+  fi
+}
+
+validate_body() {
+  local draft
+  draft="$(mktemp)"
+  printf '%s' "${body}" >"${draft}"
+  if ! issue_template validate-body --type "${issue_type}" --body-file "${draft}"; then
+    rm -f "${draft}"
+    exit 2
+  fi
+  rm -f "${draft}"
+}
+
 usage() {
   cat <<'EOF'
 Usage: bin/update-issue --issue NUMBER [OPTIONS]
 
 Plan explicit updates for one Gitea issue. The default is dry-run; add
---apply only after reviewing the plan.
+--apply only after reviewing the plan. A body must follow the issue
+template for --type.
 
 Options:
   --issue NUMBER       Issue number to update (required)
+  --title TITLE        Replace the issue title
+  --type TYPE          bug, feature, chore, or infrastructure
+  --answers-file PATH  JSON answers keyed by the template section ids
+  --body TEXT          Complete Markdown issue body
+  --body-file PATH     Read the Markdown body from PATH
   --add-label NAME     Add a repository label (repeatable)
   --remove-label NAME  Remove a repository label (repeatable)
   --milestone TITLE    Assign the named milestone
@@ -32,16 +137,26 @@ Options:
   --repository NAME    Override the repository name
   -h, --help           Show this help
 
---column uses the issue's global id. Gitea's move API does not take the
-issue number. The issue must already be on the project, or --project must
-name that project in the same command. This command never closes an issue,
-merges a pull request, or deletes a branch.
+--type is required with --body, --body-file, or --answers-file. It sets
+that type label and removes any other type label. Without --type,
+--add-label and --remove-label refuse bug, feature, chore, and
+infrastructure. The same title, body, milestone, project, column, or
+type label is left unchanged. --column uses the issue's global id.
+Gitea's move API does not take the issue number. The issue must already
+be on the project, or --project must name that project in the same
+command. This command never closes an issue, merges a pull request, or
+deletes a branch.
 EOF
 }
 
 while (($#)); do
   case "$1" in
     --issue) issue_number="$2"; shift 2 ;;
+    --title) title="$2"; title_set=true; shift 2 ;;
+    --type) issue_type="$2"; shift 2 ;;
+    --answers-file) answers_file="$2"; shift 2 ;;
+    --body) body="$2"; shift 2 ;;
+    --body-file) body_file="$2"; shift 2 ;;
     --add-label) label_names+=("$2"); shift 2 ;;
     --remove-label) remove_labels+=("$2"); shift 2 ;;
     --milestone) milestone_title="$2"; shift 2 ;;
@@ -57,10 +172,46 @@ while (($#)); do
 done
 
 [[ "${issue_number}" =~ ^[0-9]+$ ]] || { echo '--issue requires a number' >&2; exit 2; }
-(( ${#label_names[@]} > 0 || ${#remove_labels[@]} > 0 || ${#milestone_title} > 0 || ${#project_title} > 0 || ${#column_title} > 0 )) || {
-  echo 'At least one update is required' >&2
+
+body_sources=0
+[[ -n "${body}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${body_file}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${answers_file}" ]] && body_sources=$((body_sources + 1))
+if ((body_sources > 1)); then
+  echo 'Use only one of --body, --body-file, or --answers-file' >&2
   exit 2
-}
+fi
+
+if [[ "${title_set}" == true ]]; then
+  title="$(strip_edges "${title}")"
+  [[ -n "${title}" ]] || { echo 'Title cannot be empty' >&2; exit 2; }
+fi
+
+if ((body_sources > 0)); then
+  [[ -n "${issue_type}" ]] || { echo 'Type is required' >&2; exit 2; }
+elif [[ -n "${issue_type}" ]]; then
+  echo 'Pass --body, --body-file, or --answers-file with --type' >&2
+  exit 2
+fi
+
+has_update=false
+if ((${#label_names[@]} > 0 || ${#remove_labels[@]} > 0 || ${#milestone_title} > 0 || ${#project_title} > 0 || ${#column_title} > 0 || body_sources > 0)); then
+  has_update=true
+fi
+[[ "${title_set}" == true ]] && has_update=true
+[[ "${has_update}" == true ]] || { echo 'At least one update is required' >&2; exit 2; }
+refuse_type_labels_without_type
+
+if [[ -n "${answers_file}" ]]; then
+  [[ -f "${answers_file}" ]] || { echo "Answers file not found: ${answers_file}" >&2; exit 1; }
+  body="$(issue_template render --type "${issue_type}" --answers-file "${answers_file}")"
+elif [[ -n "${body_file}" ]]; then
+  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
+  body="$(<"${body_file}")"
+fi
+if ((body_sources > 0)); then
+  validate_body
+fi
 
 gitea_require_commands
 gitea_load_config
@@ -69,6 +220,9 @@ issue_global_id="$(jq -r '.id' <<<"${issue}")"
 [[ "${issue_global_id}" =~ ^[0-9]+$ ]] || { echo "Issue #${issue_number} has no global id" >&2; exit 1; }
 current_labels="$(jq -r '(.labels // [])[] | .name' <<<"${issue}")"
 current_project_ids="$(jq -c '[(.projects // [])[] | if type == "object" then .id else . end]' <<<"${issue}")"
+if ((body_sources > 0)); then
+  sync_type_label
+fi
 
 label_ids=()
 new_labels=()
@@ -137,10 +291,29 @@ if [[ -n "${column_title}" ]]; then
     echo "Unknown column: ${column_title}" >&2
     exit 1
   }
+  current_column="$(gitea_issue_column_title "${column_project_id}" "${issue_global_id}")"
+  [[ "${current_column}" == "${column_title}" ]] && column_id=''
+fi
+
+title_change=false
+if [[ "${title_set}" == true ]]; then
+  current_title="$(strip_edges "$(jq -r '.title // ""' <<<"${issue}")")"
+  [[ "${title}" == "${current_title}" ]] || title_change=true
+fi
+
+body_change=false
+if ((body_sources > 0)); then
+  current_body="$(strip_edges "$(jq -r '.body // ""' <<<"${issue}")")"
+  [[ "$(strip_edges "${body}")" == "${current_body}" ]] || body_change=true
 fi
 
 echo 'Gitea update plan'
 echo "Issue: #${issue_number} — $(jq -r '.title' <<<"${issue}")"
+if [[ "${title_change}" == true ]]; then echo "- set title: ${title}"; fi
+if [[ "${body_change}" == true ]]; then
+  echo '- replace body:'
+  printf '%s\n' "${body}"
+fi
 for label_name in "${removed_labels[@]}"; do echo "- remove label: ${label_name}"; done
 for label_name in "${new_labels[@]}"; do echo "- add label: ${label_name}"; done
 if [[ "${milestone_change}" == true ]]; then echo "- assign milestone: ${milestone_title}"; fi
@@ -152,9 +325,22 @@ if [[ "${project_change}" == true ]]; then
   fi
 fi
 if [[ -n "${column_id}" ]]; then echo "- move to column: ${column_title}"; fi
-if (( ${#removed_labels[@]} == 0 && ${#new_labels[@]} == 0 )) \
-  && [[ "${milestone_change}" == false && "${project_change}" == false && -z "${column_id}" ]]; then
+
+no_changes=false
+if ((${#removed_labels[@]} == 0 && ${#new_labels[@]} == 0)) \
+  && [[ "${milestone_change}" == false && "${project_change}" == false && -z "${column_id}" \
+        && "${title_change}" == false && "${body_change}" == false ]]; then
   echo '- no changes required'
+  no_changes=true
+fi
+
+if [[ "${no_changes}" == true ]]; then
+  if [[ "${apply}" == true ]]; then
+    echo 'No Gitea state was changed.'
+  else
+    echo 'Dry run only: no Gitea state was changed. Use --apply to execute this plan.'
+  fi
+  exit 0
 fi
 
 if [[ "${apply}" != true ]]; then
@@ -183,16 +369,24 @@ fi
 if [[ "${project_change}" == true ]]; then
   project_json="$(jq -nc --argjson id "${project_id}" '[$id]')"
 fi
-if [[ "${milestone_change}" == true || "${project_change}" == true ]]; then
+if [[ "${title_change}" == true || "${body_change}" == true || "${milestone_change}" == true || "${project_change}" == true ]]; then
   patch_payload="$(jq -nc \
+    --argjson title_change "${title_change}" \
+    --arg title "${title}" \
+    --argjson body_change "${body_change}" \
+    --arg body "${body}" \
     --argjson milestone_change "${milestone_change}" \
     --argjson milestone "${milestone_json}" \
     --argjson project_change "${project_change}" \
     --argjson projects "${project_json}" \
     '{}
+     + (if $title_change then {title: $title} else {} end)
+     + (if $body_change then {body: $body} else {} end)
      + (if $milestone_change then {milestone: $milestone} else {} end)
      + (if $project_change then {projects: $projects} else {} end)')"
   gitea_json PATCH "issues/${issue_number}" "${patch_payload}" >/dev/null
+  if [[ "${title_change}" == true ]]; then echo "Applied title: ${title}"; fi
+  if [[ "${body_change}" == true ]]; then echo 'Applied body.'; fi
   if [[ "${milestone_change}" == true ]]; then echo "Applied milestone: ${milestone_title}"; fi
   if [[ "${project_change}" == true ]]; then echo "Applied project: ${project_title}"; fi
 fi

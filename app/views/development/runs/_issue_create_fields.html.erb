@@ -36,10 +36,12 @@
   <%= text_field_tag :project, nil, class: 'form-control', placeholder: DevelopmentHelper::GITEA_PROJECT_DEFAULT %>
   <%= label_tag :no_project, class: 'checkbox-label' do %><%= check_box_tag :no_project %> Do not assign a project<% end %>
 <% end %>
-<% labels = development_label_names(choices) %>
 <%= label_tag :extra_labels, 'Extra labels (optional)' %>
-<% if labels.any? %>
-  <%= select_tag 'extra_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
+<% if development_label_names(choices).any? %>
+  <p class="issue-field-help">Type labels stay with the template above.</p>
+  <%= select_tag 'extra_labels[]',
+                 options_for_select(development_ordinary_label_names(choices)),
+                 multiple: true, class: 'form-control' %>
 <% else %>
   <%= text_field_tag :extra_labels, nil, class: 'form-control', placeholder: 'area:forms, priority:normal' %>
 <% end %>

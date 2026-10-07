@@ -222,3 +222,22 @@ gitea_project_column_id() {
 
   gitea_find_id "$(gitea_get_all "projects/${project_id}/columns")" title "${column_title}"
 }
+
+# Title of the column that holds this issue on one project, or empty.
+# issue_id is the issue's global id. The search stops at the first match.
+gitea_issue_column_title() {
+  local project_id="$1"
+  local issue_id="$2"
+  local columns column_id column_title issues
+
+  [[ "${project_id}" =~ ^[0-9]+$ && "${issue_id}" =~ ^[0-9]+$ ]] || return 0
+  columns="$(gitea_get_all "projects/${project_id}/columns")"
+  while IFS=$'\t' read -r column_id column_title; do
+    [[ "${column_id}" =~ ^[0-9]+$ ]] || continue
+    issues="$(gitea_get_all "projects/${project_id}/columns/${column_id}/issues")"
+    if jq -e --argjson id "${issue_id}" 'any(.[]; .id == $id)' >/dev/null <<<"${issues}"; then
+      printf '%s\n' "${column_title}"
+      return 0
+    fi
+  done < <(jq -r '.[] | [.id, .title] | @tsv' <<<"${columns}")
+}

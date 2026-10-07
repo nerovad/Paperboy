@@ -53,6 +53,15 @@ module Paperboy
           Body.summary(find(type_key))
         end
 
+        def answers_for(type_key, markdown)
+          Answers.for(find(type_key), markdown)
+        end
+
+        def type_for_labels(labels)
+          names = Array(labels).map(&:to_s)
+          TYPE_ORDER.find { |key| names.include?(key) }
+        end
+
         def keys
           types.map(&:key).join(' ')
         end
@@ -63,6 +72,7 @@ end
 
 require_relative 'issue_template/loader'
 require_relative 'issue_template/body'
+require_relative 'issue_template/answers'
 require_relative 'issue_template/cli'
 
 Paperboy::Gitea::IssueTemplate::Cli.call(ARGV) if $PROGRAM_NAME == __FILE__

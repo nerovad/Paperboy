@@ -1,8 +1,57 @@
 <% choices = local_assigns[:gitea_choices] %>
+<% issue = local_assigns[:gitea_issue] || {} %>
+<% selected_type = issue[:type].to_s %>
+<% answers = issue[:answers] || {} %>
 <%= label_tag :issue, 'Issue number' %>
-<%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
-<% labels = development_label_names(choices) %>
-<% if labels.any? %>
+<%= number_field_tag :issue, issue[:number], required: true, min: 1, class: 'form-control' %>
+<button type="submit" class="btn" formmethod="get" formaction="<%= development_runs_path %>">Load issue</button>
+<%= label_tag :title, 'Title' %>
+<%= text_field_tag :title, issue[:title], class: 'form-control',
+                   placeholder: 'Leave blank to keep the current title' %>
+<% if issue[:body_error].present? %>
+  <p class="issue-field-help"><%= issue[:body_error] %></p>
+<% end %>
+<div class="issue-type-picker" role="radiogroup" aria-label="Issue body">
+  <%= label_tag 'issue_type_unchanged', class: 'issue-type-option' do %>
+    <%= radio_button_tag :issue_type, 'unchanged', selected_type.blank? %>
+    <span><strong>Leave body unchanged</strong></span>
+  <% end %>
+  <% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
+    <%= label_tag "issue_type_#{type.key}", class: 'issue-type-option' do %>
+      <%= radio_button_tag :issue_type, type.key, selected_type == type.key %>
+      <span>
+        <strong><%= type.name %></strong>
+        <small><%= type.about %></small>
+      </span>
+    <% end %>
+  <% end %>
+</div>
+<p class="issue-field-help">Choosing a template sets that type label and removes the other type labels.</p>
+<% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
+  <fieldset class="issue-template-fields issue-template-fields--<%= type.key %>">
+    <% loaded = answers[type.key] || {} %>
+    <% type.fields.each do |field| %>
+      <%= render 'development/runs/issue_field', type: type, field: field, value: loaded[field.id] %>
+    <% end %>
+  </fieldset>
+<% end %>
+<% if issue[:number].present? %>
+  <p class="issue-field-help">Current labels: <%= Array(issue[:labels]).presence&.join(', ') || 'none' %></p>
+  <% if issue[:milestone].present? %>
+    <p class="issue-field-help">Current milestone: <%= issue[:milestone] %></p>
+  <% end %>
+  <% if Array(issue[:projects]).length > 1 %>
+    <p class="issue-field-help">Current projects: <%= issue[:projects].join(', ') %></p>
+  <% elsif issue[:project].present? %>
+    <p class="issue-field-help">Current project: <%= issue[:project] %></p>
+  <% end %>
+  <% if issue[:column].present? %>
+    <p class="issue-field-help">Current column: <%= issue[:column] %></p>
+  <% end %>
+<% end %>
+<% labels = development_ordinary_label_names(choices) %>
+<% if development_label_names(choices).any? %>
+  <p class="issue-field-help">Type labels stay with the template above.</p>
   <%= label_tag :add_labels, 'Add labels' %>
   <%= select_tag 'add_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
   <%= label_tag :remove_labels, 'Remove labels' %>
@@ -16,21 +65,27 @@
 <% milestones = development_milestone_titles(choices) %>
 <%= label_tag :milestone, 'Milestone' %>
 <% if milestones.any? %>
-  <%= select_tag :milestone, options_for_select(milestones), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <%= select_tag :milestone, options_for_select(milestones, issue[:milestone]), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :milestone, nil, class: 'form-control' %>
+  <%= text_field_tag :milestone, issue[:milestone], class: 'form-control' %>
 <% end %>
 <% projects = development_project_titles(choices) %>
 <%= label_tag :project, 'Project' %>
 <% if projects.any? %>
-  <%= select_tag :project, options_for_select(projects), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <%= select_tag :project, options_for_select(projects, issue[:project]), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :project, nil, class: 'form-control' %>
+  <%= text_field_tag :project, issue[:project], class: 'form-control' %>
 <% end %>
 <% columns = development_column_choices(choices) %>
 <%= label_tag :column, 'Column' %>
 <% if columns.any? %>
-  <%= select_tag :column, options_for_select(columns), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <% selected_column = issue[:column].to_s %>
+  <% selected_project = issue[:project].to_s %>
+  <% column_options = columns.map do |label, value|
+       matches = value == selected_column && (selected_project.empty? || label.start_with?("#{selected_project} — "))
+       matches ? [label, value, { selected: true }] : [label, value]
+     end %>
+  <%= select_tag :column, options_for_select(column_options), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :column, nil, class: 'form-control' %>
+  <%= text_field_tag :column, issue[:column], class: 'form-control' %>
 <% end %>

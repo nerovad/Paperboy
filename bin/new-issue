@@ -20,6 +20,20 @@ show_fields=false
 default_project='Powerpuff Girls'
 extra_labels=()
 
+# --type owns bug, feature, chore, and infrastructure.
+refuse_extra_type_labels() {
+  local label_name refused=false
+  for label_name in "${extra_labels[@]+"${extra_labels[@]}"}"; do
+    case "${label_name}" in
+      bug|feature|chore|infrastructure)
+        echo "Type labels come from --type: ${label_name}" >&2
+        refused=true
+        ;;
+    esac
+  done
+  [[ "${refused}" == false ]] || exit 2
+}
+
 issue_template() {
   command -v ruby >/dev/null 2>&1 || {
     echo 'Required command not found: ruby' >&2
@@ -54,7 +68,7 @@ Options:
   --body TEXT          Complete Markdown issue body
   --body-file PATH     Read the Markdown body from PATH
   --fields             Print the template fields and exit
-  --label NAME         Add a label (repeatable; the type label comes from the template)
+  --label NAME         Add a label other than the type label (repeatable)
   --milestone TITLE    Assign a milestone
   --no-milestone       Do not prompt for a milestone
   --project TITLE      Assign a project (default: ${default_project})
@@ -65,9 +79,10 @@ Options:
   --repository NAME    Override the repository name
   -h, --help           Show this help
 
-The issue is created in one request after every label, milestone, and
-project name has been resolved. After creation, use the suggested
-issue-linked branch with bin/wt.
+The type label comes from --type. --label refuses bug, feature, chore,
+and infrastructure. The issue is created in one request after every
+label, milestone, and project name has been resolved. After creation,
+use the suggested issue-linked branch with bin/wt.
 EOF
 }
 
@@ -92,6 +107,8 @@ while (($#)); do
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+refuse_extra_type_labels
 
 if [[ "${show_fields}" == true ]]; then
   [[ -n "${issue_type}" ]] || { echo 'Type is required' >&2; exit 2; }

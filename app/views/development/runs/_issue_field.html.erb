@@ -1,20 +1,23 @@
 <% name = "answers[#{type.key}][#{field.id}]" %>
+<% value = local_assigns.fetch(:value, nil) %>
 <% case field.kind %>
 <% when 'prompts' %>
+  <% picked = value.is_a?(Hash) ? value : {} %>
   <fieldset class="issue-template-group">
     <legend><%= field.heading %></legend>
     <% field.prompts.each do |prompt| %>
       <%= label_tag "#{name}[#{prompt.id}]", prompt.label %>
-      <%= text_field_tag "#{name}[#{prompt.id}]", nil, class: 'form-control' %>
+      <%= text_field_tag "#{name}[#{prompt.id}]", picked[prompt.id], class: 'form-control' %>
     <% end %>
   </fieldset>
 <% when 'checks' %>
+  <% selected = Array(value) %>
   <fieldset class="issue-template-group">
     <legend><%= field.heading %></legend>
     <% if field.hint.present? %><p class="issue-field-help"><%= field.hint %></p><% end %>
     <% field.options.each_with_index do |option, index| %>
       <label class="checkbox-label" for="<%= "#{type.key}_#{field.id}_#{index}" %>">
-        <%= check_box_tag "#{name}[]", option, false, id: "#{type.key}_#{field.id}_#{index}" %>
+        <%= check_box_tag "#{name}[]", option, selected.include?(option), id: "#{type.key}_#{field.id}_#{index}" %>
         <%= option %>
       </label>
     <% end %>
@@ -22,5 +25,5 @@
 <% else %>
   <%= label_tag name, field.heading %>
   <p class="issue-field-help"><%= "#{'Required. ' if field.content_required}#{field.hint}" %></p>
-  <%= text_area_tag name, nil, rows: (field.kind == 'text' ? 4 : 3), class: 'form-control' %>
+  <%= text_area_tag name, value, rows: (field.kind == 'text' ? 4 : 3), class: 'form-control' %>
 <% end %>
