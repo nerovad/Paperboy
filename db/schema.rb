@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_130000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -317,10 +317,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_090000) do
   end
 
   create_table "authorization_managers", force: :cascade do |t|
+    t.string "assigned_by"
     t.datetime "created_at", null: false
     t.string "department_id", null: false
     t.string "employee_id", null: false
+    t.datetime "removed_at"
+    t.string "removed_by"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "authorized_approver_changes", force: :cascade do |t|
+    t.string "action", null: false
+    t.string "changed_by", null: false
+    t.datetime "created_at", null: false
+    t.string "department_id", null: false
+    t.string "employee_id", null: false
+    t.text "scope_after"
+    t.text "scope_before"
+    t.index ["department_id", "created_at"], name: "index_authorized_approver_changes_on_department_id_and_created_at"
   end
 
   create_table "authorized_approvers", force: :cascade do |t|

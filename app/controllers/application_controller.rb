@@ -85,7 +85,8 @@ class ApplicationController < ActionController::Base
 
   # Whether the parking/badge/key console shows every department or only the
   # user's own. A scope question, not an access one — access is the ACL grants
-  # below. Kept on the group name because there is nowhere else to say it.
+  # below. Departments beyond a user's own are assigned per person in
+  # AuthorizationManager; this group name remains the "all of them" switch.
   def auth_console_admin?
     current_user_group_names.include?('system_admins') ||
       current_user_group_names.include?('auth_console_admin')
@@ -111,13 +112,31 @@ class ApplicationController < ActionController::Base
     current_user_group_names.include?('system_admins')
   end
 
-  # The rights this user holds on one console. Write and delete each imply read,
-  # so ticking write alone in the ACL still lets them in to use it.
-  def authorization_console_rights(console)
+  # The rights the ACL alone gives this user on one console. Write and delete
+  # each imply read, so ticking write alone in the ACL still lets them in.
+  def authorization_console_acl_rights(console)
     key = console.respond_to?(:key) ? console.key : console.to_s
     return AuthorizationConsole::RIGHT_KEYS.to_set if authorization_console_superuser?
 
     AuthorizationConsole.rights_from_keys(key, current_user_authorization_console_keys)
+  end
+
+  # The rights this user holds on one console from any source. A department
+  # manager of the parking, badges and keys console holds every right on it
+  # with no ACL grant; which departments those rights reach is decided inside
+  # the console (AuthorizationConsoleDepartments), not here.
+  def authorization_console_rights(console)
+    rights = authorization_console_acl_rights(console)
+    key = console.respond_to?(:key) ? console.key : console.to_s
+    return rights unless key == AuthorizationConsole::SERVICES.key && authorization_console_department_manager?
+
+    AuthorizationConsole::RIGHT_KEYS.to_set
+  end
+
+  def authorization_console_department_manager?
+    return @authorization_console_department_manager if defined?(@authorization_console_department_manager)
+
+    @authorization_console_department_manager = AuthorizationManager.manager?(session.dig(:user, 'employee_id'))
   end
 
   def can_read_authorization_console?(console)

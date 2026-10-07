@@ -3,6 +3,12 @@ groups:
 - name: Auth_Console_Admin
   description: Admins for the Authorization Console.
   permissions:
+  - type: authorization_console
+    key: services:delete
+  - type: authorization_console
+    key: services:read
+  - type: authorization_console
+    key: services:write
   - type: dropdown
     key: auth_console
   - type: dropdown
