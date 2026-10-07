@@ -26,10 +26,7 @@
   <%= label_tag :server_ip, 'Server IP' %><%= text_field_tag :server_ip, nil, required: true, class: 'form-control' %>
   <%= label_tag :extra_dns_names, 'Extra DNS names (space separated)' %><%= text_field_tag :extra_dns_names, nil, class: 'form-control' %>
 <% when 'create_issue' %>
-  <%= label_tag :issue_type, 'Type' %><%= select_tag :issue_type, options_for_select(%w[bug feature chore infrastructure]), class: 'form-control' %>
-  <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
-  <%= label_tag :body, 'Body' %><%= text_area_tag :body, nil, rows: 4, required: true, class: 'form-control' %>
-  <%= label_tag :milestone, 'Milestone (optional)' %><%= text_field_tag :milestone, nil, class: 'form-control' %>
+  <%= render 'development/runs/issue_create_fields', gitea_choices: local_assigns[:gitea_choices] %>
 <% when 'create_pull_request' %>
   <%= label_tag :title, 'Title' %><%= text_field_tag :title, nil, required: true, class: 'form-control' %>
   <%= label_tag :body, 'Body (optional)' %><%= text_area_tag :body, nil, rows: 4, class: 'form-control' %>
@@ -37,9 +34,7 @@
   <%= label_tag :base, 'Base branch (optional)' %><%= text_field_tag :base, 'master', class: 'form-control' %>
   <%= label_tag :issue, 'Issue number (optional)' %><%= number_field_tag :issue, nil, min: 1, class: 'form-control' %>
 <% when 'update_issue' %>
-  <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
-  <%= label_tag :labels, 'Labels (comma separated)' %><%= text_field_tag :labels, nil, class: 'form-control' %>
-  <%= label_tag :milestone, 'Milestone (optional)' %><%= text_field_tag :milestone, nil, class: 'form-control' %>
+  <%= render 'development/runs/issue_update_fields', gitea_choices: local_assigns[:gitea_choices] %>
 <% when 'clean_worktree' %>
   <%= label_tag :issue, 'Issue number' %><%= number_field_tag :issue, nil, required: true, min: 1, class: 'form-control' %>
 <% end %>

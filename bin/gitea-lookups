@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Print the labels, open milestones, and projects the issue forms offer.
+# The Development pages call this. It is not a workflow action.
+
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/gitea-common"
+
+gitea_require_commands
+gitea_load_config
+
+labels="$(gitea_get_all 'labels')"
+milestones="$(gitea_get_all 'milestones?state=open')"
+projects="$(gitea_get_all 'projects?state=all')"
+projects_out='[]'
+
+while IFS= read -r row; do
+  [[ -n "${row}" ]] || continue
+  id="$(jq -r '.id' <<<"${row}")"
+  [[ "${id}" =~ ^[0-9]+$ ]] || continue
+  columns="$(gitea_get_all "projects/${id}/columns")"
+  projects_out="$(jq -n \
+    --argjson acc "${projects_out}" \
+    --argjson project "${row}" \
+    --argjson columns "${columns}" \
+    '$acc + [$project + {columns: $columns}]')"
+done < <(jq -c '.[]' <<<"${projects}")
+
+jq -n \
+  --argjson labels "${labels}" \
+  --argjson milestones "${milestones}" \
+  --argjson projects "${projects_out}" \
+  '{
+     labels: [$labels[] | {name: .name}],
+     milestones: [$milestones[] | {title: .title}],
+     projects: [$projects[] | {title: .title, columns: [(.columns // [])[] | {title: .title}]}]
+   }'

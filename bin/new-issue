@@ -2,6 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(cd -- "${script_dir}/.." && pwd -P)"
 # shellcheck disable=SC1091
 source "${script_dir}/gitea-common"
 
@@ -9,26 +10,50 @@ issue_type=''
 title=''
 body=''
 body_file=''
+answers_file=''
 milestone_title=''
 project_title=''
 no_milestone=false
 no_project=false
 create_worktree=false
+show_fields=false
 default_project='Powerpuff Girls'
 extra_labels=()
+
+issue_template() {
+  command -v ruby >/dev/null 2>&1 || {
+    echo 'Required command not found: ruby' >&2
+    return 1
+  }
+  ruby "${repo_root}/lib/paperboy/gitea/issue_template.rb" "$@"
+}
+
+validate_body() {
+  local draft
+  draft="$(mktemp)"
+  printf '%s' "${body}" >"${draft}"
+  if ! issue_template validate-body --type "${issue_type}" --body-file "${draft}"; then
+    rm -f "${draft}"
+    exit 2
+  fi
+  rm -f "${draft}"
+}
+
 usage() {
   cat <<EOF
 Usage: bin/new-issue [OPTIONS]
 
 Create a Paperboy Gitea issue. Missing required values are prompted when
-stdin is a terminal. The body and type label come from the repository issue
-template unless --body or --body-file is set.
+stdin is a terminal. The body must follow the issue template for --type.
+Pass --answers-file, --body, or --body-file. --fields prints the section ids.
 
 Options:
   --type TYPE          bug, feature, chore, or infrastructure
   --title TITLE        Issue title
+  --answers-file PATH  JSON answers keyed by the template section ids
   --body TEXT          Complete Markdown issue body
   --body-file PATH     Read the Markdown body from PATH
+  --fields             Print the template fields and exit
   --label NAME         Add a label (repeatable; the type label comes from the template)
   --milestone TITLE    Assign a milestone
   --no-milestone       Do not prompt for a milestone
@@ -50,8 +75,10 @@ while (($#)); do
   case "$1" in
     --type) issue_type="$2"; shift 2 ;;
     --title) title="$2"; shift 2 ;;
+    --answers-file) answers_file="$2"; shift 2 ;;
     --body) body="$2"; shift 2 ;;
     --body-file) body_file="$2"; shift 2 ;;
+    --fields) show_fields=true; shift ;;
     --label) extra_labels+=("$2"); shift 2 ;;
     --milestone) milestone_title="$2"; shift 2 ;;
     --no-milestone) no_milestone=true; shift ;;
@@ -66,35 +93,38 @@ while (($#)); do
   esac
 done
 
+if [[ "${show_fields}" == true ]]; then
+  [[ -n "${issue_type}" ]] || { echo 'Type is required' >&2; exit 2; }
+  issue_template summary --type "${issue_type}"
+  exit 0
+fi
+
 if [[ "${no_project}" == true && -n "${project_title}" ]]; then
   echo 'Use only one of --project or --no-project' >&2
+  exit 2
+fi
+
+body_sources=0
+[[ -n "${body}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${body_file}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${answers_file}" ]] && body_sources=$((body_sources + 1))
+if ((body_sources > 1)); then
+  echo 'Use only one of --body, --body-file, or --answers-file' >&2
   exit 2
 fi
 
 gitea_require_commands
 gitea_load_config
 
-if [[ -n "${body}" && -n "${body_file}" ]]; then
-  echo 'Use only one of --body or --body-file' >&2
-  exit 2
-fi
-if [[ -n "${body_file}" ]]; then
-  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
-  body="$(<"${body_file}")"
-fi
-
 if [[ -z "${issue_type}" ]]; then
   if [[ -t 0 ]]; then
-    read -r -p 'Type (bug, feature, chore, infrastructure): ' issue_type
+    type_keys="$(issue_template keys)"
+    read -r -p "Type (${type_keys}): " issue_type
   else
     echo 'Type is required' >&2
     exit 2
   fi
 fi
-case "${issue_type}" in
-  bug|feature|chore|infrastructure) ;;
-  *) echo "Unsupported issue type: ${issue_type}" >&2; exit 2 ;;
-esac
 
 if [[ -z "${title}" ]]; then
   if [[ -t 0 ]]; then
@@ -103,24 +133,34 @@ if [[ -z "${title}" ]]; then
 fi
 [[ -n "${title}" ]] || { echo 'Title is required' >&2; exit 2; }
 
-templates="$(gitea_get_all 'issue_templates')"
-template_json="$(jq -er --arg type "${issue_type}" '
-  first(.[] | select(
-    [(.labels // [])[] | if type == "object" then .name else . end] | any(. == $type)
-  ))
-  | {
-      labels: [(.labels // [])[] | if type == "object" then .name else . end],
-      body: (if ((.body // "") | length) > 0 then .body else (.content // "") end)
-    }
-' <<<"${templates}")" || {
-  echo "No issue template with label: ${issue_type}" >&2
-  exit 1
-}
+template_label="$(issue_template label --type "${issue_type}")"
 
-if [[ -z "${body}" ]]; then
-  body="$(jq -r '.body' <<<"${template_json}")"
+if [[ -n "${answers_file}" ]]; then
+  [[ -f "${answers_file}" ]] || { echo "Answers file not found: ${answers_file}" >&2; exit 1; }
+  body="$(issue_template render --type "${issue_type}" --answers-file "${answers_file}")"
+elif [[ -n "${body_file}" ]]; then
+  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
+  body="$(<"${body_file}")"
+elif [[ -z "${body}" ]]; then
+  if [[ -t 0 ]]; then
+    draft="$(mktemp)"
+    issue_template skeleton --type "${issue_type}" >"${draft}"
+    if [[ -n "${EDITOR:-}" ]]; then
+      # EDITOR may include arguments, for example "code --wait".
+      # shellcheck disable=SC2086
+      ${EDITOR} "${draft}"
+    else
+      vi "${draft}"
+    fi
+    body="$(<"${draft}")"
+    rm -f "${draft}"
+  else
+    echo 'A body is required. Pass --body, --body-file, or --answers-file.' >&2
+    issue_template summary --type "${issue_type}" >&2
+    exit 2
+  fi
 fi
-[[ -n "${body}" ]] || { echo 'A body is required. Pass --body or --body-file.' >&2; exit 2; }
+validate_body
 
 if [[ -z "${milestone_title}" && "${no_milestone}" != true && -t 0 ]]; then
   read -r -p 'Milestone (optional): ' milestone_title
@@ -134,7 +174,7 @@ extra_json='[]'
 if ((${#extra_labels[@]})); then
   extra_json="$(printf '%s\n' "${extra_labels[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))')"
 fi
-mapfile -t label_names < <(jq -r --argjson extra "${extra_json}" '(.labels + $extra) | unique | .[]' <<<"${template_json}")
+mapfile -t label_names < <(jq -rn --arg label "${template_label}" --argjson extra "${extra_json}" '[$label] + $extra | unique | .[]')
 
 label_ids=()
 for label_name in "${label_names[@]}"; do

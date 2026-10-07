@@ -1,7 +1,6 @@
 ---
 name: Feature request
 about: Propose a new user-facing or system capability
-title: "[FEATURE] "
 labels: "feature"
 assignees: ""
 ---

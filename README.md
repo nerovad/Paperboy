@@ -33,12 +33,15 @@ pull request.
 
 Set `GITEA_TOKEN` in the environment or in the ignored `.env.local` file.
 Never commit the token. `bin/env-pull` replaces `.env` from LockBox, which
-keeps that token empty. Create an issue before starting implementation:
+keeps that token empty. Create an issue before starting implementation.
+The body follows the matching file in `.gitea/issue_template/`.
+`--answers-file` is JSON keyed by the section ids from
+`bin/new-issue --type feature --fields`.
 
 ```bash
 bin/new-issue --type feature \
   --title "Short imperative title" \
-  --body-file /path/to/issue.md
+  --answers-file /path/to/answers.json
 ```
 
 Create the issue-linked branch and worktree:

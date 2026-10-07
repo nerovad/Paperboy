@@ -1,0 +1,45 @@
+<% choices = local_assigns[:gitea_choices] %>
+<div class="issue-type-picker" role="radiogroup" aria-label="Issue type">
+  <% Paperboy::Gitea::IssueTemplate.types.each_with_index do |type, index| %>
+    <%= label_tag "issue_type_#{type.key}", class: 'issue-type-option' do %>
+      <%= radio_button_tag :issue_type, type.key, index.zero? %>
+      <span>
+        <strong><%= type.name %></strong>
+        <small><%= type.about %></small>
+      </span>
+    <% end %>
+  <% end %>
+</div>
+<%= label_tag :title, 'Title' %>
+<%= text_field_tag :title, nil, required: true, class: 'form-control' %>
+<% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
+  <fieldset class="issue-template-fields issue-template-fields--<%= type.key %>">
+    <% type.fields.each do |field| %>
+      <%= render 'development/runs/issue_field', type: type, field: field %>
+    <% end %>
+  </fieldset>
+<% end %>
+<% milestones = development_milestone_titles(choices) %>
+<%= label_tag :milestone, 'Milestone (optional)' %>
+<% if milestones.any? %>
+  <%= select_tag :milestone, options_for_select(milestones), include_blank: 'None', class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :milestone, nil, class: 'form-control' %>
+<% end %>
+<% projects = development_project_titles(choices) %>
+<%= label_tag :project, 'Project' %>
+<% if projects.any? %>
+  <%= select_tag :project,
+                 options_for_select([['None', '__none__']] + projects.zip(projects), development_project_default(choices)),
+                 class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :project, nil, class: 'form-control', placeholder: DevelopmentHelper::GITEA_PROJECT_DEFAULT %>
+  <%= label_tag :no_project, class: 'checkbox-label' do %><%= check_box_tag :no_project %> Do not assign a project<% end %>
+<% end %>
+<% labels = development_label_names(choices) %>
+<%= label_tag :extra_labels, 'Extra labels (optional)' %>
+<% if labels.any? %>
+  <%= select_tag 'extra_labels[]', options_for_select(labels), multiple: true, class: 'form-control' %>
+<% else %>
+  <%= text_field_tag :extra_labels, nil, class: 'form-control', placeholder: 'area:forms, priority:normal' %>
+<% end %>
