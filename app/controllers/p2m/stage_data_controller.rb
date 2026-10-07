@@ -7,6 +7,8 @@ module P2m
     include DateRange
 
     before_action -> { require_app_feature('p2m', 'stage_data', fallback: p2m_root_path) }
+    before_action :require_change_job,
+                  only: %i[move_to_staging remove_from_staging move_to_shipping_station remove_from_shipping_station]
     before_action :set_dates
 
     def show

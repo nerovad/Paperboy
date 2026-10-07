@@ -59,6 +59,19 @@ module P2m
       rows
     end
 
+    # Every Mail.dat marker in the date range, including incomplete jobs and
+    # jobs already archived. This does not copy or move any file.
+    def historical_jobs
+      validate!
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      rows = markers.group_by { |marker| oms_number(marker) }.sort.map do |number, matches|
+        build_row(number, matches).merge('files' => associated_paths(matches, number))
+      end
+      elapsed_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      write_report(rows, elapsed_seconds: elapsed_seconds, review_pending: true)
+      rows
+    end
+
     private
 
     attr_reader :source_root, :data_runner_root, :start_date, :end_date, :report_path,
@@ -152,6 +165,15 @@ module P2m
         match = ASSOCIATED_PATTERNS.filter_map { |pattern| path.basename.to_s.match(pattern) }.first
         match && match[1] == number
       end
+    end
+
+    def associated_paths(marker_matches, number)
+      marker_matches.map(&:dirname).uniq.flat_map do |directory|
+        directory_files(directory).filter_map do |path|
+          match = ASSOCIATED_PATTERNS.filter_map { |pattern| path.basename.to_s.match(pattern) }.first
+          path.to_s if match && match[1] == number
+        end
+      end.sort
     end
 
     def directory_files(directory)
@@ -328,6 +350,7 @@ def options
     parser.on('--end-date DATE') { |value| values[:end_date] = value }
     parser.on('--report PATH') { |value| values[:report_path] = value }
     parser.on('--scan-only') { values[:scan_only] = true }
+    parser.on('--historical-jobs') { values[:historical_jobs] = true }
     parser.on('--cancel-token TOKEN') { |value| values[:cancellation_token] = value }
   end.parse!
   values[:report_path] ||= File.join(values[:data_runner_root], 'p2m_oms_backfill_report.json')
@@ -336,7 +359,9 @@ end
 
 if $PROGRAM_NAME == __FILE__
   arguments = options
+  historical_jobs = arguments.delete(:historical_jobs)
   scan_only = arguments.delete(:scan_only)
-  rows = P2m::OmsBackfileStager.new(**arguments).call(stage: !scan_only)
+  stager = P2m::OmsBackfileStager.new(**arguments)
+  rows = historical_jobs ? stager.historical_jobs : stager.call(stage: !scan_only)
   puts JSON.generate('count' => rows.length, 'report' => arguments[:report_path])
 end

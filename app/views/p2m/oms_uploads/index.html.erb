@@ -135,5 +135,11 @@
         </p>
       </div>
     <% end %>
+
+    <div class="p2m-batch-actions">
+      <%= button_to "Reconcile", p2m_oms_status_reconcile_path,
+                    params: { oms_uploads: { start_date: @start_date.iso8601, end_date: @end_date.iso8601 } },
+                    class: "btn" %>
+    </div>
   </section>
-</div>
+</div

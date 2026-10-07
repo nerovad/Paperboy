@@ -21,5 +21,13 @@ module P2m
 
       redirect_to root_path, alert: 'You do not have access to Print 2 Mail.'
     end
+
+    # Send, destroy, shipping, and staging answer fetch(), which reads a JSON
+    # message. A redirect would be followed as the next document.
+    def require_change_job
+      return if helpers.can_use_app_feature?('p2m', 'change_job')
+
+      render json: { message: 'Access denied.' }, status: :forbidden
+    end
   end
 end
