@@ -3,11 +3,12 @@
 # app/jobs/scheduled_reports_runner_job.rb
 #
 # Polled every minute by Solid Queue. Executes every due schedule: form
-# reports (ScheduledReport) and Records grid exports (ScheduledRecordExport).
+# reports (ScheduledReport), Records grid exports (ScheduledRecordExport) and
+# Records email rules (RecordsEmailRule).
 class ScheduledReportsRunnerJob < ApplicationJob
   queue_as :default
 
-  SCHEDULES = [ScheduledReport, ScheduledRecordExport].freeze
+  SCHEDULES = [ScheduledReport, ScheduledRecordExport, RecordsEmailRule].freeze
 
   def perform
     Rails.logger.info 'Checking for scheduled reports due to run...'

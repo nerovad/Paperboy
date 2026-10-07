@@ -1,4 +1,4 @@
-<div class="records-screen records-screen--grid" data-controller="records-export records-highlights">
+<div class="records-screen records-screen--grid" data-controller="records-export records-highlights records-email">
   <%= render "shared/work_tabs", active: :records %>
 
   <% toolbar = render 'records/toolbar', path: records_table_path(@table.slug), page: @page,
@@ -10,7 +10,7 @@
   <% end %>
 
   <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records,
-             title: @table.label, toolbar: toolbar, actions: actions, exportable: true,
+             title: @table.label, toolbar: toolbar, actions: actions, exportable: true, emailable: true,
              highlights: @highlights, highlight_counts: @highlight_counts, view_params: @view_params %>
 
   <%= render 'records/export_modal', table: @table, rows: @records,
@@ -18,5 +18,8 @@
 
   <% if can_edit_record_table?(@table) %>
     <%= render 'records/highlight_rules_modal', table: @table, rules: @highlights.rules, view_params: @view_params %>
+    <%= render 'records/email_modal', table: @table, rows: @records, view_params: @view_params,
+               rules: @email_rules, contacts: @email_contacts, deliveries: @email_deliveries,
+               open: params[:email] == 'open' %>
   <% end %>
 </div>

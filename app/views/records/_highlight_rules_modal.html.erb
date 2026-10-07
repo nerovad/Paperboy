@@ -50,14 +50,14 @@
       <% end %>
 
       <%= form_with url: records_table_highlight_rules_path(table.slug), method: :post, local: true,
-                    class: 'records-highlights__form' do |f| %>
+                    class: 'records-highlights__form', data: { controller: 'records-condition' } do |f| %>
         <%= view_fields %>
         <h4 class="records-highlights__heading">Add a rule</h4>
         <div class="records-highlights__fields">
           <div class="form-group">
             <%= label_tag 'rule_column_name', 'Column', class: 'form-label' %>
             <select name="rule[column_name]" id="rule_column_name" class="form-control" required
-                    data-records-highlights-target="column" data-action="change->records-highlights#columnChanged">
+                    data-records-condition-target="column" data-action="change->records-condition#columnChanged">
               <% table.columns.each do |column| %>
                 <option value="<%= column.name %>" data-kind="<%= column.kind %>"><%= column.label %></option>
               <% end %>
@@ -67,7 +67,7 @@
           <div class="form-group">
             <%= label_tag 'rule_operator', 'Condition', class: 'form-label' %>
             <select name="rule[operator]" id="rule_operator" class="form-control" required
-                    data-records-highlights-target="operator" data-action="change->records-highlights#operatorChanged">
+                    data-records-condition-target="operator" data-action="change->records-condition#operatorChanged">
               <% RecordsHighlightRule::OPERATORS.each do |key, label| %>
                 <option value="<%= key %>"
                         data-applies="<%= RecordsHighlightRule::DATE_OPERATORS.key?(key) ? 'date' : (key == 'blank' ? 'any' : 'text') %>"><%= label %></option>
@@ -75,10 +75,10 @@
             </select>
           </div>
 
-          <div class="form-group" data-records-highlights-target="valueField">
-            <%= label_tag 'rule_value', 'Value', class: 'form-label', data: { records_highlights_target: 'valueLabel' } %>
+          <div class="form-group" data-records-condition-target="valueField">
+            <%= label_tag 'rule_value', 'Value', class: 'form-label', data: { records_condition_target: 'valueLabel' } %>
             <%= text_field_tag 'rule[value]', nil, id: 'rule_value', class: 'form-control',
-                               data: { records_highlights_target: 'value' } %>
+                               data: { records_condition_target: 'value' } %>
           </div>
 
           <div class="form-group">

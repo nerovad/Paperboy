@@ -1,0 +1,39 @@
+<%# app/views/records_mailer/rule_rows.html.erb %>
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="margin: 0 0 16px; color: #004976;">
+    <%= @table.label %>: <%= @rule.label %><% if @batch.group && @batch.unrouted.blank? %> &ndash; <%= @batch.group %><% end %>
+  </h2>
+
+  <% if @batch.unrouted.present? %>
+    <p style="padding: 12px 15px; background-color: #fff8e1; border-left: 4px solid #f0ad4e;">
+      <% if @rule.split? %>
+        Nobody is listed as a contact for <%= @rule.split_column_label %>
+        <strong><%= @batch.unrouted.to_sentence %></strong>, so these rows came to you. Add contacts from the
+        Email button on the <%= @table.label %> table in Paperboy.
+      <% else %>
+        None of this rule's recipients is a county employee any longer, so these rows came to you.
+      <% end %>
+    </p>
+  <% end %>
+
+  <%= simple_format(@rule.message, style: 'margin: 0 0 16px;') %>
+
+  <ul style="margin: 0 0 16px; padding-left: 20px;">
+    <% @row_labels.each do |label| %>
+      <li><%= label %></li>
+    <% end %>
+  </ul>
+  <% if @batch.rows.size > @row_labels.size %>
+    <p>&hellip; and <%= @batch.rows.size - @row_labels.size %> more.</p>
+  <% end %>
+
+  <p>
+    The full details of <%= @batch.rows.size == 1 ? 'this row' : "all #{@batch.rows.size} rows" %> are in the
+    attached CSV (<%= @filename %>).
+  </p>
+
+  <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 12px;">
+    This is an automated message from Paperboy - Ventura County GSA, sent because
+    <%= @rule.description %>.<% if @owner&.email.present? %> Replies go to <%= @owner.email %>.<% end %>
+  </p>
+</div>

@@ -1,0 +1,21 @@
+<%# app/views/records_mailer/rule_paused.html.erb %>
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="margin: 0 0 16px; color: #004976;">Email rule paused</h2>
+
+  <p>Hello <%= @owner.first_name %>,</p>
+
+  <p>
+    Your email rule <strong><%= @rule.label %></strong> on the
+    <%= @rule.table&.label || @rule.table_slug %> table has been paused, because you can no longer edit that table
+    in Paperboy. Nothing was sent.
+  </p>
+
+  <p>
+    If that is a mistake, ask an administrator to restore your Records Editing access, then open the table and
+    choose Email &rarr; Resume. Otherwise someone who edits the table can replace the rule with their own.
+  </p>
+
+  <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 12px;">
+    This is an automated message from Paperboy - Ventura County GSA
+  </p>
+</div>

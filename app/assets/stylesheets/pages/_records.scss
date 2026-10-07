@@ -506,6 +506,94 @@
   margin: 0;
 }
 
+/* ---- Email dialog contents (shell is the shared .pb-modal) ---- */
+
+.records-email__section + .records-email__section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid $border-faint;
+}
+
+.records-email__heading {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.records-email__hint {
+  margin: 0 0 10px;
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+.records-email__list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.records-email__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 0;
+
+  & + & { border-top: 1px solid $border-faint; }
+}
+
+.records-email__text {
+  flex: 1;
+  min-width: 12rem;
+
+  small {
+    display: block;
+    color: $text-muted;
+    overflow-wrap: anywhere;
+  }
+}
+
+.records-email__actions,
+.records-email__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.records-email__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+}
+
+.records-email__inline {
+  display: inline;
+  margin: 0;
+}
+
+.records-email__form {
+  padding-top: 14px;
+  border-top: 1px solid $border-faint;
+}
+
+.records-email__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 12px;
+
+  .form-group {
+    min-width: 0;
+    margin: 0;
+
+    &[hidden] { display: none; }
+  }
+}
+
+.records-email__wide {
+  grid-column: 1 / -1;
+}
+
 /* ---- Change log (records_histories/index) ---- */
 
 .records-changes__log {

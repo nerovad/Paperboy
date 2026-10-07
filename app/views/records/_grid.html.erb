@@ -9,6 +9,8 @@
             button stays inside the records-edit controller),
             exportable (optional; shows an Export button that opens the
             records-export modal, which the caller renders around the grid),
+            emailable (optional; shows editors an Email button that opens the
+            records-email dialog, which the caller renders around the grid),
             highlights (optional RecordsHighlights; built from the table when
             not given, so every grid colours its rows),
             highlight_counts + view_params (optional; given, a legend above the
@@ -42,6 +44,9 @@
         <% end %>
         <% if editable && highlight_counts %>
           <button type="button" class="btn" data-action="records-highlights#open">Highlights</button>
+        <% end %>
+        <% if editable && local_assigns[:emailable] %>
+          <button type="button" class="btn secondary" data-action="records-email#open">Email</button>
         <% end %>
         <% if local_assigns[:exportable] %>
           <button type="button" class="btn secondary"

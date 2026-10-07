@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_090000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -1461,6 +1461,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_150000) do
     t.index ["created_at"], name: "index_record_edits_on_created_at"
     t.index ["record_type", "created_at"], name: "index_record_edits_on_record_type_and_created_at"
     t.index ["record_type", "record_id"], name: "index_record_edits_on_record_type_and_record_id"
+  end
+
+  create_table "records_email_contacts", force: :cascade do |t|
+    t.string "column_name", limit: 100, null: false
+    t.datetime "created_at", null: false
+    t.integer "created_by_employee_id"
+    t.string "email", limit: 255, null: false
+    t.string "match_value", limit: 200, null: false
+    t.string "table_slug", limit: 100, null: false
+    t.datetime "updated_at", null: false
+    t.index ["table_slug", "column_name", "match_value", "email"], name: "index_records_email_contacts_unique", unique: true
+  end
+
+  create_table "records_email_deliveries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "group_value"
+    t.text "recipients"
+    t.bigint "records_email_rule_id"
+    t.integer "row_count", default: 0, null: false
+    t.string "sent_by_employee_id"
+    t.string "subject"
+    t.string "table_slug", limit: 100, null: false
+    t.index ["records_email_rule_id"], name: "index_records_email_deliveries_on_records_email_rule_id"
+    t.index ["table_slug", "created_at"], name: "index_records_email_deliveries_on_table_slug_and_created_at"
+  end
+
+  create_table "records_email_rules", force: :cascade do |t|
+    t.string "column_name", null: false
+    t.datetime "created_at", null: false
+    t.integer "day_of_month"
+    t.integer "day_of_week"
+    t.string "employee_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "frequency", null: false
+    t.string "label", null: false
+    t.datetime "last_run_at"
+    t.text "message", null: false
+    t.datetime "next_run_at"
+    t.string "operator", null: false
+    t.text "recipients"
+    t.string "split_column"
+    t.string "table_slug", limit: 100, null: false
+    t.string "time_of_day", null: false
+    t.datetime "updated_at", null: false
+    t.string "value"
+    t.index ["enabled", "next_run_at"], name: "index_records_email_rules_on_enabled_and_next_run_at"
+    t.index ["table_slug"], name: "index_records_email_rules_on_table_slug"
   end
 
   create_table "records_highlight_rules", force: :cascade do |t|

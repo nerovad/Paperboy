@@ -497,6 +497,17 @@ Rails.application.routes.draw do
     resources :highlight_rules, only: %i[create destroy], controller: 'records_highlight_rules' do
       patch :move, on: :member
     end
+    # Emailing rows, managed from the grid's Email dialog: the view on screen
+    # now, standing rules, and the contacts a rule that splits by a column
+    # sends each value's rows to.
+    resource :email, only: :create, controller: 'records_emails'
+    resources :email_rules, only: %i[create destroy], controller: 'records_email_rules' do
+      member do
+        patch :toggle
+        post :deliver
+      end
+    end
+    resources :email_contacts, only: %i[create destroy], controller: 'records_email_contacts'
   end
 
   resources :pcard_inventory, only: %i[index new create edit update] do

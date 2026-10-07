@@ -1,0 +1,274 @@
+<%# Email dialog for a Records grid (records-email controller), shown to the
+    table's editors: send the view on screen now as a CSV, keep standing rules
+    that email the rows meeting a condition on a schedule (RecordsEmailRule),
+    and list who each column value's rows go to (RecordsEmailContact).
+    Recipients are county employees only (RecordsEmailRecipients).
+    locals: table, rows, view_params, rules, contacts, deliveries,
+            open (true after a change made from the dialog, so it stays up) %>
+<% view_fields = capture do %>
+  <% view_params.each do |key, value| %>
+    <% Array(value).each do |item| %>
+      <%= hidden_field_tag(value.is_a?(Array) ? "view[#{key}][]" : "view[#{key}]", item, id: nil) %>
+    <% end %>
+  <% end %>
+<% end %>
+<%# Columns worth splitting by are the ones the grid filters as a dropdown --
+    a handful of repeated values. A table that declares none offers its text
+    columns. %>
+<% text_columns = table.columns.reject { |column| RecordsCondition::DATE_KINDS.include?(column.kind&.to_sym) } %>
+<% split_columns = text_columns.select { |column| column.try(:filter_kind) == :select }.presence || text_columns %>
+<% column_labels = table.columns.to_h { |column| [column.name.to_s, column.label] } %>
+<div class="pb-modal-backdrop" <%= 'hidden' unless open %>
+     data-records-email-target="backdrop"
+     data-action="click->records-email#backdropClick">
+  <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true" aria-labelledby="records-email-title">
+    <div class="pb-modal__header">
+      <h3 id="records-email-title">Email <%= table.label %></h3>
+      <button type="button" class="pb-modal__close" data-action="records-email#close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="pb-modal__body">
+      <section class="records-email__section">
+        <h4 class="records-email__heading">Send now</h4>
+        <p class="records-email__hint">
+          Emails a CSV of the <%= pluralize(rows.size, 'row') %> and the columns on screen
+          (<%= ScheduledRecordExport.describe_view(table, view_params) %>). Recipients must be county employees.
+        </p>
+        <%= form_with url: records_table_email_path(table.slug), method: :post, local: true do |f| %>
+          <%= view_fields %>
+          <div class="form-group">
+            <%= label_tag 'records_email_recipients', 'To', class: 'form-label' %>
+            <%= text_field_tag 'email[recipients]', nil, id: 'records_email_recipients', class: 'form-control',
+                               required: true, placeholder: 'first.last@ventura.org, …' %>
+          </div>
+          <div class="form-group">
+            <%= label_tag 'records_email_note', 'Note (optional)', class: 'form-label' %>
+            <%= text_area_tag 'email[note]', nil, id: 'records_email_note', class: 'form-control', rows: 2,
+                              maxlength: 1000 %>
+          </div>
+          <div class="pb-modal__actions">
+            <%= f.submit 'Send email', class: 'btn approve', disabled: rows.empty? %>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="records-email__section">
+        <h4 class="records-email__heading">Email rules</h4>
+        <p class="records-email__hint">
+          A rule emails the rows that meet its condition, as a CSV, each time it runs. It sends nothing when no
+          row matches, so the emails stop once the rows are put right.
+        </p>
+
+        <% if rules.any? %>
+          <ul class="records-email__list">
+            <% rules.each do |rule| %>
+              <li class="records-email__item">
+                <div class="records-email__text">
+                  <strong><%= rule.label %></strong>
+                  <span class="badge <%= rule.enabled? ? 'is-approved' : 'is-cancelled' %>">
+                    <%= rule.enabled? ? 'Active' : 'Paused' %>
+                  </span>
+                  <small><%= rule.description %> · <%= rule.schedule_description %></small>
+                  <small>To: <%= rule.recipients_description %></small>
+                  <% if rule.enabled? && rule.next_run_at %>
+                    <small>Next: <%= format_pst(rule.next_run_at) %></small>
+                  <% end %>
+                </div>
+
+                <div class="records-email__actions">
+                  <%= button_to 'Send now', deliver_records_table_email_rule_path(table.slug, rule), method: :post,
+                                class: 'btn compact', form: { class: 'records-email__inline' },
+                                params: { view: view_params },
+                                data: { turbo_confirm: "Email the rows that meet \"#{rule.label}\" now?",
+                                        confirm_title: 'Send now', confirm_label: 'Send' } %>
+                  <%= button_to (rule.enabled? ? 'Pause' : 'Resume'),
+                                toggle_records_table_email_rule_path(table.slug, rule), method: :patch,
+                                class: "btn compact #{rule.enabled? ? 'warning' : 'approve'}",
+                                form: { class: 'records-email__inline' }, params: { view: view_params } %>
+                  <%= button_to 'Delete', records_table_email_rule_path(table.slug, rule), method: :delete,
+                                class: 'btn deny compact', form: { class: 'records-email__inline' },
+                                params: { view: view_params },
+                                data: { turbo_confirm: "Stop and delete the email rule \"#{rule.label}\"?",
+                                        confirm_title: 'Delete email rule', confirm_label: 'Delete' } %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+
+        <%= form_with url: records_table_email_rules_path(table.slug), method: :post, local: true,
+                      class: 'records-email__form', data: { controller: 'records-condition' } do |f| %>
+          <%= view_fields %>
+          <h4 class="records-email__heading">Add a rule</h4>
+          <div class="records-email__fields">
+            <div class="form-group records-email__wide">
+              <%= label_tag 'email_rule_label', 'Name', class: 'form-label' %>
+              <%= text_field_tag 'rule[label]', nil, id: 'email_rule_label', class: 'form-control', required: true,
+                                 maxlength: 60, placeholder: 'e.g. Out of compliance' %>
+              <small class="help-text">Used as the email's subject.</small>
+            </div>
+
+            <div class="form-group">
+              <%= label_tag 'email_rule_column_name', 'Column', class: 'form-label' %>
+              <select name="rule[column_name]" id="email_rule_column_name" class="form-control" required
+                      data-records-condition-target="column" data-action="change->records-condition#columnChanged">
+                <% table.columns.each do |column| %>
+                  <option value="<%= column.name %>" data-kind="<%= column.kind %>"><%= column.label %></option>
+                <% end %>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <%= label_tag 'email_rule_operator', 'Condition', class: 'form-label' %>
+              <select name="rule[operator]" id="email_rule_operator" class="form-control" required
+                      data-records-condition-target="operator" data-action="change->records-condition#operatorChanged">
+                <% RecordsCondition::OPERATORS.each do |key, label| %>
+                  <option value="<%= key %>"
+                          data-applies="<%= RecordsCondition::DATE_OPERATORS.key?(key) ? 'date' : (key == 'blank' ? 'any' : 'text') %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+
+            <div class="form-group" data-records-condition-target="valueField">
+              <%= label_tag 'email_rule_value', 'Value', class: 'form-label',
+                            data: { records_condition_target: 'valueLabel' } %>
+              <%= text_field_tag 'rule[value]', nil, id: 'email_rule_value', class: 'form-control',
+                                 data: { records_condition_target: 'value' } %>
+            </div>
+
+            <div class="form-group records-email__wide">
+              <%= label_tag 'email_rule_message', 'Message', class: 'form-label' %>
+              <%= text_area_tag 'rule[message]', nil, id: 'email_rule_message', class: 'form-control', rows: 2,
+                                required: true, maxlength: 1000,
+                                placeholder: 'e.g. The following vehicles are out of compliance and need their locations updated' %>
+            </div>
+
+            <div class="form-group records-email__wide">
+              <%= label_tag 'email_rule_split_column', 'Send to', class: 'form-label' %>
+              <%= select_tag 'rule[split_column]',
+                    options_for_select([['The same people every time', '']] +
+                                       split_columns.map { |column| ["Each #{column.label}'s contacts, with only their rows", column.name] }),
+                    id: 'email_rule_split_column', class: 'form-control',
+                    data: { records_email_target: 'split', action: 'change->records-email#splitChanged' } %>
+              <small class="help-text" data-records-email-target="splitHint" hidden>
+                Contacts are listed below. Rows whose value has no contact are sent to you.
+              </small>
+            </div>
+
+            <div class="form-group records-email__wide" data-records-email-target="recipientsField">
+              <%= label_tag 'email_rule_recipients', 'Recipients', class: 'form-label' %>
+              <%= text_field_tag 'rule[recipients]', nil, id: 'email_rule_recipients', class: 'form-control',
+                                 placeholder: 'first.last@ventura.org, …' %>
+              <small class="help-text">County employees only. Everyone listed gets every matching row.</small>
+            </div>
+
+            <div class="form-group">
+              <%= label_tag 'email_rule_frequency', 'Frequency', class: 'form-label' %>
+              <%= select_tag 'rule[frequency]',
+                    options_for_select(RecurringSchedule::FREQUENCIES.map { |key, label| [label, key] }, 'weekly'),
+                    id: 'email_rule_frequency', class: 'form-control', required: true,
+                    data: { records_email_target: 'frequency', action: 'change->records-email#frequencyChanged' } %>
+            </div>
+
+            <div class="form-group" data-records-email-target="weeklyField">
+              <%= label_tag 'email_rule_day_of_week', 'Day of week', class: 'form-label' %>
+              <%= select_tag 'rule[day_of_week]', options_for_select(Date::DAYNAMES.each_with_index.to_a, 1),
+                             id: 'email_rule_day_of_week', class: 'form-control' %>
+            </div>
+
+            <div class="form-group" data-records-email-target="monthlyField" hidden>
+              <%= label_tag 'email_rule_day_of_month', 'Day of month', class: 'form-label' %>
+              <%= number_field_tag 'rule[day_of_month]', 1, min: 1, max: 31,
+                                   id: 'email_rule_day_of_month', class: 'form-control' %>
+            </div>
+
+            <div class="form-group">
+              <%= label_tag 'email_rule_time_of_day', 'Time (Pacific)', class: 'form-label' %>
+              <%= time_field_tag 'rule[time_of_day]', '07:00', id: 'email_rule_time_of_day', class: 'form-control',
+                                 required: true %>
+            </div>
+          </div>
+
+          <div class="pb-modal__actions">
+            <%= f.submit 'Add email rule', class: 'btn approve' %>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="records-email__section">
+        <h4 class="records-email__heading">Contacts</h4>
+        <p class="records-email__hint">
+          Who a rule that sends to "each … contacts" emails about the rows carrying a value. Type the value as the
+          grid shows it.
+        </p>
+
+        <% if contacts.any? %>
+          <ul class="records-email__list">
+            <% contacts.group_by { |contact| [contact.column_name, contact.match_value] }.each do |(column_name, value), group| %>
+              <li class="records-email__item">
+                <div class="records-email__text">
+                  <strong><%= column_labels[column_name] || column_name.humanize %>: <%= value %></strong>
+                </div>
+                <div class="records-email__contacts">
+                  <% group.each do |contact| %>
+                    <span class="records-email__contact">
+                      <%= contact.email %>
+                      <%= button_to '✕', records_table_email_contact_path(table.slug, contact), method: :delete,
+                                    class: 'btn close-panel compact', form: { class: 'records-email__inline' },
+                                    params: { view: view_params }, title: "Remove #{contact.email}",
+                                    aria: { label: "Remove #{contact.email}" } %>
+                    </span>
+                  <% end %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+
+        <%= form_with url: records_table_email_contacts_path(table.slug), method: :post, local: true,
+                      class: 'records-email__form' do |f| %>
+          <%= view_fields %>
+          <div class="records-email__fields">
+            <div class="form-group">
+              <%= label_tag 'email_contact_column_name', 'Column', class: 'form-label' %>
+              <%= select_tag 'contact[column_name]',
+                             options_for_select(split_columns.map { |column| [column.label, column.name] }),
+                             id: 'email_contact_column_name', class: 'form-control', required: true %>
+            </div>
+            <div class="form-group">
+              <%= label_tag 'email_contact_match_value', 'Value', class: 'form-label' %>
+              <%= text_field_tag 'contact[match_value]', nil, id: 'email_contact_match_value', class: 'form-control',
+                                 required: true, maxlength: 200, placeholder: 'e.g. GSA' %>
+            </div>
+            <div class="form-group records-email__wide">
+              <%= label_tag 'email_contact_emails', 'Email addresses', class: 'form-label' %>
+              <%= text_field_tag 'contact[emails]', nil, id: 'email_contact_emails', class: 'form-control',
+                                 required: true, placeholder: 'first.last@ventura.org, …' %>
+              <small class="help-text">County employees only. Separate several with commas.</small>
+            </div>
+          </div>
+          <div class="pb-modal__actions">
+            <button type="button" class="btn" data-action="records-email#close">Close</button>
+            <%= f.submit 'Add contact', class: 'btn approve' %>
+          </div>
+        <% end %>
+      </section>
+
+      <% if deliveries.any? %>
+        <section class="records-email__section">
+          <h4 class="records-email__heading">Recently sent</h4>
+          <ul class="records-email__list">
+            <% deliveries.each do |delivery| %>
+              <li class="records-email__item">
+                <div class="records-email__text">
+                  <span><%= delivery.subject %><% if delivery.group_value.present? %> · <%= delivery.group_value %><% end %></span>
+                  <small><%= format_pst(delivery.created_at) %> · <%= pluralize(delivery.row_count, 'row') %> · <%= delivery.recipients %></small>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  </div>
+</div>

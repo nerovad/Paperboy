@@ -23,6 +23,7 @@ class RecordsTableController < ApplicationController
         @view_params = ScheduledRecordExport.view_params_from(request.query_parameters)
         @export_schedules = ScheduledRecordExport.for_employee(current_employee_id)
                                                  .where(table_slug: @table.slug).order(:created_at)
+        load_email_dialog if helpers.can_edit_record_table?(@table)
       end
       format.csv do
         send_data RecordsCsv.generate(view), filename: RecordsCsv.filename(@table), type: 'text/csv'
@@ -113,6 +114,13 @@ class RecordsTableController < ApplicationController
     user = session[:user] || {}
     { id: user['employee_id'],
       name: [user['first_name'], user['last_name']].compact_blank.join(' ').presence }
+  end
+
+  # What the grid's Email dialog lists, for the editors who are shown it.
+  def load_email_dialog
+    @email_rules = RecordsEmailRule.for_table(@table.slug).to_a
+    @email_contacts = RecordsEmailContact.for_table(@table.slug).to_a
+    @email_deliveries = RecordsEmailDelivery.for_table(@table.slug).recent.limit(8).to_a
   end
 
   def set_table
