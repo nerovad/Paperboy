@@ -54,7 +54,7 @@ whose keys are the section ids from `bin/new-issue --type feature --fields`.
 Prompt sections are objects. `--body-file` still works when the markdown
 contains those sections. An empty template is refused. The Create form's
 extra-label menu omits bug, feature, chore, and infrastructure. The type
-radio sets that label. A direct `--label` still accepts a type name.
+radio sets that label. `--label` refuses those four names.
 
 ```bash
 bin/new-issue --type feature \
@@ -131,9 +131,11 @@ Use `bin/update-issue` only for an explicit, approved issue update. It is
 dry-run by default. `--title` replaces the title. `--type` with
 `--answers-file` or `--body` replaces the body through the same issue
 template and sets that type label, removing the other type labels. The
-Update form's add and remove menus omit those four type labels. Load
-issue shows the current labels, milestone, project, and column. The same
-title, body, milestone, project, column, or type label is left unchanged.
+Update form's add and remove menus omit those four type labels.
+`--add-label` and `--remove-label` refuse those names unless `--type`
+is also passed. Load issue shows the current labels, milestone, project,
+and column. The same title, body, milestone, project, column, or type
+label is left unchanged.
 The command does not close the issue.
 
 ```bash

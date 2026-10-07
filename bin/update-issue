@@ -44,6 +44,20 @@ is_type_label() {
 
 # The template type owns the type label. Other labels stay under
 # --add-label and --remove-label.
+refuse_type_labels_without_type() {
+  local label_name refused=false
+  if ((body_sources > 0)); then
+    return 0
+  fi
+  for label_name in "${label_names[@]+"${label_names[@]}"}" "${remove_labels[@]+"${remove_labels[@]}"}"; do
+    if is_type_label "${label_name}"; then
+      echo "Type labels come from --type: ${label_name}" >&2
+      refused=true
+    fi
+  done
+  [[ "${refused}" == false ]] || exit 2
+}
+
 sync_type_label() {
   local template_label label_name other seen=false
   local -a kept_adds=()
@@ -124,9 +138,10 @@ Options:
   -h, --help           Show this help
 
 --type is required with --body, --body-file, or --answers-file. It sets
-that type label and removes any other type label. The same title, body,
-milestone, project, column, or type label is left unchanged. --column
-uses the issue's global id.
+that type label and removes any other type label. Without --type,
+--add-label and --remove-label refuse bug, feature, chore, and
+infrastructure. The same title, body, milestone, project, column, or
+type label is left unchanged. --column uses the issue's global id.
 Gitea's move API does not take the issue number. The issue must already
 be on the project, or --project must name that project in the same
 command. This command never closes an issue, merges a pull request, or
@@ -185,6 +200,7 @@ if ((${#label_names[@]} > 0 || ${#remove_labels[@]} > 0 || ${#milestone_title} >
 fi
 [[ "${title_set}" == true ]] && has_update=true
 [[ "${has_update}" == true ]] || { echo 'At least one update is required' >&2; exit 2; }
+refuse_type_labels_without_type
 
 if [[ -n "${answers_file}" ]]; then
   [[ -f "${answers_file}" ]] || { echo "Answers file not found: ${answers_file}" >&2; exit 1; }

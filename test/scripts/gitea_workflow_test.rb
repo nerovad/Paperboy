@@ -284,7 +284,12 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   def setup
     prepare_gitea_fixture
     write_issue
-    write_fixture('GET labels page=1', [{ 'id' => 1, 'name' => 'bug' }, { 'id' => 5, 'name' => 'feature' }])
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 6, 'name' => 'priority:normal' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
     write_fixture('GET milestones name=Phase&state=all page=1', [{ 'id' => 9, 'title' => 'Phase' }])
     write_fixture('GET projects state=all page=1', [
                     { 'id' => 2, 'title' => 'Powerpuff Girls' },
@@ -302,8 +307,8 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
     stdout, stderr, status = run_script('update-issue', *update_args)
 
     assert status.success?, stderr
-    assert_includes stdout, '- remove label: bug'
-    assert_includes stdout, '- add label: feature'
+    assert_includes stdout, '- remove label: area:forms'
+    assert_includes stdout, '- add label: priority:normal'
     assert_includes stdout, '- assign milestone: Phase'
     assert_includes stdout, '- assign project: Powerpuff Girls (replaces other projects)'
     assert_includes stdout, '- move to column: In Progress'
@@ -312,7 +317,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   end
 
   def test_apply_uses_the_issue_global_id_for_the_column_move
-    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('DELETE issues/10/labels/8 page=1', nil, status: 204)
     write_fixture('POST issues/10/labels page=1', [])
     write_fixture('PATCH issues/10 page=1', {})
     write_fixture('POST projects/2/issues/200/move page=1', {})
@@ -321,7 +326,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
 
     assert status.success?, "#{stdout}\n#{stderr}"
     deleted = requests.find { |request| request['method'] == 'DELETE' }
-    assert_includes deleted.fetch('url'), '/issues/10/labels/1'
+    assert_includes deleted.fetch('url'), '/issues/10/labels/8'
     patch = JSON.parse(requests.find { |request| request['method'] == 'PATCH' }.fetch('data'))
     assert_equal 9, patch['milestone']
     assert_equal [2], patch['projects']
@@ -359,7 +364,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
   private
 
   def update_args
-    ['--issue', '10', '--add-label', 'feature', '--remove-label', 'bug',
+    ['--issue', '10', '--add-label', 'priority:normal', '--remove-label', 'area:forms',
      '--milestone', 'Phase', '--project', 'Powerpuff Girls', '--column', 'In Progress']
   end
 
@@ -368,10 +373,73 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
                     'id' => 200,
                     'number' => 10,
                     'title' => 'Widgets',
-                    'labels' => [{ 'id' => 1, 'name' => 'bug' }],
+                    'labels' => [{ 'id' => 8, 'name' => 'area:forms' }],
                     'milestone' => nil,
                     'projects' => projects
                   })
+  end
+end
+
+class GiteaNewIssueTypeLabelScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_type_name_on_label_is_refused
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'bug', '--label', 'area:forms', '--no-project'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: bug'
+    assert_empty requests
+  end
+
+  def test_matching_type_name_on_label_is_refused
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'feature', '--no-project'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: feature'
+    assert_empty requests
+  end
+
+  def test_ordinary_label_is_sent_with_the_template_label
+    write_fixture('GET labels page=1', [
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
+    write_fixture('POST issues page=1', { 'number' => 50, 'id' => 300, 'html_url' => 'http://gitea.test/issues/50' })
+
+    _stdout, stderr, status = run_script(
+      'new-issue', '--type', 'feature', '--title', 'Add widgets',
+      '--body', valid_feature_body, '--label', 'area:forms', '--no-milestone', '--no-project'
+    )
+
+    assert status.success?, stderr
+    payload = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [8, 5], payload['labels']
+  end
+
+  private
+
+  def valid_feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
   end
 end
 
@@ -513,6 +581,18 @@ class GiteaUpdateIssueTypeLabelScriptTest < Minitest::Test
     assert_empty(requests.select { |request| request['method'] == 'PATCH' })
     added = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
     assert_equal [8, 5], added['labels']
+  end
+
+  def test_type_label_without_type_is_refused
+    _stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--add-label', 'feature', '--remove-label', 'bug'
+    )
+
+    refute status.success?
+    assert_equal 2, status.exitstatus
+    assert_includes stderr, 'Type labels come from --type: feature'
+    assert_includes stderr, 'Type labels come from --type: bug'
+    assert_empty requests
   end
 
   def test_invalid_body_is_refused_before_a_request
