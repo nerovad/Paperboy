@@ -501,7 +501,6 @@ Rails.application.routes.draw do
   resources :authorization_console, only: %i[index new create] do
     collection do
       get    :select
-      delete :destroy_all_for_employee
       get    :group_edit
       patch  :group_update
       delete :group_destroy

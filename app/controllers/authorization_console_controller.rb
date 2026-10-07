@@ -7,7 +7,7 @@ class AuthorizationConsoleController < ApplicationController
   before_action :require_any_authorization_console, only: %i[select]
   before_action :require_auth_console, except: %i[select]
   before_action -> { require_auth_console('write') }, only: %i[new create group_edit group_update]
-  before_action -> { require_auth_console('delete') }, only: %i[group_destroy destroy_all_for_employee]
+  before_action -> { require_auth_console('delete') }, only: %i[group_destroy]
   before_action :set_managed_departments, except: %i[select]
 
   # Entry screen for the console: pick which form's authorizations to manage.
@@ -93,6 +93,7 @@ class AuthorizationConsoleController < ApplicationController
     authorized_by = session.dig(:user, 'employee_id').to_s
     @selected_service_types = service_types
     @selected_key_types     = key_types
+    return deny_unmanaged_scope unless within_managed_scope?(raw)
 
     if service_types.empty?
       @authorized_approver = AuthorizedApprover.new(raw)
@@ -139,7 +140,11 @@ class AuthorizationConsoleController < ApplicationController
   # Replace the group: delete the old rows and recreate from the submission.
   def group_update
     records = scoped_group(params[:ids])
+    return redirect_to(authorization_console_index_path, alert: 'Authorization not found.') if records.empty?
+
     raw = authorized_approver_create_params
+    return deny_unmanaged_scope unless within_managed_scope?(raw, keeping: records.map(&:employee_id))
+
     service_types = Array(raw.delete(:service_type)).reject(&:blank?)
     key_types     = Array(raw.delete(:key_types)).reject(&:blank?)
     authorized_by = session.dig(:user, 'employee_id').to_s
@@ -183,16 +188,6 @@ class AuthorizationConsoleController < ApplicationController
                 notice: 'Authorization removed.'
   end
 
-  def destroy_all_for_employee
-    employee_id   = params[:employee_id]
-    department_id = params[:department_id]
-
-    AuthorizedApprover.where(employee_id: employee_id, department_id: department_id).destroy_all
-
-    redirect_to authorization_console_index_path(department_id: department_id),
-                notice: "All authorizations removed for employee #{employee_id}."
-  end
-
   private
 
   # Collapse per-(service_type, key_type) rows into one group per real
@@ -227,6 +222,37 @@ class AuthorizationConsoleController < ApplicationController
 
   def scoped_group(ids)
     AuthorizedApprover.where(id: Array(ids), department_id: @managed_departments.map(&:department_id)).to_a
+  end
+
+  # The index and the pickers only ever offer the user's managed departments,
+  # but a posted form is not bound by its pickers. Hold every write to the same
+  # scope: the employee, the department and each budget unit must be ones this
+  # user manages. `keeping` lets an edit hold on to the employee it already
+  # names, who may have left the department since being authorized.
+  def within_managed_scope?(raw, keeping: [])
+    employee_ids = managed_employee_ids | keeping.to_set(&:to_s)
+    units = raw[:budget_units].to_s.split(',').map(&:strip).reject(&:blank?)
+
+    employee_ids.include?(raw[:employee_id].to_s) &&
+      (raw[:department_id].blank? || managed_department_ids.include?(raw[:department_id].to_s)) &&
+      units.all? { |unit| managed_unit_ids.include?(unit) }
+  end
+
+  def deny_unmanaged_scope
+    redirect_to authorization_console_index_path,
+                alert: 'Access denied. That employee, department or budget unit is outside the departments you manage.'
+  end
+
+  def managed_department_ids
+    @managed_department_ids ||= @managed_departments.to_set { |department| department.department_id.to_s }
+  end
+
+  def managed_unit_ids
+    @managed_unit_ids ||= fetch_managed_budget_units.to_set { |(_label, unit_id)| unit_id.to_s }
+  end
+
+  def managed_employee_ids
+    @managed_employee_ids ||= fetch_managed_employees.to_set { |employee| employee[:id].to_s }
   end
 
   def load_form_options
