@@ -74,7 +74,6 @@ module TrackableStatus
           :noop
         else
           mine.each { |task| close_step_task(task, state, actor) }
-          leave_step_task_tracking_copy(actor)
           step_task_outcome(step, tasks)
         end
       end
@@ -109,21 +108,6 @@ module TrackableStatus
 
         denied ? :denied : :advance
       end
-    end
-
-    # Someone who has answered their task no longer has the form in their
-    # queue, though it may sit at the step for days yet. Leave them the same
-    # read-only tracking copy a pool approver gets (record_pool_step_tracking_copy).
-    def leave_step_task_tracking_copy(actor)
-      return if actor.blank?
-
-      Forms::SubmissionCopy.find_or_create_by!(
-        submission_type: self.class.name,
-        submission_id: id,
-        recipient_employee_id: actor.to_i
-      ) { |row| row.delivered_via = 'pool_action' }
-    rescue ActiveRecord::RecordNotUnique
-      # Concurrent action raced the unique index — the tracking copy already exists.
     end
 
     # Denies the form once its checklist has decided on a denial, bypassing the
