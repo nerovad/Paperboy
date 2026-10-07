@@ -78,6 +78,7 @@ module P2m
     end
 
     def quote_column_name(part) = "[#{part}]"
+    def quote_table_name(name) = name.split('.').map { |part| quote_column_name(part) }.join('.')
     def quote(value) = "'#{value}'"
 
     def select_all(sql)
