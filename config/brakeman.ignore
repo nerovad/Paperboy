@@ -1,46 +1,6 @@
 {
   "ignored_warnings": [
     {
-      "warning_type": "Dangerous Eval",
-      "warning_code": 13,
-      "fingerprint": "26465519d2884fc39c356f9b50d5006f57a402992b26619059ce353f89ef7e56",
-      "check_name": "Evaluation",
-      "message": "Dynamic code evaluation",
-      "file": "app/services/dsl_catalog.rb",
-      "line": 44,
-      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
-      "code": "TOPLEVEL_BINDING.eval(path.read, path.to_s)",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "DslCatalog",
-        "method": "self.load_entries"
-      },
-      "user_input": "path.read",
-      "confidence": "Weak",
-      "note": "DataRunner DSL files are repository-owned Ruby configuration files."
-    },
-    {
-      "warning_type": "File Access",
-      "warning_code": 16,
-      "fingerprint": "bb8db1ccfe3faec1614fb198e2af3cb0dfcf5bd47591c1a9e9873fa5fa272b34",
-      "check_name": "SendFile",
-      "message": "Parameter value used in file name",
-      "file": "app/controllers/data_runner/dsls_controller.rb",
-      "line": 114,
-      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
-      "code": "send_file(WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]), :filename => WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]).basename.to_s, :disposition => :attachment)",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "DataRunner::DslsController",
-        "method": "output"
-      },
-      "user_input": "params[:path]",
-      "confidence": "Weak",
-      "note": "WorkflowOutputs#find! cleanpaths and limits files to known workflow output directories."
-    },
-    {
       "warning_type": "File Access",
       "warning_code": 16,
       "fingerprint": "328cf7d0cf9e291e5ca790374c294a3d45d8a3b2b454c3313e6c650839a75c5f",
@@ -63,6 +23,53 @@
     {
       "warning_type": "File Access",
       "warning_code": 16,
+      "fingerprint": "a13b5393db7640fdda1d0f626db8467e5a8eceed9127e1a316173d6239719335",
+      "check_name": "SendFile",
+      "message": "Parameter value used in file name",
+      "file": "app/controllers/data_runner/dsls_controller.rb",
+      "line": 119,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file((WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]).local_path or WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path])), :filename => WorkflowOutputs.new(DslCatalog.find!(params[:name])).find!(params[:path]).basename.to_s, :disposition => :attachment)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DataRunner::DslsController",
+        "method": "output"
+      },
+      "user_input": "params[:path]",
+      "confidence": "Weak",
+      "cwe_id": [
+        22
+      ],
+      "note": "WorkflowOutputs#find! cleanpaths and limits files to known workflow output directories and the listed outputs. Remote outputs are matched the same way before local_path downloads them, so send_file only serves a listed output."
+    },
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "a9b60f877b3722d850c1017113070a79bcb9250bb10ff548aa17d7b4bf77c630",
+      "check_name": "Evaluation",
+      "message": "Dynamic code evaluation",
+      "file": "app/services/dsl_catalog.rb",
+      "line": 100,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "TOPLEVEL_BINDING.eval(path.read, evaluation_path(path).to_s)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DslCatalog",
+        "method": "self.load_entries"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "cwe_id": [
+        913,
+        95
+      ],
+      "note": "DataRunner DSL files are repository-owned Ruby configuration files. DslCatalog only reads paths from its config/data_runner/dsl/*/*.rb glob; evaluation_path only changes the reported filename."
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
       "fingerprint": "b9ae79da8918a5a3d5b5d7ca72ec5f0058a5c9d14f6dd6b03946532cf600de25",
       "check_name": "SendFile",
       "message": "Parameter value used in file name",
@@ -81,6 +88,6 @@
       "note": "The path is a column, so Brakeman is right that it is not a literal. It is not sent unless Dam::StorageLocation#holds_source? says it resolves inside the folder that location scans and inside PAPERBOY_DAM_ROOTS, which is set per host in .env and not editable from the app. See AssetsController#unreadable_reason. The asset is looked up through the DAM access rules (find_viewable_asset) and the Download capability is checked before this line."
     }
   ],
-  "updated": "2026-07-10 14:08:00 -0700",
-  "brakeman_version": "8.0.5"
+  "updated": "2026-10-07 13:20:42 -0700",
+  "brakeman_version": "8.0.6"
 }

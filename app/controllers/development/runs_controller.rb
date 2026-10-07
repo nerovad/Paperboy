@@ -31,7 +31,7 @@ module Development
         requested_by: current_user.email,
         status: 'queued'
       )
-      RunScriptJob.perform_later(run.id)
+      RunScriptJob.perform_later(run.id, script.fetch(:key), arguments)
       redirect_to development_run_path(run), notice: "#{script[:label]} queued."
     rescue ArgumentError => e
       redirect_with_alert(e.message)

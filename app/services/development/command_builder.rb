@@ -7,8 +7,10 @@ module Development
       @arguments = arguments
     end
 
+    def program = Rails.root.join('bin', @script.fetch(:bin)).to_s
+
     def call
-      [Rails.root.join('bin', @script.fetch(:bin)).to_s, *@arguments]
+      [program, *@arguments]
     end
 
     alias to_a call

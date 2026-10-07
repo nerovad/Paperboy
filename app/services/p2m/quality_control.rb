@@ -18,9 +18,9 @@ module P2m
         number = connection.quote_column_name(source.fetch(:number))
         listed_at = connection.quote_column_name(source.fetch(:listed_at))
         sql = "SELECT #{number} AS omsnumber, MAX(#{listed_at}) AS qc_date " \
-              "FROM #{qualified_name(source)} " \
-              "WHERE #{listed_at} >= #{quote_date(start_date)} " \
-              "AND #{listed_at} < #{quote_date(end_date + 1)} " \
+              "FROM #{connection.quote_table_name(qualified_name(source))} " \
+              "WHERE #{listed_at} >= #{connection.quote(start_date.iso8601)} " \
+              "AND #{listed_at} < #{connection.quote((end_date + 1).iso8601)} " \
               "GROUP BY #{number}"
         connection.select_all(sql).to_a.sort_by { |row| row['omsnumber'].to_i }
       end
@@ -43,18 +43,14 @@ module P2m
       def connection = GsabssBase.connection
 
       def qualified_name(source)
-        [source.fetch(:database), 'dbo', source.fetch(:table)].map { |part| connection.quote_column_name(part) }.join('.')
-      end
-
-      def quote_date(date)
-        connection.quote(date.iso8601)
+        [source.fetch(:database), 'dbo', source.fetch(:table)].join('.')
       end
 
       def grouped_rows(source, oms_number)
         number = connection.quote_column_name(source.fetch(:number))
         job = connection.quote_column_name(source.fetch(:job))
         sql = "SELECT #{job} AS job_number, COUNT(*) AS row_count " \
-              "FROM #{qualified_name(source)} WHERE #{number} = #{connection.quote(oms_number)} " \
+              "FROM #{connection.quote_table_name(qualified_name(source))} WHERE #{number} = #{connection.quote(oms_number)} " \
               "GROUP BY #{job}"
         connection.select_all(sql).to_a.to_h do |row|
           [row['job_number']&.to_s, { source: source.fetch(:label), row_count: row['row_count'].to_i }]

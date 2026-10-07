@@ -16,6 +16,7 @@ AllCops:
     # consistent with the source form rather than the style guide.
     - 'app/services/sheriff_safety_reporting_form_pdf_generator.rb'
     - 'db/migrate/20260912015519_create_sheriff_safety_reporting_forms_20260912015519.rb'
+    - 'worktrees/**/*'
 
 Layout/LineLength:
   Max: 183

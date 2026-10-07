@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # This migration mirrors the three Solid adapter schemas in one database.
-# rubocop:disable Metrics/ClassLength, Metrics/MethodLength, Metrics/AbcSize
+# rubocop:disable-next Metrics/ClassLength, Metrics/MethodLength, Metrics/AbcSize
 class CreateSolidAdapterTables < ActiveRecord::Migration[8.1]
   def change
     create_solid_queue_tables
@@ -162,4 +162,3 @@ class CreateSolidAdapterTables < ActiveRecord::Migration[8.1]
     end
   end
 end
-# rubocop:enable Metrics/ClassLength, Metrics/MethodLength, Metrics/AbcSize
