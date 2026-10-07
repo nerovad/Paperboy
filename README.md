@@ -79,8 +79,9 @@ bin/worktree cleanup issue/123-short-description
 `bin/update-issue` can apply an explicitly approved title, body, label,
 milestone, project, or column change. It previews changes unless `--apply`
 is supplied. A body uses the same `--type` and `--answers-file` as
-`bin/new-issue`. `--project` replaces the issue's project list. `--column`
-moves the card with the issue's global id. The command does not close the
+`bin/new-issue`, and `--type` sets that type label. `--project` replaces
+the issue's project list. `--column` moves the card with the issue's
+global id. The command does not close the
 issue.
 
 ```bash

@@ -26,6 +26,7 @@
     <% end %>
   <% end %>
 </div>
+<p class="issue-field-help">Choosing a template sets that type label and removes the other type labels.</p>
 <% Paperboy::Gitea::IssueTemplate.types.each do |type| %>
   <fieldset class="issue-template-fields issue-template-fields--<%= type.key %>">
     <% loaded = answers[type.key] || {} %>

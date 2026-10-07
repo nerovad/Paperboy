@@ -365,6 +365,11 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
   def setup
     prepare_gitea_fixture
     write_issue
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
   end
 
   def teardown
@@ -378,6 +383,8 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
 
     assert status.success?, stderr
     assert_includes stdout, '- set title: Better widgets'
+    assert_includes stdout, '- remove label: bug'
+    assert_includes stdout, '- add label: feature'
     assert_includes stdout, '- replace body:'
     assert_includes stdout, 'Widgets are missing.'
     assert_includes stdout, 'Dry run only'
@@ -385,6 +392,8 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
   end
 
   def test_apply_patches_title_and_body_without_closing
+    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('POST issues/10/labels page=1', [])
     write_fixture('PATCH issues/10 page=1', {})
 
     stdout, stderr, status = run_script(
@@ -396,12 +405,16 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
     assert_equal 'Better widgets', patch['title']
     assert_includes patch['body'], 'Widgets are missing.'
     refute patch.key?('state')
+    deleted = requests.find { |request| request['method'] == 'DELETE' }
+    assert_includes deleted.fetch('url'), '/issues/10/labels/1'
+    added = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [5], added['labels']
     assert_includes stdout, 'Audit:'
   end
 
   def test_apply_patches_only_the_title_when_the_body_matches
     body = feature_body
-    write_issue(body: body)
+    write_issue(body: body, labels: [{ 'id' => 5, 'name' => 'feature' }])
     write_fixture('PATCH issues/10 page=1', {})
 
     _stdout, stderr, status = run_script(
@@ -417,7 +430,7 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
 
   def test_apply_skips_an_unchanged_title_and_body
     body = feature_body
-    write_issue(body: body)
+    write_issue(body: body, labels: [{ 'id' => 5, 'name' => 'feature' }])
 
     stdout, stderr, status = run_script(
       'update-issue', '--issue', '10', '--title', ' Widgets ', '--type', 'feature', '--body', "#{body}\n", '--apply'
@@ -428,6 +441,62 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
     assert_includes stdout, 'No Gitea state was changed.'
     refute_includes stdout, 'Audit:'
     assert_empty(requests.select { |request| request['method'] == 'PATCH' })
+  end
+
+  private
+
+  def feature_body
+    Paperboy::Gitea::IssueTemplate.render('feature', {
+                                            'problem_or_opportunity' => 'Widgets are missing.',
+                                            'proposed_capability' => 'Add widgets.',
+                                            'acceptance_criteria' => 'A widget can be added.'
+                                          })
+  end
+
+  def write_issue(body: nil, title: 'Widgets', labels: [{ 'id' => 1, 'name' => 'bug' }])
+    write_fixture('GET issues/10 page=1', {
+                    'id' => 200, 'number' => 10, 'title' => title, 'body' => body,
+                    'labels' => labels, 'milestone' => nil, 'projects' => []
+                  })
+  end
+end
+
+class GiteaUpdateIssueTypeLabelScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_issue
+    write_fixture('GET labels page=1', [
+                    { 'id' => 1, 'name' => 'bug' },
+                    { 'id' => 5, 'name' => 'feature' },
+                    { 'id' => 8, 'name' => 'area:forms' }
+                  ])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_apply_moves_the_type_label_when_the_body_already_matches
+    body = feature_body
+    write_issue(body: body)
+    write_fixture('DELETE issues/10/labels/1 page=1', nil, status: 204)
+    write_fixture('POST issues/10/labels page=1', [])
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--type', 'feature', '--body', body,
+      '--add-label', 'bug', '--add-label', 'area:forms', '--apply'
+    )
+
+    assert status.success?, "#{stdout}\n#{stderr}"
+    assert_includes stdout, '- remove label: bug'
+    assert_includes stdout, '- add label: feature'
+    assert_includes stdout, '- add label: area:forms'
+    refute_includes stdout, '- replace body:'
+    assert_empty(requests.select { |request| request['method'] == 'PATCH' })
+    added = JSON.parse(requests.find { |request| request['method'] == 'POST' }.fetch('data'))
+    assert_equal [8, 5], added['labels']
   end
 
   def test_invalid_body_is_refused_before_a_request
@@ -460,10 +529,10 @@ class GiteaUpdateIssueContentScriptTest < Minitest::Test
                                           })
   end
 
-  def write_issue(body: nil, title: 'Widgets')
+  def write_issue(body: nil, title: 'Widgets', labels: [{ 'id' => 1, 'name' => 'bug' }])
     write_fixture('GET issues/10 page=1', {
                     'id' => 200, 'number' => 10, 'title' => title, 'body' => body,
-                    'labels' => [{ 'id' => 1, 'name' => 'bug' }], 'milestone' => nil, 'projects' => []
+                    'labels' => labels, 'milestone' => nil, 'projects' => []
                   })
   end
 end

@@ -89,6 +89,7 @@ class DevelopmentHelperTest < ActionView::TestCase
     assert_select 'input#issue_type_feature[type=radio][checked]'
     assert_select 'input#issue_type_unchanged[checked]', count: 0
     assert_select 'button.btn[type=submit][formmethod=get]', text: 'Load issue'
+    assert_select 'p.issue-field-help', text: 'Choosing a template sets that type label and removes the other type labels.'
     assert_select 'textarea[name="answers[feature][problem_or_opportunity]"]', text: 'People need one shape.'
     assert_select 'input[name="answers[feature][scope_considerations][forms_workflows_or_users_affected]"][value=Editors]'
   end

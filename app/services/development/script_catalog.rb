@@ -79,7 +79,7 @@ module Development
                ->(params) { pull_request_args(params) },
                confirm: 'Open this pull request on Gitea?'),
         script('update_issue', 'Update Gitea Issue', 'collaboration', 'gitea', 'update-issue',
-               'Preview or apply label, milestone, project, column, title, and body changes.',
+               'Preview or apply label, milestone, project, column, title, and body changes. A template body also sets the type label.',
                ->(params) { update_issue_args(params) },
                confirm: 'Apply these changes to the Gitea issue?',
                confirm_when: 'apply'),

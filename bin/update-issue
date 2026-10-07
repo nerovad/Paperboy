@@ -35,6 +35,57 @@ strip_edges() {
   printf '%s' "${value}"
 }
 
+is_type_label() {
+  case "$1" in
+    bug|feature|chore|infrastructure) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# The template type owns the type label. Other labels stay under
+# --add-label and --remove-label.
+sync_type_label() {
+  local template_label label_name other seen=false
+  local -a kept_adds=()
+  local -a kept_removes=()
+  template_label="$(issue_template label --type "${issue_type}")"
+
+  for label_name in "${label_names[@]+"${label_names[@]}"}"; do
+    if is_type_label "${label_name}" && [[ "${label_name}" != "${template_label}" ]]; then
+      continue
+    fi
+    kept_adds+=("${label_name}")
+  done
+  for label_name in "${remove_labels[@]+"${remove_labels[@]}"}"; do
+    if is_type_label "${label_name}"; then
+      continue
+    fi
+    kept_removes+=("${label_name}")
+  done
+
+  for label_name in "${kept_adds[@]+"${kept_adds[@]}"}"; do
+    [[ "${label_name}" == "${template_label}" ]] && seen=true
+  done
+  if [[ "${seen}" == false ]] && ! grep -Fxq "${template_label}" <<<"${current_labels}"; then
+    kept_adds+=("${template_label}")
+  fi
+  for other in bug feature chore infrastructure; do
+    [[ "${other}" == "${template_label}" ]] && continue
+    if grep -Fxq "${other}" <<<"${current_labels}"; then
+      kept_removes+=("${other}")
+    fi
+  done
+
+  label_names=()
+  if ((${#kept_adds[@]})); then
+    label_names=("${kept_adds[@]}")
+  fi
+  remove_labels=()
+  if ((${#kept_removes[@]})); then
+    remove_labels=("${kept_removes[@]}")
+  fi
+}
+
 validate_body() {
   local draft
   draft="$(mktemp)"
@@ -72,8 +123,9 @@ Options:
   --repository NAME    Override the repository name
   -h, --help           Show this help
 
---type is required with --body, --body-file, or --answers-file. The same
-title or body is left unchanged. --column uses the issue's global id.
+--type is required with --body, --body-file, or --answers-file. It sets
+that type label and removes any other type label. The same title, body,
+or type label is left unchanged. --column uses the issue's global id.
 Gitea's move API does not take the issue number. The issue must already
 be on the project, or --project must name that project in the same
 command. This command never closes an issue, merges a pull request, or
@@ -151,6 +203,9 @@ issue_global_id="$(jq -r '.id' <<<"${issue}")"
 [[ "${issue_global_id}" =~ ^[0-9]+$ ]] || { echo "Issue #${issue_number} has no global id" >&2; exit 1; }
 current_labels="$(jq -r '(.labels // [])[] | .name' <<<"${issue}")"
 current_project_ids="$(jq -c '[(.projects // [])[] | if type == "object" then .id else . end]' <<<"${issue}")"
+if ((body_sources > 0)); then
+  sync_type_label
+fi
 
 label_ids=()
 new_labels=()
