@@ -17,12 +17,17 @@ class AuthorizationManagersController < ApplicationController
 
   def index
     @departments = manager_admin_departments
-    @managers_by_department = AuthorizationManager.active
-                                                  .where(department_id: admin_department_ids)
-                                                  .order(:created_at)
-                                                  .group_by { |manager| manager.department_id.to_s }
-    @employee_names = candidate_employees.to_h { |employee| [employee[:id].to_s, employee[:name]] }
     @candidates = candidate_employees
+    @employee_names = @candidates.to_h { |employee| [employee[:id].to_s, employee[:name]] }
+
+    managers = AuthorizationManager.active.where(department_id: admin_department_ids).order(:created_at).to_a
+    @manager_filter_options = manager_filter_options(managers)
+    @department_filter = Array(params[:filter_department]).reject(&:blank?) & admin_department_ids
+    @manager_filter = Array(params[:filter_manager]).reject(&:blank?)
+
+    managers = managers.select { |manager| @manager_filter.include?(manager.employee_id) } if @manager_filter.any?
+    @managers_by_department = managers.group_by { |manager| manager.department_id.to_s }
+    @listed_departments = @departments.select { |department| listed?(department.department_id.to_s) }
   end
 
   def create
@@ -57,6 +62,23 @@ class AuthorizationManagersController < ApplicationController
     return if manager_admin_departments.any?
 
     redirect_to authorization_console_index_path, alert: 'Access denied. You do not manage any departments.'
+  end
+
+  # [[name, employee id], ...] for everyone managing something on this page.
+  def manager_filter_options(managers)
+    managers.map(&:employee_id).uniq
+            .map { |employee_id| [@employee_names[employee_id] || "Employee #{employee_id}", employee_id] }
+            .sort
+  end
+
+  # Whether a department gets a card. An admin reaches every department and
+  # most have no manager, so one is listed only when it has managers to show --
+  # or when it was asked for by name, where "nobody" is the answer wanted.
+  def listed?(department_id)
+    return false if @department_filter.any? && @department_filter.exclude?(department_id)
+    return true if @managers_by_department.key?(department_id)
+
+    @manager_filter.empty? && (@department_filter.any? || @departments.one?)
   end
 
   def admin_department_ids

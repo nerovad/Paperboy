@@ -126,3 +126,50 @@ class AuthorizationManagersControllerTest < ActionController::TestCase
     assert_select '.approver-card', count: 1
   end
 end
+
+# Looking up who manages what on the managers screen.
+class AuthorizationManagersBrowseTest < ActionController::TestCase
+  include AuthorizationConsoleSignIn
+
+  tests AuthorizationManagersController
+
+  setup do
+    AuthorizationManager.delete_all
+    AuthorizationManager.create!(employee_id: '100', department_id: '4600')
+    sign_in_to_console(%w[services:read], admin: true)
+  end
+  teardown { AuthorizationManager.delete_all }
+
+  test 'an admin is shown only the departments that have managers, in a scrolling list' do
+    get :index
+
+    assert_select '.approvers-scroll .approver-card', count: 1
+    assert_select '.approver-card h3', text: /4600/
+    assert_select '.approver-card strong', text: 'Employee 100'
+  end
+
+  test 'asking for a department with no managers says so' do
+    get :index, params: { filter_department: %w[5500] }
+
+    assert_select '.approver-card', count: 1
+    assert_select '.approver-card h3', text: /5500/
+    assert_select '.approval-details', text: /No managers assigned/
+  end
+
+  test 'the Manager filter lists what that person manages' do
+    AuthorizationManager.create!(employee_id: '200', department_id: '5500')
+
+    get :index, params: { filter_manager: %w[200] }
+
+    assert_select '.approver-card', count: 1
+    assert_select '.approver-card h3', text: /5500/
+    assert_select '.approver-card strong', text: 'Employee 200'
+  end
+
+  test 'filters that match nobody say so' do
+    get :index, params: { filter_department: %w[5500], filter_manager: %w[100] }
+
+    assert_select '.approver-card', count: 0
+    assert_select '.empty-state', text: /No managers match these filters/
+  end
+end

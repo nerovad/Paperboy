@@ -10,12 +10,46 @@
     other managers.
   </p>
 
+  <div class="console-filters">
+    <%= form_with url: authorization_managers_path, method: :get, data: { turbo: false, controller: "auto-submit" } do %>
+      <% if @departments.size > 1 %>
+        <div class="filter-group" data-controller="choices">
+          <label>Budget Unit</label>
+          <%= select_tag :filter_department,
+                options_for_select(
+                  @departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] },
+                  @department_filter
+                ),
+                multiple: true,
+                class: "form-control",
+                data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "Budget Units with managers" } %>
+        </div>
+      <% end %>
+
+      <div class="filter-group" data-controller="choices">
+        <label>Manager</label>
+        <%= select_tag :filter_manager,
+              options_for_select(@manager_filter_options, @manager_filter),
+              multiple: true,
+              class: "form-control",
+              data: { choices_target: "select", action: "change->auto-submit#submit", placeholder: "All Managers" } %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="department-header">
+    <%= link_to "Back to Console", authorization_console_index_path, class: "btn" %>
+  </div>
+
+  <%# Everything below scrolls. The wrapper is a fixed-height column, so a list
+      left outside this region is cut off at the bottom of the window. %>
+  <div class="approvers-scroll">
   <%= form_with url: authorization_managers_path, method: :post, data: { turbo: false } do %>
     <div class="form-group" data-controller="choices">
-      <%= label_tag :department_id, "Department" %>
+      <%= label_tag :department_id, "Budget Unit" %>
       <%= select_tag :department_id,
             options_for_select(@departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] }),
-            prompt: (@departments.one? ? nil : "Select Department"),
+            prompt: (@departments.one? ? nil : "Select Budget Unit"),
             class: "form-control",
             required: true,
             data: { choices_target: "select" } %>
@@ -32,13 +66,18 @@
     </div>
 
     <div class="form-actions">
-      <%= link_to "Back to Console", authorization_console_index_path, class: "btn" %>
       <%= submit_tag "Add Manager", class: "btn approve" %>
     </div>
   <% end %>
 
   <div class="approvers-list">
-    <% @departments.each do |department| %>
+    <% if @listed_departments.empty? %>
+      <div class="empty-state">
+        <p><%= @department_filter.any? || @manager_filter.any? ? "No managers match these filters." : "No managers have been assigned yet." %></p>
+      </div>
+    <% end %>
+
+    <% @listed_departments.each do |department| %>
       <% managers = @managers_by_department.fetch(department.department_id.to_s, []) %>
       <div class="approver-card">
         <div class="approver-header">
@@ -80,6 +119,7 @@
         </div>
       </div>
     <% end %>
+  </div>
   </div>
 
   <%= render "shared/confirm_modal" %>
