@@ -447,6 +447,7 @@
       text-align: left;
       word-break: break-word;
     }
+
   }
 
   &.hsa-adoption-cards-sidebar {
@@ -465,6 +466,15 @@
     --sidebar-accent-ring: #{rgba($blue-action, 0.2)};
     --sidebar-accent-soft: #{rgba($blue-action, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$blue-action});
+  }
+
+  &.itp-sidebar {
+    /* Slate theme (from $slate-action in _tokens.scss). */
+    --sidebar-accent: #{$slate-action};
+    --sidebar-accent-hover: #{$slate-action-hover};
+    --sidebar-accent-ring: #{rgba($slate-action, 0.2)};
+    --sidebar-accent-soft: #{rgba($slate-action, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$slate-action});
   }
 
   &.data-runner-sidebar {

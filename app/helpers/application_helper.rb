@@ -70,11 +70,10 @@ module ApplicationHelper
   # The Admin Tools app's screens — the list, its ACL filtering and the
   # request-to-tool matching — live in AdminToolsHelper.
 
-  # Whether to offer the 300A Summary. It is reached from the OSHA Reporting
-  # form itself rather than the profile dropdown, and the 300 Log moved to
-  # Records (see OshaReport's registry_table) — but all three still share the
-  # single 'osha_log' grant, which the 300A controller and the Records table
-  # each enforce on their own.
+  # Whether to offer the 300A Summary. It is reached from the OSHA 300 Log in
+  # Records (see OshaReport's registry_table) rather than the profile dropdown
+  # — both share the single 'osha_log' grant, which the 300A controller and
+  # the Records table each enforce on their own.
   def osha_300a_visible?
     system_admin? || current_user_dropdown_permissions.include?('osha_log')
   end
@@ -116,6 +115,7 @@ module ApplicationHelper
     apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
     apps << { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search', path: hsa_adoption_cards_root_path } if can_access_app?('hsa_adoption_cards')
     apps << { key: 'development', label: 'Development', path: development_root_path } if can_access_app?('development')
+    apps << { key: 'itp', label: 'IP Portal', path: itp_root_path } if can_access_app?('itp')
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
   end
 
@@ -178,6 +178,8 @@ module ApplicationHelper
       'hsa_adoption_cards'
     elsif controller_path.start_with?('development/')
       'development'
+    elsif controller_path.start_with?('itp/')
+      'itp'
     else
       'paperboy'
     end

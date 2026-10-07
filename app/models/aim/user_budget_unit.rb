@@ -2,7 +2,8 @@
 
 module Aim
   # A budget unit someone works in AIM beyond their home unit, or their home
-  # unit when they are its BU Admin. See item a.2 in docs/aim/aim_plan.md.
+  # unit when they are its BU Admin. See item a.2 on the AIM Plan wiki page:
+  # http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan
   class UserBudgetUnit < Record
     validates :employee_id, :budget_unit, presence: true
     validates :budget_unit, uniqueness: { scope: :employee_id }

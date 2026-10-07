@@ -21,6 +21,8 @@
   <%= render "hsa_adoption_cards/shared/sidebar" %>
 <% elsif controller_path.start_with?("development/") %>
   <%= render "development/shared/sidebar" %>
+<% elsif controller_path.start_with?("itp/") %>
+  <%= render "itp/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

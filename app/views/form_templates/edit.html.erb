@@ -335,6 +335,18 @@
                           </label>
                         <% end %>
                       </div>
+                      <label class="step-complete-on-edit" style="display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; font-size: 0.85em; cursor: pointer;">
+                        <input type="checkbox"
+                               name="routing_steps[][complete_on_edit]"
+                               value="1"
+                               class="step-complete-on-edit-checkbox"
+                               style="margin-top: 3px;"
+                               <%= 'checked' if step.complete_on_edit? %>>
+                        <span>
+                          <strong>Saving the form completes this step</strong>
+                          <small style="display: block; color: #6c757d; font-weight: normal;">For a step where the approver fills in part of the form. When they save it from Edit, the submission moves on as if they had pressed Approve &mdash; to the next step, or to its end state after the last one &mdash; and leaves their inbox. Needs the Edit button above; Approve can be switched off.</small>
+                        </span>
+                      </label>
                       <div class="step-button-labels" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
                         <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
                           Approve button label
@@ -482,6 +494,7 @@
                         <option value="employee" <%= 'selected' if recipient.recipient_type == 'employee' %>>Specific Employee</option>
                         <option value="group" <%= 'selected' if recipient.recipient_type == 'group' %>>Group</option>
                         <option value="supervisor" <%= 'selected' if recipient.recipient_type == 'supervisor' %>>Submitter's Supervisor</option>
+                        <option value="authorization" <%= 'selected' if recipient.recipient_type == 'authorization' %>>Authorization Console</option>
                       </select>
                     </div>
 
@@ -502,6 +515,16 @@
                         <% @acl_groups.each do |grp| %>
                           <option value="<%= grp[1] %>" <%= 'selected' if recipient.group_id == grp[1] %>><%= grp[0] %></option>
                         <% end %>
+                      </select>
+                    </div>
+
+                    <div class="copy-recipient-authorization" style="flex: 1; min-width: 220px; <%= 'display: none;' unless recipient.recipient_type == 'authorization' %>">
+                      <select name="copy_recipients[][authorization_service_type]"
+                              class="form-control form-control-sm copy-recipient-authorization-select"
+                              <%= 'required' if recipient.recipient_type == 'authorization' %>
+                              title="Copy whoever holds this authorization over the submission">
+                        <option value="">Select authorization…</option>
+                        <%= grouped_options_for_select(AuthorizationConsole.routing_option_groups, recipient.authorization_service_type) %>
                       </select>
                     </div>
 
@@ -577,8 +600,10 @@
                               required>
                         <option value="">Recipient…</option>
                         <option value="submitter" <%= 'selected' if estep.recipient_type == 'submitter' %>>Submitter</option>
+                        <option value="supervisor" <%= 'selected' if estep.recipient_type == 'supervisor' %>>Submitter's Supervisor</option>
                         <option value="employee" <%= 'selected' if estep.recipient_type == 'employee' %>>Specific Employee</option>
                         <option value="group" <%= 'selected' if estep.recipient_type == 'group' %>>Group</option>
+                        <option value="authorization" <%= 'selected' if estep.recipient_type == 'authorization' %>>Authorization Console</option>
                         <option value="custom_email" <%= 'selected' if estep.recipient_type == 'custom_email' %>>Custom Email</option>
                         <option value="form_field" <%= 'selected' if estep.recipient_type == 'form_field' %>>Email Field on Form</option>
                       </select>
@@ -599,6 +624,16 @@
                         <% @acl_groups.each do |grp| %>
                           <option value="<%= grp[1] %>" <%= 'selected' if estep.group_id == grp[1] %>><%= grp[0] %></option>
                         <% end %>
+                      </select>
+                    </div>
+
+                    <div class="email-step-authorization" style="flex: 1; min-width: 220px; <%= 'display: none;' unless estep.recipient_type == 'authorization' %>">
+                      <select name="email_steps[][authorization_service_type]"
+                              class="form-control form-control-sm email-step-authorization-select"
+                              <%= 'required' if estep.recipient_type == 'authorization' %>
+                              title="Email whoever holds this authorization over the submission">
+                        <option value="">Select authorization…</option>
+                        <%= grouped_options_for_select(AuthorizationConsole.routing_option_groups, estep.authorization_service_type) %>
                       </select>
                     </div>
 
@@ -2054,6 +2089,17 @@
           </label>
         <% end %>
       </div>
+      <label class="step-complete-on-edit" style="display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; font-size: 0.85em; cursor: pointer;">
+        <input type="checkbox"
+               name="routing_steps[][complete_on_edit]"
+               value="1"
+               class="step-complete-on-edit-checkbox"
+               style="margin-top: 3px;">
+        <span>
+          <strong>Saving the form completes this step</strong>
+          <small style="display: block; color: #6c757d; font-weight: normal;">For a step where the approver fills in part of the form. When they save it from Edit, the submission moves on as if they had pressed Approve &mdash; to the next step, or to its end state after the last one &mdash; and leaves their inbox. Needs the Edit button above; Approve can be switched off.</small>
+        </span>
+      </label>
       <div class="step-button-labels" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <label style="flex: 1; min-width: 140px; font-size: 0.85em; color: #495057;">
           Approve button label
@@ -2089,6 +2135,7 @@
           <option value="employee">Specific Employee</option>
           <option value="group">Group</option>
           <option value="supervisor">Submitter's Supervisor</option>
+          <option value="authorization">Authorization Console</option>
         </select>
       </div>
 
@@ -2103,6 +2150,15 @@
         <select name="copy_recipients[][group_id]"
                 class="form-control form-control-sm copy-recipient-group-select">
           <option value="">Select group...</option>
+        </select>
+      </div>
+
+      <div class="copy-recipient-authorization" style="flex: 1; min-width: 220px; display: none;">
+        <select name="copy_recipients[][authorization_service_type]"
+                class="form-control form-control-sm copy-recipient-authorization-select"
+                title="Copy whoever holds this authorization over the submission">
+          <option value="">Select authorization…</option>
+          <%= grouped_options_for_select(AuthorizationConsole.routing_option_groups) %>
         </select>
       </div>
 
@@ -2154,8 +2210,10 @@
                 required>
           <option value="">Recipient…</option>
           <option value="submitter">Submitter</option>
+          <option value="supervisor">Submitter's Supervisor</option>
           <option value="employee">Specific Employee</option>
           <option value="group">Group</option>
+          <option value="authorization">Authorization Console</option>
           <option value="custom_email">Custom Email</option>
           <option value="form_field">Email Field on Form</option>
         </select>
@@ -2170,6 +2228,15 @@
       <div class="email-step-group" style="flex: 1; min-width: 200px; display: none;">
         <select name="email_steps[][group_id]" class="form-control form-control-sm email-step-group-select">
           <option value="">Select group...</option>
+        </select>
+      </div>
+
+      <div class="email-step-authorization" style="flex: 1; min-width: 220px; display: none;">
+        <select name="email_steps[][authorization_service_type]"
+                class="form-control form-control-sm email-step-authorization-select"
+                title="Email whoever holds this authorization over the submission">
+          <option value="">Select authorization…</option>
+          <%= grouped_options_for_select(AuthorizationConsole.routing_option_groups) %>
         </select>
       </div>
 

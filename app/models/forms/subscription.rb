@@ -12,8 +12,9 @@
 # Three things a subscription answers:
 #
 # * +form_type+ — one class name, or ALL_FORMS for every form at once.
-# * which events — created / edited / status_changed, independently switchable,
-#   so somebody can follow status without drowning in field edits.
+# * which events — created / edited / status_changed / comment_added,
+#   independently switchable, so somebody can follow status without drowning
+#   in field edits.
 # * +delivery_mode+ — 'immediate' mails as each event happens; 'daily_digest'
 #   collects a day's worth into one message (FormSubscriptionDigestJob).
 #
@@ -41,14 +42,16 @@ module Forms
     EVENT_COLUMNS = {
       'created' => :notify_created,
       'edited' => :notify_edited,
-      'status_changed' => :notify_status_changed
+      'status_changed' => :notify_status_changed,
+      'comment_added' => :notify_comment_added
     }.freeze
     EVENTS = EVENT_COLUMNS.keys.freeze
 
     EVENT_LABELS = {
       'created' => 'New submission',
       'edited' => 'Field edited',
-      'status_changed' => 'Status changed'
+      'status_changed' => 'Status changed',
+      'comment_added' => 'Comment added'
     }.freeze
 
     DELIVERY_MODE_LABELS = {

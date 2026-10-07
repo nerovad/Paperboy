@@ -10,30 +10,39 @@ title=''
 body=''
 body_file=''
 milestone_title=''
+project_title=''
 no_milestone=false
+no_project=false
 create_worktree=false
+default_project='Powerpuff Girls'
 extra_labels=()
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage: bin/new-issue [OPTIONS]
 
-Create a Paperboy Gitea issue. Missing required values are prompted.
+Create a Paperboy Gitea issue. Missing required values are prompted when
+stdin is a terminal. The body and type label come from the repository issue
+template unless --body or --body-file is set.
 
 Options:
   --type TYPE          bug, feature, chore, or infrastructure
   --title TITLE        Issue title
   --body TEXT          Complete Markdown issue body
   --body-file PATH     Read the Markdown body from PATH
-  --label NAME         Add a label (repeatable; type label is automatic)
+  --label NAME         Add a label (repeatable; the type label comes from the template)
   --milestone TITLE    Assign a milestone
   --no-milestone       Do not prompt for a milestone
-  --worktree            Create the issue worktree after creation
+  --project TITLE      Assign a project (default: ${default_project})
+  --no-project         Do not assign a project
+  --worktree           Create the issue worktree after creation
   --url URL            Override the Gitea base URL
   --owner NAME         Override the repository owner
   --repository NAME    Override the repository name
   -h, --help           Show this help
 
-After creation, use the suggested issue-linked branch with bin/worktree.
+The issue is created in one request after every label, milestone, and
+project name has been resolved. After creation, use the suggested
+issue-linked branch with bin/wt.
 EOF
 }
 
@@ -46,6 +55,8 @@ while (($#)); do
     --label) extra_labels+=("$2"); shift 2 ;;
     --milestone) milestone_title="$2"; shift 2 ;;
     --no-milestone) no_milestone=true; shift ;;
+    --project) project_title="$2"; shift 2 ;;
+    --no-project) no_project=true; shift ;;
     --worktree) create_worktree=true; shift ;;
     --url) GITEA_URL="$2"; shift 2 ;;
     --owner) GITEA_OWNER="$2"; shift 2 ;;
@@ -54,6 +65,11 @@ while (($#)); do
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+if [[ "${no_project}" == true && -n "${project_title}" ]]; then
+  echo 'Use only one of --project or --no-project' >&2
+  exit 2
+fi
 
 gitea_require_commands
 gitea_load_config
@@ -68,7 +84,12 @@ if [[ -n "${body_file}" ]]; then
 fi
 
 if [[ -z "${issue_type}" ]]; then
-  read -r -p 'Type (bug, feature, chore, infrastructure): ' issue_type
+  if [[ -t 0 ]]; then
+    read -r -p 'Type (bug, feature, chore, infrastructure): ' issue_type
+  else
+    echo 'Type is required' >&2
+    exit 2
+  fi
 fi
 case "${issue_type}" in
   bug|feature|chore|infrastructure) ;;
@@ -76,70 +97,86 @@ case "${issue_type}" in
 esac
 
 if [[ -z "${title}" ]]; then
-  read -r -p 'Title: ' title
+  if [[ -t 0 ]]; then
+    read -r -p 'Title: ' title
+  fi
 fi
 [[ -n "${title}" ]] || { echo 'Title is required' >&2; exit 2; }
 
-if [[ -z "${body}" ]]; then
-  case "${issue_type}" in
-    bug)
-      read -r -p 'Problem: ' problem
-      read -r -p 'Steps to reproduce: ' reproduction
-      read -r -p 'Expected behavior: ' expected
-      read -r -p 'Actual behavior: ' actual
-      read -r -p 'Acceptance criteria: ' acceptance
-      body=$'## Problem\n\n'"${problem}"$'\n\n## Steps to reproduce\n\n'"${reproduction}"$'\n\n## Expected behavior\n\n'"${expected}"$'\n\n## Actual behavior\n\n'"${actual}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n' ;;
-    feature)
-      read -r -p 'Problem or opportunity: ' problem
-      read -r -p 'Proposed capability: ' capability
-      read -r -p 'Acceptance criteria: ' acceptance
-      read -r -p 'Scope considerations: ' scope
-      body=$'## Problem or opportunity\n\n'"${problem}"$'\n\n## Proposed capability\n\n'"${capability}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n\n## Scope considerations\n\n'"${scope}"$'\n' ;;
-    chore)
-      read -r -p 'Work to perform: ' work
-      read -r -p 'Reason: ' reason
-      read -r -p 'Acceptance criteria: ' acceptance
-      read -r -p 'Risk and impact: ' risk
-      body=$'## Work to perform\n\n'"${work}"$'\n\n## Reason\n\n'"${reason}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n\n## Risk and impact\n\n'"${risk}"$'\n' ;;
-    infrastructure)
-      read -r -p 'Request: ' request
-      read -r -p 'Reason and outcome: ' outcome
-      read -r -p 'Environment: ' environment
-      read -r -p 'Required coordination: ' coordination
-      read -r -p 'Acceptance criteria: ' acceptance
-      body=$'## Request\n\n'"${request}"$'\n\n## Reason and outcome\n\n'"${outcome}"$'\n\n## Environment\n\n'"${environment}"$'\n\n## Required coordination\n\n'"${coordination}"$'\n\n## Acceptance criteria\n\n- [ ] '"${acceptance}"$'\n' ;;
-  esac
-fi
+templates="$(gitea_get_all 'issue_templates')"
+template_json="$(jq -er --arg type "${issue_type}" '
+  first(.[] | select(
+    [(.labels // [])[] | if type == "object" then .name else . end] | any(. == $type)
+  ))
+  | {
+      labels: [(.labels // [])[] | if type == "object" then .name else . end],
+      body: (if ((.body // "") | length) > 0 then .body else (.content // "") end)
+    }
+' <<<"${templates}")" || {
+  echo "No issue template with label: ${issue_type}" >&2
+  exit 1
+}
 
-if [[ -z "${milestone_title}" && "${no_milestone}" != true ]]; then
+if [[ -z "${body}" ]]; then
+  body="$(jq -r '.body' <<<"${template_json}")"
+fi
+[[ -n "${body}" ]] || { echo 'A body is required. Pass --body or --body-file.' >&2; exit 2; }
+
+if [[ -z "${milestone_title}" && "${no_milestone}" != true && -t 0 ]]; then
   read -r -p 'Milestone (optional): ' milestone_title
 fi
 
-label_names=("${issue_type}" "${extra_labels[@]}")
-issue_payload="$(jq -nc --arg title "${title}" --arg body "${body}" '{title: $title, body: $body}')"
-issue="$(gitea_json POST 'issues' "${issue_payload}")"
-issue_number="$(jq -r '.number' <<<"${issue}")"
-issue_url="$(jq -r '.html_url' <<<"${issue}")"
+if [[ "${no_project}" != true && -z "${project_title}" ]]; then
+  project_title="${default_project}"
+fi
+
+extra_json='[]'
+if ((${#extra_labels[@]})); then
+  extra_json="$(printf '%s\n' "${extra_labels[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))')"
+fi
+mapfile -t label_names < <(jq -r --argjson extra "${extra_json}" '(.labels + $extra) | unique | .[]' <<<"${template_json}")
 
 label_ids=()
 for label_name in "${label_names[@]}"; do
   label_id="$(gitea_label_id "${label_name}")" || {
-    echo "Issue created, but label was not found: ${label_name}" >&2
+    echo "Label was not found: ${label_name}" >&2
     exit 1
   }
   label_ids+=("${label_id}")
 done
-label_payload="$(printf '%s\n' "${label_ids[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | tonumber) | {labels: .}')"
-gitea_json POST "issues/${issue_number}/labels" "${label_payload}" >/dev/null
+label_ids_json="$(printf '%s\n' "${label_ids[@]}" | jq -Rsc 'split("\n") | map(select(length > 0) | tonumber)')"
 
+milestone_json='null'
 if [[ -n "${milestone_title}" ]]; then
   milestone_id="$(gitea_milestone_id "${milestone_title}")" || {
-    echo "Issue created, but milestone was not found: ${milestone_title}" >&2
+    echo "Milestone was not found: ${milestone_title}" >&2
     exit 1
   }
-  milestone_payload="$(jq -nc --argjson id "${milestone_id}" '{milestone: $id}')"
-  gitea_json PATCH "issues/${issue_number}" "${milestone_payload}" >/dev/null
+  milestone_json="${milestone_id}"
 fi
+
+projects_json='null'
+if [[ -n "${project_title}" ]]; then
+  project_id="$(gitea_project_id "${project_title}")" || {
+    echo "Project was not found: ${project_title}" >&2
+    exit 1
+  }
+  projects_json="$(jq -nc --argjson id "${project_id}" '[$id]')"
+fi
+
+issue_payload="$(jq -nc \
+  --arg title "${title}" \
+  --arg body "${body}" \
+  --argjson labels "${label_ids_json}" \
+  --argjson milestone "${milestone_json}" \
+  --argjson projects "${projects_json}" \
+  '{title: $title, body: $body}
+   + (if ($labels | length) > 0 then {labels: $labels} else {} end)
+   + (if $milestone == null then {} else {milestone: $milestone} end)
+   + (if $projects == null then {} else {projects: $projects} end)')"
+issue="$(gitea_json POST 'issues' "${issue_payload}")"
+issue_number="$(jq -r '.number' <<<"${issue}")"
+issue_url="$(jq -r '.html_url' <<<"${issue}")"
 
 slug="$(tr '[:upper:]' '[:lower:]' <<<"${title}" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
 branch_name="issue/${issue_number}-${slug}"

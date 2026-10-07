@@ -217,6 +217,24 @@ module TrackableStatus
     notify_pending_approvers(next_step)
   end
 
+  # Completes the routing step this submission is sitting at because the
+  # person it is routed to has just saved the form. For a step configured in
+  # the builder with "Saving the form completes this step", filling in the form
+  # *is* the sign-off, so the save moves the workflow on exactly as Approve
+  # would: to the next matching step, or to the end state after the last one.
+  #
+  # Only the step's own approver completes it. The submitter correcting their
+  # half, or an admin fixing a typo, saves the same form and leaves the step
+  # where it is. Returns the step that was completed, or nil when none was.
+  def complete_step_on_edit!(actor_id)
+    step = current_routing_step
+    return unless step&.complete_on_edit?
+    return unless routed_to?(step, actor_id)
+
+    advance_approval!
+    step
+  end
+
   # Human-readable label for the current status. Sourced from
   # form_template_statuses, falling back to the model's own constants.
   def status_label
@@ -293,6 +311,29 @@ module TrackableStatus
 
   def current_routing_step_number
     status&.to_s&.match(/\Astep_(\d+)_pending\z/)&.captures&.first&.to_i
+  end
+
+  # The routing step named by the current `step_N_pending` status, or nil for
+  # a form that isn't routed or has moved past its steps.
+  def current_routing_step
+    number = current_routing_step_number
+    return nil unless number
+
+    approval_template&.routing_steps&.find_by(step_number: number)
+  end
+
+  # Whether the submission, at this step, is in this person's hands. Once it
+  # carries an assignee (a supervisor/employee step, or a pool step somebody
+  # was handed by reassignment) only that assignee counts; a pool step still
+  # open to its whole queue counts anyone the step routes to.
+  def routed_to?(step, actor_id)
+    actor = actor_id.to_s
+    return false if actor.blank?
+
+    assignees = Forms::SubmissionPolicy.assignee_ids(self)
+    return assignees.include?(actor) if assignees.any?
+
+    Forms::SubmissionPolicy.pool_approver?(self, actor, step)
   end
 
   def approver_id_for_routing_step(step)

@@ -1109,7 +1109,8 @@ class FormTemplatesController < ApplicationController
         condition_field_name: step.condition_field_name,
         condition_operator: step.condition_operator,
         condition_value: step.condition_value,
-        inbox_buttons: step.inbox_buttons.sort
+        inbox_buttons: step.inbox_buttons.sort,
+        complete_on_edit: step.complete_on_edit?
       }
     end
 
@@ -1127,7 +1128,8 @@ class FormTemplatesController < ApplicationController
         condition_field_name: condition_field_name,
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step[:condition_value].presence : nil,
-        inbox_buttons: extract_step_inbox_buttons(step).sort
+        inbox_buttons: extract_step_inbox_buttons(step).sort,
+        complete_on_edit: step[:complete_on_edit] == '1'
       }
     end.reject { |s| s[:routing_type].blank? }
 
@@ -1244,6 +1246,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
+        complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
         deny_button_label: step_data[:deny_button_label].presence
       )
@@ -1292,6 +1295,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: row[:recipient_type],
         employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
         group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        authorization_service_type: (row[:authorization_service_type].presence if row[:recipient_type] == 'authorization'),
         trigger_event: row[:trigger_event].presence || 'approval',
         position: index
       )
@@ -1311,6 +1315,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: r.recipient_type,
         employee_id: r.employee_id,
         group_id: r.group_id,
+        authorization_service_type: r.authorization_service_type,
         trigger_event: r.trigger_event
       }
     end
@@ -1320,6 +1325,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: r[:recipient_type],
         employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
         group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        authorization_service_type: (r[:authorization_service_type].presence if r[:recipient_type] == 'authorization'),
         trigger_event: r[:trigger_event].presence || 'approval'
       }
     end.reject { |r| r[:recipient_type].blank? }
@@ -1342,6 +1348,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: row[:recipient_type],
         employee_id: row[:recipient_type] == 'employee' ? row[:employee_id].presence : nil,
         group_id: row[:recipient_type] == 'group' ? row[:group_id].presence : nil,
+        authorization_service_type: (row[:authorization_service_type].presence if row[:recipient_type] == 'authorization'),
         custom_email: row[:recipient_type] == 'custom_email' ? row[:custom_email].presence : nil,
         recipient_field_name: row[:recipient_type] == 'form_field' ? row[:recipient_field_name].presence : nil,
         attach_pdf: row[:attach_pdf] == '1',
@@ -1403,6 +1410,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: e.recipient_type,
         employee_id: e.employee_id,
         group_id: e.group_id,
+        authorization_service_type: e.authorization_service_type,
         custom_email: e.custom_email,
         recipient_field_name: e.recipient_field_name,
         attach_pdf: e.attach_pdf,
@@ -1419,6 +1427,7 @@ class FormTemplatesController < ApplicationController
         recipient_type: r[:recipient_type],
         employee_id: r[:recipient_type] == 'employee' ? r[:employee_id]&.to_i.presence : nil,
         group_id: r[:recipient_type] == 'group' ? r[:group_id]&.to_i.presence : nil,
+        authorization_service_type: (r[:authorization_service_type].presence if r[:recipient_type] == 'authorization'),
         custom_email: r[:recipient_type] == 'custom_email' ? r[:custom_email].presence : nil,
         recipient_field_name: r[:recipient_type] == 'form_field' ? r[:recipient_field_name].presence : nil,
         attach_pdf: r[:attach_pdf] == '1',
@@ -1554,6 +1563,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step_data[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
+        complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
         deny_button_label: step_data[:deny_button_label].presence
       )

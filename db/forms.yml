@@ -142,6 +142,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -352,6 +353,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -1519,6 +1521,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   - step_number: 2
     routing_type: employee
     employee_id: 104236
@@ -1529,6 +1532,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2006,6 +2010,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
     group: HCA_HR
   emails: []
   email_steps: []
@@ -2223,6 +2228,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2697,6 +2703,7 @@ forms:
     - deny
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2807,11 +2814,12 @@ forms:
     - reassign
     - take_back
     - status_history
+    complete_on_edit: false
   - step_number: 2
     routing_type: employee
     employee_id: 104236
     condition_field_name: permit_types
-    condition_operator: equals
+    condition_operator: not_equals
     condition_value: R Lot
     inbox_buttons:
     - view_pdf
@@ -2821,6 +2829,7 @@ forms:
     - reassign
     - take_back
     - status_history
+    complete_on_edit: false
   - step_number: 3
     routing_type: group
     approve_button_label: Permit Printed
@@ -2830,6 +2839,7 @@ forms:
     - approve
     - deny
     - status_history
+    complete_on_edit: false
     group: GSA_Security
   - step_number: 4
     routing_type: group
@@ -2840,6 +2850,7 @@ forms:
     - approve
     - deny
     - status_history
+    complete_on_edit: false
     group: GSA_Security
   emails: []
   email_steps: []
@@ -3086,6 +3097,7 @@ forms:
     - status_dropdown
     - reassign
     - take_back
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -3784,23 +3796,52 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
   - field_name: investigator_name
-    field_type: text
+    field_type: dropdown
     label: Investigator Name
     page_number: 8
     position: 38
     required: false
-    options: {}
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters:
+        - column: agency
+          value: HCAV
+        order_column:
+        order_direction: asc
+      values:
+      - Other
+      values_position: end
     read_only: none
     has_custom_view: false
     visible_to_filler: true
     restricted_to_type: group
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
+  - field_name: other_investigator_name
+    field_type: text
+    label: Other Investigator Name
+    page_number: 8
+    position: 39
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: investigator_name
   - field_name: investigator_title
     field_type: text
     label: Investigator Title
     page_number: 8
-    position: 39
+    position: 40
     required: false
     options: {}
     read_only: none
@@ -3813,7 +3854,7 @@ forms:
     field_type: phone
     label: Investigator Phone
     page_number: 8
-    position: 40
+    position: 41
     required: false
     options: {}
     read_only: none
@@ -3826,7 +3867,7 @@ forms:
     field_type: choices_dropdown
     label: Nature of Incident
     page_number: 8
-    position: 41
+    position: 42
     required: false
     options:
       custom_lookup:
@@ -3851,7 +3892,7 @@ forms:
     field_type: choices_dropdown
     label: Cause of Incident
     page_number: 8
-    position: 42
+    position: 43
     required: false
     options:
       custom_lookup:
@@ -3876,7 +3917,7 @@ forms:
     field_type: choices_dropdown
     label: Root Cause
     page_number: 9
-    position: 43
+    position: 44
     required: false
     options:
       custom_lookup:
@@ -3901,7 +3942,7 @@ forms:
     field_type: choices_dropdown
     label: Assessment of Future Severity Potential
     page_number: 9
-    position: 44
+    position: 45
     required: false
     options:
       custom_lookup:
@@ -3926,7 +3967,7 @@ forms:
     field_type: choices_dropdown
     label: Assessment of Probability of Recurrence
     page_number: 9
-    position: 45
+    position: 46
     required: false
     options:
       custom_lookup:
@@ -3951,7 +3992,7 @@ forms:
     field_type: dropdown
     label: Unsafe condition corrected immediately?
     page_number: 10
-    position: 46
+    position: 47
     required: false
     options:
       values:
@@ -3967,7 +4008,7 @@ forms:
     field_type: dropdown
     label: Checklist/procedures/training modified?
     page_number: 10
-    position: 47
+    position: 48
     required: false
     options:
       values:
@@ -3980,23 +4021,52 @@ forms:
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
   - field_name: person_responsible_for_corrective_action
-    field_type: text
+    field_type: dropdown
     label: Person Responsible for Corrective Action
     page_number: 10
-    position: 48
+    position: 49
     required: false
-    options: {}
+    options:
+      custom_lookup:
+        database: gsabss
+        table: employees
+        column: first_name
+        join_columns:
+        - last_name
+        join_separator: " "
+        category_filters:
+        - column: agency
+          value: HCAV
+        order_column:
+        order_direction: asc
+      values:
+      - Other
+      values_position: end
     read_only: none
     has_custom_view: false
     visible_to_filler: true
     restricted_to_type: group
     restricted_to_employee_id: 135272
     restricted_to_group: HCA_Safety_Officers
+  - field_name: other_person_responsible
+    field_type: text
+    label: Other Person Responsible
+    page_number: 10
+    position: 50
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - Other
+    conditional_field: person_responsible_for_corrective_action
   - field_name: title
     field_type: text
     label: Title
     page_number: 10
-    position: 49
+    position: 51
     required: false
     options: {}
     read_only: none
@@ -4008,7 +4078,7 @@ forms:
     field_type: date
     label: Targeted Completion Date
     page_number: 10
-    position: 50
+    position: 52
     required: false
     options: {}
     read_only: none
@@ -4021,7 +4091,7 @@ forms:
     field_type: date
     label: Actual Completion Date
     page_number: 10
-    position: 51
+    position: 53
     required: false
     options: {}
     read_only: none
@@ -4034,7 +4104,7 @@ forms:
     field_type: dropdown
     label: OSHA Recordable
     page_number: 11
-    position: 52
+    position: 54
     required: false
     options:
       values:
@@ -4050,7 +4120,7 @@ forms:
     field_type: dropdown
     label: OSHA Reportable
     page_number: 11
-    position: 53
+    position: 55
     required: false
     options:
       values:
@@ -4066,7 +4136,7 @@ forms:
     field_type: choices_dropdown
     label: Reportable Injury Codes
     page_number: 11
-    position: 54
+    position: 56
     required: false
     options:
       custom_lookup:
@@ -4127,29 +4197,22 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: hca_safety
-    condition_field_name: bloodborne_pathogen_exposure
-    condition_operator: equals
-    condition_value: 'Yes'
+    approve_button_label: Edit
+    deny_button_label: Review
     inbox_buttons:
     - view_pdf
     - edit
-    - approve
     - deny
     - reassign
     - take_back
     - status_history
+    complete_on_edit: true
   emails:
   - kind: new_submission
     subject: New Safety Reporting Form Submission
-    body: "Hello, \r\n\r\nA new Safety Reporting form has been submitted. Please see
-      the attached PDF for more information."
-  email_steps:
-  - trigger_event: submit
-    recipient_type: employee
-    employee_id: 121825
-    attach_pdf: true
-    attach_media: true
-    position: 0
+    body: "Hello, \n\nA new Safety Reporting form has been submitted. Please see the
+      attached PDF for more information."
+  email_steps: []
   copy_recipients:
   - recipient_type: group
     trigger_event: submit
@@ -5130,6 +5193,7 @@ forms:
     - reassign
     - take_back
     - status_history
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients:
@@ -5559,6 +5623,7 @@ forms:
   - step_number: 1
     routing_type: supervisor
     inbox_buttons: []
+    complete_on_edit: false
   emails: []
   email_steps: []
   copy_recipients: []
@@ -6305,6 +6370,7 @@ forms:
     - reassign
     - take_back
     - status_dropdown
+    complete_on_edit: false
     group: HCA_HR
   emails: []
   email_steps: []

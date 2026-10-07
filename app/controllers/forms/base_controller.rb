@@ -24,7 +24,30 @@ module Forms
     # action the controller doesn't have.
     before_action :authorize_submission_edit!, if: -> { action_name.in?(%w[edit update]) }
 
+    # A routing step can be configured so that its approver finishes it by
+    # saving the form instead of pressing Approve (see
+    # TrackableStatus#complete_step_on_edit!). Hooked here, like the guards
+    # above, so every form's update honours the setting without each generated
+    # controller having to call it. Runs after the action so anything the
+    # action does with the saved record (Safety Reporting spawning its OSHA
+    # report) has already happened.
+    after_action :complete_routing_step_on_edit, if: -> { action_name == 'update' }
+
     private
+
+    # Every update here answers a successful save with a redirect and a failed
+    # one by re-rendering the form, so a redirect is the sign the edit landed.
+    def complete_routing_step_on_edit
+      return unless response.redirect?
+
+      record = submission_model&.find_by(id: params[:id])
+      return unless record.respond_to?(:complete_step_on_edit!)
+
+      record.complete_step_on_edit!(session.dig(:user, 'employee_id'))
+    rescue StandardError => e
+      Rails.logger.error("complete-on-edit failed for #{controller_name} ##{params[:id]}: #{e.message}")
+      flash[:alert] = 'Your changes were saved, but the submission could not be moved to its next step.'
+    end
 
     # The model this controller edits. Every controller under Forms:: is named
     # after its model (telework_log_forms -> TeleworkLogForm), so the guard can

@@ -31,21 +31,22 @@
   * use git mv when moving files
 ## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
-implementation work. The commands below use the Gitea API and read
-`GITEA_TOKEN` from the environment or the ignored repository `.env` file.
-The shared `.env` in the main checkout is also discovered automatically when
-the command runs from a linked worktree. Never commit the token.
+implementation work. The commands below use the Gitea API and read `GITEA_TOKEN` from the
+environment or the ignored `.env.local` file. `.env` is a LockBox copy and
+keeps that token empty; `.env.local` is loaded second and wins. A linked
+worktree without its own copy reads the shared checkout's files. Never
+commit the token.
 
-The local Gitea service is reached by IP from the sandbox. The ignored `.env`
-should contain:
+The local Gitea service is reached by IP from the sandbox. The ignored
+`.env.local` should contain:
 
 ```dotenv
 GITEA_URL=http://10.135.204.125:3000
 GITEA_TOKEN=<local token value>
 ```
 
-Keep the actual token value only in `.env` or the process environment; do not
-replace the placeholder above in tracked documentation.
+Keep the actual token value only in `.env.local` or the process environment;
+do not replace the placeholder above in tracked documentation.
 
 Create an issue before creating its branch:
 
@@ -113,8 +114,42 @@ bin/update-issue --issue 123 --add-label priority:normal
 bin/update-issue --issue 123 --add-label priority:normal --apply
 ```
 
-See `docs/gitea-automation.md` for the complete workflow and project
-conventions.
+See the [Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page for the complete workflow and project conventions.
+
+## Wiki
+
+Design notes live on the Gitea wiki, not under `docs/`:
+
+`http://10.135.204.125:3000/BSS/Paperboy/wiki/`
+
+`config/wiki_pages.yml` maps a repository path to a page slug. The page
+address is that base URL plus the slug. A `keep: true` page is still read
+from the checkout. A `keep: false` page is read from the wiki.
+
+Before creating or changing a feature, read the wiki pages for that area.
+Use Architecture for framework work. Use AIM Plan, AIM Handoff, and AIM Todo
+for AIM. Use the OMS pages for OMS. Use Authentication Gem for
+authentication. Use the map for any other area.
+
+Fetch the Markdown with the wiki API. `content_base64` is the page body.
+Read `GITEA_TOKEN` from the environment or `.env.local`. Do not print the token.
+
+```bash
+curl --fail-with-body --silent \
+  -H "Authorization: token ${GITEA_TOKEN}" \
+  -H 'Accept: application/json' \
+  "${GITEA_URL%/}/api/v1/repos/BSS/Paperboy/wiki/page/Architecture"
+```
+
+A restart prompt names those wiki URLs and tells the next session to read
+`AGENTS.md` from the checkout. It does not name a `docs/*.md` path, and it
+is not saved as a new file under `docs/`.
+
+`bin/wiki-publish` refreshes the wiki from the Markdown that stays in git.
+It prints a plan unless `--apply` is given. Pages that moved out of `docs/`
+are edited on the wiki. The rules in this file stay here. The Agents wiki
+page is refreshed from this file.
 
 ## Environment files
 
@@ -383,6 +418,38 @@ Rules:
   its `LOOKUPS` / `MULTI_VALUE` tables rather than formatting in a view. Every
   lookup crosses to GSABSS and falls back to the raw value, so it must stay
   best-effort.
+
+## Submission comments
+
+Every submission has one comment thread (`SubmissionComment`, table
+`submission_comments`, polymorphic). A comment is text, attachments, or both.
+`SubmissionCommentsController` renders the thread as one fragment,
+`submission_comments/_thread`, which carries its own form; the
+`comment-thread` Stimulus controller posts it and swaps in the answer.
+
+**Comments is not a configurable button.** `inbox/_comments_button` sits in
+every inbox action panel, copies included, and `shared/_readonly_record`
+shows the thread on every submission page. Do not add `comments` to
+`Forms::Template::INBOX_BUTTON_TYPES`.
+
+Rules:
+
+- **Visibility follows view access.** Reading, posting and downloading all
+  ask `Forms::SubmissionAccess` (`can_view_submission?`). There are no
+  internal-only comments: whatever is posted, the submitter can read.
+- **Never link a comment's file with `url_for` or `rails_blob_path`.** Use
+  `submission_comment_attachment_path`, which checks the viewer and streams
+  the file as a download.
+- A comment is not an edit. It writes nothing to `record_edits` or
+  `status_changes` and must not touch the submission.
+- An author may delete their own comment and a system admin any; nobody
+  edits one.
+- A new comment is the `comment_added` form subscription event. Immediate
+  subscribers are mailed from `SubmissionComment`'s `after_create_commit`;
+  digest subscribers are found by `Forms::SubscriptionDigest#comments`. The
+  author is never mailed about their own comment.
+- Allowed file types and limits live in `SubmissionComment::FILE_TYPES`,
+  `MAX_FILES` and `MAX_FILE_SIZE`, not in the view.
 
 ## Publishing
 

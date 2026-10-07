@@ -57,7 +57,8 @@ class AclController < ApplicationController
     { key: 'admin_tools', label: 'Admin Tools' },
     { key: 'p2m', label: 'Print 2 Mail' },
     { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search' },
-    { key: 'development', label: 'Development' }
+    { key: 'development', label: 'Development' },
+    { key: 'itp', label: 'IP Portal' }
   ].freeze
 
   LEGACY_FORMS = [
@@ -72,6 +73,9 @@ class AclController < ApplicationController
   def index
     @groups = Group.all.order(:group_name)
     @group_member_counts = EmployeeGroup.group(:group_id).count
+  end
+
+  def organization_permissions
     @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
   end
 

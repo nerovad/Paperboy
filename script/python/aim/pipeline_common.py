@@ -32,7 +32,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # v2 (script/python/aim/v2) is the live worker and owns every helper the two
 # pipelines have in common: the .env search, env(), file stability, page
 # rendering, the invoice models and the key-field cleaning. v1 is stopped and
-# awaiting retirement (docs/aim/aim_plan.md, `## Next` item h), so it imports
+# awaiting retirement (AIM Plan wiki page, `## Next` item h:
+# http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan), so it imports
 # them from the v2 folder beside it instead of keeping copies that drift.
 #
 # bin/deploy-aim-workers ships v1 as one flat folder without v2/, so a v1

@@ -9,8 +9,10 @@
       selected_keys  Set of keys already granted at this scope
       scope_label    "members of this group" / "users at this organization level"
 -%>
-<div class="acl-permissions-section">
-  <h3>Submission Actions</h3>
+<details id="submission-actions" class="acl-permission-subgroup">
+  <summary>Submission Actions</summary>
+  <div class="acl-permissions-section">
+    <h3>Submission Actions</h3>
   <p class="acl-subtitle">
     Choose what <%= scope_label %> may do to submissions that aren't their own.
     Whoever a submission is assigned to can already do both without a tick here,
@@ -50,4 +52,5 @@
       <% end %>
     </tbody>
   </table>
-</div>
+  </div>
+</details>

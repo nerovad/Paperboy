@@ -15,12 +15,15 @@ module Forms
     belongs_to :form_template, class_name: 'Forms::Template'
 
     TRIGGER_EVENTS = %w[submit approved denied].freeze
-    RECIPIENT_TYPES = %w[submitter employee group custom_email form_field].freeze
+    RECIPIENT_TYPES = %w[submitter supervisor employee group authorization custom_email form_field].freeze
 
     validates :trigger_event, presence: true, inclusion: { in: TRIGGER_EVENTS }
     validates :recipient_type, presence: true, inclusion: { in: RECIPIENT_TYPES }
     validates :employee_id, presence: true, if: -> { recipient_type == 'employee' }
     validates :group_id, presence: true, if: -> { recipient_type == 'group' }
+    validates :authorization_service_type, presence: true,
+                                           inclusion: { in: ->(_rule) { AuthorizationConsole.routing_keys } },
+                                           if: -> { recipient_type == 'authorization' }
     validates :custom_email, presence: true, if: -> { recipient_type == 'custom_email' }
     validates :recipient_field_name, presence: true, if: -> { recipient_type == 'form_field' }
 
@@ -46,13 +49,18 @@ module Forms
       case recipient_type
       when 'submitter'
         [submission.try(:email)].compact_blank
+      when 'supervisor'
+        emails_for([submitter_supervisor_id(submission)].compact_blank)
       when 'employee'
         [Employee.find_by(employee_id: employee_id)&.email].compact_blank
       when 'group'
         return [] unless group_id
 
-        member_ids = EmployeeGroup.member_ids(group_id)
-        Employee.where(id: member_ids).pluck(:email).compact_blank
+        emails_for(EmployeeGroup.member_ids(group_id))
+      when 'authorization'
+        # Whoever holds this authorization over the submission — the same
+        # people a routing step sent to the console would reach.
+        emails_for(AuthorizationConsole.approver_ids_for(authorization_service_type, submission))
       when 'custom_email'
         [custom_email].compact_blank
       when 'form_field'
@@ -86,6 +94,9 @@ module Forms
     def recipient_label
       case recipient_type
       when 'submitter' then 'Submitter'
+      when 'supervisor' then "Submitter's supervisor"
+      when 'authorization'
+        "Authorized approver — #{AuthorizationConsole.routing_label(authorization_service_type)}"
       when 'employee'
         emp = Employee.find_by(employee_id: employee_id)
         emp ? emp.full_name : "Employee ##{employee_id}"
@@ -95,6 +106,20 @@ module Forms
       end
     rescue StandardError
       recipient_type.to_s.humanize
+    end
+
+    private
+
+    def emails_for(employee_ids)
+      return [] if employee_ids.blank?
+
+      Employee.where(id: employee_ids).pluck(:email).compact_blank
+    end
+
+    def submitter_supervisor_id(submission)
+      submitter_id = submission.try(:employee_id)
+      # Employee or Contractor — both expose supervisor_id.
+      submitter_id.present? ? Submitter.resolve(submitter_id)&.supervisor_id : nil
     end
   end
 end

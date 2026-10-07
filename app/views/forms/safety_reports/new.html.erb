@@ -24,9 +24,9 @@
         <% _page_5_visible = true %>
         <% _page_6_visible = true %>
         <% _page_7_visible = true %>
-        <% _page_8_visible = (@current_user_groups&.include?(19) || system_admin?) %>
+        <% _page_8_visible = true %>
         <% _page_9_visible = (@current_user_groups&.include?(19) || system_admin?) %>
-        <% _page_10_visible = (@current_user_groups&.include?(19) || system_admin?) %>
+        <% _page_10_visible = true %>
         <% _page_11_visible = (@current_user_groups&.include?(19) || system_admin?) %>
 
 <!-- Page 1: Employee Info -->
@@ -463,37 +463,46 @@
         </div>
       </div>
 
-        <% if _page_8_visible %>
 <!-- Page 8: Investigation Details -->
 <div class="form-page" style="display:none;">
   <h2>Investigation Details</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:investigator_name START -->        <% field_4841_editable = @current_user_groups&.include?(19) %>
-        <% if field_4841_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4841_editable %>">
+<!-- FIELD:investigator_name START -->        <% field_5737_editable = @current_user_groups&.include?(19) %>
+        <% if field_5737_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5737_editable %>">
   <%= form.label :investigator_name, "Investigator Name" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.text_field :investigator_name, class: "form-control", disabled: !field_4841_editable %>
+            <%= form.select :investigator_name,
+                  options_for_select(FormLookup.options_for("SafetyReport", "investigator_name")),
+                  { include_blank: "Select..." },
+                  { class: "form-control", disabled: !field_5737_editable, data: { controller: "searchable-select", conditional_trigger: 'investigator_name' } } %>
           </div>
         <% end %>
 <!-- FIELD:investigator_name END -->
-<!-- FIELD:investigator_title START -->        <% field_4842_editable = @current_user_groups&.include?(19) %>
-        <% if field_4842_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4842_editable %>">
+<!-- FIELD:other_investigator_name START -->          <div class="conditional-field" data-depends-on="investigator_name" data-show-values="[&quot;Other&quot;]" style="display: none;">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_investigator_name, "Other Investigator Name" %>
+            <%= form.text_field :other_investigator_name, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_investigator_name END -->
+<!-- FIELD:investigator_title START -->        <% field_5739_editable = @current_user_groups&.include?(19) %>
+        <% if field_5739_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5739_editable %>">
   <%= form.label :investigator_title, "Investigator Title" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.text_field :investigator_title, class: "form-control", disabled: !field_4842_editable %>
+            <%= form.text_field :investigator_title, class: "form-control", disabled: !field_5739_editable %>
           </div>
         <% end %>
 <!-- FIELD:investigator_title END -->
-<!-- FIELD:investigator_phone START -->        <% field_4843_editable = @current_user_groups&.include?(19) %>
-        <% if field_4843_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4843_editable %>">
+<!-- FIELD:investigator_phone START -->        <% field_5740_editable = @current_user_groups&.include?(19) %>
+        <% if field_5740_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5740_editable %>">
   <%= form.label :investigator_phone, "Investigator Phone" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.text_field :investigator_phone,
                   class: "form-control",
-                  disabled: !field_4843_editable,
+                  disabled: !field_5740_editable,
                   placeholder: "e.g. 555-555-5555",
                   title: "Enter a 10-digit phone number like 555-555-5555",
                   data: { controller: "phone", phone_target: "input", action: "input->phone#format paste->phone#format blur->phone#validate" },
@@ -506,72 +515,71 @@
           </div>
         <% end %>
 <!-- FIELD:investigator_phone END -->
-<!-- FIELD:nature_of_incident START -->        <% field_4844_editable = @current_user_groups&.include?(19) %>
-        <% if field_4844_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4844_editable %>" data-controller="choices">
+<!-- FIELD:nature_of_incident START -->        <% field_5741_editable = @current_user_groups&.include?(19) %>
+        <% if field_5741_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5741_editable %>" data-controller="choices">
   <%= form.label :nature_of_incident, "Nature of Incident" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :nature_of_incident,
                   options_for_select(FormLookup.options_for("SafetyReport", "nature_of_incident")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4844_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5741_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:nature_of_incident END -->
-<!-- FIELD:cause_of_incident START -->        <% field_4845_editable = @current_user_groups&.include?(19) %>
-        <% if field_4845_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4845_editable %>" data-controller="choices">
+<!-- FIELD:cause_of_incident START -->        <% field_5742_editable = @current_user_groups&.include?(19) %>
+        <% if field_5742_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5742_editable %>" data-controller="choices">
   <%= form.label :cause_of_incident, "Cause of Incident" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :cause_of_incident,
                   options_for_select(FormLookup.options_for("SafetyReport", "cause_of_incident")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4845_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5742_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:cause_of_incident END -->
         </div>
       </div>
-        <% end %>
 
         <% if _page_9_visible %>
 <!-- Page 9: Severity & Root Cause -->
 <div class="form-page" style="display:none;">
   <h2>Severity & Root Cause</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:root_cause START -->        <% field_4846_editable = @current_user_groups&.include?(19) %>
-        <% if field_4846_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4846_editable %>" data-controller="choices">
+<!-- FIELD:root_cause START -->        <% field_5743_editable = @current_user_groups&.include?(19) %>
+        <% if field_5743_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5743_editable %>" data-controller="choices">
   <%= form.label :root_cause, "Root Cause" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :root_cause,
                   options_for_select(FormLookup.options_for("SafetyReport", "root_cause")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4846_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5743_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:root_cause END -->
-<!-- FIELD:assessment_of_future_severity_potential START -->        <% field_4847_editable = @current_user_groups&.include?(19) %>
-        <% if field_4847_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4847_editable %>" data-controller="choices">
+<!-- FIELD:assessment_of_future_severity_potential START -->        <% field_5744_editable = @current_user_groups&.include?(19) %>
+        <% if field_5744_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5744_editable %>" data-controller="choices">
   <%= form.label :assessment_of_future_severity_potential, "Assessment of Future Severity Potential" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :assessment_of_future_severity_potential,
                   options_for_select(FormLookup.options_for("SafetyReport", "assessment_of_future_severity_potential")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4847_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5744_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:assessment_of_future_severity_potential END -->
-<!-- FIELD:assessment_of_probability_of_recurrence START -->        <% field_4848_editable = @current_user_groups&.include?(19) %>
-        <% if field_4848_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4848_editable %>" data-controller="choices">
+<!-- FIELD:assessment_of_probability_of_recurrence START -->        <% field_5745_editable = @current_user_groups&.include?(19) %>
+        <% if field_5745_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5745_editable %>" data-controller="choices">
   <%= form.label :assessment_of_probability_of_recurrence, "Assessment of Probability of Recurrence" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :assessment_of_probability_of_recurrence,
                   options_for_select(FormLookup.options_for("SafetyReport", "assessment_of_probability_of_recurrence")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4848_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5745_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:assessment_of_probability_of_recurrence END -->
@@ -579,113 +587,121 @@
       </div>
         <% end %>
 
-        <% if _page_10_visible %>
 <!-- Page 10: Corrective Actions -->
 <div class="form-page" style="display:none;">
   <h2>Corrective Actions</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:unsafe_condition_corrected_immediately START -->        <% field_4849_editable = @current_user_groups&.include?(19) %>
-        <% if field_4849_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4849_editable %>">
+<!-- FIELD:unsafe_condition_corrected_immediately START -->        <% field_5746_editable = @current_user_groups&.include?(19) %>
+        <% if field_5746_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5746_editable %>">
   <%= form.label :unsafe_condition_corrected_immediately, "Unsafe condition corrected immediately?" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :unsafe_condition_corrected_immediately,
                   options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4849_editable, data: { controller: "searchable-select" } } %>
+                  { class: "form-control", disabled: !field_5746_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:unsafe_condition_corrected_immediately END -->
-<!-- FIELD:checklistprocedurestraining_modified START -->        <% field_4850_editable = @current_user_groups&.include?(19) %>
-        <% if field_4850_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4850_editable %>">
+<!-- FIELD:checklistprocedurestraining_modified START -->        <% field_5747_editable = @current_user_groups&.include?(19) %>
+        <% if field_5747_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5747_editable %>">
   <%= form.label :checklistprocedurestraining_modified, "Checklist/procedures/training modified?" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :checklistprocedurestraining_modified,
                   options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4850_editable, data: { controller: "searchable-select" } } %>
+                  { class: "form-control", disabled: !field_5747_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:checklistprocedurestraining_modified END -->
-<!-- FIELD:person_responsible_for_corrective_action START -->        <% field_4851_editable = @current_user_groups&.include?(19) %>
-        <% if field_4851_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4851_editable %>">
+<!-- FIELD:person_responsible_for_corrective_action START -->        <% field_5748_editable = @current_user_groups&.include?(19) %>
+        <% if field_5748_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5748_editable %>">
   <%= form.label :person_responsible_for_corrective_action, "Person Responsible for Corrective Action" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.text_field :person_responsible_for_corrective_action, class: "form-control", disabled: !field_4851_editable %>
+            <%= form.select :person_responsible_for_corrective_action,
+                  options_for_select(FormLookup.options_for("SafetyReport", "person_responsible_for_corrective_action")),
+                  { include_blank: "Select..." },
+                  { class: "form-control", disabled: !field_5748_editable, data: { controller: "searchable-select", conditional_trigger: 'person_responsible_for_corrective_action' } } %>
           </div>
         <% end %>
 <!-- FIELD:person_responsible_for_corrective_action END -->
-<!-- FIELD:title START -->        <% field_4852_editable = @current_user_groups&.include?(19) %>
-        <% if field_4852_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4852_editable %>">
+<!-- FIELD:other_person_responsible START -->          <div class="conditional-field" data-depends-on="person_responsible_for_corrective_action" data-show-values="[&quot;Other&quot;]" style="display: none;">
+<div class="form-group flex-fill<%= '' %>">
+  <%= form.label :other_person_responsible, "Other Person Responsible" %>
+            <%= form.text_field :other_person_responsible, class: "form-control" %>
+          </div>
+          </div>
+<!-- FIELD:other_person_responsible END -->
+<!-- FIELD:title START -->        <% field_5750_editable = @current_user_groups&.include?(19) %>
+        <% if field_5750_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5750_editable %>">
   <%= form.label :title, "Title" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.text_field :title, class: "form-control", disabled: !field_4852_editable %>
+            <%= form.text_field :title, class: "form-control", disabled: !field_5750_editable %>
           </div>
         <% end %>
 <!-- FIELD:title END -->
-<!-- FIELD:targeted_completion_date START -->        <% field_4853_editable = @current_user_groups&.include?(19) %>
-        <% if field_4853_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4853_editable %>">
+<!-- FIELD:targeted_completion_date START -->        <% field_5751_editable = @current_user_groups&.include?(19) %>
+        <% if field_5751_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5751_editable %>">
   <%= form.label :targeted_completion_date, "Targeted Completion Date" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.date_field :targeted_completion_date, class: "form-control", disabled: !field_4853_editable %>
+            <%= form.date_field :targeted_completion_date, class: "form-control", disabled: !field_5751_editable %>
           </div>
         <% end %>
 <!-- FIELD:targeted_completion_date END -->
-<!-- FIELD:actual_completion_date START -->        <% field_4854_editable = @current_user_groups&.include?(19) %>
-        <% if field_4854_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4854_editable %>">
+<!-- FIELD:actual_completion_date START -->        <% field_5752_editable = @current_user_groups&.include?(19) %>
+        <% if field_5752_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5752_editable %>">
   <%= form.label :actual_completion_date, "Actual Completion Date" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
-            <%= form.date_field :actual_completion_date, class: "form-control", disabled: !field_4854_editable %>
+            <%= form.date_field :actual_completion_date, class: "form-control", disabled: !field_5752_editable %>
           </div>
         <% end %>
 <!-- FIELD:actual_completion_date END -->
         </div>
       </div>
-        <% end %>
 
         <% if _page_11_visible %>
 <!-- Page 11: OSHA Info -->
 <div class="form-page" style="display:none;">
   <h2>OSHA Info</h2>
         <div class="form-row d-flex flex-wrap">
-<!-- FIELD:osha_recordable START -->        <% field_4855_editable = @current_user_groups&.include?(19) %>
-        <% if field_4855_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4855_editable %>">
+<!-- FIELD:osha_recordable START -->        <% field_5753_editable = @current_user_groups&.include?(19) %>
+        <% if field_5753_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5753_editable %>">
   <%= form.label :osha_recordable, "OSHA Recordable" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :osha_recordable,
                   options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4855_editable, data: { controller: "searchable-select" } } %>
+                  { class: "form-control", disabled: !field_5753_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:osha_recordable END -->
-<!-- FIELD:osha_reportable START -->        <% field_4856_editable = @current_user_groups&.include?(19) %>
-        <% if field_4856_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4856_editable %>">
+<!-- FIELD:osha_reportable START -->        <% field_5754_editable = @current_user_groups&.include?(19) %>
+        <% if field_5754_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5754_editable %>">
   <%= form.label :osha_reportable, "OSHA Reportable" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :osha_reportable,
                   options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", disabled: !field_4856_editable, data: { controller: "searchable-select" } } %>
+                  { class: "form-control", disabled: !field_5754_editable, data: { controller: "searchable-select" } } %>
           </div>
         <% end %>
 <!-- FIELD:osha_reportable END -->
-<!-- FIELD:reportable_injury_codes START -->        <% field_4857_editable = @current_user_groups&.include?(19) %>
-        <% if field_4857_editable || system_admin? %>
-<div class="form-group flex-fill<%= ' field-restricted' unless field_4857_editable %>" data-controller="choices">
+<!-- FIELD:reportable_injury_codes START -->        <% field_5755_editable = @current_user_groups&.include?(19) %>
+        <% if field_5755_editable || system_admin? %>
+<div class="form-group flex-fill<%= ' field-restricted' unless field_5755_editable %>" data-controller="choices">
   <%= form.label :reportable_injury_codes, "Reportable Injury Codes" %>
             <small class="restriction-notice">To be filled by: HCA_Safety_Officers</small>
             <%= form.select :reportable_injury_codes,
                   options_for_select(FormLookup.options_for("SafetyReport", "reportable_injury_codes")),
                   { include_blank: false },
-                  { class: "form-control", disabled: !field_4857_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
+                  { class: "form-control", disabled: !field_5755_editable, multiple: true, data: { choices_target: "select", placeholder: "Select options..." } } %>
           </div>
         <% end %>
 <!-- FIELD:reportable_injury_codes END -->

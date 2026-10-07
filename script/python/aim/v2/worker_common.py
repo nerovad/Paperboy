@@ -2,7 +2,8 @@
 
 v2 owns these. v1's pipeline_common imports them from here rather than
 carrying copies of its own (v1 is stopped and awaiting retirement -- see
-`## Next`, item h, in docs/aim/aim_plan.md). So this module imports no other
+`## Next`, item h, on the AIM Plan wiki page,
+http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan). So this module imports no other
 v2 module and reads nothing at import: v1 can load it without pulling in the
 v2 worker.
 

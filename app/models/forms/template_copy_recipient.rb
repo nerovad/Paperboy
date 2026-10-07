@@ -7,13 +7,16 @@ module Forms
     def self.model_name = ActiveModel::Name.new(self, nil, 'FormTemplateCopyRecipient')
     belongs_to :form_template, class_name: 'Forms::Template'
 
-    RECIPIENT_TYPES = %w[employee group supervisor].freeze
+    RECIPIENT_TYPES = %w[employee group supervisor authorization].freeze
     TRIGGER_EVENTS = %w[submit approval either].freeze
 
     validates :recipient_type, presence: true, inclusion: { in: RECIPIENT_TYPES }
     validates :trigger_event, presence: true, inclusion: { in: TRIGGER_EVENTS }
     validates :employee_id, presence: true, if: -> { recipient_type == 'employee' }
     validates :group_id, presence: true, if: -> { recipient_type == 'group' }
+    validates :authorization_service_type, presence: true,
+                                           inclusion: { in: ->(_row) { AuthorizationConsole.routing_keys } },
+                                           if: -> { recipient_type == 'authorization' }
 
     scope :ordered, -> { order(:position, :id) }
     scope :for_event, ->(event) { where(trigger_event: [event.to_s, 'either']) }
@@ -32,6 +35,10 @@ module Forms
         return [] unless group_id
 
         EmployeeGroup.member_ids(group_id).map(&:to_s)
+      when 'authorization'
+        # Whoever holds this authorization over the submission — the same
+        # people a routing step sent to the console would reach.
+        AuthorizationConsole.approver_ids_for(authorization_service_type, submission)
       else
         []
       end
@@ -46,6 +53,8 @@ module Forms
         Group.find_by(GroupID: group_id)&.group_name || "Group ##{group_id}"
       when 'supervisor'
         "Submitter's supervisor"
+      when 'authorization'
+        "Authorized approver — #{AuthorizationConsole.routing_label(authorization_service_type)}"
       end
     rescue StandardError
       recipient_type.humanize

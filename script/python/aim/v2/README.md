@@ -17,5 +17,5 @@ Every outcome clears the command and the lease and writes an event.
 
 Run it with `Run_AIM_Worker.bat` from this folder. It reads `.env` beside it,
 which `bin/deploy-aim-workers --v2` renders from LockBox; a missing variable
-stops it at start. See `docs/aim/aim_plan.md`, "AIM v2 — The Row-First
-Rebuild", for the contract it is built against.
+stops it at start. See the [AIM Plan](http://10.135.204.125:3000/BSS/Paperboy/wiki/AIM-Plan)
+wiki page, "AIM v2 — The Row-First Rebuild", for the contract it is built against.

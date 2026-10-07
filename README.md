@@ -18,18 +18,22 @@ with a modernized workflow. It integrates with Microsoft SQL Server and uses
 Solid Queue for background jobs, Solid Cache for Rails.cache, and Solid Cable
 for Action Cable.
 
-For the product story / sales pitch, see [docs/PITCH.md](docs/PITCH.md).
+For the product story / sales pitch, see the
+[Pitch](http://10.135.204.125:3000/BSS/Paperboy/wiki/Pitch) wiki page.
 
 ## Gitea workflow
 
 Paperboy's issue, pull request, milestone, Project, and automation conventions
-are documented in [docs/gitea-automation.md](docs/gitea-automation.md). Use the
-repository's Gitea templates when opening an issue or pull request.
+are documented on the
+[Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page. Use the repository's Gitea templates when opening an issue or
+pull request.
 
 ### Command-line workflow
 
-Set `GITEA_TOKEN` in the environment or in the ignored repository `.env` file.
-Never commit the token. Create an issue before starting implementation:
+Set `GITEA_TOKEN` in the environment or in the ignored `.env.local` file.
+Never commit the token. `bin/env-pull` replaces `.env` from LockBox, which
+keeps that token empty. Create an issue before starting implementation:
 
 ```bash
 bin/new-issue --type feature \
@@ -59,8 +63,10 @@ git pull --ff-only
 bin/worktree cleanup issue/123-short-description
 ```
 
-`bin/update-issue` can apply an explicitly approved label or milestone
-change. It previews changes unless `--apply` is supplied:
+`bin/update-issue` can apply an explicitly approved label, milestone,
+project, or column change. It previews changes unless `--apply` is supplied.
+`--project` replaces the issue's project list. `--column` moves the card
+with the issue's global id:
 
 ```bash
 bin/update-issue --issue 123 --add-label priority:normal
@@ -76,8 +82,9 @@ source /path/to/Paperboy/bin/shell-init
 wt 123
 ```
 
-For command options, prompting behavior, and safety rules, see
-[docs/gitea-automation.md](docs/gitea-automation.md).
+For command options, prompting behavior, and safety rules, see the
+[Gitea Workflow](http://10.135.204.125:3000/BSS/Paperboy/wiki/Gitea-Workflow)
+wiki page.
 
 ---
 
@@ -197,9 +204,24 @@ stock dotenv — so does the test environment, which is where
 boot without `.env`. At minimum:
 
 ```bash
-GSABSS_HOST=  GSABSS_PORT=  GSABSS_USERNAME=  GSABSS_PASSWORD=
-GSABSS_DATABASE=GSABSS
+# Define simple ROOTS alphabetically here. Define all other roots within their
+# respective sub-application locations using these roots.
+AIM_ROOT=/mnt/a
 GSABSS_ROOT=/mnt/i
+HSA_ADOPT_ROOT=/mnt/a
+P2M_ROOT=/mnt/o
+
+# Primary SQL Server connections
+#GSABSS_HOST=GSASQL16
+GSABSS_HOST=10.135.204.161
+GSABSS_PORT=1433
+GSABSS_USERNAME=
+GSABSS_PASSWORD=
+GSABSS_TIMEOUT=5
+GSABSS_DATABASE=GSABSS
+PAPERBOY_DATABASE=Paperboy_Dev
+
+# P2M
 P2M_DATARUNNER_ROOT=/mnt/o/Outputs/DataRunner
 P2M_SHIPPING_STATION=00_ShippingStation
 P2M_STAGING=01_Staging
@@ -207,14 +229,23 @@ P2M_TEMPORARY_OUTPUT=02_TemporaryOutput
 P2M_PROCESSED=03_Processed
 P2M_DESTROYED=04_Destroyed
 P2M_PRINTERS=99_Printers
-SMB_USERNAME=  SMB_PASSWORD=  SMB_IP=
-AIM_ROOT=/mnt/a
+SMB_USERNAME=
+SMB_PASSWORD=
+SMB_IP=
 PAPERBOY_DATABASE=Paperboy_Dev
+
+# Active Record
 ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
 ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
-```
 
+# SMB Shortcut
+SMB_USERNAME='ENT\000000'
+SMB_PASSWORD='password'
+
+# GITEA
+GITEA_URL=http://10.135.204.125:3000
+```
 `PAPERBOY_DATABASE` is read in every environment, not just development —
 `config/database.yml` uses it as the database name for development, staging
 and production alike. The stage host overrides it back to `Paperboy_Stage`
@@ -691,6 +722,7 @@ also accepts no selector and then discovers every supported file in
 inbox in `.env`:
 
 ```dotenv
+
 DATARUNNER_INBOX=${GSABSS_ROOT}/BUSINESS_SUPPORT/DataRunner/00_Inbox
 ```
 
