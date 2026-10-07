@@ -8,8 +8,8 @@ module Development
   class RunLauncher
     ADAPTER = ActiveJob::QueueAdapters::AsyncAdapter.new
 
-    def self.enqueue(run_id)
-      job = RunScriptJob.new(run_id)
+    def self.enqueue(run_id, script_key, arguments)
+      job = RunScriptJob.new(run_id, script_key, arguments)
       ADAPTER.enqueue(job)
       job
     end

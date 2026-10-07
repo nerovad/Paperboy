@@ -86,29 +86,6 @@
       "user_input": "find_viewable_asset(params[:id]).original_path.to_s",
       "confidence": "Weak",
       "note": "The path is a column, so Brakeman is right that it is not a literal. It is not sent unless Dam::StorageLocation#holds_source? says it resolves inside the folder that location scans and inside PAPERBOY_DAM_ROOTS, which is set per host in .env and not editable from the app. See AssetsController#unreadable_reason. The asset is looked up through the DAM access rules (find_viewable_asset) and the Download capability is checked before this line."
-    },
-    {
-      "warning_type": "Command Injection",
-      "warning_code": 14,
-      "fingerprint": "cf8777aa90851811d24eeca8abb073610577323165f70f197fdaa28310317ee9",
-      "check_name": "Execute",
-      "message": "Possible command injection",
-      "file": "app/jobs/development/run_script_job.rb",
-      "line": 24,
-      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
-      "code": "Open3.capture2e([(ScriptCatalog.find(Development::Run.find(run_id).script_key) and CommandBuilder.new(ScriptCatalog.find(Development::Run.find(run_id).script_key), []).program), (ScriptCatalog.find(Development::Run.find(run_id).script_key) and CommandBuilder.new(ScriptCatalog.find(Development::Run.find(run_id).script_key), []).program)], *arguments, :chdir => Rails.root.to_s)",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "Development::RunScriptJob",
-        "method": "perform"
-      },
-      "user_input": "Development::Run.find(run_id).script_key",
-      "confidence": "High",
-      "cwe_id": [
-        77
-      ],
-      "note": "Brakeman treats the Development::Run columns as input. The program comes from ScriptCatalog (a hard-coded allowlist of bin/ scripts) via CommandBuilder#program, and the job refuses a stored command whose executable differs. Argv runs in array form with no shell, and RunsController builds the arguments with the catalog lambdas."
     }
   ],
   "updated": "2026-10-07 13:20:42 -0700",
