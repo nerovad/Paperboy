@@ -52,6 +52,10 @@ export default class extends Controller {
   connect() {
     console.log("Form Builder controller connected")
 
+    // The "+ Create Form" button on the index is a bare launcher: it only
+    // needs openModal, and has no builder of its own to set up.
+    if (!this.hasFieldsContainerTarget) return
+
     // Monotonic id used to give every field-item a stable identity so conditional
     // references survive reorder/add/remove (positional field_N indices don't).
     this.fieldUidSeq = 0
@@ -344,11 +348,6 @@ export default class extends Controller {
       this.fieldsContainerTarget.innerHTML = ''
       this.addField() // Add back the default field
       this.pageHeadersContainerTarget.style.display = 'none'
-      this.aclGroupContainerTarget.style.display = 'none'
-      if (this.hasOrgScopeContainerTarget) {
-        this.orgScopeContainerTarget.style.display = 'none'
-        this.clearOrgScope()
-      }
       this.approvalRoutingContainerTarget.style.display = 'none'
       this.routingStepsContainerTarget.innerHTML = ''
       if (this.hasStatusesContainerTarget) {
