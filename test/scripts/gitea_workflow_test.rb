@@ -291,6 +291,7 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
                     { 'id' => 3, 'title' => 'Other' }
                   ])
     write_fixture('GET projects/2/columns page=1', [{ 'id' => 7, 'title' => 'In Progress' }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [])
   end
 
   def teardown
@@ -329,6 +330,21 @@ class GiteaUpdateIssueScriptTest < Minitest::Test
     assert_includes move.fetch('url'), '/projects/2/issues/200/move'
     refute_includes move.fetch('url'), '/issues/10/move'
     assert_equal({ 'column_id' => 7 }, JSON.parse(move.fetch('data')))
+  end
+
+  def test_same_column_is_left_unchanged
+    write_issue(projects: [{ 'id' => 2, 'title' => 'Powerpuff Girls' }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [{ 'id' => 200, 'number' => 10 }])
+
+    stdout, stderr, status = run_script(
+      'update-issue', '--issue', '10', '--project', 'Powerpuff Girls', '--column', 'In Progress'
+    )
+
+    assert status.success?, stderr
+    assert_includes stdout, '- no changes required'
+    refute_includes stdout, '- move to column'
+    refute_includes stdout, 'Audit:'
+    assert_empty(requests.select { |request| %w[POST PATCH DELETE].include?(request['method']) })
   end
 
   def test_column_without_a_project_is_refused
@@ -764,6 +780,69 @@ class GiteaCreatePullRequestScriptTest < Minitest::Test
       'issue' => '64',
       'implementation_notes' => 'Bash still posts the request.',
       'verification' => { 'checks_run' => 'ruby gitea_workflow_test.rb' }
+    }
+  end
+end
+
+class GiteaIssueScriptTest < Minitest::Test
+  include GiteaScriptFixture
+
+  def setup
+    prepare_gitea_fixture
+    write_fixture('GET issues/69 page=1', issue_payload)
+    write_fixture('GET projects/2/columns page=1', [
+                    { 'id' => 5, 'title' => 'Backlog' },
+                    { 'id' => 7, 'title' => 'In Progress' }
+                  ])
+    write_fixture('GET projects/2/columns/5/issues page=1', [{ 'id' => 1, 'number' => 1 }])
+    write_fixture('GET projects/2/columns/7/issues page=1', [{ 'id' => 690, 'number' => 69 }])
+  end
+
+  def teardown
+    cleanup_gitea_fixture
+  end
+
+  def test_prints_labels_milestone_project_and_column
+    stdout, stderr, status = run_script('gitea-issue', '69')
+
+    assert status.success?, stderr
+    payload = JSON.parse(stdout)
+    assert_equal %w[feature area:forms], payload['labels']
+    assert_equal 'Phase', payload['milestone']
+    assert_equal ['Powerpuff Girls'], payload['projects']
+    assert_equal 'In Progress', payload['column']
+    assert_equal 'Revise widgets', payload['title']
+  end
+
+  def test_column_is_blank_without_exactly_one_project
+    write_fixture(
+      'GET issues/69 page=1',
+      issue_payload.merge(
+        'milestone' => nil,
+        'projects' => [{ 'id' => 2, 'title' => 'One' }, { 'id' => 3, 'title' => 'Two' }]
+      )
+    )
+
+    stdout, stderr, status = run_script('gitea-issue', '69')
+
+    assert status.success?, stderr
+    payload = JSON.parse(stdout)
+    assert_nil payload['milestone']
+    assert_nil payload['column']
+    assert_equal %w[One Two], payload['projects']
+  end
+
+  private
+
+  def issue_payload
+    {
+      'id' => 690,
+      'number' => 69,
+      'title' => 'Revise widgets',
+      'body' => 'text',
+      'labels' => [{ 'id' => 5, 'name' => 'feature' }, { 'id' => 8, 'name' => 'area:forms' }],
+      'milestone' => { 'id' => 9, 'title' => 'Phase' },
+      'projects' => [{ 'id' => 2, 'title' => 'Powerpuff Girls' }]
     }
   end
 end

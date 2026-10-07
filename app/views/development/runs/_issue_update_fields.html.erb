@@ -35,6 +35,20 @@
     <% end %>
   </fieldset>
 <% end %>
+<% if issue[:number].present? %>
+  <p class="issue-field-help">Current labels: <%= Array(issue[:labels]).presence&.join(', ') || 'none' %></p>
+  <% if issue[:milestone].present? %>
+    <p class="issue-field-help">Current milestone: <%= issue[:milestone] %></p>
+  <% end %>
+  <% if Array(issue[:projects]).length > 1 %>
+    <p class="issue-field-help">Current projects: <%= issue[:projects].join(', ') %></p>
+  <% elsif issue[:project].present? %>
+    <p class="issue-field-help">Current project: <%= issue[:project] %></p>
+  <% end %>
+  <% if issue[:column].present? %>
+    <p class="issue-field-help">Current column: <%= issue[:column] %></p>
+  <% end %>
+<% end %>
 <% labels = development_label_names(choices) %>
 <% if labels.any? %>
   <%= label_tag :add_labels, 'Add labels' %>
@@ -50,21 +64,27 @@
 <% milestones = development_milestone_titles(choices) %>
 <%= label_tag :milestone, 'Milestone' %>
 <% if milestones.any? %>
-  <%= select_tag :milestone, options_for_select(milestones), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <%= select_tag :milestone, options_for_select(milestones, issue[:milestone]), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :milestone, nil, class: 'form-control' %>
+  <%= text_field_tag :milestone, issue[:milestone], class: 'form-control' %>
 <% end %>
 <% projects = development_project_titles(choices) %>
 <%= label_tag :project, 'Project' %>
 <% if projects.any? %>
-  <%= select_tag :project, options_for_select(projects), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <%= select_tag :project, options_for_select(projects, issue[:project]), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :project, nil, class: 'form-control' %>
+  <%= text_field_tag :project, issue[:project], class: 'form-control' %>
 <% end %>
 <% columns = development_column_choices(choices) %>
 <%= label_tag :column, 'Column' %>
 <% if columns.any? %>
-  <%= select_tag :column, options_for_select(columns), include_blank: 'Leave unchanged', class: 'form-control' %>
+  <% selected_column = issue[:column].to_s %>
+  <% selected_project = issue[:project].to_s %>
+  <% column_options = columns.map do |label, value|
+       matches = value == selected_column && (selected_project.empty? || label.start_with?("#{selected_project} — "))
+       matches ? [label, value, { selected: true }] : [label, value]
+     end %>
+  <%= select_tag :column, options_for_select(column_options), include_blank: 'Leave unchanged', class: 'form-control' %>
 <% else %>
-  <%= text_field_tag :column, nil, class: 'form-control' %>
+  <%= text_field_tag :column, issue[:column], class: 'form-control' %>
 <% end %>

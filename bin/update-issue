@@ -125,7 +125,8 @@ Options:
 
 --type is required with --body, --body-file, or --answers-file. It sets
 that type label and removes any other type label. The same title, body,
-or type label is left unchanged. --column uses the issue's global id.
+milestone, project, column, or type label is left unchanged. --column
+uses the issue's global id.
 Gitea's move API does not take the issue number. The issue must already
 be on the project, or --project must name that project in the same
 command. This command never closes an issue, merges a pull request, or
@@ -274,6 +275,8 @@ if [[ -n "${column_title}" ]]; then
     echo "Unknown column: ${column_title}" >&2
     exit 1
   }
+  current_column="$(gitea_issue_column_title "${column_project_id}" "${issue_global_id}")"
+  [[ "${current_column}" == "${column_title}" ]] && column_id=''
 fi
 
 title_change=false

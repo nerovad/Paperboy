@@ -13,4 +13,15 @@ source "${script_dir}/gitea-common"
 gitea_require_commands
 gitea_load_config
 issue="$(gitea_get "issues/${1}")"
-jq -c '{number, title, body, labels: [(.labels // [])[] | .name]}' <<<"${issue}"
+issue_id="$(jq -r '.id // empty' <<<"${issue}")"
+project_ids="$(jq -c '[(.projects // [])[] | if type == "object" then .id else . end]' <<<"${issue}")"
+column=''
+if [[ "$(jq 'length' <<<"${project_ids}")" -eq 1 ]]; then
+  column="$(gitea_issue_column_title "$(jq -r '.[0]' <<<"${project_ids}")" "${issue_id}")"
+fi
+jq -c --arg column "${column}" \
+  '{number, title, body,
+    labels: [(.labels // [])[] | .name],
+    milestone: (.milestone.title // null),
+    projects: [(.projects // [])[] | if type == "object" then .title else empty end],
+    column: (if $column == "" then null else $column end)}' <<<"${issue}"

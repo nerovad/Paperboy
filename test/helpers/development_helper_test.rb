@@ -78,6 +78,8 @@ class DevelopmentHelperTest < ActionView::TestCase
     script = Development::ScriptCatalog.find('update_issue')
     issue = {
       number: 41, title: 'Revise widgets', type: 'feature', body_error: nil,
+      labels: %w[feature area:forms], milestone: 'Phase', project: 'Powerpuff Girls',
+      projects: ['Powerpuff Girls'], column: 'In Progress',
       answers: { 'feature' => { 'problem_or_opportunity' => 'People need one shape.',
                                 'scope_considerations' => { 'forms_workflows_or_users_affected' => 'Editors' } } }
     }
@@ -92,6 +94,10 @@ class DevelopmentHelperTest < ActionView::TestCase
     assert_select 'p.issue-field-help', text: 'Choosing a template sets that type label and removes the other type labels.'
     assert_select 'textarea[name="answers[feature][problem_or_opportunity]"]', text: 'People need one shape.'
     assert_select 'input[name="answers[feature][scope_considerations][forms_workflows_or_users_affected]"][value=Editors]'
+    assert_select 'p.issue-field-help', text: 'Current labels: feature, area:forms'
+    assert_select 'p.issue-field-help', text: 'Current milestone: Phase'
+    assert_select 'p.issue-field-help', text: 'Current project: Powerpuff Girls'
+    assert_select 'p.issue-field-help', text: 'Current column: In Progress'
   end
 
   test 'update issue form keeps the title when the body does not match' do
@@ -104,5 +110,33 @@ class DevelopmentHelperTest < ActionView::TestCase
     assert_select 'p.issue-field-help', text: 'Unexpected section: Notes.'
     assert_select 'input#issue_type_unchanged[type=radio][checked]'
     assert_select 'input[name=title][value="Revise widgets"]'
+  end
+end
+
+class DevelopmentIssueLoadHelperTest < ActionView::TestCase
+  self.fixture_table_names = []
+
+  test 'loaded issue selects its milestone project and column' do
+    script = Development::ScriptCatalog.find('update_issue')
+    choices = {
+      'labels' => [{ 'name' => 'area:forms' }, { 'name' => 'feature' }],
+      'milestones' => [{ 'title' => 'Phase' }],
+      'projects' => [
+        { 'title' => 'Powerpuff Girls', 'columns' => [{ 'title' => 'In Progress' }, { 'title' => 'Done' }] },
+        { 'title' => 'Other', 'columns' => [{ 'title' => 'In Progress' }] }
+      ]
+    }
+    issue = {
+      number: 41, title: 'Revise widgets', type: 'feature', labels: %w[feature area:forms],
+      milestone: 'Phase', project: 'Powerpuff Girls', projects: ['Powerpuff Girls'],
+      column: 'In Progress', answers: {}
+    }
+
+    render partial: 'development/runs/card', locals: { script: script, gitea_choices: choices, gitea_issue: issue }
+
+    assert_select 'select[name=milestone] option[selected]', text: 'Phase'
+    assert_select 'select[name=project] option[selected]', text: 'Powerpuff Girls'
+    assert_select 'select[name=column] option[selected]', text: 'Powerpuff Girls — In Progress'
+    assert_select 'select[name=column] option[selected]', text: 'Other — In Progress', count: 0
   end
 end

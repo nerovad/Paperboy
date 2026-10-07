@@ -81,8 +81,8 @@ milestone, project, or column change. It previews changes unless `--apply`
 is supplied. A body uses the same `--type` and `--answers-file` as
 `bin/new-issue`, and `--type` sets that type label. `--project` replaces
 the issue's project list. `--column` moves the card with the issue's
-global id. The command does not close the
-issue.
+global id. The same milestone, project, or column is left unchanged.
+The command does not close the issue.
 
 ```bash
 bin/update-issue --issue 123 --add-label priority:normal
