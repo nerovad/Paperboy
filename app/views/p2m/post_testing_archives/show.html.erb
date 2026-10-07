@@ -1,0 +1,90 @@
+<div class="form-header p2m-form-header">
+  <h1>Post Testing Archive</h1>
+</div>
+
+<div class="form-wrapper p2m-stage-data"
+     data-controller="data-refresh-groups<%= " p2m-post-testing-archive" if @jobs.any? %>"
+     data-p2m-post-testing-archive-url-value="<%= p2m_data_reset_path %>">
+  <section class="p2m-stage-card" aria-labelledby="p2m-archive-title">
+    <h2 id="p2m-archive-title">Historical jobs</h2>
+    <p>
+      Moves files from 7/1/2026 through 9/30/2026 into Processed.
+      This quarter is fixed. A file already in Processed with the same
+      contents is removed from the historical tree. A different file stops
+      that OMS.
+    </p>
+
+    <% if @jobs.any? %>
+      <div class="table-wrap p2m-maildat-grid">
+        <table class="p2m-maildat-table" data-controller="output-table" data-simple-sort="true">
+          <thead>
+            <tr>
+              <th aria-sort="ascending" data-column-index="0" data-sort-type="number">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">OMS Number</button>
+              </th>
+              <th aria-sort="none" data-column-index="1" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Mail date</button>
+              </th>
+              <th aria-sort="none" data-column-index="2" data-sort-type="text">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Status</button>
+              </th>
+              <th aria-sort="none" data-column-index="3" data-sort-type="number">
+                <button type="button" class="p2m-sort-header"
+                        data-action="click->output-table#changeSort">Files</button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @jobs.each_with_index do |job, index| %>
+              <% detail_id = "p2m-archive-#{index}-details" %>
+              <tr class="p2m-maildat-row<%= " is-alternate" if index.odd? %>" data-sort-row
+                  data-detail-id="<%= detail_id %>" data-p2m-archive-row
+                  data-oms-number="<%= job.fetch("oms_number") %>">
+                <td data-sort-value="<%= job.fetch("oms_number") %>">
+                  <button type="button" class="p2m-row-trigger" aria-expanded="false"
+                          aria-controls="<%= detail_id %>"
+                          aria-label="Show files for OMS <%= job.fetch("oms_number") %>"
+                          data-action="data-refresh-groups#toggle" data-detail-id="<%= detail_id %>">
+                    <span aria-hidden="true">▸</span>
+                  </button>
+                  <%= job.fetch("oms_number") %>
+                </td>
+                <td><%= job.fetch("mail_date") %></td>
+                <td><%= job.fetch("status") %></td>
+                <td data-sort-value="<%= job.fetch("count") %>"><%= job.fetch("count") %></td>
+              </tr>
+              <tr id="<%= detail_id %>" class="p2m-maildat-detail" hidden>
+                <td colspan="4">
+                  <p><%= job.fetch("detail") %></p>
+                  <% if job.fetch("files").any? %>
+                    <ul class="p2m-production-files">
+                      <% job.fetch("files").each do |file| %>
+                        <li><%= file %></li>
+                      <% end %>
+                    </ul>
+                  <% else %>
+                    <p>No files found.</p>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p2m-batch-actions">
+        <button type="button" class="btn approve" data-p2m-post-testing-archive-target="button"
+                data-action="p2m-post-testing-archive#archive">Archive</button>
+        <div class="p2m-batch-progress" data-p2m-post-testing-archive-target="progress" hidden>
+          <progress data-archive-progress-bar max="1" value="0"></progress>
+          <span data-archive-progress-label aria-live="polite"></span>
+        </div>
+      </div>
+    <% else %>
+      <p>No historical jobs were found for 7/1/2026 through 9/30/2026.</p>
+    <% end %>
+  </section>
+</div>

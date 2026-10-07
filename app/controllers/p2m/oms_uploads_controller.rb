@@ -11,21 +11,18 @@ module P2m
     before_action :set_dates
 
     def index
-      attempts = 0
-      begin
-        validate_date_range!
-        scope = OmsUpload.where.not(status: 'removed')
-                         .where(mailer_date: @start_date..@end_date)
-        OmsUploadLedger.new.reconcile_imported!(scope: scope)
-        scope = scope.includes(:files, :findings).newest_first
-        @pagy, @uploads = pagy(:offset, scope)
-      rescue ActiveRecord::DeadlockVictim, ActiveRecord::Deadlocked
-        attempts += 1
-        raise if attempts > MAX_DEADLOCK_RETRIES
+      validate_date_range!
+      @pagy, @uploads = pagy(:offset, listed_uploads)
+    rescue ArgumentError
+      @uploads = OmsUpload.none
+      render_invalid_date_range(:index)
+    end
 
-        sleep(0.05 * attempts)
-        retry
-      end
+    def reconcile
+      validate_date_range!
+      count = with_deadlock_retry { OmsUploadLedger.new.reconcile_imported!(scope: selected_uploads) }
+      redirect_to p2m_oms_status_path(oms_uploads: selected_dates),
+                  notice: reconciliation_notice(count), status: :see_other
     rescue ArgumentError
       @uploads = OmsUpload.none
       render_invalid_date_range(:index)
@@ -35,6 +32,37 @@ module P2m
 
     def date_range_param_key
       :oms_uploads
+    end
+
+    def selected_uploads
+      OmsUpload.where.not(status: 'removed').where(mailer_date: @start_date..@end_date)
+    end
+
+    def listed_uploads
+      selected_uploads.includes(:files, :findings).newest_first
+    end
+
+    def selected_dates
+      { start_date: @start_date.iso8601, end_date: @end_date.iso8601 }
+    end
+
+    def reconciliation_notice(count)
+      return 'No OMS uploads needed reconciliation.' if count.to_i.zero?
+
+      "Reconciled #{count} #{'OMS upload'.pluralize(count)}."
+    end
+
+    def with_deadlock_retry
+      attempts = 0
+      begin
+        yield
+      rescue ActiveRecord::DeadlockVictim, ActiveRecord::Deadlocked
+        attempts += 1
+        raise if attempts > MAX_DEADLOCK_RETRIES
+
+        sleep(0.05 * attempts)
+        retry
+      end
     end
   end
 end

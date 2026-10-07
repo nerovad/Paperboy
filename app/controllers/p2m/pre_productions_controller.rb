@@ -5,6 +5,7 @@ module P2m
     include DateRange
 
     before_action -> { require_app_feature('p2m', 'stage_data', fallback: p2m_root_path) }
+    before_action :require_change_job, only: %i[send_to_printer remove_from_printer destroy_oms]
     before_action :set_dates
 
     def show

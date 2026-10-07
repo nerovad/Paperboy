@@ -70,12 +70,11 @@ export default class extends Controller {
 
   async staging(event) {
     const button = event.currentTarget
-    const destructive = button.dataset.stagingMethod === "DELETE"
-    if (destructive && !await pbConfirm({
+    if (button.dataset.confirmMessage && !await pbConfirm({
       title: button.dataset.stagingAction,
       message: button.dataset.confirmMessage,
-      confirmLabel: "Remove",
-      confirmVariant: "deny"
+      confirmLabel: button.dataset.confirmLabel || "Remove",
+      confirmVariant: button.dataset.confirmVariant || "deny"
     })) return
 
     const progress = button.dataset.stagingRemoveOnSuccess === "true"

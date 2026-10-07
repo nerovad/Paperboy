@@ -3,23 +3,25 @@
 module P2m
   class QualityControl
     SOURCES = [
-      { label: 'GSABSS Companions', database: 'GSABSS', table: 'companions', job: 'budget_1_job_id' },
-      { label: 'GSABSS Daily Presorts', database: 'GSABSS', table: 'daily_presorts', job: 'flduserdefined9' },
-      { label: 'GSABSS Move Results', database: 'GSABSS', table: 'move_results', job: 'USER_DEFINED_9' },
-      { label: 'GSAP2M Companion', database: 'GSAP2M', table: 'Companion', job: 'Budget 1 - Job ID' },
-      { label: 'GSAP2M Daily Presorts', database: 'GSAP2M', table: 'DailyPresort', job: 'flduserdefined9' },
-      { label: 'GSAP2M Move Results', database: 'GSAP2M', table: 'MoveResults', job: 'USER_DEFINED_9' }
+      { label: 'GSAP2M Companion', database: 'GSAP2M', table: 'Companion',
+        job: 'Budget 1 - Job ID', number: 'OMSNumber', listed_at: 'Print or send time' },
+      { label: 'GSAP2M Daily Presorts', database: 'GSAP2M', table: 'DailyPresort',
+        job: 'flduserdefined9', number: 'omsnumber' },
+      { label: 'GSAP2M Move Results', database: 'GSAP2M', table: 'MoveResults',
+        job: 'USER_DEFINED_9', number: 'OMSNumber' }
     ].freeze
     DETAIL_SOURCES = SOURCES
 
     class << self
       def oms_rows(start_date:, end_date:)
-        source = SOURCES.find { |candidate| candidate.fetch(:table) == 'companions' }
-        sql = 'SELECT omsnumber, MAX(print_or_send_time) AS qc_date ' \
+        source = SOURCES.find { |candidate| candidate.fetch(:table) == 'Companion' }
+        number = connection.quote_column_name(source.fetch(:number))
+        listed_at = connection.quote_column_name(source.fetch(:listed_at))
+        sql = "SELECT #{number} AS omsnumber, MAX(#{listed_at}) AS qc_date " \
               "FROM #{qualified_name(source)} " \
-              "WHERE print_or_send_time >= #{quote_date(start_date)} " \
-              "AND print_or_send_time < #{quote_date(end_date + 1)} " \
-              'GROUP BY omsnumber'
+              "WHERE #{listed_at} >= #{quote_date(start_date)} " \
+              "AND #{listed_at} < #{quote_date(end_date + 1)} " \
+              "GROUP BY #{number}"
         connection.select_all(sql).to_a.sort_by { |row| row['omsnumber'].to_i }
       end
 
@@ -29,11 +31,10 @@ module P2m
         end
         upload = OmsUpload.where(oms_number: oms_number).order(imported_at: :desc).first
 
-        all_rows = grouped.values.flatten
         {
           oms_number: oms_number,
           upload: upload,
-          databases: grouped.transform_values { |rows| database_result(rows, all_rows) }
+          databases: grouped.transform_values { |rows| database_result(rows) }
         }
       end
 
@@ -50,25 +51,25 @@ module P2m
       end
 
       def grouped_rows(source, oms_number)
-        sql = "SELECT #{connection.quote_column_name(source.fetch(:job))} AS job_number, COUNT(*) AS row_count " \
-              "FROM #{qualified_name(source)} WHERE omsnumber = #{connection.quote(oms_number)} " \
-              "GROUP BY #{connection.quote_column_name(source.fetch(:job))}"
+        number = connection.quote_column_name(source.fetch(:number))
+        job = connection.quote_column_name(source.fetch(:job))
+        sql = "SELECT #{job} AS job_number, COUNT(*) AS row_count " \
+              "FROM #{qualified_name(source)} WHERE #{number} = #{connection.quote(oms_number)} " \
+              "GROUP BY #{job}"
         connection.select_all(sql).to_a.to_h do |row|
           [row['job_number']&.to_s, { source: source.fetch(:label), row_count: row['row_count'].to_i }]
         end
       end
 
-      def database_result(rows, all_rows)
-        jobs = all_rows.flat_map(&:keys).compact.map(&:to_s).uniq.sort
+      def database_result(rows)
+        jobs = rows.flat_map(&:keys).compact.map(&:to_s).uniq.sort
         totals = rows.map { |result| result.values.sum { |value| value[:row_count] } }
-        all_totals = all_rows.map { |result| result.values.sum { |value| value[:row_count] } }
-        { totals: totals, match: all_totals.uniq.one?, jobs: jobs.map { |job| job_result(job, rows, all_rows) } }
+        { totals: totals, match: totals.uniq.one?, jobs: jobs.map { |job| job_result(job, rows) } }
       end
 
-      def job_result(job, rows, all_rows)
+      def job_result(job, rows)
         values = rows.map { |result| result.fetch(job, zero_result) }
-        all_values = all_rows.map { |result| result.fetch(job, zero_result) }
-        { job_number: job, sources: values, match: all_values.map { |value| value[:row_count] }.uniq.one? }
+        { job_number: job, sources: values, match: values.map { |value| value[:row_count] }.uniq.one? }
       end
 
       def zero_result = { source: nil, row_count: nil }

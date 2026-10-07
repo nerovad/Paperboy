@@ -230,7 +230,6 @@ Rails.application.routes.draw do
 
   namespace :p2m do
     root 'dashboard#home'
-    get 'dashboard', to: 'dashboard#index', as: :dashboard
     resource :pre_production, only: :show do
       get :details
       post :send_to_printer
@@ -240,7 +239,7 @@ Rails.application.routes.draw do
     resource :production, only: :show do
       get :preview
     end
-    resource :data_reset, only: %i[show create]
+    resource :data_reset, only: %i[show create], controller: 'post_testing_archives'
     resource :quality_control, only: :show do
       get :details
     end
@@ -255,6 +254,7 @@ Rails.application.routes.draw do
     end
     post 'search/cancel', to: 'searches#cancel', as: :search_cancel
     get 'oms_status', to: 'oms_uploads#index', as: :oms_status
+    post 'oms_status/reconcile', to: 'oms_uploads#reconcile', as: :oms_status_reconcile
     resource :data_refresh, only: %i[show update] do
       post :restart
     end

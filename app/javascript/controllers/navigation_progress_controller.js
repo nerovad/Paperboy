@@ -9,8 +9,8 @@ export default class extends Controller {
     this.progress.className = "p2m-navigation-progress"
     this.progress.setAttribute("role", "status")
     this.progress.setAttribute("aria-live", "polite")
-    this.progress.innerHTML = '<progress max="1" value="0" aria-label="Loading Data Reset"></progress>' +
-      '<span>Loading Data Reset… 0.0 seconds elapsed</span>'
+    this.progress.innerHTML = '<progress max="1" value="0" aria-label="Loading Post Testing Archive"></progress>' +
+      '<span>Loading Post Testing Archive… 0.0 seconds elapsed</span>'
     document.body.appendChild(this.progress)
     this.timer = window.setInterval(() => this.update(), 100)
     this.update()
@@ -21,7 +21,7 @@ export default class extends Controller {
 
     const elapsed = ((performance.now() - this.startedAt) / 1000).toFixed(1)
     this.progress.querySelector("span").textContent =
-      `Loading Data Reset… ${elapsed} seconds elapsed`
+      `Loading Post Testing Archive… ${elapsed} seconds elapsed`
   }
 
   disconnect() {

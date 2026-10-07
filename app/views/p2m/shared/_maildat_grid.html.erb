@@ -68,6 +68,7 @@
       </tbody>
     </table>
   </div>
+  <% if can_use_app_feature?('p2m', 'change_job') %>
   <div class="p2m-batch-actions">
     <% if production_stage == :pre %>
       <button type="button" class="btn approve"
@@ -100,6 +101,7 @@
       </button>
     <% end %>
   </div>
+  <% end %>
   <% unless production_stage == :pre %>
     <div class="p2m-batch-progress" data-batch-progress hidden>
       <progress data-batch-progress-bar max="1" value="0"></progress>
