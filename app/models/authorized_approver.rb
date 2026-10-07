@@ -62,8 +62,13 @@ class AuthorizedApprover < ApplicationRecord
   # True when this authorization row covers the given budget unit. Mirrors the
   # expansion used by authorized_unit_ids_for: all_budget_units covers any unit
   # in the approver's department; otherwise the unit must be listed explicitly.
-  def covers_unit?(unit_id)
+  #
+  # A caller that already knows which department the unit sits in passes it,
+  # and the question is answered without a lookup.
+  def covers_unit?(unit_id, unit_department_id: nil)
     if all_budget_units?
+      return department_id.to_s == unit_department_id.to_s if unit_department_id
+
       Coa::Unit.exists?(unit_id: unit_id, department_id: department_id)
     else
       budget_units.to_s.split(',').map(&:strip).include?(unit_id.to_s)
@@ -76,6 +81,26 @@ class AuthorizedApprover < ApplicationRecord
   # authorization visibility exactly.
   def self.approver_ids_covering_unit(service_type:, unit_id:)
     where(service_type: service_type).select { |a| a.covers_unit?(unit_id) }.map(&:employee_id).uniq
+  end
+
+  # The budget units nobody can approve for, by department:
+  #   { department_id => [[unit_id, [service types with no approver]], ...] }
+  # Takes { department_id => [unit_id, ...] } and asks covers_unit? of every
+  # row, the same test routing applies, so a unit shown as covered here is one
+  # a submission will route for. Facility Keys count as covered when anyone
+  # holds them for the unit, whatever the key type or building.
+  def self.coverage_gaps(units_by_department)
+    rows = all.to_a.group_by(&:service_type)
+
+    units_by_department.to_h do |department_id, unit_ids|
+      gaps = unit_ids.filter_map do |unit_id|
+        missing = SERVICE_TYPES.keys.reject do |service_type|
+          Array(rows[service_type]).any? { |a| a.covers_unit?(unit_id, unit_department_id: department_id) }
+        end
+        [unit_id, missing] if missing.any?
+      end
+      [department_id, gaps]
+    end
   end
 
   # Returns every unit_id this employee is authorized to approve for the given

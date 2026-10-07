@@ -77,6 +77,16 @@ module AuthorizationConsoleDepartments
     Coa::Department.where(department_id: department_ids).order(:department_id).to_a.uniq(&:department_id)
   end
 
+  # { department_id => [unit_id, ...] } for the given departments. GSABSS units
+  # has duplicate rows, so each unit is listed once per department.
+  def units_by_department(department_ids)
+    return {} if department_ids.empty?
+
+    pairs = Coa::Unit.where(department_id: department_ids).pluck(:department_id, :unit_id)
+    pairs.map { |department_id, unit_id| [department_id.to_s, unit_id.to_s] }
+         .uniq.sort.group_by(&:first).transform_values { |rows| rows.map(&:last) }
+  end
+
   # Employee id => full name, for lists that name people by stored id.
   def employee_names_by_id(employee_ids)
     Employee.where(id: employee_ids.uniq).to_h { |employee| [employee.id.to_s, employee.full_name] }

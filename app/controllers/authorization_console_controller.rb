@@ -79,8 +79,10 @@ class AuthorizationConsoleController < ApplicationController
 
   def new
     @department_id = params[:department_id]
-    @authorized_approver = AuthorizedApprover.new(department_id: @department_id)
-    @selected_service_types = []
+    # The coverage screen links here with the gap it found already filled in.
+    @authorized_approver = AuthorizedApprover.new(department_id: @department_id,
+                                                  budget_units: params[:budget_unit].to_s)
+    @selected_service_types = Array(params[:service_type]) & AuthorizedApprover::SERVICE_TYPES.keys
     @selected_key_types = []
 
     @location_options     = location_options

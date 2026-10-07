@@ -1,0 +1,61 @@
+<!-- app/views/authorization_coverage/index.html.erb -->
+<div class="form-header">
+  <h1>Authorization Console Coverage</h1>
+</div>
+
+<div class="form-wrapper authorization-console">
+  <div class="department-header">
+    <%= link_to "Back to Console", authorization_console_index_path(department_id: @department_ids), class: "btn" %>
+  </div>
+
+  <p class="help-text">
+    Budget units with nobody authorized to approve a service type. A request
+    from one of these units has no one to route to.
+  </p>
+
+  <% if @departments.any? %>
+    <div class="approvers-list">
+      <% @departments.each do |department| %>
+        <% gaps = @gaps_by_department.fetch(department.department_id.to_s, []) %>
+        <div class="approver-card">
+          <div class="approver-header">
+            <h3><%= department.department_id %> - <%= department.long_name %></h3>
+          </div>
+
+          <div class="approvals-list">
+            <% if gaps.empty? %>
+              <div class="approval-item">
+                <div class="approval-details">Every budget unit has an approver for every service type.</div>
+              </div>
+            <% end %>
+
+            <% gaps.each do |(unit_id, missing)| %>
+              <div class="approval-item">
+                <div class="approval-details">
+                  <strong>Budget Unit <%= unit_id %></strong>
+                  <div class="detail-row">
+                    <span class="label">No approver for:</span>
+                    <span class="value"><%= missing.map { |s| AuthorizedApprover::SERVICE_TYPES[s] }.join(", ") %></span>
+                  </div>
+                </div>
+
+                <% if department_right?(department.department_id, "write") %>
+                  <div class="approval-actions">
+                    <%= link_to "Add Approver",
+                          new_authorization_console_path(department_id: department.department_id,
+                                                         budget_unit: unit_id, service_type: missing),
+                          class: "btn approve" %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>No departments assigned to manage.</p>
+    </div>
+  <% end %>
+</div>

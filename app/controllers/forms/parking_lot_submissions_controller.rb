@@ -54,7 +54,7 @@ module Forms
                                end
 
         if authorized_approvers.empty?
-          @parking_lot_submission.errors.add(:base, "No authorized approver found for Parking Permits in your budget unit. Please contact your department's authorization manager.")
+          @parking_lot_submission.errors.add(:base, AuthorizationManager.no_approver_message('Parking Permits', submitted_unit))
           render_new_with_options(emp_record, is_mb3) and return
         end
       end
