@@ -14,8 +14,8 @@ Usage:
 
 The short form finds the local or origin-tracking issue/<number>-<slug> branch
 and places its worktree in the shared checkout's worktrees/<number> directory.
-It copies the common checkout's .env when the worktree does not already have
-one.
+It copies the common checkout's .env and .env.local when the worktree does
+not already have them. An existing file is left unchanged.
 
 Use: cd "$(bin/wt 123)"
 
@@ -155,21 +155,22 @@ issue_number="${branch_name#issue/}"
 issue_number="${issue_number%%-*}"
 worktree_path="${worktree_root}/${issue_number}"
 branch_ref="refs/heads/${branch_name}"
-env_source=''
-if [[ -f "${common_root}/.env" ]]; then
-  env_source="${common_root}/.env"
-fi
 
 copy_env_if_needed() {
-  local destination="$1/.env"
+  local worktree="$1"
+  local filename destination source
 
-  [[ -e "${destination}" ]] && return 0
-  if [[ -n "${env_source}" && -f "${env_source}" ]]; then
-    cp -p -- "${env_source}" "${destination}"
-    echo "Copied .env to ${1}" >&2
-  else
-    echo "Warning: no .env found in the common checkout" >&2
-  fi
+  for filename in .env .env.local; do
+    destination="${worktree}/${filename}"
+    source="${common_root}/${filename}"
+    [[ -e "${destination}" ]] && continue
+    if [[ -f "${source}" ]]; then
+      cp -p -- "${source}" "${destination}"
+      echo "Copied ${filename} to ${worktree}" >&2
+    else
+      echo "Warning: no ${filename} found in the common checkout" >&2
+    fi
+  done
 }
 
 existing_path="$(

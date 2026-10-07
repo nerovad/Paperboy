@@ -78,8 +78,12 @@ class WorktreeScriptTest < Minitest::Test
                  run_git('-C', expected_path, 'symbolic-ref', '--short', 'HEAD').strip
   end
 
-  def test_create_copies_env_from_the_common_checkout
+  def test_create_copies_env_files_from_the_common_checkout
     File.write(File.join(@repository, '.env'), "PAPERBOY_TEST_VALUE=from-root\n")
+    File.write(File.join(@repository, '.env.local'), "PAPERBOY_LOCAL_VALUE=from-root\n")
+    existing = File.join(@repository, 'worktrees', '7')
+    File.write(File.join(existing, '.env'), "PAPERBOY_TEST_VALUE=keep\n")
+    File.write(File.join(existing, '.env.local'), "PAPERBOY_LOCAL_VALUE=keep\n")
 
     output = run_script('create', 'issue/11-env-worktree')
 
@@ -87,6 +91,22 @@ class WorktreeScriptTest < Minitest::Test
     assert_equal "#{expected_path}\n", output
     assert_equal "PAPERBOY_TEST_VALUE=from-root\n",
                  File.read(File.join(expected_path, '.env'))
+    assert_equal "PAPERBOY_LOCAL_VALUE=from-root\n",
+                 File.read(File.join(expected_path, '.env.local'))
+
+    run_script('switch', 'issue/7-first-worktree')
+    assert_equal "PAPERBOY_TEST_VALUE=keep\n", File.read(File.join(existing, '.env'))
+    assert_equal "PAPERBOY_LOCAL_VALUE=keep\n",
+                 File.read(File.join(existing, '.env.local'))
+  end
+
+  def test_open_copies_a_missing_env_local
+    File.write(File.join(@repository, '.env.local'), "FROM=root\n")
+    worktree = File.join(@repository, 'worktrees', '7')
+
+    run_script('7')
+
+    assert_equal "FROM=root\n", File.read(File.join(worktree, '.env.local'))
   end
 
   private

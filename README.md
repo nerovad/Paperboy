@@ -185,6 +185,9 @@ Environment variables come from two gitignored files:
 | `.env` | a verbatim copy of `LockBox/Paperboy.env` | `bin/env-pull` — never edit it by hand |
 | `.env.local` | what belongs to this machine or to you | you; nothing ever overwrites it |
 
+Creating or opening a worktree copies a missing `.env` and `.env.local`
+from the shared checkout. A file already in the worktree stays as it is.
+
 dotenv reads `.env.local` first and the first value wins, so a name set in
 both takes its value from `.env.local`. If a value is the same for everyone
 it belongs in LockBox; otherwise it goes in `.env.local`.

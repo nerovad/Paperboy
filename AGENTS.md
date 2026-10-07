@@ -94,8 +94,9 @@ wt 123
 
 The short command resolves the local `issue/123-*` branch, uses the shared
 checkout's `worktrees/123` directory even when invoked from a linked worktree,
-and copies the main checkout's `.env` when the worktree does not already have
-one. Use `bin/wt list` to see worktrees and `bin/wt clean 123` to clean up a
+and copies the main checkout's `.env` and `.env.local` when the worktree
+does not already have them. An existing file is left unchanged. Use
+`bin/wt list` to see worktrees and `bin/wt clean 123` to clean up a
 merged issue. The full `bin/worktree` branch-name commands remain available
 for scripts.
 
