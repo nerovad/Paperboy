@@ -18,7 +18,8 @@ class SubmissionHistoriesController < ApplicationController
     return if performed?
 
     render partial: 'submissions/status_timeline',
-           locals: { status_changes: record.status_timeline.to_a, item_id: fragment_id(record) },
+           locals: { status_changes: record.status_timeline.to_a, item_id: fragment_id(record),
+                     step_tasks: record.current_step_tasks },
            layout: false
   end
 

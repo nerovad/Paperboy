@@ -9,6 +9,7 @@ class FormTemplatesController < ApplicationController
 
   before_action -> { require_admin_tab('manage_forms') }
   before_action :set_form_template, only: %i[show edit update destroy archive unarchive duplicate_preview duplicate]
+  before_action :settle_multiple_route_steps, only: %i[create update]
 
   def index
     @form_templates = Forms::Template.includes(:form_fields).order(:name)
@@ -1110,7 +1111,10 @@ class FormTemplatesController < ApplicationController
         condition_operator: step.condition_operator,
         condition_value: step.condition_value,
         inbox_buttons: step.inbox_buttons.sort,
-        complete_on_edit: step.complete_on_edit?
+        complete_on_edit: step.complete_on_edit?,
+        completion_rule: step.completion_rule,
+        deny_rule: step.deny_rule,
+        routes: step.routes.map { |route| route.slice(*Forms::TemplateStepRoute::COLUMNS).symbolize_keys }
       }
     end
 
@@ -1129,7 +1133,9 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step).sort,
-        complete_on_edit: step[:complete_on_edit] == '1'
+        complete_on_edit: step[:complete_on_edit] == '1',
+        routes: step_route_attrs(step),
+        **step_rules(step)
       }
     end.reject { |s| s[:routing_type].blank? }
 
@@ -1234,7 +1240,7 @@ class FormTemplatesController < ApplicationController
       condition_field_name = step_data[:condition_field_name].presence
       group_routed = step_data[:routing_type] == 'group'
       authorization_routed = step_data[:routing_type] == 'authorization'
-      form_template.routing_steps.create!(
+      step = form_template.routing_steps.create!(
         step_number: step_data[:step_number].to_i,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
@@ -1248,8 +1254,12 @@ class FormTemplatesController < ApplicationController
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence
+        deny_button_label: step_data[:deny_button_label].presence,
+        **step_rules(step_data)
       )
+      step_route_attrs(step_data).each_with_index do |route, position|
+        step.routes.create!(route.merge(position: position))
+      end
     end
   end
 
@@ -1275,6 +1285,69 @@ class FormTemplatesController < ApplicationController
             'has no members, so it may route to no one.'
         end
       end
+    end
+  end
+
+  # A "Multiple routes" step posts its routes as one JSON list, kept in step
+  # by the builder (routing_steps[][routes_json]). Returns them as attribute
+  # hashes for Forms::TemplateStepRoute, each carrying only the columns its own
+  # routing type uses. Empty for every other kind of step.
+  def step_route_attrs(step_data)
+    return [] unless step_data[:routing_type] == Forms::TemplateRoutingStep::MULTIPLE
+
+    rows = JSON.parse(step_data[:routes_json].presence || '[]')
+    Array(rows).filter_map do |row|
+      next unless row.is_a?(Hash) && Forms::RouteTarget::TARGET_TYPES.include?(row['routing_type'])
+
+      type = row['routing_type']
+      route = {
+        routing_type: type,
+        employee_id: (row['employee_id'].presence&.to_i if type == 'employee'),
+        group_id: (row['group_id'].presence&.to_i if type == 'group'),
+        org_filter_level: (row['org_filter_level'].presence if type == 'group'),
+        authorization_service_type: (row['authorization_service_type'].presence if type == 'authorization'),
+        label: row['label'].to_s.strip.presence
+      }
+      # A row whose target was never picked routes to nobody; leave it out.
+      route if Forms::TemplateStepRoute.new(route).valid_target?
+    end
+  rescue JSON::ParserError
+    []
+  end
+
+  # The completion and deny rules of a step. They only mean anything on a
+  # step with several routes; every other step keeps the column defaults.
+  def step_rules(step_data)
+    multiple = step_data[:routing_type] == Forms::TemplateRoutingStep::MULTIPLE
+    {
+      completion_rule: chosen_rule(step_data[:completion_rule], Forms::TemplateRoutingStep::COMPLETION_RULES, multiple),
+      deny_rule: chosen_rule(step_data[:deny_rule], Forms::TemplateRoutingStep::DENY_RULES, multiple)
+    }
+  end
+
+  def chosen_rule(value, allowed, multiple)
+    multiple && allowed.include?(value) ? value : allowed.first
+  end
+
+  # A "Multiple routes" step needs at least two routes to be one. Left with a
+  # single route it is saved as the ordinary step that route describes, and
+  # left with none it is dropped like any step with no routing type chosen --
+  # so nothing downstream ever meets a multi-route step it cannot fan out.
+  def settle_multiple_route_steps
+    Array(params[:routing_steps]).each do |step_data|
+      next unless step_data[:routing_type] == Forms::TemplateRoutingStep::MULTIPLE
+
+      routes = step_route_attrs(step_data)
+      next if routes.size > 1
+
+      only = routes.first
+      step_data[:routing_type] = only ? only[:routing_type] : ''
+      next unless only
+
+      %i[employee_id group_id org_filter_level authorization_service_type].each do |column|
+        step_data[column] = only[column].to_s
+      end
+      step_data[:display_name] = only[:label].to_s if step_data[:display_name].blank?
     end
   end
 
@@ -1551,7 +1624,7 @@ class FormTemplatesController < ApplicationController
       condition_field_name = step_data[:condition_field_name].presence
       group_routed = step_data[:routing_type] == 'group'
       authorization_routed = step_data[:routing_type] == 'authorization'
-      form_template.routing_steps.create!(
+      step = form_template.routing_steps.create!(
         step_number: index + 1,
         routing_type: step_data[:routing_type],
         employee_id: step_data[:employee_id].presence,
@@ -1565,8 +1638,12 @@ class FormTemplatesController < ApplicationController
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
         approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence
+        deny_button_label: step_data[:deny_button_label].presence,
+        **step_rules(step_data)
       )
+      step_route_attrs(step_data).each_with_index do |route, position|
+        step.routes.create!(route.merge(position: position))
+      end
     end
 
     # Clear legacy routing fields when using routing steps

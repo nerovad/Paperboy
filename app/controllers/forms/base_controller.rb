@@ -33,7 +33,41 @@ module Forms
     # report) has already happened.
     after_action :complete_routing_step_on_edit, if: -> { action_name == 'update' }
 
+    # A step with several routes is not finished by one approver's answer (see
+    # TrackableStatus::StepTasks). The generated approve and deny actions were
+    # written for a step with one, so two things are added around them here
+    # rather than in each of them: the deny reason is handed to the engine to
+    # file against the task it closes, and the flash they set ("Approved and
+    # routed to the next step") is corrected when the form is in fact still
+    # waiting on the other routes.
+    before_action :carry_deny_reason, if: -> { action_name == 'deny' }
+    after_action :report_step_tasks_outstanding, if: -> { action_name.in?(%w[approve deny]) }
+
     private
+
+    def carry_deny_reason
+      Current.deny_reason = params[:deny_reason]
+    end
+
+    def report_step_tasks_outstanding
+      record = submission_model&.find_by(id: params[:id])
+      return unless record.respond_to?(:current_step_tasks)
+
+      tasks = record.current_step_tasks
+      waiting = tasks.select(&:pending?)
+      return if waiting.empty?
+
+      viewer = session.dig(:user, 'employee_id').to_s
+      flash.delete(:notice)
+      names = waiting.map(&:label).to_sentence
+      if tasks.any? { |task| !task.pending? && task.acted_by_id.to_s == viewer }
+        flash[:notice] = "Your answer is recorded. Still waiting on: #{names}."
+      else
+        flash[:alert] = "Nothing was changed: you have no open task on this step. It is waiting on: #{names}."
+      end
+    rescue StandardError => e
+      Rails.logger.error("step task flash failed for #{controller_name} ##{params[:id]}: #{e.message}")
+    end
 
     # Every update here answers a successful save with a redirect and a failed
     # one by re-rendering the form, so a redirect is the sign the edit landed.

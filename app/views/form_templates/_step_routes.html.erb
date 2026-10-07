@@ -1,0 +1,45 @@
+<%# The routes of a "Multiple routes" routing step, and the two rules that say
+    when such a step is finished. Rendered inside every routing step item and
+    shown only when that is the step's routing type.
+
+    Route rows are built by the form-builder controller from
+    #step-route-template and carry no field names of their own: the controller
+    keeps the hidden routes_json input in step with them, so a step posts its
+    routes as one value and the routing_steps[] list keeps its shape.
+
+    `step` is the Forms::TemplateRoutingStep being edited, or nil for a new one. %>
+<% multiple = step&.multiple? %>
+<% routes = multiple ? step.routes.map { |route| route.slice(*Forms::TemplateStepRoute::COLUMNS) } : [] %>
+<div class="step-routes-panel" style="margin-top: 8px; padding: 8px; background: #fff; border-radius: 4px; border-left: 2px solid #17a2b8; <%= 'display: none;' unless multiple %>">
+  <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 2px;">Routes at this step</div>
+  <small style="display: block; color: #6c757d; margin-bottom: 8px;">
+    The form goes to every route at once. Each has its own label while it is open
+    (e.g. "Waiting on Vendor Approval") and is checked off on its own; the form's
+    status stays at this step until the rule below is met. Reassign is not
+    offered at a step with several routes.
+  </small>
+
+  <div class="step-routes-list"></div>
+
+  <button type="button" class="btn compact" data-action="click->form-builder#addStepRoute">+ Add Route</button>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+    <label style="flex: 1; min-width: 200px; font-size: 0.85em; color: #495057;">
+      This step is finished when
+      <select name="routing_steps[][completion_rule]" class="form-control form-control-sm step-completion-rule">
+        <option value="all" <%= 'selected' if step.nil? || step.completion_rule == 'all' %>>every route has approved</option>
+        <option value="any" <%= 'selected' if step&.completion_rule == 'any' %>>any one route has approved</option>
+      </select>
+    </label>
+    <label style="flex: 1; min-width: 200px; font-size: 0.85em; color: #495057;">
+      When a route denies
+      <select name="routing_steps[][deny_rule]" class="form-control form-control-sm step-deny-rule">
+        <option value="form" <%= 'selected' if step.nil? || step.deny_rule == 'form' %>>the form is denied straight away</option>
+        <option value="task" <%= 'selected' if step&.deny_rule == 'task' %>>record it and let the other routes answer</option>
+      </select>
+      <small style="display: block; color: #6c757d;">With the second choice the form is denied once everyone has answered, unless the step only needs one approval and gets it.</small>
+    </label>
+  </div>
+
+  <input type="hidden" name="routing_steps[][routes_json]" class="step-routes-json" value="<%= routes.to_json %>">
+</div>

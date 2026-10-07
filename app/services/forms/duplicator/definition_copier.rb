@@ -88,7 +88,10 @@ module Forms
         @source.routing_steps.each do |step|
           attrs = step.attributes.except(*ROW_SKIP)
           attrs['form_template_status_id'] = status_ids[step.form_template_status_id]
-          template.routing_steps.create!(attrs)
+          copy = template.routing_steps.create!(attrs)
+          step.routes.each do |route|
+            copy.routes.create!(route.attributes.except(*ROW_SKIP, 'form_template_routing_step_id'))
+          end
         end
         @source.email_steps.each { |step| template.email_steps.create!(step.attributes.except(*ROW_SKIP)) }
         @source.emails.each { |email| template.emails.create!(renamed_email(email)) }

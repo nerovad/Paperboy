@@ -15,6 +15,9 @@ module TrackableStatus
   # recorded; a form without a status workflow includes it on its own.
   include AuditableEdits
 
+  # Multi-route steps: the per-route checklist and the rules that settle it.
+  include StepTasks
+
   included do
     has_many :status_changes, as: :trackable, dependent: :destroy
     has_many :form_submission_copies,
@@ -178,18 +181,17 @@ module TrackableStatus
     first_step = steps.find { |s| !skip_types.include?(s.routing_type) && s.matches?(self) }
     return approved! unless first_step
 
-    update!(
-      status: "step_#{first_step.step_number}_pending",
-      approver_id: approver_id_for_routing_step(first_step)
-    )
-    warn_if_no_eligible_approver(first_step)
-    notify_pending_approvers(first_step)
+    enter_routing_step!(first_step)
   end
 
   # Advances a multi-step approval form to the next matching step, skipping
   # steps whose conditions evaluate false. Marks the form fully approved when
   # no further matching step remains.
-  def advance_approval!
+  #
+  # At a step with several routes this closes the actor's own task first, and
+  # the form only moves once the step's rules are met (see StepTasks). The
+  # actor is the signed-in user unless one is named.
+  def advance_approval!(actor_id: nil)
     template = approval_template
     return finalize_approval! unless template
 
@@ -199,6 +201,14 @@ module TrackableStatus
     current = current_routing_step_number
     return finalize_approval! if current.nil?
 
+    current_step = steps.find { |s| s.step_number == current }
+    if current_step&.multiple?
+      case settle_step_task(current_step, Forms::SubmissionStepTask::APPROVED, actor_id)
+      when :waiting, :noop then return
+      when :denied then return finalize_step_denial!
+      end
+    end
+
     next_step = steps.find { |s| s.step_number > current && s.matches?(self) }
     return finalize_approval! unless next_step
 
@@ -207,14 +217,9 @@ module TrackableStatus
     # multi-approver pool (group/authorization). Without this the form would
     # vanish from every pool member's queue the moment one of them acts —
     # including the person who actually actioned it.
-    record_pool_step_tracking_copy(steps.find { |s| s.step_number == current })
+    record_pool_step_tracking_copy(current_step)
 
-    update!(
-      status: "step_#{next_step.step_number}_pending",
-      approver_id: approver_id_for_routing_step(next_step)
-    )
-    warn_if_no_eligible_approver(next_step)
-    notify_pending_approvers(next_step)
+    enter_routing_step!(next_step)
   end
 
   # Completes the routing step this submission is sitting at because the
@@ -231,7 +236,7 @@ module TrackableStatus
     return unless step&.complete_on_edit?
     return unless routed_to?(step, actor_id)
 
-    advance_approval!
+    advance_approval!(actor_id: actor_id)
     step
   end
 
@@ -262,6 +267,25 @@ module TrackableStatus
 
   def finalize_approval!
     approved!
+  end
+
+  # Puts the submission on `step` and tells whoever it now sits with. A step
+  # with several routes also gets its checklist, in the same transaction as
+  # the status so the form is never at the step without one.
+  def enter_routing_step!(step)
+    arrival = { status: "step_#{step.step_number}_pending", approver_id: approver_id_for_routing_step(step) }
+
+    if step.multiple?
+      transaction do
+        update!(arrival)
+        open_step_tasks(step)
+      end
+    else
+      update!(arrival)
+    end
+
+    warn_if_no_eligible_approver(step)
+    notify_pending_approvers(step)
   end
 
   # Whenever status transitions to a terminal state (approved/denied/cancelled),
@@ -419,7 +443,7 @@ module TrackableStatus
   # is told. The submission is left in place (visible to admins in the inbox).
   def warn_if_no_eligible_approver(step)
     return unless step
-    return if step.eligible_approver_ids(self).present?
+    return unless step.unstaffed?(self)
 
     Rails.logger.warn(
       "No eligible approver: #{self.class.name} ##{id} stuck at step #{step.step_number} " \

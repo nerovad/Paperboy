@@ -90,6 +90,9 @@ export default class extends Controller {
     // Hydrate routing-step condition editors that were rendered server-side
     this.initializeRoutingStepConditions()
 
+    // Build the route rows of server-rendered "Multiple routes" steps
+    this.routingStepItemTargets.forEach(stepItem => this.hydrateStepRoutes(stepItem))
+
       // Hydrate server-rendered answer-lookup panels so their table/column lists
     // (including the "+ also" add-column dropdown) are fully populated on edit.
     this.initializeAnswerLookups()
@@ -290,6 +293,9 @@ export default class extends Controller {
       employee: '.step-employee-dropdown',
       group: '.step-group-dropdown',
       authorization: '.step-authorization-dropdown'
+    }
+    if (routeType === 'multiple') {
+      return `${stepItem.querySelectorAll('.step-route-row').length} routes`
     }
     const select = stepItem.querySelector(selectors[routeType])
     return select?.value ? select.selectedOptions[0]?.text.trim() : ''
@@ -679,8 +685,123 @@ export default class extends Controller {
       }
     }
 
+    this.toggleStepRoutesPanel(stepItem, routingType === 'multiple')
+
     // Also update the display name placeholder
     this.updateStepDisplayName(event)
+  }
+
+  // ---- Routes of a "Multiple routes" step ----
+  //
+  // Route rows carry no field names. The step posts them as one JSON value in
+  // its hidden routes_json input, which serializeStepRoutes rewrites on every
+  // change, so the routing_steps[] list keeps one entry per step.
+
+  // Show the routes panel for a multi-route step, starting it with the two
+  // rows that make it one. Leaving the type empties the panel again: a hidden
+  // row with a required select would block the form from saving.
+  toggleStepRoutesPanel(stepItem, multiple) {
+    const panel = stepItem.querySelector('.step-routes-panel')
+    if (!panel) return
+
+    panel.style.display = multiple ? 'block' : 'none'
+    const list = panel.querySelector('.step-routes-list')
+    if (multiple) {
+      while (list.children.length < 2) this.appendStepRoute(stepItem)
+    } else {
+      list.innerHTML = ''
+    }
+    this.serializeStepRoutes(stepItem)
+  }
+
+  // Rebuild a server-rendered step's route rows from its routes_json value.
+  hydrateStepRoutes(stepItem) {
+    const input = stepItem.querySelector('.step-routes-json')
+    if (!input) return
+
+    let routes = []
+    try { routes = JSON.parse(input.value || '[]') } catch (_e) { routes = [] }
+    routes.forEach(route => this.appendStepRoute(stepItem, route))
+    if (routes.length) this.serializeStepRoutes(stepItem)
+  }
+
+  appendStepRoute(stepItem, route = {}) {
+    const template = document.getElementById('step-route-template')
+    const list = stepItem.querySelector('.step-routes-list')
+    if (!template || !list) return
+
+    list.appendChild(template.content.cloneNode(true))
+    const row = list.lastElementChild
+    const fields = {
+      '.step-route-type': route.routing_type,
+      '.step-route-employee': route.employee_id,
+      '.step-route-group': route.group_id,
+      '.step-route-org-filter': route.org_filter_level,
+      '.step-route-authorization': route.authorization_service_type,
+      '.step-route-label': route.label
+    }
+    Object.entries(fields).forEach(([selector, value]) => {
+      row.querySelector(selector).value = value == null ? '' : String(value)
+    })
+    this.refreshStepRouteRow(row)
+  }
+
+  addStepRoute(event) {
+    event.preventDefault()
+    const stepItem = event.target.closest('.routing-step-item')
+    this.appendStepRoute(stepItem)
+    this.serializeStepRoutes(stepItem)
+  }
+
+  removeStepRoute(event) {
+    event.preventDefault()
+    const stepItem = event.target.closest('.routing-step-item')
+    event.target.closest('.step-route-row').remove()
+    this.serializeStepRoutes(stepItem)
+  }
+
+  changeStepRoute(event) {
+    this.refreshStepRouteRow(event.target.closest('.step-route-row'))
+    this.serializeStepRoutes(event.target.closest('.routing-step-item'))
+  }
+
+  // Show the target select that matches the row's routing type, and require it.
+  refreshStepRouteRow(row) {
+    const type = row.querySelector('.step-route-type').value
+    const targets = {
+      employee: row.querySelector('.step-route-employee'),
+      group: row.querySelector('.step-route-group'),
+      authorization: row.querySelector('.step-route-authorization')
+    }
+    Object.entries(targets).forEach(([key, select]) => {
+      select.style.display = key === type ? 'block' : 'none'
+      select.required = key === type
+      if (key !== type) select.value = ''
+    })
+
+    const orgFilter = row.querySelector('.step-route-org-filter')
+    orgFilter.style.display = type === 'group' ? 'block' : 'none'
+    if (type !== 'group') orgFilter.value = ''
+  }
+
+  serializeStepRoutes(stepItem) {
+    const input = stepItem.querySelector('.step-routes-json')
+    if (!input) return
+
+    const routes = Array.from(stepItem.querySelectorAll('.step-route-row')).map(row => ({
+      routing_type: row.querySelector('.step-route-type').value,
+      employee_id: row.querySelector('.step-route-employee').value,
+      group_id: row.querySelector('.step-route-group').value,
+      org_filter_level: row.querySelector('.step-route-org-filter').value,
+      authorization_service_type: row.querySelector('.step-route-authorization').value,
+      label: row.querySelector('.step-route-label').value.trim()
+    }))
+    input.value = JSON.stringify(routes)
+
+    const summary = stepItem.querySelector('.routing-step-disclosure-label')
+    if (summary && stepItem.querySelector('.routing-type-select')?.value === 'multiple') {
+      summary.textContent = `Multiple routes — ${routes.length} routes`
+    }
   }
 
   // Update the display name input placeholder based on routing type and the
