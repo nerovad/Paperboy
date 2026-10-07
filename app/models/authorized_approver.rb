@@ -59,23 +59,6 @@ class AuthorizedApprover < ApplicationRecord
     units.empty? ? nil : { unit: units }
   end
 
-  # Find approvers for a given department and service type
-  def self.approvers_for(department_id:, service_type:)
-    where(department_id: department_id, service_type: service_type).pluck(:employee_id).uniq
-  end
-
-  # Find approvers for a given department, service type, and budget unit.
-  # all_budget_units matches any unit; otherwise the unit must appear in the
-  # approver's comma-separated budget_units list.
-  def self.approver_for_unit(department_id:, service_type:, unit_id:)
-    candidates = where(department_id: department_id, service_type: service_type)
-    unit_str = unit_id.to_s
-
-    candidates.select do |a|
-      a.all_budget_units? || a.budget_units.to_s.split(',').map(&:strip).include?(unit_str)
-    end.map(&:employee_id).uniq
-  end
-
   # True when this authorization row covers the given budget unit. Mirrors the
   # expansion used by authorized_unit_ids_for: all_budget_units covers any unit
   # in the approver's department; otherwise the unit must be listed explicitly.
