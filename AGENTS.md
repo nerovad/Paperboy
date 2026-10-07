@@ -160,8 +160,9 @@ from the checkout. A `keep: false` page is read from the wiki.
 
 Before creating or changing a feature, read the wiki pages for that area.
 Use Architecture for framework work. Use AIM Plan, AIM Handoff, and AIM Todo
-for AIM. Use the OMS pages for OMS. Use Authentication Gem for
-authentication. Use the map for any other area.
+for AIM. Use the OMS pages for OMS. Record Print 2 Mail OMS discussions on
+OMS Status. Use Authentication Gem for authentication. Use the map for any
+other area.
 
 Fetch the Markdown with the wiki API. `content_base64` is the page body.
 Read `GITEA_TOKEN` from the environment or `.env.local`. Do not print the token.
