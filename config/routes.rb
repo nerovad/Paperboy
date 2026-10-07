@@ -313,6 +313,12 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :development do
+    root 'dashboard#home'
+    get 'queue', to: 'queue#show', as: :queue
+    resources :runs, only: %i[index show create]
+  end
+
   resources :fleet_vehicle_garaging_forms, controller: 'forms/fleet_vehicle_garaging_forms' do
     member do
       get :pdf

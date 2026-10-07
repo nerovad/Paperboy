@@ -1,0 +1,54 @@
+<div class="development-page">
+  <div class="form-header">
+    <h1>Check Queue</h1>
+    <p>Inspect Solid Queue workers and recent job activity.</p>
+  </div>
+
+  <section class="development-section">
+    <h2>Workers</h2>
+    <% if @processes.any? %>
+      <div class="development-queue-table-wrap">
+        <table class="development-queue-table">
+          <thead>
+            <tr><th>Process</th><th>PID</th><th>Last heartbeat</th></tr>
+          </thead>
+          <tbody>
+            <% @processes.each do |process| %>
+              <tr>
+                <td><%= process.kind %></td>
+                <td><%= process.pid %></td>
+                <td><%= process.last_heartbeat_at&.strftime('%Y-%m-%d %H:%M:%S %Z') || '—' %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="development-empty-state">No Solid Queue processes are registered.</p>
+    <% end %>
+  </section>
+
+  <% [['Queued', @queued_jobs], ['Running', @running_jobs], ['Failed', @failed_jobs]].each do |label, executions| %>
+    <section class="development-section">
+      <h2><%= label %> <span class="development-count"><%= executions.size %></span></h2>
+      <% if executions.any? %>
+        <div class="development-queue-table-wrap">
+          <table class="development-queue-table">
+            <thead><tr><th>Job</th><th>Queue</th><th>Created</th></tr></thead>
+            <tbody>
+              <% executions.each do |execution| %>
+                <tr>
+                  <td><%= execution.job.class_name %></td>
+                  <td><%= execution.job.queue_name %></td>
+                  <td><%= execution.job.created_at.strftime('%Y-%m-%d %H:%M:%S %Z') %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p>No <%= label.downcase %> jobs.</p>
+      <% end %>
+    </section>
+  <% end %>
+</div>

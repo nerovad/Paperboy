@@ -93,6 +93,38 @@ class StopserversTest < Minitest::Test
     end
   end
 
+  def test_kills_a_stubborn_process_group_and_its_child
+    Dir.mktmpdir('paperboy-stopservers-stubborn') do |root|
+      root = Pathname.new(root)
+      bin = root.join('bin')
+      pid_dir = root.join('tmp/pids')
+      bin.mkpath
+      pid_dir.mkpath
+      FileUtils.cp(SCRIPT, bin.join('stopservers'))
+      FileUtils.chmod(0o755, bin.join('stopservers'))
+
+      pid = Process.spawn('bash', '-c', <<~BASH, chdir: root.to_s, pgroup: true)
+        exec -a 'bundle exec bin/jobs' bash -c 'trap "" TERM; sleep 30 & wait'
+      BASH
+      child_pid = nil
+      10.times do
+        child_pid = `pgrep -P #{pid}`.to_i
+        break if child_pid.positive?
+
+        sleep 0.1
+      end
+      pid_dir.join('paperboy-dev-3002.pids').write("#{pid}\n")
+
+      stdout, stderr, status = Open3.capture3(bin.join('stopservers').to_s, '3002', chdir: root.to_s)
+
+      assert status.success?, "stopservers failed: #{stdout}\n#{stderr}"
+      assert_process_stopped(pid)
+      refute child_pid.positive? && process_alive?(child_pid), 'the child is still running'
+    ensure
+      stop_process(pid) if pid
+    end
+  end
+
   private
 
   def start_stack(root, port, pid_dir, components: %i[server jobs sass])

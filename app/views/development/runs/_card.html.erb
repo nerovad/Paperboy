@@ -1,0 +1,20 @@
+<article class="development-card" id="<%= script[:key] %>">
+  <h3><%= script[:label] %></h3>
+  <p><%= script[:description] %></p>
+  <%= form_with url: development_runs_path, method: :post, class: "development-form" do |form| %>
+    <%= hidden_field_tag :script_key, script[:key] %>
+    <%= render "development/runs/fields", script: script, form: form %>
+    <div class="form-actions">
+      <% if script[:confirm_when] == 'apply' %>
+        <%= form.submit 'Preview changes', class: 'btn secondary' %>
+        <%= form.button 'Apply changes', name: 'apply', value: '1', type: 'submit', class: 'btn warning',
+                        data: { turbo_confirm: script[:confirm],
+                                confirm_title: 'Apply issue update',
+                                confirm_label: 'Apply' } %>
+      <% else %>
+        <%= form.submit script[:label], class: "btn #{development_button_class(script)}",
+                        data: development_confirm_data(script) %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

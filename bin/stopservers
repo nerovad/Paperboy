@@ -37,6 +37,40 @@ process_is_running() {
   [[ $state != Z* ]]
 }
 
+process_group_for() {
+  local pid=$1
+
+  ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' '
+}
+
+process_group_is_running() {
+  local process_group=$1
+
+  [[ -n "$process_group" ]] || return 1
+  ps -o pid= -g "$process_group" 2>/dev/null | grep -q '[0-9]'
+}
+
+stack_is_running() {
+  local pid process_group
+
+  for pid in "$@"; do
+    process_is_running "$pid" && return 0
+    process_group="${process_groups[$pid]:-}"
+    process_group_is_running "$process_group" && return 0
+  done
+  return 1
+}
+
+signal_process_group() {
+  local pid=$1 signal=$2 process_group=${3:-}
+
+  if [[ -n "$process_group" && "$process_group" == "$pid" ]]; then
+    kill -"$signal" -- "-$process_group" 2>/dev/null || true
+  else
+    kill -"$signal" "$pid" 2>/dev/null || true
+  fi
+}
+
 process_is_shell() {
   local pid=$1 executable
 
@@ -91,8 +125,8 @@ find_processes() {
 stop_servers() {
   local port=${1:-3001}
   local -a pids=()
-  local all_stopped
-  local pid
+  local -A process_groups=()
+  local pid process_group
 
   if [[ ! $port =~ ^[0-9]+$ ]]; then
     usage
@@ -102,40 +136,42 @@ stop_servers() {
   mapfile -t pids < <(find_processes "$port" | sort -n -u)
   if ((${#pids[@]} == 0)); then
     rm -f "$pid_dir/paperboy-dev-$port.pids"
+    echo "No Paperboy processes found for port ${port}."
     return
   fi
 
   for pid in "${pids[@]}"; do
-    local process_group
-
-    process_group=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
-    if [[ $process_group == "$pid" ]]; then
-      kill -TERM -- "-$pid" 2>/dev/null || true
-    else
-      kill -TERM "$pid" 2>/dev/null || true
-    fi
+    process_group="$(process_group_for "$pid")"
+    process_groups["$pid"]="$process_group"
+    signal_process_group "$pid" TERM "$process_group"
   done
 
   for _ in {1..50}; do
-    all_stopped=true
-    for pid in "${pids[@]}"; do
-      if process_is_running "$pid"; then
-        all_stopped=false
-        break
-      fi
-    done
-    if $all_stopped; then
+    if ! stack_is_running "${pids[@]}"; then
       rm -f "$pid_dir/paperboy-dev-$port.pids"
+      echo "Stopped Paperboy processes for port ${port}."
       return
     fi
     sleep 0.1
   done
 
+  echo "==> Graceful shutdown timed out; sending KILL to process groups" >&2
   for pid in "${pids[@]}"; do
-    kill -KILL "$pid" 2>/dev/null || true
+    signal_process_group "$pid" KILL "${process_groups[$pid]}"
   done
 
-  rm -f "$pid_dir/paperboy-dev-$port.pids"
+  for _ in {1..10}; do
+    if ! stack_is_running "${pids[@]}"; then
+      rm -f "$pid_dir/paperboy-dev-$port.pids"
+      echo "Stopped Paperboy processes for port ${port}."
+      return
+    fi
+    sleep 0.1
+  done
+
+  echo "==> Could not stop all Paperboy processes for port ${port}." >&2
+  echo "==> PID manifest retained at ${pid_dir}/paperboy-dev-${port}.pids." >&2
+  return 1
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

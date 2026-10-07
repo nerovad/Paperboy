@@ -18,6 +18,17 @@
 #
 # Not a database model — it is a registry, and lives in app/models because
 # that is where RegistryTable and the other catalogs live.
+# Five grants for the Development sub-application. Tag, deploy-dev, and the
+# hidden stage, production, and AIM deploys share Deploy. Unit tests sit on
+# Local. Nothing in git stored the older per-script keys.
+DEVELOPMENT_APP_FEATURES = [
+  { key: 'local', label: 'Local' },
+  { key: 'environment', label: 'Environment' },
+  { key: 'gitea', label: 'Gitea' },
+  { key: 'deploy', label: 'Deploy' },
+  { key: 'csr', label: 'Certificates' }
+].freeze
+
 class AppFeature
   FEATURES = {
     'admin_tools' => [
@@ -94,7 +105,8 @@ class AppFeature
     # is appended by +for+.
     'data_runner' => [
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
-    ]
+    ],
+    'development' => DEVELOPMENT_APP_FEATURES
   }.freeze
 
   # A DSL's feature key. Prefixed so a DSL can never be named the same thing as

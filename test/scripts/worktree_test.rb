@@ -57,12 +57,12 @@ class WorktreeScriptTest < Minitest::Test
     assert_equal "#{expected_path}\n", output
     assert_equal 'issue/9-remote-worktree',
                  run_git('-C', expected_path, 'symbolic-ref', '--short', 'HEAD').strip
-    assert_equal 'origin/issue/9-remote-worktree',
+    assert_equal('origin/issue/9-remote-worktree',
                  run_git('config', '--get',
-                         'branch.issue/9-remote-worktree.remote').strip.then { |remote| \
+                         'branch.issue/9-remote-worktree.remote').strip.then do |remote|
                            "#{remote}/#{run_git('config', '--get',
-                                                 'branch.issue/9-remote-worktree.merge').strip.delete_prefix('refs/heads/')}" \
-                         }
+                                                'branch.issue/9-remote-worktree.merge').strip.delete_prefix('refs/heads/')}"
+                         end)
   end
 
   def test_open_by_issue_number_finds_an_origin_tracking_branch

@@ -32,6 +32,11 @@ pages:
     slug: Claude
     section: Workflow
     keep: true
+
+  - source: docs/DEVELOPMENT_WORKFLOW.md
+    slug: Development-Workflow
+    section: Workflow
+    keep: true
   - source: .gitea/issue_template/bug_report.md
     slug: Issue-Template-Bug-Report
     section: Workflow

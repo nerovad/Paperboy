@@ -414,7 +414,8 @@
   &.coa-sidebar,
   &.admin-tools-sidebar,
   &.production-sidebar,
-  &.aim-sidebar {
+  &.aim-sidebar,
+  &.development-sidebar {
     .nav-group {
       margin: 10px 0;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -450,6 +451,15 @@
   }
 
   &.hsa-adoption-cards-sidebar {
+    /* Blue theme (from $blue-action in _tokens.scss). */
+    --sidebar-accent: #{$blue-action};
+    --sidebar-accent-hover: #{$blue-action-hover};
+    --sidebar-accent-ring: #{rgba($blue-action, 0.2)};
+    --sidebar-accent-soft: #{rgba($blue-action, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$blue-action});
+  }
+
+  &.development-sidebar {
     /* Blue theme (from $blue-action in _tokens.scss). */
     --sidebar-accent: #{$blue-action};
     --sidebar-accent-hover: #{$blue-action-hover};

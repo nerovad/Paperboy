@@ -1,0 +1,19 @@
+<div class="development-page">
+  <% unless @run.finished? %>
+    <%= javascript_tag nonce: true do %>
+      setTimeout(function () { window.location.reload() }, 2000)
+    <% end %>
+  <% end %>
+  <div class="form-header">
+    <h1><%= @run.script_label %></h1>
+    <p>Requested by <%= @run.requested_by %> · <%= @run.created_at %></p>
+  </div>
+  <div class="development-run-detail">
+    <p><strong>Status:</strong> <span class="development-status development-status--<%= @run.status %>"><%= @run.status.humanize %></span></p>
+    <p><strong>Command:</strong> <code><%= @run.command.join(' ') %></code></p>
+    <% if @run.exit_status %><p><strong>Exit status:</strong> <%= @run.exit_status %></p><% end %>
+    <h2>Output</h2>
+    <pre class="development-output"><%= @run.output.presence || 'Running…' %></pre>
+  </div>
+  <%= link_to 'Back to Development', development_root_path, class: 'btn secondary' %>
+</div>
