@@ -1,0 +1,86 @@
+<!-- app/views/authorization_managers/index.html.erb -->
+<div class="form-header">
+  <h1>Authorization Console Managers</h1>
+</div>
+
+<div class="form-wrapper authorization-console" data-controller="confirm-modal">
+  <p class="help-text">
+    A manager can add, edit and remove a department's authorized approvers for
+    parking permits, badges and keys, and can add or remove that department's
+    other managers.
+  </p>
+
+  <%= form_with url: authorization_managers_path, method: :post, data: { turbo: false } do %>
+    <div class="form-group" data-controller="choices">
+      <%= label_tag :department_id, "Department" %>
+      <%= select_tag :department_id,
+            options_for_select(@departments.map { |d| ["#{d.department_id} - #{d.long_name}", d.department_id] }),
+            prompt: (@departments.one? ? nil : "Select Department"),
+            class: "form-control",
+            required: true,
+            data: { choices_target: "select" } %>
+    </div>
+
+    <div class="form-group" data-controller="choices">
+      <%= label_tag :employee_id, "Employee" %>
+      <%= select_tag :employee_id,
+            options_for_select(@candidates.map { |e| [e[:name], e[:id]] }),
+            prompt: "Select Employee",
+            class: "form-control",
+            required: true,
+            data: { choices_target: "select", placeholder: "Search for an employee..." } %>
+    </div>
+
+    <div class="form-actions">
+      <%= link_to "Back to Console", authorization_console_index_path, class: "btn" %>
+      <%= submit_tag "Add Manager", class: "btn approve" %>
+    </div>
+  <% end %>
+
+  <div class="approvers-list">
+    <% @departments.each do |department| %>
+      <% managers = @managers_by_department.fetch(department.department_id.to_s, []) %>
+      <div class="approver-card">
+        <div class="approver-header">
+          <h3><%= department.department_id %> - <%= department.long_name %></h3>
+        </div>
+
+        <div class="approvals-list">
+          <% if managers.empty? %>
+            <div class="approval-item">
+              <div class="approval-details">No managers assigned.</div>
+            </div>
+          <% end %>
+
+          <% managers.each do |manager| %>
+            <% name = @employee_names[manager.employee_id] || "Employee #{manager.employee_id}" %>
+            <div class="approval-item">
+              <div class="approval-details">
+                <strong><%= name %></strong>
+                <div class="detail-row">
+                  <span class="label">Added:</span>
+                  <span class="value">
+                    <%= manager.created_at&.strftime("%Y-%m-%d") %><%= " by #{manager.assigned_by}" if manager.assigned_by.present? %>
+                  </span>
+                </div>
+              </div>
+
+              <div class="approval-actions">
+                <button type="button"
+                        class="btn deny"
+                        data-action="click->confirm-modal#open"
+                        data-delete-path="<%= authorization_manager_path(manager) %>"
+                        data-confirm-title="Remove Manager"
+                        data-confirm-message="Remove <%= name %> as a manager of <%= department.long_name %>?">
+                  Remove
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "shared/confirm_modal" %>
+</div>

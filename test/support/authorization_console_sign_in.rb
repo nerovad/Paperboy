@@ -8,24 +8,44 @@ module AuthorizationConsoleSignIn
   UNITS     = { '4601' => '4600', '5501' => '5500' }.freeze
   EMPLOYEES = { '100' => '4600', '200' => '5500' }.freeze
 
-  # Signs in holding exactly the given console keys and managing exactly the
-  # given departments. The org and employee lookups cross to GSABSS, so they
-  # are answered from the tables above rather than the database.
-  def sign_in_to_console(keys, departments:)
-    session[:user] = { 'employee_id' => 1, 'email' => 'employee@example.com' }
+  # Signs in holding exactly the given console ACL keys, sitting in +own+
+  # department. +admin+ is the auth_console_admin group, which reaches every
+  # department. Assigned departments come from AuthorizationManager rows, which
+  # the test creates itself. The org and employee lookups cross to GSABSS, so
+  # they are answered from the tables above rather than the database.
+  def sign_in_to_console(keys, own: nil, admin: false, employee_id: 1)
+    session[:user] = { 'employee_id' => employee_id, 'email' => 'employee@example.com' }
     granted = keys.to_set
-    managed = departments.map { |id| Department.new(id, "Department #{id}") }
-    units = UNITS.select { |_unit, department| departments.include?(department) }
-    employees = EMPLOYEES.select { |_id, department| departments.include?(department) }
+    departments = UNITS.values.uniq.map { |id| Department.new(id, "Department #{id}") }
+    @controller = @controller.class.new
 
-    @controller.define_singleton_method(:current_user_group_names) { Set.new }
-    @controller.define_singleton_method(:current_user_authorization_console_keys) { granted }
-    @controller.define_singleton_method(:set_managed_departments) { @managed_departments = managed }
-    @controller.define_singleton_method(:fetch_managed_budget_units) { units.keys.map { |unit| [unit, unit] } }
-    @controller.define_singleton_method(:fetch_managed_employees) do
-      employees.keys.map { |id| { id: id, name: "Employee #{id}", email: nil } }
+    stub_console(:current_user_group_names) { admin ? Set['auth_console_admin'] : Set.new }
+    stub_console(:current_user_org_chain) { { department_id: own } }
+    stub_console(:current_user_authorization_console_keys) { granted }
+    stub_console(:all_departments) { departments }
+    stub_console(:find_departments) { |ids| departments.select { |d| ids.include?(d.department_id) } }
+    stub_console(:employees_in_departments) do |ids|
+      EMPLOYEES.select { |_id, department| ids.include?(department) }
+               .keys.map { |id| { id: id, name: "Employee #{id}", email: nil } }
     end
-    @controller.define_singleton_method(:resolve_department_from_units) do |approver|
+    stub_gsabss_units
+  end
+
+  private
+
+  def stub_console(name, &block)
+    @controller.define_singleton_method(name, &block)
+  end
+
+  # Only the approver console looks units up; the managers screen has none.
+  def stub_gsabss_units
+    return unless @controller.is_a?(AuthorizationConsoleController)
+
+    stub_console(:fetch_managed_budget_units) do
+      UNITS.select { |_unit, department| department_ids_with('write').include?(department) }
+           .keys.map { |unit| [unit, unit] }
+    end
+    stub_console(:resolve_department_from_units) do |approver|
       unit = approver.budget_units.to_s.split(',').first
       approver.department_id = AuthorizationConsoleSignIn::UNITS.fetch(unit) if unit.present?
     end

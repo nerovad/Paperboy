@@ -4,6 +4,8 @@
 require 'csv'
 
 class AuthorizationConsoleController < ApplicationController
+  include AuthorizationConsoleDepartments
+
   before_action :require_any_authorization_console, only: %i[select]
   before_action :require_auth_console, except: %i[select]
   before_action -> { require_auth_console('write') }, only: %i[new create group_edit group_update]
@@ -120,7 +122,7 @@ class AuthorizationConsoleController < ApplicationController
   # Edit a whole authorization group (all service/key-type rows that share the
   # same employee/dept/budget/locations), identified by ids[].
   def group_edit
-    records = scoped_group(params[:ids])
+    records = scoped_group(params[:ids], 'write')
     return redirect_to(authorization_console_index_path, alert: 'Authorization not found.') if records.empty?
 
     rep = records.first
@@ -139,7 +141,7 @@ class AuthorizationConsoleController < ApplicationController
 
   # Replace the group: delete the old rows and recreate from the submission.
   def group_update
-    records = scoped_group(params[:ids])
+    records = scoped_group(params[:ids], 'write')
     return redirect_to(authorization_console_index_path, alert: 'Authorization not found.') if records.empty?
 
     raw = authorized_approver_create_params
@@ -181,7 +183,7 @@ class AuthorizationConsoleController < ApplicationController
   end
 
   def group_destroy
-    records = scoped_group(params[:ids])
+    records = scoped_group(params[:ids], 'delete')
     dept = records.first&.department_id
     AuthorizedApprover.where(id: records.map(&:id)).destroy_all
     redirect_to authorization_console_index_path(department_id: dept),
@@ -220,14 +222,16 @@ class AuthorizationConsoleController < ApplicationController
     end
   end
 
-  def scoped_group(ids)
-    AuthorizedApprover.where(id: Array(ids), department_id: @managed_departments.map(&:department_id)).to_a
+  # The rows of one authorization group, limited to departments where the user
+  # holds `right` — viewing a department does not mean being able to change it.
+  def scoped_group(ids, right)
+    AuthorizedApprover.where(id: Array(ids), department_id: department_ids_with(right)).to_a
   end
 
-  # The index and the pickers only ever offer the user's managed departments,
-  # but a posted form is not bound by its pickers. Hold every write to the same
+  # The pickers only ever offer the departments the user may add to, but a
+  # posted form is not bound by its pickers. Hold every write to the same
   # scope: the employee, the department and each budget unit must be ones this
-  # user manages. `keeping` lets an edit hold on to the employee it already
+  # user may write to. `keeping` lets an edit hold on to the employee it already
   # names, who may have left the department since being authorized.
   def within_managed_scope?(raw, keeping: [])
     employee_ids = managed_employee_ids | keeping.to_set(&:to_s)
@@ -244,7 +248,7 @@ class AuthorizationConsoleController < ApplicationController
   end
 
   def managed_department_ids
-    @managed_department_ids ||= @managed_departments.to_set { |department| department.department_id.to_s }
+    @managed_department_ids ||= department_ids_with('write').to_set
   end
 
   def managed_unit_ids
@@ -294,31 +298,9 @@ class AuthorizationConsoleController < ApplicationController
     end
   end
 
-  def set_managed_departments
-    if auth_console_admin?
-      # GSABSS departments table has duplicate rows; collapse by department_id.
-      @managed_departments = Coa::Department.order(:department_id).to_a.uniq(&:department_id)
-    else
-      dept_id = current_user_org_chain[:department_id]
-      dept = dept_id ? Coa::Department.find_by(department_id: dept_id) : nil
-      @managed_departments = [dept].compact
-    end
-  end
-
+  # The add/edit form's pickers: only departments the user may write to.
   def fetch_managed_employees
-    dept_ids = @managed_departments.map(&:department_id)
-    return [] if dept_ids.empty?
-
-    unit_ids = Coa::Unit.where(department_id: dept_ids).pluck(:unit_id)
-    employees = Employee.where(unit: unit_ids).order(:last_name, :first_name)
-
-    employees.map do |e|
-      {
-        id: e.employee_id,
-        name: e.name_with_id,
-        email: e.email
-      }
-    end
+    employees_in_departments(department_ids_with('write'))
   end
 
   def location_options
@@ -331,7 +313,7 @@ class AuthorizationConsoleController < ApplicationController
   end
 
   def fetch_managed_budget_units
-    dept_ids = @managed_departments.map(&:department_id)
+    dept_ids = department_ids_with('write')
     return [] if dept_ids.empty?
 
     dept_names = @managed_departments.index_by(&:department_id)

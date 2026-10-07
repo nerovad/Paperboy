@@ -54,10 +54,14 @@
     </div>
 
     <div class="department-header">
-      <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+      <% writable = departments_with("write").map(&:department_id) %>
+      <% if writable.any? %>
         <%= link_to "+ Add New Authorized Approver",
-              new_authorization_console_path(department_id: @department_ids.first || @managed_departments.first&.department_id),
+              new_authorization_console_path(department_id: (@department_ids & writable).first || writable.first),
               class: "btn approve" %>
+      <% end %>
+      <% if manager_admin_departments.any? %>
+        <%= link_to "Managers", authorization_managers_path, class: "btn" %>
       <% end %>
       <%= link_to "Export CSV",
             authorization_console_index_path(format: :csv, department_id: @department_ids,
@@ -110,12 +114,12 @@
                   </div>
 
                   <div class="approval-actions">
-                    <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+                    <% if department_right?(a.department_id, "write") %>
                       <%= link_to "Edit",
                             group_edit_authorization_console_index_path(ids: group[:ids]),
                             class: "btn" %>
                     <% end %>
-                    <% if can_delete_authorization_console?(AuthorizationConsole::SERVICES) %>
+                    <% if department_right?(a.department_id, "delete") %>
                       <button type="button"
                               class="btn deny"
                               data-action="click->confirm-modal#open"
@@ -135,7 +139,7 @@
     <% else %>
       <div class="empty-state">
         <p>No authorized approvers have been assigned yet.</p>
-        <% if can_write_authorization_console?(AuthorizationConsole::SERVICES) %>
+        <% if writable.any? %>
           <p class="empty-state-hint">Click "+ Add New Authorized Approver" to get started.</p>
         <% end %>
       </div>

@@ -507,6 +507,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # Who manages which departments in the parking, badges and keys console.
+  resources :authorization_managers, only: %i[index create destroy],
+                                     path: 'authorization_console/managers'
+
   # Safety Reporting authorization console (HCA safety officers by org node).
   resources :safety_authorizations, only: %i[index new create edit update destroy],
                                     path: 'authorization_console/safety'

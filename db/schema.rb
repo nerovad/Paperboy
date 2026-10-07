@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_120000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -317,9 +317,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_150000) do
   end
 
   create_table "authorization_managers", force: :cascade do |t|
+    t.string "assigned_by"
     t.datetime "created_at", null: false
     t.string "department_id", null: false
     t.string "employee_id", null: false
+    t.datetime "removed_at"
+    t.string "removed_by"
     t.datetime "updated_at", null: false
   end
 

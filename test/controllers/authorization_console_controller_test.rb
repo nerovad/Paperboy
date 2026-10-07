@@ -9,11 +9,11 @@ require_relative '../support/authorization_console_sign_in'
 class AuthorizationConsoleControllerTest < ActionController::TestCase
   include AuthorizationConsoleSignIn
 
-  setup { AuthorizedApprover.delete_all }
-  teardown { AuthorizedApprover.delete_all }
+  setup { [AuthorizedApprover, AuthorizationManager].each(&:delete_all) }
+  teardown { [AuthorizedApprover, AuthorizationManager].each(&:delete_all) }
 
   test 'a department user adds an approver in their own department' do
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     post :create, params: { authorized_approver: approver_params }
 
@@ -22,7 +22,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   end
 
   test 'a department user cannot add an approver over another department' do
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     post :create, params: { authorized_approver: approver_params(department_id: '5500', budget_units: []) }
 
@@ -30,7 +30,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   end
 
   test "a department user cannot add another department's budget unit" do
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     post :create, params: { authorized_approver: approver_params(budget_units: %w[4601 5501]) }
 
@@ -38,7 +38,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   end
 
   test "a department user cannot authorize another department's employee" do
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     post :create, params: { authorized_approver: approver_params(employee_id: '200') }
 
@@ -46,7 +46,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   end
 
   test 'an admin adds an approver in any department' do
-    sign_in_to_console(%w[services:write], departments: %w[4600 5500])
+    sign_in_to_console(%w[services:write], admin: true)
 
     post :create, params: { authorized_approver: approver_params(employee_id: '200', department_id: '5500',
                                                                  budget_units: %w[5501]) }
@@ -56,7 +56,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
 
   test 'an edit cannot move an authorization into another department' do
     mine = create_approver('100', '4600', '4601')
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     patch :group_update, params: { ids: [mine.id], authorized_approver: approver_params(budget_units: %w[5501]) }
 
@@ -67,7 +67,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
 
   test 'an edit keeps an employee who has since left the department' do
     moved = create_approver('200', '4600', '4601')
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     patch :group_update, params: { ids: [moved.id],
                                    authorized_approver: approver_params(employee_id: '200', service_type: %w[E]) }
@@ -77,7 +77,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
 
   test "an edit naming another department's authorization changes nothing" do
     theirs = create_approver('200', '5500', '5501')
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     patch :group_update, params: { ids: [theirs.id], authorized_approver: approver_params }
 
@@ -89,7 +89,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   test "a department user cannot remove another department's authorization" do
     mine = create_approver('100', '4600', '4601')
     theirs = create_approver('200', '5500', '5501')
-    sign_in_to_console(%w[services:delete], departments: %w[4600])
+    sign_in_to_console(%w[services:delete], own: '4600')
 
     delete :group_destroy, params: { ids: [mine.id, theirs.id] }
 
@@ -98,14 +98,14 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
 
   test 'write does not grant remove, and remove does not grant write' do
     mine = create_approver('100', '4600', '4601')
-    sign_in_to_console(%w[services:write], departments: %w[4600])
+    sign_in_to_console(%w[services:write], own: '4600')
 
     delete :group_destroy, params: { ids: [mine.id] }
 
     assert_match(/do not have delete access/, flash[:alert])
     assert AuthorizedApprover.exists?(mine.id)
 
-    sign_in_to_console(%w[services:delete], departments: %w[4600])
+    sign_in_to_console(%w[services:delete], own: '4600')
 
     post :create, params: { authorized_approver: approver_params(employee_id: '100', service_type: %w[E]) }
 
@@ -114,7 +114,7 @@ class AuthorizationConsoleControllerTest < ActionController::TestCase
   end
 
   test 'a user holding nothing on the console is turned away' do
-    sign_in_to_console([], departments: %w[4600])
+    sign_in_to_console([], own: '4600')
 
     post :create, params: { authorized_approver: approver_params }
 
