@@ -60,6 +60,20 @@ bin/new-issue --type feature \
   --answers-file /path/to/answers.json
 ```
 
+Open a pull request from the same template source. The body follows
+`.gitea/pull_request_template.md`. `--answers-file` is JSON keyed by the
+section ids from `bin/create-pull-request --fields`. `verification` is an
+object with `checks` and `checks_run`. The issue section is `Closes #<number>`.
+An empty template is refused. `--issue` fills that section when the body
+still says `Closes #`.
+
+```bash
+bin/create-pull-request \
+  --title "Short imperative description (#123)" \
+  --head issue/123-short-description \
+  --answers-file /path/to/answers.json
+```
+
 The command supports `bug`, `feature`, `chore`, and `infrastructure` issue
 types. Missing required options are prompted on a terminal. Use
 `--no-milestone` to skip the optional milestone prompt.

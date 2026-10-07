@@ -2,29 +2,67 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(cd -- "${script_dir}/.." && pwd -P)"
 # shellcheck disable=SC1091
 source "${script_dir}/gitea-common"
 
 title=''
 body=''
 body_file=''
+answers_file=''
 head=''
 base='master'
 issue=''
+show_fields=false
+
+pull_request_template() {
+  command -v ruby >/dev/null 2>&1 || {
+    echo 'Required command not found: ruby' >&2
+    return 1
+  }
+  ruby "${repo_root}/lib/paperboy/gitea/pull_request_template.rb" "$@"
+}
+
+validate_body() {
+  local draft
+  draft="$(mktemp)"
+  printf '%s' "${body}" >"${draft}"
+  if ! pull_request_template validate-body --body-file "${draft}"; then
+    rm -f "${draft}"
+    exit 2
+  fi
+  rm -f "${draft}"
+}
+
+apply_issue() {
+  [[ -n "${issue}" ]] || return 0
+  local draft
+  draft="$(mktemp)"
+  printf '%s' "${body}" >"${draft}"
+  if ! body="$(pull_request_template close-issue --body-file "${draft}" --issue "${issue}")"; then
+    rm -f "${draft}"
+    exit 2
+  fi
+  rm -f "${draft}"
+}
 
 usage() {
   cat <<'EOF'
 Usage: bin/create-pull-request [OPTIONS]
 
-Open a Gitea pull request for a branch.
+Open a Gitea pull request for a branch. The body must follow
+.gitea/pull_request_template.md. Pass --answers-file, --body, or
+--body-file. --fields prints the section ids.
 
 Options:
   --title TITLE        Pull request title (required)
-  --body TEXT          Markdown body
+  --answers-file PATH  JSON answers keyed by the template section ids
+  --body TEXT          Complete Markdown pull request body
   --body-file PATH     Read the Markdown body from PATH
+  --fields             Print the template fields and exit
   --head BRANCH        Source branch (default: current branch)
   --base BRANCH        Target branch (default: master)
-  --issue NUMBER       Add a reference to an issue
+  --issue NUMBER       Set the template Issue section to Closes #NUMBER
   --url URL            Override the Gitea base URL
   --owner NAME         Override the repository owner
   --repository NAME    Override the repository name
@@ -35,8 +73,10 @@ EOF
 while (($#)); do
   case "$1" in
     --title) title="$2"; shift 2 ;;
+    --answers-file) answers_file="$2"; shift 2 ;;
     --body) body="$2"; shift 2 ;;
     --body-file) body_file="$2"; shift 2 ;;
+    --fields) show_fields=true; shift ;;
     --head) head="$2"; shift 2 ;;
     --base) base="$2"; shift 2 ;;
     --issue) issue="$2"; shift 2 ;;
@@ -48,16 +88,54 @@ while (($#)); do
   esac
 done
 
-if [[ -n "${body}" && -n "${body_file}" ]]; then
-  echo 'Use only one of --body or --body-file' >&2
+if [[ "${show_fields}" == true ]]; then
+  pull_request_template summary
+  exit 0
+fi
+
+body_sources=0
+[[ -n "${body}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${body_file}" ]] && body_sources=$((body_sources + 1))
+[[ -n "${answers_file}" ]] && body_sources=$((body_sources + 1))
+if ((body_sources > 1)); then
+  echo 'Use only one of --body, --body-file, or --answers-file' >&2
   exit 2
 fi
-if [[ -n "${body_file}" ]]; then
-  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
-  body="$(<"${body_file}")"
+if [[ -n "${issue}" && ! "${issue}" =~ ^[0-9]+$ ]]; then
+  echo '--issue must be a number' >&2
+  exit 2
 fi
 
 [[ -n "${title}" ]] || { echo '--title is required' >&2; exit 2; }
+
+if [[ -n "${answers_file}" ]]; then
+  [[ -f "${answers_file}" ]] || { echo "Answers file not found: ${answers_file}" >&2; exit 1; }
+  body="$(pull_request_template render --answers-file "${answers_file}")"
+elif [[ -n "${body_file}" ]]; then
+  [[ -f "${body_file}" ]] || { echo "Body file not found: ${body_file}" >&2; exit 1; }
+  body="$(<"${body_file}")"
+elif [[ -z "${body}" ]]; then
+  if [[ -t 0 ]]; then
+    draft="$(mktemp)"
+    pull_request_template skeleton >"${draft}"
+    if [[ -n "${EDITOR:-}" ]]; then
+      # EDITOR may include arguments, for example "code --wait".
+      # shellcheck disable=SC2086
+      ${EDITOR} "${draft}"
+    else
+      vi "${draft}"
+    fi
+    body="$(<"${draft}")"
+    rm -f "${draft}"
+  else
+    echo 'A body is required. Pass --body, --body-file, or --answers-file.' >&2
+    pull_request_template summary >&2
+    exit 2
+  fi
+fi
+apply_issue
+validate_body
+
 if [[ -z "${head}" ]]; then
   head="$(git symbolic-ref --quiet --short HEAD)" || {
     echo 'The current checkout is not on a branch; use --head.' >&2
@@ -65,19 +143,10 @@ if [[ -z "${head}" ]]; then
   }
 fi
 [[ -n "${head}" && -n "${base}" ]] || { echo 'Branches are required' >&2; exit 2; }
-if [[ -n "${issue}" && ! "${issue}" =~ ^[0-9]+$ ]]; then
-  echo '--issue must be a number' >&2
-  exit 2
-fi
 
 gitea_require_commands
 gitea_load_config
 
-if [[ -n "${issue}" ]]; then
-  body="${body}
-
-Refs #${issue}"
-fi
 payload="$(jq -nc --arg title "${title}" --arg body "${body}" \
   --arg head "${head}" --arg base "${base}" \
   '{title: $title, body: $body, head: $head, base: $base}')"

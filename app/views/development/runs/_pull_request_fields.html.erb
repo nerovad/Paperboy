@@ -1,0 +1,9 @@
+<%= label_tag :title, 'Title' %>
+<%= text_field_tag :title, nil, required: true, class: 'form-control' %>
+<%= label_tag :head, 'Head branch' %>
+<%= text_field_tag :head, nil, required: true, class: 'form-control', placeholder: 'issue/64-short-description' %>
+<%= label_tag :base, 'Base branch' %>
+<%= text_field_tag :base, 'master', class: 'form-control' %>
+<% Paperboy::Gitea::PullRequestTemplate.fields.each do |field| %>
+  <%= render 'development/runs/pull_request_field', field: field %>
+<% end %>
