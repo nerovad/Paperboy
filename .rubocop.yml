@@ -21,6 +21,11 @@ AllCops:
 Layout/LineLength:
   Max: 183
 
+# The Windows CI runner would otherwise read `native` as CRLF; the repository
+# is LF everywhere.
+Layout/EndOfLine:
+  EnforcedStyle: lf
+
 Layout/ExtraSpacing:
   Enabled: false
 
