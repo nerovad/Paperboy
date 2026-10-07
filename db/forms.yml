@@ -143,6 +143,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -354,6 +356,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -1522,6 +1526,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   - step_number: 2
     routing_type: employee
     employee_id: 104236
@@ -1533,6 +1539,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2011,6 +2019,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
     group: HCA_HR
   emails: []
   email_steps: []
@@ -2229,6 +2239,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2704,6 +2716,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -2815,6 +2829,8 @@ forms:
     - take_back
     - status_history
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   - step_number: 2
     routing_type: employee
     employee_id: 104236
@@ -2830,6 +2846,8 @@ forms:
     - take_back
     - status_history
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   - step_number: 3
     routing_type: group
     approve_button_label: Permit Printed
@@ -2840,6 +2858,8 @@ forms:
     - deny
     - status_history
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
     group: GSA_Security
   - step_number: 4
     routing_type: group
@@ -2851,6 +2871,8 @@ forms:
     - deny
     - status_history
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
     group: GSA_Security
   emails: []
   email_steps: []
@@ -3098,6 +3120,8 @@ forms:
     - reassign
     - take_back
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -4207,6 +4231,8 @@ forms:
     - take_back
     - status_history
     complete_on_edit: true
+    completion_rule: all
+    deny_rule: form
   emails:
   - kind: new_submission
     subject: New Safety Reporting Form Submission
@@ -5194,6 +5220,8 @@ forms:
     - take_back
     - status_history
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients:
@@ -5624,6 +5652,8 @@ forms:
     routing_type: supervisor
     inbox_buttons: []
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
   emails: []
   email_steps: []
   copy_recipients: []
@@ -6371,6 +6401,8 @@ forms:
     - take_back
     - status_dropdown
     complete_on_edit: false
+    completion_rule: all
+    deny_rule: form
     group: HCA_HR
   emails: []
   email_steps: []
