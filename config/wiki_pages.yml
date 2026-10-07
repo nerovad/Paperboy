@@ -36,7 +36,7 @@ pages:
   - source: docs/DEVELOPMENT_WORKFLOW.md
     slug: Development-Workflow
     section: Workflow
-    keep: true
+    keep: false
   - source: .gitea/issue_template/bug_report.md
     slug: Issue-Template-Bug-Report
     section: Workflow
@@ -130,7 +130,7 @@ pages:
   - source: docs/ITPORTAL_TO_PAPERBOY.md
     slug: ITPortal-to-Paperboy
     section: Proposals
-    keep: true
+    keep: false
   - source: docs/unit-test-proposed-solutions.md
     slug: Unit-Test-Proposed-Solutions
     section: Proposals
