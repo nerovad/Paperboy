@@ -8,7 +8,7 @@ class BackupOutputsControllerTest < ActionController::TestCase
   test 'backup outputs list sorts by file size and modified' do
     sign_in
     backup_dir = Rails.root.join('output/data_runner/06_Download_Backup')
-    suffix = format('%03d', Process.pid % 1000)
+    suffix = format('%03d', SecureRandom.random_number(1000))
     small = backup_dir.join("2099-01-03-#{suffix}-employees.csv")
     large = backup_dir.join("2099-01-04-#{suffix}-employees.csv")
     backup_dir.mkpath
