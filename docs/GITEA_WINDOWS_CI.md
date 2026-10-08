@@ -94,20 +94,43 @@ empty or unset. None are set today.
 | `CI_RUNNER_LABEL` | `windows` | Runner label. | Unset. Default matches the runner. |
 | `CI_SQL_HOST` | empty | Empty skips the test job. | Unset. Stage 2. |
 | `CI_SQL_PORT` | `1433` | SQL Server port (`GSABSS_PORT`). | Unset. |
-| `CI_SQL_DATABASE` | `Paperboy_Test` | Test database name. | Unset. |
+| `CI_SQL_DATABASE` | `Paperboy_CI` | Test database name. Must end in `_CI`. | Unset. |
 | `CI_SYSTEM_TESTS` | unset | `true` runs system tests. | Unset. |
 
 `CI_SQL_DATABASE` sets `GSABSS_DATABASE` and `PAPERBOY_TEST_DATABASE`.
 
-Secrets. They are not written in YAML. Point them at a CI login for
-`Paperboy_Test` only, never Dev, Stage, or Prod data. The test login
-needs to create and drop databases. Neither secret is set yet
-(stage 2).
+Secrets. They are not written in YAML. Point them at a CI login whose only
+rights are on the CI database, never Dev, Stage, or Prod data. The login
+does not create or drop databases. Neither secret is set yet (stage 2).
 
 | Secret | Maps to |
 | ------ | ------- |
 | `CI_SQL_USERNAME` | `GSABSS_USERNAME` |
 | `CI_SQL_PASSWORD` | `GSABSS_PASSWORD` |
+
+### Test database (stage 2)
+
+The `test` job uses one pre-made database whose name ends in `_CI`
+(default `Paperboy_CI`). It never creates or drops a database.
+
+- `bundle exec rails ci:reset_database` runs first. It drops every object
+  inside that database (foreign keys, views, procedures, functions,
+  tables, then sequences, synonyms, types, and user schemas such as
+  `aim`), then loads `db/schema.rb`. It refuses a database whose
+  configured name, or whose name as SQL Server reports it, does not end
+  in `_CI`.
+- `PARALLEL_WORKERS=1` runs the suite in one process, so `test_helper.rb`
+  creates no per-worker databases. A parallel run against a `_CI`
+  database is refused.
+- Against a `_CI` database, `test_helper.rb` turns off Rails' test-schema
+  maintenance, which would otherwise purge by dropping and re-creating the
+  database.
+- `CI_SQL_HOST` plus `CI_SQL_PORT` is all `tiny_tds` needs; no instance
+  name. The workflow does not hard-code the server.
+- Not covered yet: models on the `gsabss` and `billing` connections
+  (`Employees`, `Buildings`, `p2m_oms_upload*`, and the `GSABSS.dbo.*`
+  billing tables) read tables that `db/schema.rb` does not create. In CI
+  those connections point at the `_CI` database.
 
 ## A green run
 
@@ -222,9 +245,10 @@ These were open before the runner went live.
 
 Stage 2 (tests):
 
-1. **Open: SQL host and CI login.** Which host, and which login may
-   create and drop test databases? Then set `CI_SQL_HOST` (and
-   `CI_SQL_PORT` / `CI_SQL_DATABASE` if they differ from the
+1. **Open: CI database and login.** Create `Paperboy_CI` on the test
+   server and a CI login whose user is `db_owner` of that database only
+   (no `CREATE ANY DATABASE`, no server roles). Then set `CI_SQL_HOST`
+   (and `CI_SQL_PORT` / `CI_SQL_DATABASE` if they differ from the
    defaults) and the `CI_SQL_USERNAME` / `CI_SQL_PASSWORD` secrets. The
    gate stays `if: ${{ vars.CI_SQL_HOST != '' }}`.
 2. **Open: FreeTDS.** `tiny_tds` builds today. Whether the runner needs
