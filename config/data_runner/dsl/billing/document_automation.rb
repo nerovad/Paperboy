@@ -72,7 +72,7 @@
     ],
     database_connections: [
       {
-        host: 'GSASQL16',
+        host: 'GSASQL16.ent.co.ventura.ca.us',
         database: 'GSA Scan',
         schema: 'dbo',
         table: 'document_automation',
