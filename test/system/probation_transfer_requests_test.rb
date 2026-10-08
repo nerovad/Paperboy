@@ -4,8 +4,9 @@ require 'application_system_test_case'
 
 class ProbationTransferRequestsTest < ApplicationSystemTestCase
   setup do
-    sign_in_as_employee
+    @employee_id = sign_in_as_employee
     @probation_transfer_request = probation_transfer_requests(:one)
+    @probation_transfer_request.update!(employee_id: @employee_id)
   end
 
   test 'visiting the index' do

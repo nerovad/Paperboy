@@ -17,18 +17,23 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     page.find('.pb-modal--startup-warning button', text: 'Continue').click
   end
 
-  def sign_in_as_employee(employee_id = 1)
+  def sign_in_as_employee(employee_id = nil)
+    employee_id ||= Employee.order(:employee_id).pick(:employee_id)
+    raise 'No employee is available for system test sign-in' unless employee_id
+
     visit root_path
     page.execute_script(<<~JAVASCRIPT, employee_id)
       const form = document.createElement('form')
       form.method = 'post'
       form.action = '/login'
 
-      const token = document.querySelector('meta[name="csrf-token"]').content
-      const authenticity = document.createElement('input')
-      authenticity.name = 'authenticity_token'
-      authenticity.value = token
-      form.appendChild(authenticity)
+      const token = document.querySelector('input[name="authenticity_token"]')?.value
+      if (token) {
+        const authenticity = document.createElement('input')
+        authenticity.name = 'authenticity_token'
+        authenticity.value = token
+        form.appendChild(authenticity)
+      }
 
       const employee = document.createElement('input')
       employee.name = 'id'
@@ -38,5 +43,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       document.body.appendChild(form)
       form.submit()
     JAVASCRIPT
+    page.find('#profile-toggle', wait: 5)
+    employee_id
   end
 end

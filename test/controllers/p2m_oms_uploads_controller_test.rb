@@ -2,34 +2,45 @@
 
 require 'test_helper'
 
-class P2mOmsUploadsControllerTest < ActionController::TestCase
+class P2mOmsUploadsControllerTest < ActionController::TestCase # rubocop:disable Metrics/ClassLength
   tests P2m::OmsUploadsController
 
   test 'shows active uploads and excludes removed uploads without reconciling' do
     sign_in
     active_oms, removed_oms = oms_numbers
-    create_upload(active_oms, status: 'ready', mailer_date: mailer_date)
-    create_upload(removed_oms, status: 'removed', mailer_date: mailer_date)
+    active_upload = P2m::OmsUpload.new(oms_number: active_oms, mailer_date: mailer_date,
+                                       status: 'ready', validation_status: 'passed',
+                                       import_status: 'not_started', archive_status: 'queued')
+    active_upload.id = 1
 
-    without_ledger { get :index, params: date_params }
+    @controller.stub(:listed_uploads, []) do
+      @controller.stub(:pagy, [nil, [active_upload]]) do
+        without_ledger { get :index, params: date_params }
+      end
+    end
 
     assert_response :success
     assert_select 'td', text: active_oms
     assert_select 'td', text: removed_oms, count: 0
     assert_select 'button', text: 'Reconcile'
+    sql = @controller.send(:selected_uploads).to_sql
+    assert_match(/status.*(?:!=|NOT IN)/i, sql)
+    assert_includes sql, mailer_date.strftime('%m-%d-%Y')
   end
 
   test 'reconciles the selected range from its own action' do
     sign_in
-    active_oms, removed_oms = oms_numbers
-    create_upload(active_oms, status: 'ready', mailer_date: mailer_date)
-    create_upload(removed_oms, status: 'removed', mailer_date: mailer_date)
+    active_oms, _removed_oms = oms_numbers
     reconciled_ids = nil
+    scope = Object.new
+    scope.define_singleton_method(:pluck) { |column| column == :oms_number ? [active_oms] : [] }
 
-    post_reconcile(lambda { |scope:|
-      reconciled_ids = scope.pluck(:oms_number)
-      1
-    })
+    @controller.stub(:selected_uploads, scope) do
+      post_reconcile(lambda { |scope:|
+        reconciled_ids = scope.pluck(:oms_number)
+        1
+      })
+    end
 
     assert_response :see_other
     assert_redirected_to p2m_oms_status_path(date_params)
@@ -60,6 +71,24 @@ class P2mOmsUploadsControllerTest < ActionController::TestCase
 
     assert_equal 3, attempts
     assert_equal 'Reconciled 2 OMS uploads.', flash[:notice]
+  end
+
+  test 'retries listing uploads when the database deadlocks' do
+    sign_in
+    attempts = 0
+    @controller.stub(:listed_uploads, lambda {
+      attempts += 1
+      raise ActiveRecord::Deadlocked if attempts < 2
+
+      []
+    }) do
+      @controller.stub(:pagy, [nil, []]) do
+        without_ledger { get :index, params: date_params }
+      end
+    end
+
+    assert_response :success
+    assert_equal 2, attempts
   end
 
   test 'rejects a reconcile range that starts after it ends' do
@@ -97,24 +126,13 @@ class P2mOmsUploadsControllerTest < ActionController::TestCase
     { oms_uploads: { start_date: date, end_date: date } }
   end
 
-  def create_upload(oms_number, status:, mailer_date:)
-    P2m::OmsUpload.create!(oms_number: oms_number, mailer_date: mailer_date, status: status,
-                           validation_status: 'passed', import_status: 'not_started',
-                           archive_status: 'queued')
-  end
-
   def mailer_date
-    # Keep this outside the seeded upload history so the selected range only
-    # contains rows created by this test.
+    # Keep the range outside the seeded upload history.
     @mailer_date ||= Date.new(2099, 1, (Process.pid % 28) + 1)
   end
 
   def oms_numbers
-    @oms_numbers ||= ["5178#{suffix}", "5179#{suffix}"]
-  end
-
-  def suffix
-    format('%04d', Process.pid % 10_000)
+    @oms_numbers ||= %w[51780001 51790001]
   end
 
   def sign_in(admin: true)

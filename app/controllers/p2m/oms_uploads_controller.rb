@@ -12,7 +12,7 @@ module P2m
 
     def index
       validate_date_range!
-      @pagy, @uploads = pagy(:offset, listed_uploads)
+      @pagy, @uploads = with_deadlock_retry { pagy(:offset, listed_uploads) }
     rescue ArgumentError
       @uploads = OmsUpload.none
       render_invalid_date_range(:index)

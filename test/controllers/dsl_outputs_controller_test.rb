@@ -70,7 +70,7 @@ class DslOutputsControllerTest < ActionController::TestCase
   private
 
   def backup_suffix
-    format('%03d', Process.pid % 1000)
+    @backup_suffix ||= format('%03d', SecureRandom.random_number(1000))
   end
 
   def sign_in
