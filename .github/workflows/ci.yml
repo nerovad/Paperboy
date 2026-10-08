@@ -41,17 +41,20 @@ jobs:
   test:
     name: Tests
     needs: lint
-    # The test job stays skipped until Gary sets CI_SQL_HOST.
+    # The test job stays skipped until CI_SQL_HOST is set.
     if: ${{ vars.CI_SQL_HOST != '' }}
     runs-on: ${{ vars.CI_RUNNER_LABEL || 'windows' }}
     env:
       RAILS_ENV: test
+      # One worker: test_helper.rb otherwise creates a database per worker,
+      # and the CI login cannot create databases.
+      PARALLEL_WORKERS: '1'
       GSABSS_HOST: ${{ vars.CI_SQL_HOST }}
       GSABSS_PORT: ${{ vars.CI_SQL_PORT || '1433' }}
       GSABSS_USERNAME: ${{ secrets.CI_SQL_USERNAME }}
       GSABSS_PASSWORD: ${{ secrets.CI_SQL_PASSWORD }}
-      GSABSS_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_Test' }}
-      PAPERBOY_TEST_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_Test' }}
+      GSABSS_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_CI' }}
+      PAPERBOY_TEST_DATABASE: ${{ vars.CI_SQL_DATABASE || 'Paperboy_CI' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,6 +64,10 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+
+      - name: Reset CI database
+        shell: bash
+        run: bundle exec rails ci:reset_database
 
       - name: Run tests
         shell: bash

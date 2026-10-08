@@ -2,6 +2,12 @@
 
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
+
+# A _CI database is emptied and loaded only by `bin/rails ci:reset_database`.
+# Rails' test-schema maintenance would purge it, and the sqlserver adapter
+# purges by dropping and re-creating the database, which the CI login may not do.
+ActiveRecord.maintain_test_schema = false if Paperboy::CiDatabase.ci_database?(ActiveRecord::Base.connection_db_config.database)
+
 require 'rails/test_help'
 
 Rails.application.routes.default_url_options[:host] = 'www.example.com'
@@ -42,6 +48,10 @@ module ActiveSupport
     parallelize(workers: :number_of_processors, parallelize_databases: false)
 
     parallelize_before_fork do
+      if Paperboy::CiDatabase.ci_database?(BASE_TEST_DATABASE)
+        raise Paperboy::CiDatabase::Refused,
+              "#{BASE_TEST_DATABASE} is a CI database; run with PARALLEL_WORKERS=1 so no per-worker databases are created"
+      end
       ActiveRecord::Base.connection_handler.clear_all_connections!
       self.parallel_database_run_started = true
     end
