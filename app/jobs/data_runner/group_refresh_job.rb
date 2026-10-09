@@ -44,6 +44,9 @@ module DataRunner
 
     def process_items(run)
       items = run.items.order(:position).to_a
+      DependentTruncate.perform(items.map(&:dsl_name)).each do |message|
+        append_log(run.run_id) { |log| log.puts(message) }
+      end
       dsl_names = items.map(&:dsl_name).join(',')
       work = items.map { |item| prepare_item(run, item, dsl_names) }
       queue = Queue.new

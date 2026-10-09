@@ -112,7 +112,10 @@ sop: {
   dependency must be included in the same run. DataRunner uses the shared run
   ID in `DataRunner_Log`, so an older successful injection cannot satisfy the
   dependency. A failed dependency fails the dependent DSL; a missing dependency
-  or an hour-long wait raises an explicit error.
+  or an hour-long wait raises an explicit error. A `truncate_insert` DSL whose
+  dependency is in the same run is truncated and committed before any inject
+  in that run starts, so the dependency can delete rows the foreign key would
+  otherwise keep.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
   script that creates `$DATARUNNER_INBOX/source.local`:
 
