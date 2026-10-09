@@ -29,9 +29,13 @@ entries.each do |name, config|
   dependency = config[:dependency]
   next if dependency.nil?
 
-  raise "invalid dependency for #{name}: expected a DSL name" unless dependency.is_a?(String) && !dependency.empty?
-  raise "invalid dependency for #{name}: cannot depend on itself" if dependency == name
-  raise "unknown dependency for #{name}: #{dependency}" unless keys.include?(dependency)
+  dependencies = dependency.is_a?(Array) ? dependency : [dependency]
+  raise "invalid dependency for #{name}: expected a DSL name" unless dependencies.all? { |item| item.is_a?(String) && !item.empty? }
+
+  dependencies.each do |item|
+    raise "invalid dependency for #{name}: cannot depend on itself" if item == name
+    raise "unknown dependency for #{name}: #{item}" unless keys.include?(item)
+  end
 end
 
 DSL_MAP = entries.to_h.freeze

@@ -3,74 +3,108 @@
 require 'test_helper'
 require 'tmpdir'
 
-class DatabaseDslCreatorTest < ActiveSupport::TestCase
-  test 'creates replication without capturing schema or requiring inferred mappings' do
+module AgenciesCatalogFixture
+  def agencies_catalog
     catalog = Object.new
     catalog.define_singleton_method(:databases) do |server|
-      server == 'TARGETSQL' ? ['Reporting'] : ['GSABSS']
+      server == 'gsa-sql22-tst.example' ? ['Paperboy'] : ['GSABSS']
     end
-    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
-    status = Struct.new(:success?).new(true)
+    catalog.define_singleton_method(:schemas) { |_server, _database| %w[bss dbo] }
+    catalog.define_singleton_method(:tables) do |_server, _database, schema: nil|
+      schema ? ['agencies'] : ['dbo.agencies']
+    end
+    catalog.define_singleton_method(:columns) do |_server, _database, _schema, _table|
+      [{ name: 'agency_id', data_type: 'nvarchar(3)', nullability: 'NOT NULL' }]
+    end
+    catalog
+  end
+end
+
+class DatabaseDslCreatorTest < ActiveSupport::TestCase
+  include AgenciesCatalogFixture
+
+  test 'writes a replication dsl named for the source database and table' do
     commands = []
     runner = lambda do |*arguments, **options|
       commands << [arguments, options]
-      ['Imported', status]
+      ['Imported', Struct.new(:success?).new(true)]
     end
-    entry = Struct.new(:config).new({ header: [] })
 
     Dir.mktmpdir do |directory|
       Open3.stub(:capture2e, runner) do
         DslCatalog.stub(:reload!, nil) do
-          DslCatalog.stub(:find!, entry) do
+          DslCatalog.stub(:entries, []) do
             slug = DatabaseDslCreator.new(
-              server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+              server: 'GSASQL16', database: 'GSABSS', table: 'dbo.agencies',
               replicate: true,
-              target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl',
-                        table: 'SampleReplica' },
-              catalog: catalog, dsl_directory: directory
+              target: { server: 'gsa-sql22-tst.example', database: 'Paperboy', schema: 'bss',
+                        table: 'agencies' },
+              catalog: agencies_catalog, dsl_root: directory
             ).create!
 
-            assert_equal 'SampleTable', slug
-            dsl = File.read(File.join(directory, 'SampleTable.rb'))
+            assert_equal 'gsabss_agencies', slug
+            dsl = File.read(File.join(directory, 'gsabss', 'gsabss_agencies.rb'))
+            assert_includes dsl, "'Gsabss_agencies'"
+            assert_includes dsl, "name: 'gsabss'"
             assert_includes dsl, 'strategy: :replicate'
-            assert_includes dsl, 'host: "TARGETSQL"'
-            assert_includes dsl, 'table: "SampleReplica"'
-            assert_includes dsl, 'mode: :truncate_insert'
+            assert_includes dsl, "host: 'gsa-sql22-tst.example'"
+            assert_includes dsl, "database: 'Paperboy'"
+            assert_includes dsl, "schema: 'bss'"
+            assert_includes dsl, "table: 'agencies'"
+            assert_includes dsl, "local: 'gsabss_agencies.csv'"
+            assert_includes dsl, "['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil]"
+            assert_includes dsl, 'steps: Workflow::MANUAL_STEPS'
+            assert_includes dsl, 'steps: Workflow::SCHEDULED_STEPS'
+            assert_not_includes dsl, '"'
+            assert_not_includes dsl, '%i[download to_csv use_dsl inject]'
           end
         end
       end
     end
 
-    expected_commands = [
-      ['DataRunner:from_sql', 'SampleTable']
-    ]
-    actual_commands = commands.map { |command, _options| command.last(2) }
-    assert_equal expected_commands, actual_commands
-    assert(commands.all? { |_command, options| options.fetch(:chdir) == Rails.root.to_s })
+    assert_empty commands
   end
 
-  test 'previews the validated target without creating a DSL' do
-    catalog = Object.new
-    catalog.define_singleton_method(:databases) do |server|
-      server == 'TARGETSQL' ? ['Reporting'] : ['GSABSS']
-    end
-    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
+  test 'does not replace an existing replication dsl' do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, 'gsabss', 'gsabss_agencies.rb')
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, 'existing')
 
+      error = assert_raises(DatabaseDslCreator::ImportFailed) do
+        DatabaseDslCreator.new(
+          server: 'GSASQL16', database: 'GSABSS', table: 'dbo.agencies',
+          replicate: true,
+          target: { server: 'gsa-sql22-tst.example', database: 'Paperboy', schema: 'bss', table: 'agencies' },
+          catalog: agencies_catalog, dsl_root: directory
+        ).create!
+      end
+
+      assert_equal 'A DSL for this table already exists.', error.message
+      assert_equal 'existing', File.read(path)
+    end
+  end
+
+  test 'previews the validated replication target without creating a DSL' do
     preview = DatabaseDslCreator.new(
-      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable',
+      server: 'GSASQL16', database: 'GSABSS', table: 'dbo.agencies',
       replicate: true,
-      target: { server: 'TARGETSQL', database: 'Reporting', schema: 'etl', table: 'SampleReplica' },
-      catalog: catalog
+      target: { server: 'gsa-sql22-tst.example', database: 'Paperboy', schema: 'bss', table: 'agencies' },
+      catalog: agencies_catalog
     ).preview!
 
-    assert_equal ['GSASQL16', 'GSABSS', 'dbo', 'SampleTable', true,
-                  'TARGETSQL', 'Reporting', 'etl', 'SampleReplica'], preview.to_a
+    assert_equal ['GSASQL16', 'GSABSS', 'dbo', 'agencies', true,
+                  'gsa-sql22-tst.example', 'Paperboy', 'bss', 'agencies',
+                  'gsabss_agencies', 'Gsabss_agencies', 'gsabss', 'gsabss_agencies.csv'],
+                 preview.to_a[0, 13]
+    assert_equal 'agency_id', preview.headers.first[:name]
+    assert_equal 'nvarchar(3)', preview.headers.first[:data_type]
   end
 
   test 'normal import does not require a replication target' do
     catalog = Object.new
     catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
-    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.SampleTable'] }
+    catalog.define_singleton_method(:tables) { |_server, _database, schema: nil| schema ? [] : ['dbo.SampleTable'] }
 
     preview = DatabaseDslCreator.new(
       server: 'GSASQL16', database: 'GSABSS', table: 'dbo.SampleTable', catalog: catalog
@@ -79,12 +113,13 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
     assert_not preview.replicate
     assert_empty preview.target_server
     assert_empty preview.target_table
+    assert_nil preview.group
   end
 
   test 'rejects database and table values not returned by the server' do
     catalog = Object.new
     catalog.define_singleton_method(:databases) { |_server| ['GSABSS'] }
-    catalog.define_singleton_method(:tables) { |_server, _database| ['dbo.KnownTable'] }
+    catalog.define_singleton_method(:tables) { |_server, _database, schema: nil| schema ? [] : ['dbo.KnownTable'] }
 
     error = assert_raises(DatabaseDslCreator::ImportFailed) do
       DatabaseDslCreator.new(

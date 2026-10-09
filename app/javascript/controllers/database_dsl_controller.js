@@ -7,10 +7,13 @@ export default class extends Controller {
   ]
   static values = {
     databasesUrl: String,
+    schemasUrl: String,
     tablesUrl: String,
     selectedDatabase: String,
     selectedTable: String,
     selectedTargetDatabase: String,
+    selectedTargetSchema: String,
+    selectedTargetTable: String,
   }
 
   connect() {
@@ -21,8 +24,7 @@ export default class extends Controller {
   showReplication() {
     this.replicateTarget.value = "1"
     this.enableReplication()
-    this.defaultTargetTable()
-    this.targetServerTarget.focus()
+    this.targetSchemaTarget.focus()
   }
 
   enableReplication() {
@@ -32,11 +34,14 @@ export default class extends Controller {
   }
 
   sourceTableChanged() {
-    if (this.replicateTarget.value === "1") this.defaultTargetTable()
+    if (this.replicateTarget.value !== "1" || this.targetTableTarget.value) return
+
+    this.defaultTargetTable()
   }
 
   defaultTargetTable() {
-    this.targetTableTarget.value = this.tableTarget.value.split(".").pop() || ""
+    const name = this.tableTarget.value.split(".").pop() || ""
+    if (this.hasOption(this.targetTableTarget, name)) this.targetTableTarget.value = name
   }
 
   targetInputs() {
@@ -45,14 +50,60 @@ export default class extends Controller {
 
   async loadTargetDatabases() {
     this.replaceOptions(this.targetDatabaseTarget, "Loading databases…")
+    this.replaceOptions(this.targetSchemaTarget, "Select a target database first")
+    this.replaceOptions(this.targetTableTarget, "Select a target schema first")
     const loaded = await this.loadOptions(
       this.targetDatabaseTarget,
       this.databasesUrlValue,
       { server: this.targetServerTarget.value },
       "Select a target database"
     )
-    if (loaded && this.selectedTargetDatabaseValue) {
-      this.targetDatabaseTarget.value = this.selectedTargetDatabaseValue
+    if (!loaded) return
+
+    this.applySelection(this.targetDatabaseTarget, this.selectedTargetDatabaseValue)
+    this.selectedTargetDatabaseValue = ""
+    if (this.targetDatabaseTarget.value) await this.loadTargetSchemas()
+  }
+
+  async loadTargetSchemas() {
+    if (!this.targetDatabaseTarget.value) return
+
+    this.replaceOptions(this.targetSchemaTarget, "Loading schemas…")
+    this.replaceOptions(this.targetTableTarget, "Select a target schema first")
+    const loaded = await this.loadOptions(
+      this.targetSchemaTarget,
+      this.schemasUrlValue,
+      { server: this.targetServerTarget.value, database: this.targetDatabaseTarget.value },
+      "Select a target schema"
+    )
+    if (!loaded) return
+
+    this.applySelection(this.targetSchemaTarget, this.selectedTargetSchemaValue)
+    this.selectedTargetSchemaValue = ""
+    if (this.targetSchemaTarget.value) await this.loadTargetTables()
+  }
+
+  async loadTargetTables() {
+    if (!this.targetDatabaseTarget.value || !this.targetSchemaTarget.value) return
+
+    this.replaceOptions(this.targetTableTarget, "Loading tables…")
+    const loaded = await this.loadOptions(
+      this.targetTableTarget,
+      this.tablesUrlValue,
+      {
+        server: this.targetServerTarget.value,
+        database: this.targetDatabaseTarget.value,
+        schema: this.targetSchemaTarget.value
+      },
+      "Select a target table"
+    )
+    if (!loaded) return
+
+    if (this.selectedTargetTableValue) {
+      this.applySelection(this.targetTableTarget, this.selectedTargetTableValue)
+      this.selectedTargetTableValue = ""
+    } else {
+      this.defaultTargetTable()
     }
   }
 
@@ -65,10 +116,11 @@ export default class extends Controller {
       { server: this.serverTarget.value },
       "Select a database"
     )
-    if (loaded && this.selectedDatabaseValue) {
-      this.databaseTarget.value = this.selectedDatabaseValue
-      await this.loadTables()
-    }
+    if (!loaded || !this.selectedDatabaseValue) return
+
+    this.applySelection(this.databaseTarget, this.selectedDatabaseValue)
+    this.selectedDatabaseValue = ""
+    if (this.databaseTarget.value) await this.loadTables()
   }
 
   async loadTables() {
@@ -81,7 +133,18 @@ export default class extends Controller {
       { server: this.serverTarget.value, database: this.databaseTarget.value },
       "Select a table"
     )
-    if (loaded && this.selectedTableValue) this.tableTarget.value = this.selectedTableValue
+    if (!loaded || !this.selectedTableValue) return
+
+    this.applySelection(this.tableTarget, this.selectedTableValue)
+    this.selectedTableValue = ""
+  }
+
+  applySelection(select, value) {
+    if (value && this.hasOption(select, value)) select.value = value
+  }
+
+  hasOption(select, value) {
+    return Array.from(select.options).some(option => option.value === value)
   }
 
   async loadOptions(select, url, params, prompt) {

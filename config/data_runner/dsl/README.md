@@ -107,12 +107,16 @@ sop: {
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
-- Use top-level `dependency: 'Units'` when this DSL's injection must wait for
-  another DSL's injection to succeed. During a parallel group refresh, the
-  dependency must be included in the same run. DataRunner uses the shared run
-  ID in `DataRunner_Log`, so an older successful injection cannot satisfy the
-  dependency. A failed dependency fails the dependent DSL; a missing dependency
-  or an hour-long wait raises an explicit error.
+- Use top-level `dependency: 'Units'`, or a list of DSL names, when this DSL's
+  injection must wait for another DSL's injection to succeed. During a parallel
+  group refresh, every dependency must be included in the same run. DataRunner
+  uses the shared run ID in `DataRunner_Log`, so an older successful injection
+  cannot satisfy the dependency. A failed dependency fails the dependent DSL; a
+  missing dependency or an hour-long wait raises an explicit error. Before any
+  inject starts, a `truncate_insert` dependent is truncated and a `delete_insert`
+  dependent is deleted, and that change is committed. A `delete_insert` child is
+  cleared only after `truncate_insert` dependents, so a parent can then delete
+  rows a foreign key would otherwise keep.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
   script that creates `$DATARUNNER_INBOX/source.local`:
 
@@ -170,12 +174,14 @@ orchestration: {
   Symbol arguments resolve from the orchestration context.
 
 - Replication (`source.strategy: :replicate`) copies source data using the
-  configured destination mappings. Import setup skips `dump_sql` and `use_sql`;
-  explicitly running those commands also skips replication entries. No source
-  schema snapshot is created or applied. Configure destination headers for a
-  new replication DSL before running it. Existing headers and destination
-  `inject.post_script` settings are preserved. `to_sql` still generates the
-  destination table definition from those headers when requested.
+  configured destination mappings. Import Database Table writes the DSL under
+  `config/data_runner/dsl/<source_database>/<source_database>_<table>.rb`,
+  with the source columns in `header` and the standard manual and scheduled
+  step lists. `Refresh` runs `download`, `to_csv`, `use_dsl`, and `inject`,
+  and copies rows into the existing target table. `dump_sql` and `use_sql`
+  skip replication entries, and no source schema snapshot is created or
+  applied. `to_sql` still generates a destination table definition, including
+  `DROP TABLE`, when that step runs.
 
 - Use `inject.post_script` when a destination should run a local Ruby script
   after its inject transaction commits:

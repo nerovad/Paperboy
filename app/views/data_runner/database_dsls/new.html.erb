@@ -6,15 +6,18 @@
               data: { turbo: false,
                       controller: "database-dsl",
                       database_dsl_databases_url_value: databases_data_runner_database_dsls_path,
+                      database_dsl_schemas_url_value: schemas_data_runner_database_dsls_path,
                       database_dsl_tables_url_value: tables_data_runner_database_dsls_path,
                       database_dsl_selected_database_value: @database,
                       database_dsl_selected_table_value: @table,
-                      database_dsl_selected_target_database_value: @target_database } do |form| %>
+                      database_dsl_selected_target_database_value: @target_database,
+                      database_dsl_selected_target_schema_value: @target_schema,
+                      database_dsl_selected_target_table_value: @target_table } do |form| %>
   <h2>Source table</h2>
   <div class="field">
     <%= form.label :server, "Database server" %>
-    <%= form.text_field :server, value: @server, required: true, autofocus: true,
-                        data: { database_dsl_target: "server", action: "change->database-dsl#loadDatabases" } %>
+    <%= form.text_field :server, value: @server, required: true, readonly: true,
+                        data: { database_dsl_target: "server" } %>
   </div>
   <div class="field">
     <%= form.label :database, "Database name" %>
@@ -31,26 +34,28 @@
                         data: { database_dsl_target: "replicate" } %>
   <section class="card" data-database-dsl-target="targetCard" <%= "hidden" unless @replicate %>>
     <h2>Replication target</h2>
+    <p class="form-help">The DSL copies rows into the existing table. Refresh runs the copy. It does not drop or recreate the table.</p>
     <div class="field">
       <%= form.label :target_server, "Target database server" %>
-      <%= form.text_field :target_server, value: @target_server, required: @replicate,
-                          data: { database_dsl_target: "targetServer",
-                                  action: "change->database-dsl#loadTargetDatabases" } %>
+      <%= form.text_field :target_server, value: @target_server, required: @replicate, readonly: true,
+                          data: { database_dsl_target: "targetServer" } %>
     </div>
     <div class="field">
       <%= form.label :target_database, "Target database name" %>
       <%= form.select :target_database, [], { prompt: "Select a target database" }, required: @replicate,
-                      data: { database_dsl_target: "targetDatabase" } %>
+                      data: { database_dsl_target: "targetDatabase",
+                              action: "change->database-dsl#loadTargetSchemas" } %>
     </div>
     <div class="field">
       <%= form.label :target_schema, "Target schema" %>
-      <%= form.text_field :target_schema, value: @target_schema, required: @replicate,
-                          data: { database_dsl_target: "targetSchema" } %>
+      <%= form.select :target_schema, [], { prompt: "Select a target schema" }, required: @replicate,
+                      data: { database_dsl_target: "targetSchema",
+                              action: "change->database-dsl#loadTargetTables" } %>
     </div>
     <div class="field">
       <%= form.label :target_table, "Target table" %>
-      <%= form.text_field :target_table, value: @target_table, required: @replicate,
-                          data: { database_dsl_target: "targetTable" } %>
+      <%= form.select :target_table, [], { prompt: "Select a target table" }, required: @replicate,
+                      data: { database_dsl_target: "targetTable" } %>
     </div>
   </section>
   <p class="form-help" data-database-dsl-target="status" aria-live="polite"></p>

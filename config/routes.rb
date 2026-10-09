@@ -296,6 +296,7 @@ Rails.application.routes.draw do
     resource :inbox_dsls, only: :create
     resource :database_dsls, only: %i[new create] do
       get :databases
+      get :schemas
       get :tables
     end
     resources :dsls, only: %i[index show new create edit update destroy], param: :name do
