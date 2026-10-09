@@ -8,7 +8,7 @@
       scheduled: { enabled: true, frequency: :daily, steps: Workflow::SCHEDULED_STEPS }
     },
     source: {
-      host: 'GSASQL16',
+      host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'Paperboy_Dev',
       schema: 'dbo',
       table: 'employee_union_codes',
@@ -26,7 +26,7 @@
     ],
     database_connections: [
       {
-        host: 'GSASQL16',
+        host: 'GSASQL16.ent.co.ventura.ca.us',
         database: 'GSABSS',
         schema: 'dbo',
         table: 'employee_union_codes',

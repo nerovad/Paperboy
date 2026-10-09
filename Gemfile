@@ -22,8 +22,11 @@ end
 gem 'dartsass-rails', '~> 0.5'
 gem 'sprockets-rails'
 
-# Use sqlite3 as the database for Active Record
-# gem "sqlite3", ">= 2.1"
+# Workstation Solid Queue, Cache, and Cable. bin/dev sets PAPERBOY_LOCAL_SOLID.
+# Servers leave that variable unset and keep the primary SQL Server database.
+group :development do
+  gem 'sqlite3', '~> 2.1'
+end
 # gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'

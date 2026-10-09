@@ -8,6 +8,9 @@
 /storage/development/
 /storage/staging/
 /storage/production/
+# Workstation Solid Queue, Cache, and Cable (PAPERBOY_LOCAL_SOLID)
+/storage/solid_*.sqlite3
+/storage/solid_*.sqlite3-*
 # Default DAM roots and watch folders (PAPERBOY_DAM_ROOTS)
 /storage/dam/
 

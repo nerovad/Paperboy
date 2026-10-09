@@ -36,7 +36,7 @@
     ],
     database_connections: [
       {
-        host: 'GSASQL16',
+        host: 'GSASQL16.ent.co.ventura.ca.us',
         database: 'Paperboy_Dev',
         schema: 'dbo',
         table: 'injury_categories',

@@ -11,7 +11,7 @@
       name: 'human_resources'
     },
     source: {
-      host: 'GSASQL16',
+      host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSABSS',
       schema: 'dbo',
       table: 'employees',
@@ -44,7 +44,7 @@
     ],
     database_connections: [
       {
-        host: 'GSASQL16',
+        host: 'GSASQL16.ent.co.ventura.ca.us',
         database: 'GSABSS',
         schema: 'dbo',
         table: 'employees_new',

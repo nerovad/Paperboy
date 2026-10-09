@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -1149,6 +1149,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_140000) do
     t.datetime "updated_at", null: false
     t.index ["form_type"], name: "index_form_visibility_grants_on_form_type"
     t.index ["grantee_type", "group_id"], name: "index_form_visibility_grants_on_grantee_type_and_group_id"
+  end
+
+  create_table "gsa_authorization_form_forms", force: :cascade do |t|
+    t.string "agency"
+    t.string "approver_id"
+    t.datetime "created_at", null: false
+    t.text "deny_reason"
+    t.string "department"
+    t.string "division"
+    t.string "email"
+    t.string "employee_id"
+    t.string "name"
+    t.string "phone"
+    t.string "status", default: "in_progress", null: false
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["approver_id"], name: "index_gsa_authorization_form_forms_on_approver_id"
+    t.index ["employee_id"], name: "index_gsa_authorization_form_forms_on_employee_id"
   end
 
   create_table "gym_locker_forms", force: :cascade do |t|
