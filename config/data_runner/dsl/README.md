@@ -107,15 +107,16 @@ sop: {
 - Use `source.strategy: :append` when a locally staged supplemental file should
   flow through the normal stages and append into another dataset's destination
   table via `inject.mode: :append`.
-- Use top-level `dependency: 'Units'` when this DSL's injection must wait for
-  another DSL's injection to succeed. During a parallel group refresh, the
-  dependency must be included in the same run. DataRunner uses the shared run
-  ID in `DataRunner_Log`, so an older successful injection cannot satisfy the
-  dependency. A failed dependency fails the dependent DSL; a missing dependency
-  or an hour-long wait raises an explicit error. A `truncate_insert` DSL whose
-  dependency is in the same run is truncated and committed before any inject
-  in that run starts, so the dependency can delete rows the foreign key would
-  otherwise keep.
+- Use top-level `dependency: 'Units'`, or a list of DSL names, when this DSL's
+  injection must wait for another DSL's injection to succeed. During a parallel
+  group refresh, every dependency must be included in the same run. DataRunner
+  uses the shared run ID in `DataRunner_Log`, so an older successful injection
+  cannot satisfy the dependency. A failed dependency fails the dependent DSL; a
+  missing dependency or an hour-long wait raises an explicit error. Before any
+  inject starts, a `truncate_insert` dependent is truncated and a `delete_insert`
+  dependent is deleted, and that change is committed. A `delete_insert` child is
+  cleared only after `truncate_insert` dependents, so a parent can then delete
+  rows a foreign key would otherwise keep.
 - Use `source.strategy: :script` when the download stage should run a local Ruby
   script that creates `$DATARUNNER_INBOX/source.local`:
 

@@ -10,15 +10,15 @@ module DataRunnerDependencyHelpers
   DEFAULT_POLL_SECONDS = 1
 
   def wait!(name, config)
-    dependency = config[:dependency]
-    return if dependency.nil?
+    dependencies = Array(config[:dependency]).map(&:to_s).reject(&:empty?)
+    return if dependencies.empty?
 
     run_id = ENV.fetch('DATARUNNER_RUN_ID', '').strip
-    raise "#{name}: dependency #{dependency} requires DATARUNNER_RUN_ID" if run_id.empty?
+    raise "#{name}: dependency #{dependencies.join(', ')} requires DATARUNNER_RUN_ID" if run_id.empty?
 
-    ensure_scheduled!(name, dependency)
+    dependencies.each { |dependency| ensure_scheduled!(name, dependency) }
     client = log_client
-    wait_for_log!(client, name, dependency, run_id)
+    dependencies.each { |dependency| wait_for_log!(client, name, dependency, run_id) }
   ensure
     client&.close
   end
