@@ -15,6 +15,30 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
     end
   end
 
+  test 'returns one page of a csv and the full row count' do
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    with_file('paged.csv', body) do |path|
+      output = WorkflowOutputPresenter.new(path, page: 2, per_page: 2)
+
+      assert_equal 5, output.row_count
+      assert_equal [['Row 2'], ['Row 3']], output.rows
+      assert_not output.truncated?
+    end
+  end
+
+  test 'caps a preview at the requested row count' do
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    with_file('capped.csv', body) do |path|
+      output = WorkflowOutputPresenter.new(path, max_rows: 3)
+
+      assert_equal 3, output.max_rows
+      assert_equal [['Row 0'], ['Row 1'], ['Row 2']], output.rows
+      assert output.truncated?
+    end
+  end
+
   test 'normalizes ragged CSV rows for datatables' do
     with_file('ragged.csv', "name,value\nAlpha,1,extra\nBeta\n") do |path|
       output = WorkflowOutputPresenter.new(path)

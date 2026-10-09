@@ -112,6 +112,7 @@ import P2mPostTestingArchiveController from "controllers/p2m_post_testing_archiv
 import NavigationProgressController from "controllers/navigation_progress_controller"
 import P2mQualityControlController from "controllers/p2m_quality_control_controller"
 import StartupWarningController from "controllers/startup_warning_controller"
+import PfaGridController from "controllers/pfa_grid_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -135,6 +136,7 @@ application.register("p2m-post-testing-archive", P2mPostTestingArchiveController
 application.register("navigation-progress", NavigationProgressController)
 application.register("p2m-quality-control", P2mQualityControlController)
 application.register("startup-warning", StartupWarningController)
+application.register("pfa-grid", PfaGridController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)

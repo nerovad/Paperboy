@@ -11,30 +11,12 @@ export default class extends Controller {
 
     if (!window.jQuery || !window.jQuery.fn.DataTable || this.element.dataset.datatableInitialized === "true") return
 
-    const table = window.jQuery(this.element).DataTable({
-      dom: "Bfrtip",
-      orderCellsTop: true,
-      pageLength: 25,
-      responsive: true,
-      buttons: [
-        { extend: "copyHtml5", title: this.exportTitle },
-        { extend: "csvHtml5", title: this.exportTitle },
-        { extend: "print", title: this.exportTitle }
-      ]
-    })
-
-    table.columns().every(function () {
-      const column = this
-      const input = column.table().node().querySelectorAll("thead tr.column-filters input")[column.index()]
-      if (!input) return
-
-      input.addEventListener("keyup", () => {
-        if (column.search() !== input.value) column.search(input.value).draw()
-      })
-      input.addEventListener("change", () => {
-        if (column.search() !== input.value) column.search(input.value).draw()
-      })
-      input.addEventListener("click", event => event.stopPropagation())
+    // Search the rows on this page. Paging is the shared series nav, and
+    // Copy, CSV, print, and the per-column search row stay off.
+    window.jQuery(this.element).DataTable({
+      dom: "frt",
+      paging: false,
+      info: false
     })
 
     this.element.dataset.datatableInitialized = "true"
@@ -69,9 +51,5 @@ export default class extends Controller {
 
     headers.forEach(item => item.setAttribute("aria-sort", "none"))
     header.setAttribute("aria-sort", direction)
-  }
-
-  get exportTitle() {
-    return this.element.dataset.exportTitle || "DataRunner output"
   }
 }

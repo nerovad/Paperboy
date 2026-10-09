@@ -9,7 +9,8 @@
     <% actions = link_to 'OSHA 300A Summary', osha_300a_path, class: 'btn secondary' %>
   <% end %>
 
-  <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @records,
+  <%= render 'records/grid', table: @table, page: @page, columns: @columns, rows: @grid_rows,
+             pagy: @pagy,
              title: @table.label, toolbar: toolbar, actions: actions, exportable: true, emailable: true,
              highlights: @highlights, highlight_counts: @highlight_counts, view_params: @view_params %>
 

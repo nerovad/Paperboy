@@ -73,57 +73,48 @@
   <% end %>
 
   <% if rows.any? %>
-    <div class="records-table-wrapper" data-column-customizer-target="tableContainer">
-      <table class="records-table">
-        <thead>
-          <tr>
-            <% columns.each do |column| %>
-              <th><%= sortable_column_header(column) %></th>
-            <% end %>
-            <th class="records-actions-col">
-              <button type="button" class="cc-trigger" data-action="column-customizer#open" title="Customize columns" aria-label="Customize columns">+</button>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <% rows.each do |row| %>
-            <% highlight = highlights.rule_for(row) %>
-            <tr <%= tag.attributes(class: class_names('is-inactive': row.respond_to?(:canceled_date) && row.canceled_date.present?,
-                                                      "is-highlight-#{highlight&.color}": highlight).presence,
-                                   title: highlight&.display_label) %>>
-              <% columns.each do |column| %>
-                <% if editable && records_cell_editable?(table, column) %>
-                  <td class="records-cell is-editable"
-                      data-action="click->records-edit#start"
-                      data-id="<%= row.id %>"
-                      data-column="<%= column.id %>"
-                      data-label="<%= column.label %>"
-                      data-kind="<%= column.kind %>"
-                      data-raw="<%= records_edit_raw(column, row) %>"><%= table_cell_content(column, row) %></td>
-                <% else %>
-                  <td class="records-cell"><%= table_cell_content(column, row) %></td>
-                <% end %>
-              <% end %>
-              <td class="records-actions-col">
-                <% if edit_path %><%= link_to 'Edit', edit_path.call(row), class: 'btn edit compact' %><% end %>
-                <% if editable %>
-                  <button type="button" class="btn status-history compact"
-                          data-action="history-modal#open"
-                          data-history-url="<%= records_table_row_history_path(table.slug, row.id) %>"
-                          data-history-label="History"
-                          data-record-title="<%= table.row_label(row) %>">History</button>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+    <% row_attributes = ->(row) do
+         highlight = highlights.rule_for(row)
+         { class: class_names('is-inactive': row.respond_to?(:canceled_date) && row.canceled_date.present?,
+                              "is-highlight-#{highlight&.color}": highlight).presence,
+           title: highlight&.display_label }
+       end %>
+    <% cell_markup = ->(column, row) do
+         attrs = { class: 'records-cell' }
+         if editable && records_cell_editable?(table, column)
+           attrs.merge!(class: 'records-cell is-editable',
+                        data: { action: 'click->records-edit#start', id: row.id,
+                                column: column.id, label: column.label, kind: column.kind,
+                                raw: records_edit_raw(column, row) })
+         end
+         content_tag(:td, table_cell_content(column, row), attrs)
+       end %>
+    <% action_cell = ->(row) do
+         actions = []
+         actions << link_to('Edit', edit_path.call(row), class: 'btn edit compact') if edit_path
+         if editable
+           actions << button_tag('History', type: 'button', class: 'btn status-history compact',
+                                 data: { action: 'history-modal#open',
+                                         history_url: records_table_row_history_path(table.slug, row.id),
+                                         history_label: 'History', record_title: table.row_label(row) })
+         end
+         safe_join(actions)
+       end %>
+    <%= render 'pfa/grid/table', columns: columns, rows: rows,
+               header: ->(column) { sortable_column_header(column) },
+               cell: cell_markup, cell_markup: true, row_attributes: row_attributes,
+               action_header: button_tag('+', type: 'button', class: 'cc-trigger',
+                                         data: { action: 'column-customizer#open' },
+                                         title: 'Customize columns', aria: { label: 'Customize columns' }),
+               action_cell: action_cell, table_class: 'records-table',
+               wrapper_class: 'records-table-wrapper', wrapper_target: true %>
   <% else %>
     <div class="empty-state">
       <p>No <%= table.label %> records found.</p>
     </div>
   <% end %>
+
+  <%= render "shared/series_pagination", pagy: local_assigns[:pagy] %>
 
   <%# Unsaved-changes bar — appears only while edits are staged %>
   <div class="records-savebar" data-records-edit-target="savebar" hidden>

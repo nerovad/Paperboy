@@ -2,6 +2,7 @@
 
 class PcardInventoryController < ApplicationController
   include Filterable
+  include Pagy::Method
 
   before_action :require_pcard_admin
   before_action :set_pcard_inventory, only: %i[edit update]
@@ -23,8 +24,9 @@ class PcardInventoryController < ApplicationController
     sort_direction = params[:sort_direction] || 'asc'
     sort_configs = @columns.select(&:sortable?).index_by(&:sort_key).transform_values(&:value)
 
-    @pcard_inventories = sort_collection(records, sort_by, sort_direction, sort_configs,
-                                         default_sort: @default_sort)
+    sorted = sort_collection(records, sort_by, sort_direction, sort_configs, default_sort: @default_sort)
+    @pagy, @pcard_inventories = pagy(:offset, sorted,
+                                     limit: Pfa::Grid::Table::PAGE_ROWS, count: sorted.size)
   end
 
   def new

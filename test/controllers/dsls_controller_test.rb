@@ -82,21 +82,20 @@ class DslsControllerTest < ActionController::TestCase
     assert_redirected_to data_runner_root_path(group: 'finance_reporting')
   end
 
-  test 'csv output uses datatables with per-column filters' do
+  test 'csv output uses datatables search without export buttons or column filters' do
     sign_in
     output_path = Rails.root.join('output/data_runner/05_DSL_Applied', 'employees.csv')
     output_path.dirname.mkpath
     output_path.write("id,name\n1,Ada\n2,Grace\n")
-
     get :output, params: { name: 'employees', path: '05_DSL_Applied/employees.csv' }
 
     assert_response :success
     assert_select 'script[src*=?]', 'jquery3'
     assert_select 'script[src*=?]', 'datatables/jquery.dataTables'
-    assert_select 'script[src*=?]', 'datatables/extensions/Buttons/dataTables.buttons'
-    assert_select 'script[src*=?]', 'datatables/extensions/Responsive/dataTables.responsive'
+    assert_select 'script[src*=?]', 'datatables/extensions/Buttons/dataTables.buttons', count: 0
+    assert_select 'script[src*=?]', 'datatables/extensions/Responsive/dataTables.responsive', count: 0
     assert_select 'table.datatable-output[data-controller=?]', 'output-table'
-    assert_select 'thead tr.column-filters input', count: 2
+    assert_select 'thead tr.column-filters', count: 0
   ensure
     output_path&.delete if output_path&.file?
   end

@@ -36,5 +36,6 @@
   </div>
 
   <%= render 'records/grid', table: @records_table, page: @page, columns: @columns,
-             rows: @pcard_inventories, edit_path: ->(card) { edit_pcard_inventory_path(card) } %>
+             rows: @pcard_inventories, pagy: @pagy,
+             edit_path: ->(card) { edit_pcard_inventory_path(card) } %>
 </div>
