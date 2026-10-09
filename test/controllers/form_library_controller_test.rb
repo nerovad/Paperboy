@@ -81,7 +81,7 @@ class FormLibraryControllerTest < ActionController::TestCase
   test 'inside the library the sidebar button leads back to quick search' do
     without_templates { get :index }
 
-    assert_select '.sidebar a.pb-advanced-trigger[href=?]', root_path, text: 'Quick Search'
+    assert_select '.sidebar a.pb-advanced-trigger[href=?]', forms_home_path, text: 'Quick Search'
     assert_select '.sidebar a.pb-advanced-trigger[href=?]', form_library_path, count: 0
   end
 end

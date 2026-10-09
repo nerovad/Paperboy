@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_09_140000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -2083,7 +2083,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_120000) do
     t.text "column_prefs"
     t.datetime "created_at", null: false
     t.integer "dam_storage_location_id"
+    t.string "default_search_mode"
     t.string "employee_id", null: false
+    t.text "hidden_form_keys"
     t.boolean "inbox_email_notifications", default: false, null: false
     t.string "theme", default: "light", null: false
     t.datetime "updated_at", null: false

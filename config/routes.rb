@@ -629,6 +629,8 @@ Rails.application.routes.draw do
 
   # Per-user column/filter layout for the Inbox & Submissions tables
   patch '/settings/table_layout', to: 'settings#table_layout', as: :settings_table_layout
+  patch '/settings/sidebar_form', to: 'settings#sidebar_form', as: :settings_sidebar_form
+  patch '/settings/default_search', to: 'settings#default_search', as: :settings_default_search
 
   resources :form_submission_copies, only: [] do
     member do

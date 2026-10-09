@@ -7,7 +7,8 @@
     its address can be bookmarked.
 
     Locals:
-      library  the FormLibrary the page is showing %>
+      library      the FormLibrary the page is showing
+      search_mode  the search this person starred as their start page %>
 <%
   collection  = library.collection
   search_path = collection ? form_library_collection_path(collection) : form_library_path
@@ -18,8 +19,13 @@
                        placeholder: "Search forms, collections, numbers, tags",
                        aria: { label: "Search forms and collections" } %>
 
-  <%= link_to "Quick Search", root_path,
-              class: "btn secondary compact pb-advanced-trigger has-filters" %>
+  <%# /forms/home rather than the root: the root sends someone who starred
+      Advanced Search straight back here. %>
+  <div class="pb-search-mode">
+    <%= link_to "Quick Search", forms_home_path,
+                class: "btn secondary compact pb-advanced-trigger has-filters" %>
+    <%= render "shared/search_mode_star", mode: "quick", starred: search_mode == "quick" %>
+  </div>
 
   <% if library.finder.org_tree[:agencies].any? %>
     <fieldset class="pb-filter-set">

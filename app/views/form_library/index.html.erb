@@ -77,6 +77,7 @@
             <h3>
               <%= link_to entry.name, entry.path %>
               <% if entry.number.present? %><span class="form-library__number"><%= entry.number %></span><% end %>
+              <% if @library.hidden_from_sidebar?(entry) %><span class="form-library__hidden">Hidden from your sidebar</span><% end %>
             </h3>
             <% if entry.description.present? %><p><%= entry.description %></p><% end %>
             <% if org_path.present? || entry.form_type.present? || entry.tags.any? %>
@@ -89,7 +90,15 @@
               </div>
             <% end %>
           </div>
-          <%= link_to "Open", entry.path, class: "btn pdf compact" %>
+          <div class="form-library__row-actions">
+            <%# A preference, not a permission: it only takes the form off this
+                person's own sidebar list. %>
+            <% hidden = @library.hidden_from_sidebar?(entry) %>
+            <%= button_to hidden ? "Show in sidebar" : "Hide from sidebar", settings_sidebar_form_path,
+                          method: :patch, params: { form_key: entry.key, hidden: hidden ? "0" : "1" },
+                          class: "btn ghost compact" %>
+            <%= link_to "Open", entry.path, class: "btn pdf compact" %>
+          </div>
         </article>
       <% end %>
     </section>

@@ -19,6 +19,19 @@
               FormCatalog.new(admin: system_admin?,
                               permitted_keys: current_user_form_permission_keys)
             end
+
+  # This person's own sidebar choices: the forms they have taken off it (from a
+  # row in the Form Library), and the search they starred as their start page.
+  # Hidden forms stay in the markup, unseen, so a search that asks for them
+  # can bring them back without a round trip.
+  settings = UserSetting.find_by(employee_id: current_user.employee_id.to_s) if catalog
+  search_mode = settings&.search_mode || "quick"
+  hidden_forms = if catalog && !@library
+                   hidden_keys = settings&.hidden_form_key_list || []
+                   catalog.forms.map(&:first).select { |label| hidden_keys.include?(catalog.key_for(label)) }
+                 else
+                   []
+                 end
 %>
 <div class="sidebar"
      <%= tag.attributes(data: { controller: "sidebar-search" }) if catalog && !@library %>>
@@ -26,7 +39,7 @@
   <%# With the Form Library open the sidebar is in Advanced Search mode: the
       forms are listed on the page, and this column holds the filters. %>
   <% if current_user && @library %>
-    <%= render "form_library/sidebar_filters", library: @library %>
+    <%= render "form_library/sidebar_filters", library: @library, search_mode: search_mode %>
   <% elsif current_user %>
     <input
       type="text"
@@ -40,17 +53,32 @@
         admin set in the form builder — org, type, tags — needs more room than
         a list of names has, so the button opens the Form Library, which puts
         those filters in this sidebar and the forms on the page. %>
-    <%= link_to "Advanced Search", form_library_path,
-                class: "btn secondary compact pb-advanced-trigger" %>
+    <div class="pb-search-mode">
+      <%= link_to "Advanced Search", form_library_path,
+                  class: "btn secondary compact pb-advanced-trigger" %>
+      <%= render "shared/search_mode_star", mode: "advanced", starred: search_mode == "advanced" %>
+    </div>
+
+    <%# Offered only while something is typed in the box above, and only to
+        someone who has hidden a form (sidebar_search_controller.js). %>
+    <% if hidden_forms.any? %>
+      <label class="sidebar-show-hidden" data-sidebar-search-target="hiddenToggle" hidden>
+        <input type="checkbox" data-sidebar-search-target="showHidden"
+               data-action="change->sidebar-search#filter">
+        Show Hidden Forms (<%= hidden_forms.size %>)
+      </label>
+    <% end %>
 
     <%= render "shared/search_commands", row_class: "nav-link sidebar-command" %>
 
     <div data-sidebar-search-target="formsList">
       <% catalog.forms.each do |label, path| %>
-        <%= link_to label, path, class: "nav-link",
+        <% user_hidden = hidden_forms.include?(label) %>
+        <%= link_to label, path, class: "nav-link", style: ("display: none" if user_hidden),
             data: catalog.search_data(label)
                          .merge(turbo_frame: "main-content",
-                                sidebar_search_target: "formLink") %>
+                                sidebar_search_target: "formLink",
+                                user_hidden: (true if user_hidden)) %>
       <% end %>
       <%# Shown only when the search box leaves nothing, so a list that has
           gone empty says why. %>
@@ -60,6 +88,11 @@
     </div>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
+  <% end %>
+  <% if catalog %>
+    <%# What the stars beside the search-mode button submit. Out here because
+        the star in Advanced Search mode sits inside the filters' form. %>
+    <%= form_with url: settings_default_search_path, method: :patch, id: "search-mode-form" do %><% end %>
   <% end %>
   <%= render "shared/sidebar_footer" %>
 </div>

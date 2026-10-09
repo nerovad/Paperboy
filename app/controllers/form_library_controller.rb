@@ -10,7 +10,8 @@ class FormLibraryController < ApplicationController
     catalog = FormCatalog.new(admin: helpers.system_admin?,
                               permitted_keys: current_user_form_permission_keys)
     @library = FormLibrary.new(catalog, params,
-                               manager: helpers.can_use_app_feature?('paperboy', 'form_collections'))
+                               manager: helpers.can_use_app_feature?('paperboy', 'form_collections'),
+                               hidden_keys: UserSetting.hidden_form_keys_for(current_user.employee_id))
 
     head :not_found if params[:collection].present? && @library.collection.nil?
   end

@@ -45,8 +45,12 @@ class FormLibrary
   # `manager` is someone who may create and edit collections. They are shown
   # every collection, including one none of their own forms are in — a new
   # collection is empty, and its maker has to be able to find it again.
-  def initialize(catalog, params = {}, collections: nil, manager: false)
+  #
+  # `hidden_keys` are the forms the viewer has taken off their own sidebar.
+  # The library still lists them — it is where they are put back.
+  def initialize(catalog, params = {}, collections: nil, manager: false, hidden_keys: [])
     @catalog = catalog
+    @hidden_keys = hidden_keys
     raw = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
     @params = raw.with_indifferent_access
     @all_collections = collections
@@ -54,6 +58,8 @@ class FormLibrary
   end
 
   def manager? = @manager
+
+  def hidden_from_sidebar?(entry) = @hidden_keys.include?(entry.key)
 
   # Every form the viewer may open, alphabetical.
   def entries
