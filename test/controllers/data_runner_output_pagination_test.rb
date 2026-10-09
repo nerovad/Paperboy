@@ -37,6 +37,27 @@ class DataRunnerOutputPaginationTest < ActionController::TestCase
     output_path&.delete if output_path&.file?
   end
 
+  test 'a large csv offers the next page without a full count' do
+    sign_in
+    output_path = Rails.root.join('output/data_runner/05_DSL_Applied', 'employees.csv')
+    output_path.dirname.mkpath
+    total = Pfa::Grid::Table::PAGE_ROWS + 1
+    output_path.write("id\n#{(1..total).to_a.join("\n")}\n")
+
+    WorkflowOutputPresenter.stub(:exact_csv_count?, false) do
+      get :output, params: { name: 'employees', path: '05_DSL_Applied/employees.csv' }
+    end
+
+    assert_response :success
+    assert_select 'tbody tr', count: Pfa::Grid::Table::PAGE_ROWS
+    assert_select '.pagination-wrapper .pagy.series-nav a[aria-label=?]', 'Next'
+    assert_select '.pagination-wrapper .pagy.series-nav a[href*=?]', 'page=2'
+    assert_no_match(/of #{total} rows/, response.body)
+    assert_match(/Showing 1–#{Pfa::Grid::Table::PAGE_ROWS}/, response.body)
+  ensure
+    output_path&.delete if output_path&.file?
+  end
+
   private
 
   def sign_in

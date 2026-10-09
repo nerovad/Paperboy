@@ -24,6 +24,7 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
       assert_equal 5, output.row_count
       assert_equal [['Row 2'], ['Row 3']], output.rows
       assert_not output.truncated?
+      assert_not output.more?
     end
   end
 
@@ -111,6 +112,48 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
     Dir.mktmpdir do |directory|
       path = Pathname(directory).join(name)
       path.write(content)
+      yield path
+    end
+  end
+end
+
+class WorkflowOutputCsvPageTest < ActiveSupport::TestCase
+  test 'stops a large csv after this page and one extra row' do
+    csv_file do |path|
+      WorkflowOutputPresenter.stub(:exact_csv_count?, false) do
+        output = WorkflowOutputPresenter.new(path, page: 1, per_page: 2)
+
+        assert_nil output.row_count
+        assert output.more?
+        assert_equal [['Row 0'], ['Row 1']], output.rows
+        assert_equal 1, output.page_from
+        assert_equal 2, output.page_to
+      end
+    end
+  end
+
+  test 'counts a large csv when the requested page reaches the end' do
+    csv_file do |path|
+      WorkflowOutputPresenter.stub(:exact_csv_count?, false) do
+        output = WorkflowOutputPresenter.new(path, page: 3, per_page: 2)
+
+        assert_equal 5, output.row_count
+        assert_not output.more?
+        assert_equal [['Row 4']], output.rows
+        assert_equal 5, output.page_from
+        assert_equal 5, output.page_to
+      end
+    end
+  end
+
+  private
+
+  def csv_file
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    Dir.mktmpdir do |directory|
+      path = Pathname(directory).join('large.csv')
+      path.write(body)
       yield path
     end
   end

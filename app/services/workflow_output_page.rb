@@ -5,10 +5,18 @@
 module WorkflowOutputPage
   private
 
+  # A full CSV parse of a large result blocks the request: an 868MB file
+  # took about two minutes before the first page could render. Files at or
+  # under the exact-count limit still report a real total. Larger files stop
+  # after this page plus one row, which is enough to offer Next. Quoted line
+  # breaks make a raw line count the wrong total, so the parser still owns it.
   def load_csv_page
     headers = nil
     page_rows = []
     seen = 0
+    stop_after = page_offset + page_limit
+    count_all = exact_csv_count?
+    stopped_early = false
     CSV.foreach(path, encoding: 'bom|utf-8') do |record|
       if headers.nil?
         headers = record
@@ -17,8 +25,13 @@ module WorkflowOutputPage
 
       seen += 1
       page_rows << record if seen > page_offset && page_rows.size < page_limit
+      next if count_all || seen <= stop_after
+
+      stopped_early = true
+      break
     end
-    @row_count = seen
+    @row_count = stopped_early ? nil : seen
+    @more = stopped_early
     @truncated = false
     assign_table(headers || [], page_rows)
   end
