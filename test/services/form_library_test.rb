@@ -12,6 +12,8 @@ class FormLibraryTest < ActiveSupport::TestCase
 
     def template_for(name) = templates.find { |template| template.name == name }
 
+    def key_for(name) = name.parameterize
+
     def finder = FormFinder.new(templates)
   end
 
@@ -21,9 +23,14 @@ class FormLibraryTest < ActiveSupport::TestCase
     end
   end
 
-  def collection(key, **rules)
-    FormLibrary::Collection.new(key, key.titleize, '', Array(rules[:tags]),
-                                Array(rules[:agencies]), Array(rules[:forms]))
+  # A collection as the library reads one: an id, a name, and the keys of the
+  # forms it names. The stub catalog keys a form by its parameterized name.
+  StubCollection = Struct.new(:id, :name, :description, :form_keys) do
+    def haystack = [name, description].join(' ').downcase
+  end
+
+  def collection(id, name, *form_keys, description: '')
+    StubCollection.new(id, name, description, form_keys)
   end
 
   def library(collections: [], **params)
@@ -63,48 +70,58 @@ class FormLibraryTest < ActiveSupport::TestCase
     assert_equal ['Bike Locker', 'Safety Reporting'], names(library(tag: %w[security safety]))
   end
 
-  test 'a collection takes a form by tag, by issuing agency or by name' do
-    groups = [collection('mixed', tags: %w[security], agencies: %w[HCA], forms: ['Telework Log'])]
+  test 'a collection lists the forms it names' do
+    groups = [collection(1, 'Commuting', 'bike-locker', 'telework-log')]
 
-    assert_equal 3, library(collection: 'mixed', collections: groups).results.size
+    assert_equal ['Bike Locker', 'Telework Log'], names(library(collection: '1', collections: groups))
+  end
+
+  test 'a form the viewer may not open is not shown by a collection that names it' do
+    # 'parking-permit' is not among the forms the catalog let through, so the
+    # collection shows the one form of its two that this viewer can open.
+    groups = [collection(1, 'Parking', 'bike-locker', 'parking-permit')]
+    subject = library(collection: '1', collections: groups)
+
+    assert_equal ['Bike Locker'], names(subject)
+    assert_equal [1], subject.collections.map(&:last)
   end
 
   test 'a search inside a collection stays inside it' do
-    groups = [collection('gsa', agencies: %w[GSA])]
-    subject = library(collection: 'gsa', q: 'safety', collections: groups)
+    groups = [collection(1, 'Commuting', 'bike-locker')]
+    subject = library(collection: '1', q: 'safety', collections: groups)
 
-    assert_equal 'gsa', subject.collection.key
+    assert_equal 1, subject.collection.id
     assert_empty names(subject)
   end
 
-  test 'a collection the viewer has no forms in is not offered and cannot be browsed' do
-    groups = [collection('empty', tags: %w[nothing]), collection('gsa', agencies: %w[GSA])]
-    subject = library(collection: 'empty', collections: groups)
+  test 'a collection holding none of the viewer\'s forms is not offered and cannot be browsed' do
+    groups = [collection(1, 'Parking', 'parking-permit'), collection(2, 'Commuting', 'bike-locker')]
+    subject = library(collection: '1', collections: groups)
 
-    offered = subject.collections.map { |group, count| [group.key, count] }
-
-    assert_equal [['gsa', 1]], offered
+    assert_equal([2], subject.collections.map { |group, _| group.id })
     assert_nil subject.collection
   end
 
-  test 'the search box finds a collection by its name, description or tags' do
-    groups = [collection('fleet', agencies: %w[GSA]), collection('clinics', tags: %w[safety])]
+  test 'a manager is offered every collection, an empty one included' do
+    groups = [collection(1, 'Brand new')]
+    subject = FormLibrary.new(StubCatalog.new([]), { collection: '1' }, collections: groups, manager: true)
 
-    assert_equal(%w[fleet], library(q: 'FLEET', collections: groups).matching_collections.map { |group, _| group.key })
-    assert_equal(%w[clinics], library(q: 'safety', collections: groups).matching_collections.map { |group, _| group.key })
+    assert_equal([[1, 0]], subject.collections.map { |group, count| [group.id, count] })
+    assert_equal 1, subject.collection.id
+  end
+
+  test 'the search box finds a collection by its name or description' do
+    groups = [collection(1, 'Fleet', 'bike-locker'),
+              collection(2, 'Clinics', 'safety-reporting', description: 'Safety and risk')]
+
+    assert_equal([1], library(q: 'FLEET', collections: groups).matching_collections.map { |group, _| group.id })
+    assert_equal([2], library(q: 'risk', collections: groups).matching_collections.map { |group, _| group.id })
     assert_empty library(q: 'payroll', collections: groups).matching_collections
   end
 
   test 'with nothing typed every collection is offered, whatever the facets say' do
-    groups = [collection('fleet', agencies: %w[GSA]), collection('clinics', tags: %w[safety])]
+    groups = [collection(1, 'Fleet', 'bike-locker'), collection(2, 'Clinics', 'safety-reporting')]
 
     assert_equal 2, library(type: %w[Log], collections: groups).matching_collections.size
-  end
-
-  test 'the collections file loads and every entry has a name and a rule' do
-    FormLibrary.defined_collections.each do |group|
-      assert_predicate group.name, :present?
-      assert_predicate group.tags + group.agencies + group.forms, :any?, "#{group.key} matches nothing"
-    end
   end
 end

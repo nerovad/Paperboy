@@ -36,6 +36,38 @@
   a { color: $brand-navy; }
 }
 
+.form-library__byline { font-size: 0.82rem; }
+
+.form-library__manage {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* --- Creating and editing a collection ---------------------------------- */
+
+.form-collection__forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px 16px;
+  max-height: 22rem;
+  overflow-y: auto;
+
+  small { color: $text-muted; }
+}
+
+.form-collection__errors {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid $form-error-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+
+  ul { margin: 0; padding-left: 18px; }
+}
+
 /* --- Collections --------------------------------------------------------- */
 
 .form-library__collections {

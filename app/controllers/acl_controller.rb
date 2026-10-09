@@ -409,7 +409,9 @@ class AclController < ApplicationController
   # section directly above it; apps that declare no features (Print Production)
   # drop out rather than rendering an empty box.
   def feature_apps
-    APPLICATION_ITEMS.filter_map do |app|
+    # Paperboy is not in APPLICATION_ITEMS — nobody is granted the base app —
+    # but it has features of its own to hand out, so it leads the list here.
+    ([{ key: 'paperboy', label: 'Paperboy' }] + APPLICATION_ITEMS).filter_map do |app|
       features = AppFeature.for(app[:key])
       next if features.empty?
 

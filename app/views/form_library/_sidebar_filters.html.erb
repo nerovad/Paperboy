@@ -10,7 +10,7 @@
       library  the FormLibrary the page is showing %>
 <%
   collection  = library.collection
-  search_path = collection ? form_library_collection_path(collection.key) : form_library_path
+  search_path = collection ? form_library_collection_path(collection) : form_library_path
 %>
 <%= form_with url: search_path, method: :get, class: "form-library-filters",
               data: { controller: "auto-submit", action: "change->auto-submit#submit" } do %>

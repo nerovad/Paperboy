@@ -9,18 +9,19 @@
 #
 #   library = FormLibrary.new(catalog, params)
 #   library.results       # the entries that survive the search
-#   library.collections   # the named groups this viewer has forms in
+#   library.collections   # the Forms::Collections this viewer has forms in
 #   library.collection    # the group being browsed, or nil
 #
 # Everything starts from a FormCatalog, so the ACL has already been applied and
-# no search here can surface a form the viewer may not open. Every criterion is
+# no search here can surface a form the viewer may not open. A collection does
+# not change that: it names forms, and each viewer sees the ones in it that
+# their own ACL allows — which may be some, all or none. Every criterion is
 # read from the request, so a search is its URL and can be bookmarked.
 class FormLibrary
-  COLLECTIONS_FILE = Rails.root.join('config/form_collections.yml')
-
-  # One form in the library. A legacy form with no template row has a name and
-  # a path and nothing else to search on.
-  Entry = Struct.new(:name, :path, :template) do
+  # One form in the library. `key` is what the form ACL and a collection both
+  # know it by. A legacy form with no template row has a name and a path and
+  # nothing else to search on.
+  Entry = Struct.new(:key, :name, :path, :template) do
     def number = template&.form_number.to_s
 
     def description = template&.description.to_s
@@ -39,54 +40,39 @@ class FormLibrary
     end
   end
 
-  # A named group of forms. See config/form_collections.yml for the rules.
-  Collection = Struct.new(:key, :name, :description, :tags, :agencies, :forms) do
-    def include?(entry)
-      forms.include?(entry.name) ||
-        agencies.include?(entry.org_code(:agency)) ||
-        entry.tags.any? { |tag| tags.include?(tag.downcase) }
-    end
-
-    # What the search box matches a collection on: what it is called, what it
-    # says it holds and the tags that fill it.
-    def haystack
-      @haystack ||= [name, description, tags].flatten.join(' ').downcase
-    end
-  end
-
-  # Built per call rather than memoized on the class, so an edit to the file
-  # shows on the next request in development.
-  def self.defined_collections
-    YAML.safe_load_file(COLLECTIONS_FILE).map do |key, config|
-      Collection.new(key, config['name'], config['description'].to_s,
-                     Array(config['tags']).map(&:downcase),
-                     Array(config['agencies']), Array(config['forms']))
-    end
-  end
-
   attr_reader :catalog, :params
 
-  def initialize(catalog, params = {}, collections: self.class.defined_collections)
+  # `manager` is someone who may create and edit collections. They are shown
+  # every collection, including one none of their own forms are in — a new
+  # collection is empty, and its maker has to be able to find it again.
+  def initialize(catalog, params = {}, collections: nil, manager: false)
     @catalog = catalog
     raw = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
     @params = raw.with_indifferent_access
-    @defined_collections = collections
+    @all_collections = collections
+    @manager = manager
   end
+
+  def manager? = @manager
 
   # Every form the viewer may open, alphabetical.
   def entries
-    @entries ||= catalog.forms.map { |name, path| Entry.new(name, path, catalog.template_for(name)) }
+    @entries ||= catalog.forms.map do |name, path|
+      Entry.new(catalog.key_for(name), name, path, catalog.template_for(name))
+    end
   end
 
   def results
     @results ||= entries.select { |entry| matches?(entry) }
   end
 
-  # [[collection, form count], …] — only the groups this viewer has forms in.
+  # [[collection, form count], …]. The count is of the forms this viewer may
+  # open, so it always agrees with what the collection's page will list. A
+  # collection holding none of them is left out, except for a manager.
   def collections
-    @collections ||= @defined_collections.filter_map do |collection|
-      count = entries.count { |entry| collection.include?(entry) }
-      [collection, count] if count.positive?
+    @collections ||= all_collections.filter_map do |collection|
+      count = entries.count { |entry| member?(collection, entry) }
+      [collection, count] if count.positive? || manager?
     end
   end
 
@@ -97,12 +83,13 @@ class FormLibrary
     collections.select { |group, _| terms.all? { |term| group.haystack.include?(term) } }
   end
 
-  # The group being browsed. An unknown key, or one the viewer has no forms
-  # in, is nil: the caller answers that as a missing page.
+  # The collection being browsed. An unknown id, or a collection this viewer
+  # has no forms in, is nil: the caller answers that as a missing page, so a
+  # collection's existence is not given away to someone it holds nothing for.
   def collection
     return @collection if defined?(@collection)
 
-    @collection = collections.map(&:first).find { |candidate| candidate.key == params[:collection].to_s }
+    @collection = collections.map(&:first).find { |candidate| candidate.id.to_s == params[:collection].to_s }
   end
 
   def finder = catalog.finder
@@ -146,7 +133,15 @@ class FormLibrary
   end
 
   def in_collection?(entry)
-    collection.nil? || collection.include?(entry)
+    collection.nil? || member?(collection, entry)
+  end
+
+  def member?(collection, entry)
+    collection.form_keys.include?(entry.key)
+  end
+
+  def all_collections
+    @all_collections ||= Forms::Collection.alphabetical.includes(:collection_forms).to_a
   end
 
   # Every word typed has to appear somewhere on the form.

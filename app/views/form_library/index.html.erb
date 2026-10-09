@@ -7,7 +7,7 @@
     a GET param, so whatever is on screen can be bookmarked or sent on. %>
 <%
   collection  = @library.collection
-  search_path = collection ? form_library_collection_path(collection.key) : form_library_path
+  search_path = collection ? form_library_collection_path(collection) : form_library_path
   count       = @library.results.size
 %>
 <div class="form-library">
@@ -18,10 +18,28 @@
         <span><%= collection.name %></span>
       </nav>
       <h1><%= collection.name %></h1>
-      <p><%= collection.description %></p>
+      <% if collection.description.present? %><p><%= collection.description %></p><% end %>
+      <p class="form-library__byline">
+        Created<%= " by #{collection.created_by_name}" if collection.created_by_name.present? %>
+        on <%= collection.created_at.strftime("%B %-d, %Y") %>
+      </p>
+      <% if @library.manager? %>
+        <div class="form-library__manage">
+          <%= link_to "Edit collection", edit_form_collection_path(collection), class: "btn edit compact" %>
+          <%= button_to "Delete collection", form_collection_path(collection), method: :delete,
+                        class: "btn deny compact",
+                        data: { turbo_confirm: "Delete #{collection.name}? The forms in it are not affected.",
+                                confirm_title: "Delete collection", confirm_label: "Delete" } %>
+        </div>
+      <% end %>
     <% else %>
       <h1>Form Library</h1>
       <p>Every form you can fill out. Search and narrow them with the filters in the sidebar.</p>
+      <% if @library.manager? %>
+        <div class="form-library__manage">
+          <%= link_to "New collection", new_form_collection_path, class: "btn approve compact" %>
+        </div>
+      <% end %>
     <% end %>
   </header>
 
@@ -30,7 +48,7 @@
       <h2 id="form-library-collections-title">Collections</h2>
       <div class="form-library__collection-grid">
         <% @library.matching_collections.each do |group, form_count| %>
-          <%= link_to form_library_collection_path(group.key), class: "form-library__collection" do %>
+          <%= link_to form_library_collection_path(group), class: "form-library__collection" do %>
             <strong><%= group.name %></strong>
             <span><%= group.description %></span>
             <em><%= pluralize(form_count, "form") %></em>

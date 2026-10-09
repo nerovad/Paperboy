@@ -29,8 +29,15 @@ DEVELOPMENT_APP_FEATURES = [
   { key: 'csr', label: 'Certificates' }
 ].freeze
 
+# Paperboy itself is open to everyone, so it has no Applications grant to pair
+# with; this is the one control inside it that is handed out.
+PAPERBOY_APP_FEATURES = [
+  { key: 'form_collections', label: 'Form Collections (create and manage)' }
+].freeze
+
 class AppFeature
   FEATURES = {
+    'paperboy' => PAPERBOY_APP_FEATURES,
     'admin_tools' => [
       { key: 'acl',             label: 'ACL',             legacy_key: 'acl' },
       { key: 'manage_forms',    label: 'Manage Forms',    legacy_key: 'manage_forms' },

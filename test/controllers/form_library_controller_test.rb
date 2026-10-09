@@ -72,25 +72,8 @@ class FormLibraryControllerTest < ActionController::TestCase
     assert_select '.sidebar a.nav-link', text: 'Bike Locker', count: 0
   end
 
-  test 'a collection has a page of its own, listing only its forms' do
-    with_templates([bike_locker]) { get :index, params: { collection: 'human_resources' } }
-
-    assert_response :success
-    assert_select 'h1', text: 'Human Resources'
-    assert_select '.form-library__row a', text: 'Bike Locker'
-    assert_select '.form-library__row a', text: 'Leave of Absence', count: 0
-    assert_select '.sidebar form.form-library-filters[action=?]', form_library_collection_path('human_resources')
-  end
-
-  test 'searching brings up the collections that match beside the forms' do
-    with_templates([bike_locker]) { get :index, params: { q: 'human' } }
-
-    assert_select '.form-library__collection', count: 1
-    assert_select '.form-library__collection strong', text: 'Human Resources'
-  end
-
   test 'a collection that does not exist is a missing page' do
-    without_templates { get :index, params: { collection: 'no_such_collection' } }
+    without_templates { get :index, params: { collection: '999999' } }
 
     assert_response :not_found
   end

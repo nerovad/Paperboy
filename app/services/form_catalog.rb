@@ -46,6 +46,13 @@ class FormCatalog
     templates_by_name[name]
   end
 
+  # The key the form ACL knows a form by: a legacy form's permission key, or
+  # a template's id. What a collection stores to name a form.
+  def key_for(name)
+    legacy = LEGACY_FORMS.find { |form| form[:name] == name }
+    legacy ? legacy[:key] : template_for(name)&.id&.to_s
+  end
+
   # The metadata a search row carries, in the shape MATCH_SOURCES reads it in
   # sidebar_search_controller.js. A legacy form with no template row searches
   # on its name alone.
