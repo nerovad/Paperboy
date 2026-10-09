@@ -53,10 +53,10 @@ class DatabaseDslCreatorTest < ActiveSupport::TestCase
             assert_includes dsl, "table: 'agencies'"
             assert_includes dsl, "local: 'gsabss_agencies.csv'"
             assert_includes dsl, "['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil]"
-            assert_includes dsl, '%i[download to_csv use_dsl inject]'
+            assert_includes dsl, 'steps: Workflow::MANUAL_STEPS'
+            assert_includes dsl, 'steps: Workflow::SCHEDULED_STEPS'
             assert_not_includes dsl, '"'
-            assert_not_includes dsl, 'Workflow::MANUAL_STEPS'
-            assert_not_includes dsl, 'drop_table'
+            assert_not_includes dsl, '%i[download to_csv use_dsl inject]'
           end
         end
       end

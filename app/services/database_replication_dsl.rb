@@ -5,8 +5,6 @@ require 'fileutils'
 class DatabaseReplicationDsl
   class AlreadyExists < StandardError; end
 
-  STEPS = %i[download to_csv use_dsl inject].freeze
-
   def self.group_name(database)
     database.to_s.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/\A_+|_+\z/, '')
   end
@@ -39,8 +37,15 @@ class DatabaseReplicationDsl
         #{ruby_string(preview.key)},
         {
           steps: {
-            manual: { enabled: true, steps: %i[#{STEPS.join(' ')}] },
-            scheduled: { enabled: true, frequency: :daily, steps: %i[#{STEPS.join(' ')}] }
+            manual: {
+              enabled: true,
+              steps: Workflow::MANUAL_STEPS
+            },
+            scheduled: {
+              enabled: true,
+              frequency: :daily,
+              steps: Workflow::SCHEDULED_STEPS
+            }
           },
           group: {
             name: #{ruby_string(preview.group)}
