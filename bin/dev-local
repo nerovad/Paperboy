@@ -9,11 +9,16 @@
 #   bin/dev-local 3005       # different port
 #   bin/dev-local --cron     # also run the recurring schedule
 #   bin/dev-local --no-jobs  # Puma and Sass only
+# Solid Queue, Cache, and Cable use SQLite files in this checkout.
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 app_root=$(cd "$script_dir/.." && pwd)
 cd "$app_root"
+
+# Private Solid Queue, Cache, and Cable files for this checkout. The dev
+# server, staging, and production never set this, so they stay on SQL Server.
+export PAPERBOY_LOCAL_SOLID=1
 
 PORT="${PORT:-3001}"
 BIND="${BIND:-127.0.0.1}"
@@ -26,7 +31,7 @@ while [[ $# -gt 0 ]]; do
     --no-jobs)  RUN_JOBS=0; shift ;;
     -p|--port)  PORT="$2"; shift 2 ;;
     [0-9]*)     PORT="$1"; shift ;;
-    -h|--help)  sed -n '2,11p' "$0"; exit 0 ;;
+    -h|--help)  sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "unknown option: $1 (try --help)" >&2; exit 1 ;;
   esac
 done
@@ -102,6 +107,12 @@ wait_for_port() {
   tail -20 "$app_root/log/server.log" >&2 || true
   return 1
 }
+
+# --- Local Solid databases -------------------------------------------------
+echo "==> Preparing local Solid databases..."
+bundle check || bundle install
+mkdir -p "$app_root/storage"
+bundle exec rails local_solid:prepare
 
 # --- Assets -----------------------------------------------------------------
 {
