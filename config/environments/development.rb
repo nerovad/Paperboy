@@ -40,6 +40,13 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :solid_cache_store
 
+  # bin/dev sets PAPERBOY_LOCAL_SOLID so this checkout does not share Solid
+  # tables in Paperboy_Dev. The dev server leaves the variable unset.
+  if ENV['PAPERBOY_LOCAL_SOLID'] == '1'
+    config.solid_queue.connects_to = { database: { writing: :queue } }
+    config.solid_cache.connects_to = { database: { writing: :cache } }
+  end
+
   # Enable when development runs behind nginx with HTTPS termination
   # (https://dev-gsa-forms). Leave disabled for direct http://localhost.
   dev_https = ENV.fetch('PAPERBOY_ASSUME_SSL', 'false') == 'true'
