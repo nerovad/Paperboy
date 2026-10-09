@@ -15,6 +15,11 @@ class DataRunnerOutputPaginationTest < ActionController::TestCase
     get :output, params: { name: 'employees', path: '05_DSL_Applied/employees.csv' }
 
     assert_response :success
+    assert_select '.dsl-header .detail-grid h2', text: 'Source'
+    assert_select '.dsl-header .detail-grid h2', text: 'Destination'
+    assert_select '.dsl-header .detail-grid h2', text: 'Workflow'
+    assert_select 'nav.hot-menu'
+    assert_select '.output-table-wrap .pfa-grid__scrollport'
     assert_select 'tbody tr', count: Pfa::Grid::Table::PAGE_ROWS
     assert_select '.pagination-wrapper .pagy.series-nav a', text: '<'
     assert_select '.pagination-wrapper .pagy.series-nav a[href*=?]', 'page=2', text: '2'

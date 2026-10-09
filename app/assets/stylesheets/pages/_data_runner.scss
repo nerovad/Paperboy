@@ -311,6 +311,21 @@
     }
   }
 
+  /* The scrolling rows use the Records grid window. The DSL header and
+     action buttons stay in normal flow above it. */
+  &.page-dsls-output .output-table-wrap .pfa-grid__scrollport {
+    max-height: calc(100vh - 80px - 16px - 104px);
+
+    @media (max-width: 768px) {
+      max-height: calc(100vh - 60px - 16px - 76px);
+    }
+  }
+
+  &.page-dsls-output .output-table-wrap .dataTables_filter {
+    margin-bottom: 8px;
+    text-align: right;
+  }
+
   &.page-dsls-edit {
     .dsl-source-form {
       width: 100%;

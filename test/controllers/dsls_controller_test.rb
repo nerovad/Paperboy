@@ -11,7 +11,7 @@ class DslsControllerTest < ActionController::TestCase
     get :index
 
     assert_response :success
-    assert_select 'h1', text: 'DataRunner DSLs'
+    assert_select 'h1', text: 'ETL CONTROL CENTER: DataRunner DSLs'
   end
 
   test 'group selection opens the control center group editor' do
@@ -119,7 +119,7 @@ class DslsControllerTest < ActionController::TestCase
 
   def assert_dsl_layout_order
     cursor = -1
-    ['<div class="dsl-header">', 'class="eyebrow"', 'Employees', 'Source', 'Destination', 'Workflow',
+    ['<div class="dsl-header">', 'HUMAN RESOURCES: Employees', 'Source', 'Destination', 'Workflow',
      'aria-label="DSL actions"'].each do |text|
       cursor = response.body.index(text, cursor + 1)
       assert cursor, "Expected #{text.inspect} after prior DSL layout content"

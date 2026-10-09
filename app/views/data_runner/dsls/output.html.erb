@@ -7,14 +7,13 @@
     <%= javascript_include_tag "datatables/jquery.dataTables" %>
   <% end %>
 <% end %>
-<div class="page-heading output-heading">
-  <% relative_path = @output_relative_path %>
-  <div><p class="eyebrow"><%= @output.kind.upcase %> output</p><h2><%= relative_path %></h2></div>
-  <div class="inline-actions">
-    <%= link_to "Download file", output_data_runner_dsl_path(@dsl.slug, path: relative_path, download: 1), class: "btn pdf" %>
-    <% if @backup_output %><%= link_to "Close", backup_outputs_data_runner_dsl_path(@dsl.slug), class: "btn" %><% end %>
+<% if @backup_output %>
+  <div class="page-heading output-heading">
+    <div class="inline-actions">
+      <%= link_to "Close", backup_outputs_data_runner_dsl_path(@dsl.slug), class: "btn" %>
+    </div>
   </div>
-</div>
+<% end %>
 
 <% if @output.kind == "sql" %>
   <pre class="output highlighted-output"><%= syntax_highlight(@output.content, language: "sql") %></pre>
@@ -24,8 +23,7 @@
                header: ->(column) { column.label },
                cell: ->(column, row) { row[column.key] },
                data_controller: "output-table",
-               table_class: "output-table datatable-output",
-               scrollport: false %>
+               table_class: "output-table datatable-output" %>
     <%= render "shared/series_pagination", pagy: @pagy %>
   </section>
 <% end %>

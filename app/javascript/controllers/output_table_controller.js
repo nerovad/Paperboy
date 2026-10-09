@@ -19,6 +19,12 @@ export default class extends Controller {
       info: false
     })
 
+    // DataTables wraps the table, which would put the search box inside the
+    // scrollport. Keep it above the scrolling rows, as Records does.
+    const scrollport = this.element.closest(".pfa-grid__scrollport")
+    const filter = this.element.closest(".dataTables_wrapper")?.querySelector(".dataTables_filter")
+    if (filter && scrollport) scrollport.before(filter)
+
     this.element.dataset.datatableInitialized = "true"
   }
 
