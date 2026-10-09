@@ -1,12 +1,12 @@
 @use "base/tokens" as *;
 
 /* The Form Library — the full page behind the sidebar's Advanced Search
-   button. A filter rail on the left, the forms on the right, and the
-   collections above both.
+   button. The forms and the collections are on the page; the filters take
+   over the sidebar while it is open.
 
-   The rail's fieldsets, checkboxes and selects are the shared Advanced Search
-   parts (components/_advanced_search.scss); only the page's own layout and
-   its result rows are declared here. */
+   The filters' fieldsets, checkboxes and selects are the shared Advanced
+   Search parts (components/_advanced_search.scss), recoloured at the end of
+   this file to sit on the sidebar's dark ground. */
 
 .form-library {
   max-width: 1200px;
@@ -92,45 +92,7 @@
   }
 }
 
-/* --- Rail and results ---------------------------------------------------- */
-
-.form-library__body {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-library__filters {
-  position: sticky;
-  top: 16px;
-  padding: 16px;
-  border-radius: $radius-12;
-  background: $surface-base;
-  box-shadow: $shadow-soft;
-
-  @media (max-width: 900px) {
-    position: static;
-  }
-
-  > .pb-filter { margin-bottom: 16px; }
-
-  /* The cascade lays its four levels side by side where it has the width; in
-     the rail they stack. */
-  .pb-filter-grid { grid-template-columns: 1fr; }
-
-  .pb-checkbox-row { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
-}
-
-.form-library__filter-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+/* --- Results ------------------------------------------------------------- */
 
 .form-library__count {
   margin: 0 0 10px;
@@ -211,3 +173,31 @@
     text-decoration: underline;
   }
 }
+
+/* --- Filters, in the sidebar --------------------------------------------- */
+
+.sidebar .form-library-filters {
+  .pb-filter-set {
+    min-width: 0;
+    border-color: rgba($surface-base, 0.25);
+
+    legend { color: $surface-base; }
+  }
+
+  /* The cascade lays its four levels side by side where it has the width; in
+     the sidebar they stack. */
+  .pb-filter-grid { grid-template-columns: 1fr; }
+
+  .pb-filter label,
+  .pb-checkbox { color: $surface-base; }
+
+  .pb-checkbox-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .pb-checkbox-row--scroll { max-height: 260px; }
+}
+
+.form-library-filters__clear { width: 100%; }

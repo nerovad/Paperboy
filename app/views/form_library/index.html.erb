@@ -1,9 +1,10 @@
 <%# The Form Library — every form the viewer may fill out, with the metadata an
-    admin set on it in the form builder, and the facets to narrow on.
+    admin set on it in the form builder. The search box and facets that narrow
+    it are in the sidebar (form_library/_sidebar_filters).
 
     A collection's page is this same view: the list arrives already narrowed
-    to the group, and the search box and facets work inside it. Every criterion
-    is a GET param, so whatever is on screen can be bookmarked or sent on. %>
+    to the group, and the sidebar's filters work inside it. Every criterion is
+    a GET param, so whatever is on screen can be bookmarked or sent on. %>
 <%
   collection  = @library.collection
   search_path = collection ? form_library_collection_path(collection.key) : form_library_path
@@ -20,7 +21,7 @@
       <p><%= collection.description %></p>
     <% else %>
       <h1>Form Library</h1>
-      <p>Every form you can fill out. Search by name, number, field or tag, or narrow with the filters.</p>
+      <p>Every form you can fill out. Search and narrow them with the filters in the sidebar.</p>
     <% end %>
   </header>
 
@@ -38,65 +39,6 @@
       </div>
     </section>
   <% end %>
-
-  <div class="form-library__body">
-    <%= form_with url: search_path, method: :get, class: "form-library__filters",
-                  data: { controller: "auto-submit", action: "change->auto-submit#submit" } do %>
-      <div class="pb-filter">
-        <%= label_tag :q, "Search" %>
-        <%= search_field_tag :q, @library.query, class: "form-control",
-                             placeholder: "Name, number, field or tag", autofocus: true %>
-      </div>
-
-      <% if @library.finder.org_tree[:agencies].any? %>
-        <fieldset class="pb-filter-set">
-          <legend>Issued by</legend>
-          <%= render "shared/org_cascade",
-                     prefix: "filter",
-                     selected: { agency: @library.org.agency, division: @library.org.division,
-                                 department: @library.org.department, unit: @library.org.unit },
-                     labels: { agency: "Any Agency", division: "Any", department: "Any", unit: "Any Unit" },
-                     options: { agency: @library.finder.org_tree[:agencies] } %>
-        </fieldset>
-      <% end %>
-
-      <% if @library.finder.form_types.any? %>
-        <fieldset class="pb-filter-set">
-          <legend>Form Type</legend>
-          <div class="pb-checkbox-row">
-            <% @library.finder.form_types.each_with_index do |form_type, index| %>
-              <label class="pb-checkbox">
-                <%= check_box_tag "type[]", form_type, @library.form_types.include?(form_type.downcase),
-                                  id: "form-library-type-#{index}" %>
-                <span><%= form_type %></span>
-              </label>
-            <% end %>
-          </div>
-        </fieldset>
-      <% end %>
-
-      <% if @library.tag_options.any? %>
-        <fieldset class="pb-filter-set">
-          <legend>Tags</legend>
-          <div class="pb-checkbox-row pb-checkbox-row--scroll">
-            <% @library.tag_options.each_with_index do |tag, index| %>
-              <label class="pb-checkbox">
-                <%= check_box_tag "tag[]", tag, @library.tags.include?(tag.downcase),
-                                  id: "form-library-tag-#{index}" %>
-                <span><%= tag %></span>
-              </label>
-            <% end %>
-          </div>
-        </fieldset>
-      <% end %>
-
-      <div class="form-library__filter-actions">
-        <%= submit_tag "Search", name: nil, class: "btn approve" %>
-        <% if @library.filtered? %>
-          <%= link_to "Clear filters", search_path, class: "btn clear-filters" %>
-        <% end %>
-      </div>
-    <% end %>
 
     <section class="form-library__results" aria-live="polite">
       <p class="form-library__count">
@@ -133,5 +75,4 @@
         </article>
       <% end %>
     </section>
-  </div>
 </div>

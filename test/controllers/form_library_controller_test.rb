@@ -60,9 +60,16 @@ class FormLibraryControllerTest < ActionController::TestCase
 
     assert_select '.form-library__number', text: 'GSA-101'
     assert_select '.form-library__tag', text: '#transportation'
-    assert_select 'select[name=filter_agency] option[value=GSA]', count: 1
-    assert_select 'input[name=?][value=Request]', 'type[]', count: 1
-    assert_select 'input[name=?][value=hr]', 'tag[]', count: 1
+  end
+
+  test 'the sidebar holds the filters instead of the list of forms' do
+    with_templates([bike_locker]) { get :index }
+
+    assert_select '.sidebar select[name=filter_agency] option[value=GSA]', count: 1
+    assert_select '.sidebar input[name=?][value=Request]', 'type[]', count: 1
+    assert_select '.sidebar input[name=?][value=hr]', 'tag[]', count: 1
+    assert_select '.sidebar input[name=q]', count: 1
+    assert_select '.sidebar a.nav-link', text: 'Bike Locker', count: 0
   end
 
   test 'a collection has a page of its own, listing only its forms' do
@@ -72,7 +79,7 @@ class FormLibraryControllerTest < ActionController::TestCase
     assert_select 'h1', text: 'Human Resources'
     assert_select '.form-library__row a', text: 'Bike Locker'
     assert_select '.form-library__row a', text: 'Leave of Absence', count: 0
-    assert_select 'form.form-library__filters[action=?]', form_library_collection_path('human_resources')
+    assert_select '.sidebar form.form-library-filters[action=?]', form_library_collection_path('human_resources')
   end
 
   test 'a collection that does not exist is a missing page' do
@@ -81,9 +88,10 @@ class FormLibraryControllerTest < ActionController::TestCase
     assert_response :not_found
   end
 
-  test 'the sidebar button leads here' do
+  test 'inside the library the sidebar button leads back to basic search' do
     without_templates { get :index }
 
-    assert_select '.sidebar a.pb-advanced-trigger[href=?]', form_library_path
+    assert_select '.sidebar a.pb-advanced-trigger[href=?]', root_path, text: 'Basic Search'
+    assert_select '.sidebar a.pb-advanced-trigger[href=?]', form_library_path, count: 0
   end
 end

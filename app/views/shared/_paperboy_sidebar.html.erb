@@ -21,9 +21,13 @@
             end
 %>
 <div class="sidebar"
-     <%= tag.attributes(data: { controller: "sidebar-search" }) if catalog %>>
+     <%= tag.attributes(data: { controller: "sidebar-search" }) if catalog && !@library %>>
   <%= render "shared/app_switcher" %>
-  <% if current_user %>
+  <%# With the Form Library open the sidebar is in Advanced Search mode: the
+      forms are listed on the page, and this column holds the filters. %>
+  <% if current_user && @library %>
+    <%= render "form_library/sidebar_filters", library: @library %>
+  <% elsif current_user %>
     <input
       type="text"
       placeholder="Search forms, numbers, fields, tags — or ask who am i"
@@ -34,7 +38,8 @@
 
     <%# The box above narrows this list by text. Narrowing on the metadata an
         admin set in the form builder — org, type, tags — needs more room than
-        a sidebar has, so the button opens the Form Library instead. %>
+        a list of names has, so the button opens the Form Library, which puts
+        those filters in this sidebar and the forms on the page. %>
     <%= link_to "Advanced Search", form_library_path,
                 class: "btn secondary compact pb-advanced-trigger" %>
 
