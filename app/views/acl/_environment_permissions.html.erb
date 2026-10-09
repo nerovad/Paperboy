@@ -1,0 +1,30 @@
+<%# app/views/acl/_environment_permissions.html.erb
+    The "Test Environments" section, shared by the group and org-level
+    permission screens.
+
+    Locals:
+      environments  — EnvironmentAccess::ENVIRONMENTS
+      selected_keys — Set of environment keys already granted
+      scope_label   — who the grant reaches, e.g. "members of this group"
+
+    No Select All: opening a test server to people is a thing to tick on
+    purpose, one server at a time. %>
+<details id="test-environments" class="acl-permission-subgroup">
+  <summary>Test Environments</summary>
+  <div class="acl-permissions-section">
+    <p class="acl-subtitle">
+      Which test servers <%= scope_label %> may use. Without a tick, signing in
+      there leads to a page that sends them to Production. Production itself
+      needs no grant, and system admins are never kept out.
+    </p>
+    <div class="permissions-grid">
+      <% environments.each do |environment| %>
+        <label class="permission-checkbox">
+          <%= check_box_tag "environment_permissions[]", environment[:key], selected_keys.include?(environment[:key]),
+                id: "environment_permissions_#{environment[:key]}" %>
+          <span><%= environment[:label] %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+</details>
