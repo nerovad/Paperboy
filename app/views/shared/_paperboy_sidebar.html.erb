@@ -21,9 +21,7 @@
             end
 %>
 <div class="sidebar"
-     <%= tag.attributes(data: { controller: "sidebar-search advanced-search",
-                                "advanced-search-org-labels-value": OrgLabels.js_config.to_json,
-                                "advanced-search-org-tree-value": catalog.finder.org_tree.to_json }) if catalog %>>
+     <%= tag.attributes(data: { controller: "sidebar-search" }) if catalog %>>
   <%= render "shared/app_switcher" %>
   <% if current_user %>
     <input
@@ -34,15 +32,11 @@
       class="sidebar-search-input"
     />
 
-    <%# Both controls narrow the same list of forms you can fill out: the box
-        above matches text, this one filters on the metadata an admin set in
-        the form builder. They compose — a search inside a narrowed list. %>
-    <button type="button"
-            class="btn secondary compact pb-advanced-trigger"
-            data-advanced-search-target="trigger"
-            data-action="advanced-search#open">
-      Advanced Search
-    </button>
+    <%# The box above narrows this list by text. Narrowing on the metadata an
+        admin set in the form builder — org, type, tags — needs more room than
+        a sidebar has, so the button opens the Form Library instead. %>
+    <%= link_to "Advanced Search", form_library_path,
+                class: "btn secondary compact pb-advanced-trigger" %>
 
     <%= render "shared/search_commands", row_class: "nav-link sidebar-command" %>
 
@@ -50,19 +44,15 @@
       <% catalog.forms.each do |label, path| %>
         <%= link_to label, path, class: "nav-link",
             data: catalog.search_data(label)
-                         .merge(catalog.facet_data(label))
                          .merge(turbo_frame: "main-content",
-                                sidebar_search_target: "formLink",
-                                advanced_search_target: "formLink") %>
+                                sidebar_search_target: "formLink") %>
       <% end %>
-      <%# Shown only when the search box and Advanced Search between them leave
-          nothing, so a list that has gone empty says why. %>
+      <%# Shown only when the search box leaves nothing, so a list that has
+          gone empty says why. %>
       <p class="sidebar-p sidebar-empty" data-sidebar-search-target="emptyState" hidden>
         No forms match.
       </p>
     </div>
-
-    <%= render "shared/advanced_search_modal", form_finder: catalog.finder %>
   <% else %>
     <p class="sidebar-p">Please log in to access forms.</p>
   <% end %>
