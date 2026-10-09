@@ -455,6 +455,8 @@ Rails.application.routes.draw do
   # navigates to on its own.
   get '/who_am_i', to: 'who_am_i#show', as: :who_am_i
   get '/command_palette', to: 'command_palette#show', as: :command_palette
+  # Where a visitor without a Development or Stage grant is sent.
+  get '/environment_access', to: 'environment_access#show', as: :environment_access
   get 'forms/home'
   get '/form_success', to: 'shared#form_success', as: :form_success
   get '/ticket_success', to: 'shared#ticket_success', as: :ticket_success

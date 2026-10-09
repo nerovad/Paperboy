@@ -1,0 +1,23 @@
+<!-- app/views/environment_access/show.html.erb -->
+<div class="form-header">
+  <h1>This is the <%= @environment_label %> server</h1>
+</div>
+
+<div class="form-wrapper environment-access">
+  <p>
+    Development and Stage are for testing, and you do not have access to them.
+    Nothing entered here reaches Production.
+  </p>
+  <p>
+    Go to Production to do your work, or ask for help in the
+    <%= EnvironmentAccess::SUPPORT_CHANNEL_NAME %> channel if you were expecting
+    to test here.
+  </p>
+
+  <div class="form-actions">
+    <%= link_to "Go to Production", EnvironmentAccess.production_url, class: "btn approve" %>
+    <%= link_to "Ask in #{EnvironmentAccess::SUPPORT_CHANNEL_NAME}", EnvironmentAccess::SUPPORT_CHANNEL_URL,
+                class: "btn info", target: "_blank", rel: "noopener" %>
+    <%= button_to "Sign out", logout_path, method: :delete, class: "btn" %>
+  </div>
+</div>

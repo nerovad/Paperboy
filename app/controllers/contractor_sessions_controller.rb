@@ -8,6 +8,7 @@
 # session[:contractor] marker records the identity source.
 class ContractorSessionsController < ApplicationController
   skip_before_action :require_sign_in
+  skip_before_action :require_environment_access
 
   def new; end
 
