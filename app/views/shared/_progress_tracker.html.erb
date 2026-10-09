@@ -66,7 +66,7 @@
     <div class="progress-tracker__actions">
       <%= button_to "Restart interrupted refresh", interrupted_restart_path,
                     method: :post, class: "btn warning",
-                    data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+                    data: { turbo_confirm: "Restart this refresh? The running refresh will stop and its progress will be cleared. Every DSL starts over." } %>
     </div>
   <% end %>
 

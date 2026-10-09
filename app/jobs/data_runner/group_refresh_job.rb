@@ -1,40 +1,23 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-
 module DataRunner
   class GroupRefreshJob < ApplicationJob
     queue_as :default
 
     DOWNLOAD_CONCURRENCY = 4
 
-    class SynchronizedOutput
-      def initialize(output, mutex)
-        @output = output
-        @mutex = mutex
-      end
-
-      def puts(*args)
-        @mutex.synchronize { @output.puts(*args) }
-      end
-
-      def write(content)
-        @mutex.synchronize { @output.write(content) }
-      end
-
-      def flush
-        @mutex.synchronize { @output.flush }
-      end
-    end
+    def self.download_concurrency = DOWNLOAD_CONCURRENCY
 
     def perform(group_run_id)
-      run = GroupRun.find(group_run_id)
-      return unless run.status == 'queued'
+      run = GroupRun.find_by(id: group_run_id)
+      return if run.nil? || run.status != 'queued'
 
       run.update!(status: 'running', started_at: Time.current)
       prepare_log(run)
       process_items(run)
       finish(run)
+    rescue ActiveRecord::RecordNotFound
+      nil
     rescue StandardError => e
       fail_run(run, e)
       raise
@@ -47,28 +30,20 @@ module DataRunner
       DependentTruncate.perform(items.map(&:dsl_name)).each do |message|
         append_log(run.run_id) { |log| log.puts(message) }
       end
-      dsl_names = items.map(&:dsl_name).join(',')
-      work = items.map { |item| prepare_item(run, item, dsl_names) }
+      return unless run_active?(run.id)
+
       queue = Queue.new
-      work.each { |item| queue << item }
-      ActiveRecord::Base.connection_pool.release_connection
-      File.open(TaskRunner.output_path(run.run_id), 'a') do |output|
-        log = SynchronizedOutput.new(output, Mutex.new)
-        workers = [worker_count(run), work.size].min.times.map do
-          Thread.new { work_items(run.id, queue, log) }
-        end
-        workers.each(&:value)
-      end
-    end
+      dsl_names = items.map(&:dsl_name).join(',')
+      items.each { |item| queue << prepare_item(run, item, dsl_names) }
+      return unless run_active?(run.id)
 
-    def worker_count(_run) = DOWNLOAD_CONCURRENCY
-
-    def work_items(run_id, queue, log)
-      while (item = queue.pop(true))
-        process_item(run_id, item, log)
-      end
-    rescue ThreadError
-      nil
+      stop = RefreshStop.new
+      monitor = stop.watch(run.id)
+      GroupRefreshWorkers.new(run, queue, stop, method(:append_log)).run
+    ensure
+      note_stopped(run) if stop && !run_active?(run.id)
+      stop&.stop!
+      monitor&.join(2)
     end
 
     def prepare_item(run, item, dsl_names)
@@ -89,28 +64,6 @@ module DataRunner
         environment: environment, started_clock: Process.clock_gettime(Process::CLOCK_MONOTONIC) }
     end
 
-    def process_item(run_id, item, log)
-      status = TaskRunner.run_selector!(task: 'refresh', selector: item[:slug], output: log,
-                                        environment: item[:environment])
-      item_status = status.success? ? 'succeeded' : 'failed'
-      complete_item(run_id, item, status: item_status)
-    rescue StandardError => e
-      complete_item(run_id, item, status: 'failed', error_message: e.message)
-      append_log(run_id) { |failure_log| failure_log.puts("[FAIL] #{item[:name]}: #{e.message}") }
-    ensure
-      workspace = item[:workspace]
-      FileUtils.rm_rf(workspace) if workspace&.to_s&.start_with?(Rails.root.join('tmp/data_runner_runs').to_s)
-      ActiveRecord::Base.connection_pool.release_connection
-    end
-
-    def complete_item(run_id, item, status:, error_message: nil)
-      duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - item[:started_clock]) * 1000).round
-      GroupRunItem.find(item[:id]).update!(status: status, error_message: error_message,
-                                           duration_ms: duration_ms, completed_at: Time.current)
-      GroupRun.increment_counter(:completed_count, run_id)
-      GroupRun.increment_counter(:failed_count, run_id) if status == 'failed'
-    end
-
     def item_workspace(run, item)
       return unless run.group_name == P2m::DataRefresh::GROUP_RUN_NAME
 
@@ -119,15 +72,35 @@ module DataRunner
 
     def finish(run)
       run.reload
+      return unless run.active?
+
       run.update!(status: run.failed_count.positive? ? 'failed' : 'succeeded',
                   current_dsl: nil, completed_at: Time.current)
+    rescue ActiveRecord::RecordNotFound
+      nil
     end
 
     def fail_run(run, error)
-      return if run.nil? || run.finished?
+      return if run.nil?
+
+      run.reload
+      return if run.finished?
 
       run.update(status: 'failed', current_dsl: nil, completed_at: Time.current)
       append_log(run.run_id) { |log| log.puts("[FAIL] Group refresh: #{error.message}") }
+    rescue ActiveRecord::RecordNotFound
+      nil
+    end
+
+    def run_active?(run_id)
+      GroupRun.exists?(id: run_id, status: GroupRun::ACTIVE_STATUSES)
+    end
+
+    def note_stopped(run)
+      return if @stop_logged
+
+      @stop_logged = true
+      append_log(run.run_id) { |log| log.puts('[STOP] Group refresh stopped. Progress was cleared.') }
     end
 
     def prepare_log(run)

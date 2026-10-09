@@ -68,12 +68,22 @@ module MssqlHelpers
     %w[1 true yes y on].include?(value.to_s.strip.downcase)
   end
 
+  # TinyTDS leaves these off. Indexed views, filtered indexes, and persisted
+  # computed columns reject writes until they are on. NUMERIC_ROUNDABORT stays OFF.
+  SESSION_OPTIONS = 'SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; ' \
+                    'SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF;'
+
   def connect!(host = nil, database: nil, kerberos: nil)
     require 'tiny_tds'
 
     resolved_host = host.to_s.strip.empty? ? env_any!('MSSQL_HOST', 'GSABSS_HOST') : host
     use_kerberos = kerberos.nil? ? kerberos_host?(resolved_host) : kerberos
-    open_client(connection_options(resolved_host, database, use_kerberos), kerberos: use_kerberos)
+    client = open_client(connection_options(resolved_host, database, use_kerberos), kerberos: use_kerberos)
+    client.execute(SESSION_OPTIONS).do
+    client
+  rescue StandardError
+    client&.close
+    raise
   end
 
   # Auth mode mirrors config/database.yml: a username present means SQL/NTLM
@@ -109,7 +119,9 @@ module MssqlHelpers
     return requested unless requested.empty?
     return nil if use_kerberos
 
-    env_any('MSSQL_DATABASE', 'GSABSS_DATABASE').to_s.strip.presence
+    # Inject runs as plain Ruby, so this cannot use ActiveSupport's String#presence.
+    env_database = env_any('MSSQL_DATABASE', 'GSABSS_DATABASE').to_s.strip
+    env_database.empty? ? nil : env_database
   end
 
   def kerberos_host?(host)

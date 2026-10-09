@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 require 'test_helper'
 require Rails.root.join('script/ruby/data_runner/db/mssql_helpers')
 
@@ -37,5 +38,24 @@ class DataRunnerDatabaseCatalogTest < ActiveSupport::TestCase
     assert_not MssqlHelpers.kerberos_host?('GSASQL16')
   ensure
     previous.nil? ? ENV.delete('SQL22_HOST') : ENV['SQL22_HOST'] = previous
+  end
+
+  test 'selects a database without ActiveSupport' do
+    helper = Rails.root.join('script/ruby/data_runner/db/mssql_helpers.rb')
+    script = <<~RUBY
+      require #{helper.to_s.inspect}
+      ENV['MSSQL_DATABASE'] = 'Paperboy'
+      ENV['GSABSS_DATABASE'] = ''
+      fallback = MssqlHelpers.selected_database('', false)
+      raise "fallback \#{fallback.inspect}" unless fallback == 'Paperboy'
+      raise 'kerberos' unless MssqlHelpers.selected_database(nil, true).nil?
+      raise 'explicit' unless MssqlHelpers.selected_database('GSARecords', false) == 'GSARecords'
+      ENV['MSSQL_DATABASE'] = '   '
+      ENV['GSABSS_DATABASE'] = ''
+      raise 'blank' unless MssqlHelpers.selected_database('', false).nil?
+    RUBY
+    output = IO.popen([RbConfig.ruby, '-e', script], err: %i[child out], &:read)
+
+    assert $CHILD_STATUS.success?, output
   end
 end

@@ -33,6 +33,12 @@ class DataRunnerDependentClearTest < ActiveSupport::TestCase
       '[OK] Session: deleted sql22.example.Paperboy.scan.TimeTrackingSession before dependency inject'
     ], messages
     sql = clients['sql22.example'].sql
+    assert_includes sql.first, 'SET ANSI_NULLS ON'
+    assert_includes sql.first, 'SET QUOTED_IDENTIFIER ON'
+    assert_includes sql.first, 'SET CONCAT_NULL_YIELDS_NULL ON'
+    assert_includes sql.first, 'SET ANSI_WARNINGS ON'
+    assert_includes sql.first, 'SET ANSI_PADDING ON'
+    assert_includes sql.first, 'NUMERIC_ROUNDABORT OFF'
     truncate_at = sql.index { |statement| statement.include?('TRUNCATE TABLE') }
     delete_at = sql.index { |statement| statement.include?('DELETE FROM') }
     assert_operator truncate_at, :<, delete_at

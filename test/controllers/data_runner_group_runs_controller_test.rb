@@ -19,6 +19,9 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select 'form[action=?]', data_runner_refresh_dsl_group_path(run.group_name, restart: 1) do
       assert_select 'button.btn.warning', text: 'Restart interrupted refresh'
     end
+    assert_select '[data-turbo-confirm=?]',
+                  'Restart this refresh? The running refresh will stop and its progress will be cleared. ' \
+                  'Every DSL starts over.'
     assert_select 'p', text: /Processing will continue/
   end
 

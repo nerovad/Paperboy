@@ -35,13 +35,12 @@ module DataRunner
       raise
     end
 
+    # Delete the run and its items. Marking them failed left the worker and its
+    # rake children going, and the next refresh still saw that run. The worker
+    # notices the row is gone, kills those children, and the replacement starts
+    # with every DSL pending.
     private_class_method def self.interrupt!(run)
-      now = Time.current
-      run.items.where(status: %w[pending running]).update_all(
-        status: 'failed', error_message: 'Interrupted refresh was restarted', completed_at: now, updated_at: now
-      )
-      run.update!(status: 'failed', current_dsl: nil, completed_count: run.total_count,
-                  failed_count: run.items.where(status: 'failed').count, completed_at: now)
+      run.destroy!
     end
 
     private_class_method def self.enqueue!(run_id)

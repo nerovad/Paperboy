@@ -14,7 +14,7 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
     assert_match 'require an OMS number', error.message
   end
 
-  test 'restart fails the interrupted run and queues a replacement' do
+  test 'restart clears the interrupted run and queues a replacement from the start' do
     interrupted = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
                                                status: 'running', total_count: 1)
     item = interrupted.items.create!(dsl_name: 'Sample', dsl_slug: 'sample', position: 0,
@@ -27,12 +27,12 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
         group: 'sample', entries: [entry], requested_by: 'employee@example.com'
       )
 
-      assert_equal 'failed', interrupted.reload.status
-      assert_equal 1, interrupted.completed_count
-      assert_equal 1, interrupted.failed_count
-      assert_equal 'failed', item.reload.status
-      assert_equal 'Interrupted refresh was restarted', item.error_message
+      assert_nil DataRunner::GroupRun.find_by(id: interrupted.id)
+      assert_nil DataRunner::GroupRunItem.find_by(id: item.id)
       assert_equal 'queued', replacement.status
+      assert_equal 0, replacement.completed_count
+      assert_equal 0, replacement.failed_count
+      assert_equal ['pending'], replacement.items.pluck(:status)
       assert_equal replacement.id, enqueued_run_id
     end
   end

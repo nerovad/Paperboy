@@ -94,9 +94,15 @@ module DataRunner
 
     def apply_host(host, targets, action)
       client = open_client(host)
+      prepare_session(client)
       targets.map { |target| apply_target(client, target, action) }
     ensure
       client&.close
+    end
+
+    def prepare_session(client)
+      require Rails.root.join('script/ruby/data_runner/db/mssql_helpers')
+      client.execute(MssqlHelpers::SESSION_OPTIONS).do
     end
 
     def apply_target(client, target, action)

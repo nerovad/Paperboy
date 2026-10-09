@@ -43,7 +43,7 @@ class TaskRunner
     Result.new(id: id, success: successes.all?)
   end
 
-  def self.run_selector!(task:, selector:, output:, environment: {})
+  def self.run_selector!(task:, selector:, output:, environment: {}, on_start: nil)
     task_name = TASK_COMMANDS.fetch(task) { raise ArgumentError, 'Task is not allowed' }
     selector_name = selector_name!(selector)
     command = [Gem.ruby, Rails.root.join('bin/rake').to_s, task_name, selector_name]
@@ -51,8 +51,9 @@ class TaskRunner
     output.flush
 
     status = nil
-    Open3.popen2e(environment, *command, chdir: Rails.root.to_s) do |stdin, stream, wait_thread|
+    Open3.popen2e(environment, *command, chdir: Rails.root.to_s, pgroup: true) do |stdin, stream, wait_thread|
       stdin.close
+      on_start&.call(wait_thread.pid)
       stream.each do |line|
         output.write(line)
         output.flush
