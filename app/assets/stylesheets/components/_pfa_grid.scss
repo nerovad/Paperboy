@@ -1,0 +1,81 @@
+@use "sass:color";
+@use "base/tokens" as *;
+
+// Shared grid chrome. Records adds the sticky leading column, highlights,
+// and edit-cell treatment in pages/_records.scss.
+
+.pfa-grid__scrollport {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $form-bg;
+}
+
+.pfa-grid__frame {
+  max-width: 100%;
+}
+
+.pfa-grid__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid $border-color;
+    border-right: 1px solid $border-color;
+
+    &:last-child { border-right: none; }
+  }
+
+  td {
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: $brand-navy;
+    color: $surface-base;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border-bottom: 2px solid color.adjust($brand-navy, $lightness: -8%);
+    border-right-color: rgba(255, 255, 255, 0.14);
+  }
+
+  tbody tr {
+    transition: background-color 0.12s ease;
+
+    &:hover { background: $surface-muted; }
+  }
+
+  .pfa-grid__sort {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .pfa-grid__filters th { top: 2.5rem; }
+  .pfa-grid__filters input { max-width: 100%; }
+}
+
+.pfa-grid__actions {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+
+  .btn + .btn { margin-left: 4px; }
+}

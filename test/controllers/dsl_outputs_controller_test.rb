@@ -52,7 +52,7 @@ class DslOutputsControllerTest < ActionController::TestCase
     created_files&.each { |path| path.delete if path.file? }
   end
 
-  test 'backup file preview has close action next to download' do
+  test 'backup file preview has a close action' do
     sign_in
     backup_path = Rails.root.join('output/data_runner/06_Download_Backup', "2099-01-02-#{backup_suffix}-employees.csv")
     backup_path.dirname.mkpath
@@ -61,7 +61,8 @@ class DslOutputsControllerTest < ActionController::TestCase
     get :output, params: { name: 'employees', path: "06_Download_Backup/2099-01-02-#{backup_suffix}-employees.csv" }
 
     assert_response :success
-    assert_select '.output-heading .inline-actions a', text: 'Download file'
+    assert_select 'a', text: 'Download file', count: 0
+    assert_select '.output-heading h2', count: 0
     assert_select '.output-heading .inline-actions a[href=?]', backup_outputs_data_runner_dsl_path('employees'), text: 'Close'
   ensure
     backup_path&.delete if backup_path&.file?

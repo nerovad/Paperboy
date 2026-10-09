@@ -59,6 +59,24 @@ class RecordsTableControllerTest < ActionController::TestCase
     assert_response :forbidden
   end
 
+  test 'the html grid renders one page and keeps the full set for export' do
+    sign_in(groups: [], record_view: %w[fleet], record_edit: [])
+    @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }
+    rows = Array.new(Pfa::Grid::Table::PAGE_ROWS + 1) { |number| Struct.new(:id).new(number + 1) }
+    highlights = Object.new
+    def highlights.rule_for(_) = nil
+    def highlights.any? = false
+    view = Struct.new(:columns, :rows, :filter_options, :default_sort, :highlights, :highlight_counts)
+                 .new([], rows, {}, nil, highlights, nil)
+    RecordsView.stub(:new, view) do
+      get :show, params: { slug: 'fleet' }
+    end
+
+    assert_select 'tbody tr', count: Pfa::Grid::Table::PAGE_ROWS
+    assert_select '.pagination-wrapper .pagy.series-nav'
+    assert_match(/Showing 1–#{Pfa::Grid::Table::PAGE_ROWS} of #{rows.size} rows/, response.body)
+  end
+
   test 'downloads the grid view as a CSV' do
     sign_in(groups: [], record_view: %w[fleet], record_edit: [])
     @controller.define_singleton_method(:current_user_dropdown_permissions) { Set.new }

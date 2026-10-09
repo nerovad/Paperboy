@@ -1,6 +1,5 @@
 <div class="dsl-header">
-  <p class="eyebrow"><%= @dsl.group&.humanize || "Other DSLs" %></p>
-  <h1><%= @dsl.key %></h1>
+  <h1><%= (@dsl.group&.humanize || "Other DSLs").upcase %>: <%= @dsl.key %></h1>
   <div class="detail-grid">
     <section class="card"><h2>Source</h2><dl><dt>Strategy</dt><dd><%= @dsl.config.dig(:source, :strategy) || "-" %></dd><dt>File</dt><dd><%= @dsl.config.dig(:source, :local) || "-" %></dd></dl></section>
     <section class="card"><h2>Destination</h2>

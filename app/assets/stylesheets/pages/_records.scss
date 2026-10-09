@@ -130,82 +130,31 @@
   gap: 8px;
 }
 
-/* The grid is its own scrollport on both axes, like a spreadsheet: the
-   horizontal scrollbar stays on screen instead of sitting under the last row,
-   and the sticky header and leading column pin against this box. Its height
-   comes from the flex column set up by .records-screen--grid below. */
+/* Flex slot for the shared .pfa-grid__scrollport. Border, header, and cell
+   chrome live in components/_pfa_grid.scss. Height comes from the flex column
+   set up by .records-screen--grid below. */
 .records-table-wrapper {
   flex: 0 1 auto;
   min-height: 0;
-  overflow: auto;
-  border: 1px solid $border-color;
-  border-radius: $radius-6;
-  background: $form-bg;
 }
 
 .records-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-
-  th,
-  td {
-    padding: 8px 12px;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid $border-color;
-    border-right: 1px solid $border-color;
-
-    &:last-child {
-      border-right: none;
-    }
-  }
-
-  /* Cap long values so one wide cell doesn't push every other column off
-     screen; the full value is still there when the cell is edited. */
-  td {
-    max-width: 24rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Navy header row, matching the Inbox table. The sort links and the white
-     column-customizer "+" (components/column_customizer) are built for a dark
-     header, so they read white here rather than as default link blue. */
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: $brand-navy;
-    font-weight: 600;
+  /* Sort links and the column-customizer "+" are built for the dark header
+     in .pfa-grid__table, so they read white here. */
+  thead th a.sortable-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     color: $surface-base;
-    letter-spacing: 0.01em;
-    border-bottom: 2px solid color.adjust($brand-navy, $lightness: -8%);
-    border-right-color: rgba(255, 255, 255, 0.14);
+    text-decoration: none;
+    transition: color 0.15s ease;
 
-    a.sortable-header {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: $surface-base;
-      text-decoration: none;
-      transition: color 0.15s ease;
+    &:hover,
+    &:focus-visible { color: rgba(255, 255, 255, 0.75); }
 
-      &:hover,
-      &:focus-visible { color: rgba(255, 255, 255, 0.75); }
-
-      .sort-indicator {
-        font-size: 0.75em;
-        opacity: 0.85;
-      }
-    }
-  }
-
-  tbody tr {
-    transition: background-color 0.12s ease;
-
-    &:hover {
-      background: $surface-muted;
+    .sort-indicator {
+      font-size: 0.75em;
+      opacity: 0.85;
     }
   }
 
@@ -215,11 +164,10 @@
     text-decoration-color: rgba(0, 0, 0, 0.25);
   }
 
-  /* Sticky leading column. Wide grids scroll sideways, so the first column
-     stays pinned and every row remains identifiable. Sticky cells need their
-     own opaque background — the row's would scroll out from under them — and
-     must outrank the ordinary cells sliding beneath. Stacking order: header
-     corner (3) > header row (2) > leading body cells (1). */
+  /* Sticky leading column. Wide grids scroll sideways inside the scrollport,
+     so the first column stays pinned. Sticky cells need their own opaque
+     background, and must outrank the cells sliding beneath. Stacking order:
+     header corner (3) > header row (2) > leading body cells (1). */
   th:first-child,
   td:first-child {
     position: sticky;
@@ -273,14 +221,6 @@
   font: inherit;
   color: $text-color;
   background: $form-bg;
-}
-
-.records-actions-col {
-  width: 1%;
-  text-align: right;
-  white-space: nowrap;
-
-  .btn + .btn { margin-left: 4px; }
 }
 
 /* ---- Full-bleed Records screen (replaces the boxed .form-wrapper) ---- */

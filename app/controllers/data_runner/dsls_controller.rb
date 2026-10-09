@@ -3,6 +3,8 @@
 module DataRunner
   # rubocop:disable-next Metrics/ClassLength
   class DslsController < ApplicationController
+    include Pagy::Method
+
     before_action :require_login, except: :index
     before_action :set_dsl, except: %i[index new create] + DataRunner::ApplicationController::GROUP_ACTIONS
     after_action :cleanup_output_file, only: :output
@@ -125,12 +127,21 @@ module DataRunner
           backup == file
         end
       end
-      @output = WorkflowOutputPresenter.new(local_path, header_row: @dsl.config.dig(:to_csv, :header_row))
+      @output = WorkflowOutputPresenter.new(local_path,
+                                            header_row: @dsl.config.dig(:to_csv, :header_row),
+                                            page: params[:page].presence || 1,
+                                            per_page: Pfa::Grid::Table::PAGE_ROWS)
+      @pagy, = pagy_output(@output) if @output.row_count
       @output_relative_path = file.respond_to?(:relative_path) ? file.relative_path : file.relative_path_from(WorkflowPaths::OUTPUT_ROOT)
       render :output, formats: [:html]
     end
 
     private
+
+    # The presenter already sliced this page, so pagy only builds the nav.
+    def pagy_output(output)
+      pagy(:offset, [], count: output.row_count, limit: Pfa::Grid::Table::PAGE_ROWS)
+    end
 
     def set_dsl
       @dsl = DslCatalog.find!(params[:name])

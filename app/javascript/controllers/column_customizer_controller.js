@@ -8,7 +8,7 @@ import { pbAlert } from "pb_modal";
 // reloads so the server re-renders columns + filters.
 //
 // Records grids opt out of the cap with `scrollable: true`: they scroll
-// horizontally (see .records-table-wrapper), so a table is allowed to be wider
+// horizontally (see .pfa-grid__scrollport), so a table is allowed to be wider
 // than its container and every column of the record stays reachable.
 export default class extends Controller {
   static targets = [
