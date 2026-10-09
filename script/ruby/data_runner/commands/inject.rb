@@ -343,6 +343,29 @@ def acquire_atomic_inject_lock!(client)
   client.execute(sql).do
 end
 
+def inject_source(name, cfg, stats)
+  unless Workflow.wants_step?(cfg, :inject)
+    puts "[SKIP] #{name}: step disabled (:inject)"
+    stats.skip!
+    return
+  end
+
+  csv_name = EtlHelpers.output_for(cfg)
+  input = File.join(APPLIED_DIR, csv_name)
+  if !File.exist?(input) && EtlHelpers.source_strategy(cfg) == :append
+    puts "[SKIP] #{name}: nothing to append (missing #{APPLIED_DIR}/#{csv_name})"
+    stats.skip!
+    return
+  end
+
+  DataRunnerDependencyHelpers.wait!(name, cfg)
+  return [csv_name, input] if File.exist?(input)
+
+  puts "[SKIP] #{name}: missing #{APPLIED_DIR}/#{csv_name}"
+  stats.fail!
+  nil
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Main logic
 
@@ -366,22 +389,8 @@ selected_entries = if atomic_inject
                    end
 begin
   selected_entries.each do |name, cfg|
-    unless Workflow.wants_step?(cfg, :inject)
-      puts "[SKIP] #{name}: step disabled (:inject)"
-      stats.skip!
-      next
-    end
-
-    DataRunnerDependencyHelpers.wait!(name, cfg)
-
-    csv_name = EtlHelpers.output_for(cfg)
-    input    = File.join(APPLIED_DIR, csv_name)
-
-    unless File.exist?(input)
-      puts "[SKIP] #{name}: missing #{APPLIED_DIR}/#{csv_name}"
-      stats.fail!
-      next
-    end
+    csv_name, input = inject_source(name, cfg, stats)
+    next unless input
 
     EtlHelpers.database_targets(
       cfg,

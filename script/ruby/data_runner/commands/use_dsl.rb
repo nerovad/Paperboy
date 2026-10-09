@@ -108,8 +108,15 @@ if __FILE__ == $PROGRAM_NAME
 
   inputs.each do |input|
     unless File.exist?(input)
-      puts "[SKIP] Missing #{File.basename(input)}"
-      stats.fail!
+      dsl_name = name_for_output[File.basename(input)]
+      dsl_config = dsl_name && DSL_MAP[dsl_name]
+      if dsl_config && EtlHelpers.source_strategy(dsl_config) == :append
+        puts "[SKIP] #{dsl_name}: nothing to append (missing #{File.basename(input)})"
+        stats.skip!
+      else
+        puts "[SKIP] Missing #{File.basename(input)}"
+        stats.fail!
+      end
       next
     end
 
