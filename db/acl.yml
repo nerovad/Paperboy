@@ -574,6 +574,10 @@ groups:
   - type: feature
     key: digital_asset_management:workflows
   - type: form
+    key: '100'
+    class: GsaAuthorizationFormForm
+    label: GSA Authorization Form
+  - type: form
     key: '15'
     class: ParkingLotSubmission
     label: Parking Permit Application
@@ -708,6 +712,10 @@ groups:
     key: admin_tools:manage_forms
   - type: feature
     key: data_runner:manage_groups
+  - type: form
+    key: '100'
+    class: GsaAuthorizationFormForm
+    label: GSA Authorization Form
   - type: form
     key: '15'
     class: ParkingLotSubmission
