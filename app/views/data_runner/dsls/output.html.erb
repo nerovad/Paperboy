@@ -18,14 +18,16 @@
 <% if @output.kind == "sql" %>
   <pre class="output highlighted-output"><%= syntax_highlight(@output.content, language: "sql") %></pre>
 <% else %>
-  <section class="card output-table-wrap">
-    <%= render "pfa/grid/table", columns: grid.columns, rows: grid.rows,
-               header: ->(column) { column.label },
-               cell: ->(column, row) { row[column.key] },
-               data_controller: "output-table",
-               table_class: "output-table datatable-output" %>
-    <%= render "shared/series_pagination", pagy: @pagy %>
-  </section>
+  <div class="output-grid">
+    <section class="card output-table-wrap">
+      <%= render "pfa/grid/table", columns: grid.columns, rows: grid.rows,
+                 header: ->(column) { column.label },
+                 cell: ->(column, row) { row[column.key] },
+                 data_controller: "output-table",
+                 table_class: "output-table datatable-output" %>
+      <%= render "shared/series_pagination", pagy: @pagy %>
+    </section>
+  </div>
 <% end %>
 
 <% if @output.truncated? %>

@@ -19,7 +19,9 @@ class DataRunnerOutputPaginationTest < ActionController::TestCase
     assert_select '.dsl-header .detail-grid h2', text: 'Destination'
     assert_select '.dsl-header .detail-grid h2', text: 'Workflow'
     assert_select 'nav.hot-menu'
-    assert_select '.output-table-wrap .pfa-grid__scrollport'
+    assert_select '.output-grid .dsl-header', count: 0
+    assert_select '.output-grid .hot-menu', count: 0
+    assert_select '.output-grid .output-table-wrap .pfa-grid__scrollport'
     assert_select 'tbody tr', count: Pfa::Grid::Table::PAGE_ROWS
     assert_select '.pagination-wrapper .pagy.series-nav a', text: '<'
     assert_select '.pagination-wrapper .pagy.series-nav a[href*=?]', 'page=2', text: '2'

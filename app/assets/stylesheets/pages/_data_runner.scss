@@ -311,19 +311,26 @@
     }
   }
 
-  /* The scrolling rows use the Records grid window. The DSL header and
-     action buttons stay in normal flow above it. */
-  &.page-dsls-output .output-table-wrap .pfa-grid__scrollport {
-    max-height: calc(100vh - 80px - 16px - 104px);
+  /* About 25 body rows, plus the column header. The page buttons stay
+     under the scrollport. A row is the 0.875rem type at 1.25 line-height
+     plus the 10px vertical padding on each side. */
+  &.page-dsls-output .output-grid {
+    min-width: 0;
 
-    @media (max-width: 768px) {
-      max-height: calc(100vh - 60px - 16px - 76px);
+    .pfa-grid__table th,
+    .pfa-grid__table td {
+      line-height: 1.25;
     }
-  }
 
-  &.page-dsls-output .output-table-wrap .dataTables_filter {
-    margin-bottom: 8px;
-    text-align: right;
+    .pfa-grid__scrollport {
+      --output-grid-row: calc(1.25 * 0.875rem + 20px);
+      max-height: calc(26 * var(--output-grid-row));
+    }
+
+    .dataTables_filter {
+      margin-bottom: 8px;
+      text-align: right;
+    }
   }
 
   &.page-dsls-edit {
