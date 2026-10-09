@@ -25,11 +25,11 @@
     <% end %>
   </header>
 
-  <% if collection.nil? && @library.collections.any? %>
+  <% if collection.nil? && @library.matching_collections.any? %>
     <section class="form-library__collections" aria-labelledby="form-library-collections-title">
       <h2 id="form-library-collections-title">Collections</h2>
       <div class="form-library__collection-grid">
-        <% @library.collections.each do |group, form_count| %>
+        <% @library.matching_collections.each do |group, form_count| %>
           <%= link_to form_library_collection_path(group.key), class: "form-library__collection" do %>
             <strong><%= group.name %></strong>
             <span><%= group.description %></span>

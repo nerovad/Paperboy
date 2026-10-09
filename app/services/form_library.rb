@@ -46,6 +46,12 @@ class FormLibrary
         agencies.include?(entry.org_code(:agency)) ||
         entry.tags.any? { |tag| tags.include?(tag.downcase) }
     end
+
+    # What the search box matches a collection on: what it is called, what it
+    # says it holds and the tags that fill it.
+    def haystack
+      @haystack ||= [name, description, tags].flatten.join(' ').downcase
+    end
   end
 
   # Built per call rather than memoized on the class, so an edit to the file
@@ -82,6 +88,13 @@ class FormLibrary
       count = entries.count { |entry| collection.include?(entry) }
       [collection, count] if count.positive?
     end
+  end
+
+  # The groups to offer beside the results. The search box finds collections
+  # as well as forms, so typing "safety" brings up the Safety collection above
+  # the forms that mention it. The facets describe forms and leave these alone.
+  def matching_collections
+    collections.select { |group, _| terms.all? { |term| group.haystack.include?(term) } }
   end
 
   # The group being browsed. An unknown key, or one the viewer has no forms
@@ -138,7 +151,11 @@ class FormLibrary
 
   # Every word typed has to appear somewhere on the form.
   def matches_query?(entry)
-    query.downcase.split.all? { |term| entry.haystack.include?(term) }
+    terms.all? { |term| entry.haystack.include?(term) }
+  end
+
+  def terms
+    @terms ||= query.downcase.split
   end
 
   # A form not tied to an org cannot answer "issued by HCA", so it drops out

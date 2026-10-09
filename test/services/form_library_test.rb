@@ -87,6 +87,20 @@ class FormLibraryTest < ActiveSupport::TestCase
     assert_nil subject.collection
   end
 
+  test 'the search box finds a collection by its name, description or tags' do
+    groups = [collection('fleet', agencies: %w[GSA]), collection('clinics', tags: %w[safety])]
+
+    assert_equal(%w[fleet], library(q: 'FLEET', collections: groups).matching_collections.map { |group, _| group.key })
+    assert_equal(%w[clinics], library(q: 'safety', collections: groups).matching_collections.map { |group, _| group.key })
+    assert_empty library(q: 'payroll', collections: groups).matching_collections
+  end
+
+  test 'with nothing typed every collection is offered, whatever the facets say' do
+    groups = [collection('fleet', agencies: %w[GSA]), collection('clinics', tags: %w[safety])]
+
+    assert_equal 2, library(type: %w[Log], collections: groups).matching_collections.size
+  end
+
   test 'the collections file loads and every entry has a name and a rule' do
     FormLibrary.defined_collections.each do |group|
       assert_predicate group.name, :present?

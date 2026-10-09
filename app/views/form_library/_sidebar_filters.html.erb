@@ -15,8 +15,8 @@
 <%= form_with url: search_path, method: :get, class: "form-library-filters",
               data: { controller: "auto-submit", action: "change->auto-submit#submit" } do %>
   <%= search_field_tag :q, library.query, class: "sidebar-search-input",
-                       placeholder: "Search forms, numbers, fields, tags",
-                       aria: { label: "Search forms" } %>
+                       placeholder: "Search forms, collections, numbers, tags",
+                       aria: { label: "Search forms and collections" } %>
 
   <%= link_to "Basic Search", root_path,
               class: "btn secondary compact pb-advanced-trigger has-filters" %>
