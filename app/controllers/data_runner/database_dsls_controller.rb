@@ -11,7 +11,7 @@ module DataRunner
 
     def create
       raise DatabaseDslCreator::ImportFailed, 'Set GSABSS_HOST before importing a table.' if source_server.blank?
-      raise DatabaseDslCreator::ImportFailed, 'Set SQL22_HOST or SQL22 before replicating a table.' if replicate? && target_server.blank?
+      raise DatabaseDslCreator::ImportFailed, 'Set SQL22_HOST before replicating a table.' if replicate? && target_server.blank?
 
       creator = DatabaseDslCreator.new(**creator_params)
       return render_confirmation(creator) unless params[:confirmed] == '1'
@@ -86,7 +86,7 @@ module DataRunner
     end
 
     def target_server
-      ENV['SQL22_HOST'].presence || ENV['SQL22'].presence
+      ENV['SQL22_HOST'].presence
     end
 
     def catalog

@@ -79,7 +79,7 @@ module MssqlHelpers
   # Auth mode mirrors config/database.yml: a username present means SQL/NTLM
   # auth (used by CI, which has no AD); absent means Kerberos (GSSAPI) using
   # the ticket in KRB5CCNAME. Kerberos needs tiny_tds built against the system
-  # FreeTDS - the precompiled gem ships without GSSAPI support. SQL22 is
+  # FreeTDS - the precompiled gem ships without GSSAPI support. SQL22_HOST is
   # reached with that ticket even when GSAETL is configured for GSASQL16.
   def connection_options(host, database, use_kerberos)
     timeout = env_any('MSSQL_TIMEOUT', 'GSABSS_TIMEOUT').to_s.strip
@@ -116,7 +116,7 @@ module MssqlHelpers
     value = host.to_s.strip.downcase
     return false if value.empty?
 
-    %w[SQL22 SQL22_HOST].any? { |key| ENV[key].to_s.strip.casecmp?(value) }
+    ENV['SQL22_HOST'].to_s.strip.casecmp?(value)
   end
 
   def open_client(opts, kerberos:)

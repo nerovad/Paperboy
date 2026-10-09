@@ -43,10 +43,9 @@ class DatabaseDslsControllerTest < ActionController::TestCase
   end
 
   def with_replication_env
-    previous = %w[GSABSS_HOST MSSQL_HOST SQL22 SQL22_HOST SQL22_DB].to_h { |key| [key, ENV.fetch(key, nil)] }
+    previous = %w[GSABSS_HOST MSSQL_HOST SQL22_HOST SQL22_DB].to_h { |key| [key, ENV.fetch(key, nil)] }
     ENV['GSABSS_HOST'] = '10.1.1.16'
     ENV['MSSQL_HOST'] = 'other-host'
-    ENV['SQL22'] = '10.1.1.22'
     ENV['SQL22_HOST'] = 'gsa-sql22-tst.example'
     ENV['SQL22_DB'] = 'Paperboy'
     yield

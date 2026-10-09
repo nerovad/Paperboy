@@ -28,15 +28,14 @@ class DataRunnerDatabaseCatalogTest < ActiveSupport::TestCase
     )
   end
 
-  test 'treats the SQL22 host names as Kerberos targets' do
-    previous = { 'SQL22' => ENV.fetch('SQL22', nil), 'SQL22_HOST' => ENV.fetch('SQL22_HOST', nil) }
-    ENV['SQL22'] = '10.1.1.22'
+  test 'treats SQL22_HOST as the Kerberos target' do
+    previous = ENV.fetch('SQL22_HOST', nil)
     ENV['SQL22_HOST'] = 'gsa-sql22-tst.example'
 
     assert MssqlHelpers.kerberos_host?('gsa-sql22-tst.example')
-    assert MssqlHelpers.kerberos_host?('10.1.1.22')
+    assert_not MssqlHelpers.kerberos_host?('10.1.1.22')
     assert_not MssqlHelpers.kerberos_host?('GSASQL16')
   ensure
-    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    previous.nil? ? ENV.delete('SQL22_HOST') : ENV['SQL22_HOST'] = previous
   end
 end

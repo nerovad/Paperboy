@@ -3,15 +3,22 @@
 [
   'Gsabss_agencies',
   {
-    steps: {
-      manual: { enabled: true, steps: %i[download to_csv use_dsl inject] },
-      scheduled: { enabled: true, frequency: :daily, steps: %i[download to_csv use_dsl inject] }
+     steps: {
+      manual: {
+        enabled: true,
+        steps: Workflow::MANUAL_STEPS
+      },
+      scheduled: {
+        enabled: true,
+        frequency: :daily,
+        steps: Workflow::SCHEDULED_STEPS
+      }
     },
     group: {
       name: 'gsabss'
     },
     source: {
-      host: '10.135.204.161',
+      host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSABSS',
       schema: 'dbo',
       table: 'agencies',
