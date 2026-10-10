@@ -47,9 +47,7 @@ module DataRunner
     end
 
     def prepare_item(run, item, dsl_names)
-      started_at = Time.current
       workspace = item_workspace(run, item)
-      item.update!(status: 'running', started_at: started_at)
       environment = {
         'DATARUNNER_RUN_ID' => run.run_id,
         'DATARUNNER_RUN_DSLS' => dsl_names
@@ -61,7 +59,7 @@ module DataRunner
 
       environment['DATARUNNER_QUEUE_OMS'] = oms_number if oms_number
       { id: item.id, name: item.dsl_name, slug: item.dsl_slug, workspace: workspace,
-        environment: environment, started_clock: Process.clock_gettime(Process::CLOCK_MONOTONIC) }
+        environment: environment }
     end
 
     def item_workspace(run, item)

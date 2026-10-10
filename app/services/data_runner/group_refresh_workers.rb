@@ -59,7 +59,9 @@ module DataRunner
 
     def process_item(item, log)
       return if @stop.stopped? || !run_active?
+      return unless claim_item?(item)
 
+      ActiveRecord::Base.connection_pool.release_connection
       pid = nil
       status = TaskRunner.run_selector!(
         task: 'refresh', selector: item[:slug], output: log, environment: item[:environment],
@@ -80,6 +82,17 @@ module DataRunner
       @stop.forget(pid) if pid
       remove_workspace(item[:workspace])
       ActiveRecord::Base.connection_pool.release_connection
+    end
+
+    def claim_item?(item)
+      now = Time.current
+      claimed = GroupRunItem.where(id: item[:id], status: 'pending').update_all(
+        status: 'running', started_at: now, updated_at: now
+      )
+      return false unless claimed == 1
+
+      item[:started_clock] = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      true
     end
 
     def complete_item(item, status, error_message = nil)

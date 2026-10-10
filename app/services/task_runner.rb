@@ -13,6 +13,7 @@ class TaskRunner
     'table_drop' => 'DataRunner:table_drop',
     'table_create' => 'DataRunner:table_create',
     'use_dsl' => 'DataRunner:use_dsl',
+    'replicate' => 'DataRunner:replicate',
     'use_sql' => 'DataRunner:use_sql',
     'inject' => 'DataRunner:inject',
     'oneshot' => 'DataRunner:oneshot',

@@ -8,8 +8,10 @@ require 'csv'
 require 'fileutils'
 require 'set'
 require_relative 'dsl_map'
+require_relative '../helpers/bcp_character_file'
 require_relative '../helpers/etl_helpers'
 require_relative '../helpers/etl_mapping_helpers'
+require_relative '../helpers/sql_value'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
@@ -20,12 +22,13 @@ NORMALIZED_DIR = WorkflowPaths::NORMALIZED_DIR
 APPLIED_DIR = WorkflowPaths::APPLIED_DIR
 FileUtils.mkdir_p(APPLIED_DIR)
 
-def apply_mapping(cfg, input_path, output_path)
+def apply_mapping(cfg, input_path, output_path, dsl_name: nil)
   mapping = EtlMappingHelpers.csv_mapping(cfg)
   return :pass if mapping.empty?
 
   out_cols = mapping.map { |entry| entry[:output] }
   dedup = dedup_enabled?(cfg)
+  dsl = dsl_name || File.basename(output_path)
 
   input_headers = nil
   File.open(input_path, 'r:bom|utf-8') do |io|
@@ -35,29 +38,45 @@ def apply_mapping(cfg, input_path, output_path)
   missing_inputs = mapping.filter_map { |entry| entry[:input] }.uniq - input_headers
   puts "  [WARN] mapping references missing input columns: #{missing_inputs.join(', ')}" unless missing_inputs.empty?
 
-  CSV.open(output_path, 'w') do |out|
-    out << out_cols
+  File.open(output_path, 'wb') do |out|
+    BcpCharacterFile.write_row(out, out_cols, dsl: dsl, columns: out_cols)
 
     row_number = 0
     rows = []
     CSV.foreach(input_path, headers: true, encoding: 'bom|utf-8') do |row|
       row_number += 1
-      mapped_row = mapping.map do |entry|
-        value = entry[:input].nil? ? nil : row[entry[:input]]
-        mapped_value_for(entry, value, row, row_number)
-      end
+      mapped_row = mapped_character_row(mapping, row, row_number, dsl)
 
       if dedup
         rows << mapped_row
       else
-        out << mapped_row
+        BcpCharacterFile.write_row(out, mapped_row, dsl: dsl, columns: out_cols)
       end
     end
 
-    write_deduplicated_rows(out, rows) if dedup
+    write_deduplicated_rows(out, rows, dsl: dsl, columns: out_cols) if dedup
   end
 
   :applied
+end
+
+def write_unmapped_character_file(input_path, output_path, dsl_name)
+  headers = nil
+  File.open(output_path, 'wb') do |out|
+    CSV.foreach(input_path, encoding: 'bom|utf-8') do |row|
+      headers ||= row.map(&:to_s)
+      BcpCharacterFile.write_row(out, row, dsl: dsl_name, columns: headers)
+    end
+  end
+end
+
+def mapped_character_row(mapping, row, row_number, dsl)
+  mapping.map do |entry|
+    value = entry[:input].nil? ? nil : row[entry[:input]]
+    SqlValue.canonical(EtlMappingHelpers.mapped_value_for(entry, value, row, row_number), entry[:data_type])
+  rescue ArgumentError => e
+    raise "#{dsl}: column #{entry[:output]}: #{e.message}"
+  end
 end
 
 def dedup_enabled?(cfg)
@@ -67,27 +86,14 @@ def dedup_enabled?(cfg)
   use_dsl[:dedup] == true
 end
 
-def write_deduplicated_rows(out, rows)
+def write_deduplicated_rows(io, rows, dsl:, columns:)
   seen = Set.new
   rows.sort_by { |row| CSV.generate_line(row) }.each do |row|
     key = CSV.generate_line(row)
     next unless seen.add?(key)
 
-    out << row
+    BcpCharacterFile.write_row(io, row, dsl: dsl, columns: columns)
   end
-end
-
-def mapped_value_for(entry, value, row, row_number)
-  return default_value_for(entry[:default_value], row) if value.to_s.empty? && !entry[:default_value].nil?
-  return row_number if value.to_s.empty? && entry[:identity]
-
-  value
-end
-
-def default_value_for(default_value, row)
-  return default_value.call(row) if default_value.respond_to?(:call)
-
-  default_value
 end
 
 # -------------------------------------------------------------------------- }}}
@@ -134,10 +140,10 @@ if __FILE__ == $PROGRAM_NAME
 
     begin
       cfg = map_name ? DSL_MAP[map_name] : nil
-      result = apply_mapping(cfg, input, out)
+      result = apply_mapping(cfg, input, out, dsl_name: map_name || out_name)
 
       if result == :pass
-        FileUtils.cp(input, out)
+        write_unmapped_character_file(input, out, map_name || out_name)
         puts "[PASS] #{out_name} (no mapping) -> #{APPLIED_DIR}/#{File.basename(out)}"
       else
         puts "[OK] #{out_name} -> #{APPLIED_DIR}/#{File.basename(out)}"

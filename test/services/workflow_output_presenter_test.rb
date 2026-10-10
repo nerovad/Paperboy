@@ -2,6 +2,7 @@
 
 require 'test_helper'
 require 'tmpdir'
+require_relative '../../script/ruby/data_runner/helpers/bcp_character_file'
 
 class WorkflowOutputPresenterTest < ActiveSupport::TestCase
   test 'presents CSV as headers and rows' do
@@ -118,6 +119,24 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
 end
 
 class WorkflowOutputCsvPageTest < ActiveSupport::TestCase
+  test 'reads an applied bcp file on its field and row terminators' do
+    note = "a, \"b\"\nc"
+    Dir.mktmpdir do |directory|
+      applied = Pathname(directory).join('05_DSL_Applied')
+      applied.mkpath
+      path = applied.join('sample.csv')
+      File.open(path, 'wb') do |io|
+        BcpCharacterFile.write_row(io, ['Note'], dsl: 'Sample', columns: ['Note'])
+        BcpCharacterFile.write_row(io, [note], dsl: 'Sample', columns: ['Note'])
+      end
+
+      output = WorkflowOutputPresenter.new(path)
+
+      assert_equal ['Note'], output.headers
+      assert_equal [[note]], output.rows
+    end
+  end
+
   test 'stops a large csv after this page and one extra row' do
     csv_file do |path|
       WorkflowOutputPresenter.stub(:exact_csv_count?, false) do

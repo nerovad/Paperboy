@@ -92,12 +92,14 @@ module DataRunnerTaskHelpers
   def run_setup(selector)
     return run_orchestrated_setup(selector) if orchestrated?(selector)
 
+    run_replicate_stage(selector)
     run_standard_stages(selector, %i[download to_csv to_sql use_dsl])
   end
 
   def run_oneshot(selector)
     return run_orchestrated_oneshot(selector) if orchestrated?(selector)
 
+    run_replicate_stage(selector)
     run_standard_stages(selector, %i[download to_csv to_sql use_dsl create_table inject])
   end
 

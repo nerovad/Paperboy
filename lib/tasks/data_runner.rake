@@ -68,6 +68,13 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_stage_or_orchestration(selector, :use_dsl, 'use_dsl.rb')
   end
 
+  desc 'Stream a replicate source into the bcp applied file'
+  task :replicate, [:name] => :environment do |_task, args|
+    selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
+    log_selectors = DataRunnerTaskHelpers.log_selectors(:replicate, selector)
+    DataRunnerTaskHelpers.run_ruby_stage('replicate.rb', selector, log_selectors: log_selectors)
+  end
+
   desc 'Update DSL header mappings from reviewed SQL in output/data_runner/04_SQL_SCHEMA'
   task :use_sql, [:name] do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
@@ -92,17 +99,13 @@ namespace :DataRunner do
     DataRunnerTaskHelpers.run_oneshot(selector)
   end
 
-  desc 'Run download, to_csv, use_dsl, and inject in sequence'
+  desc 'Run replicate or download, to_csv, use_dsl, and inject in sequence'
   task :refresh, [:name] => :environment do |_task, args|
     selector = DataRunnerTaskHelpers.task_arg(args, allow_all: true)
-
     if DataRunnerTaskHelpers.orchestrated?(selector)
       DataRunnerTaskHelpers.run_orchestrated_refresh(selector)
     else
-      DataRunnerTaskHelpers.run_ruby_stage('download.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:download, selector))
-      DataRunnerTaskHelpers.run_ruby_stage('to_csv.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:to_csv, selector))
-      DataRunnerTaskHelpers.run_ruby_stage('use_dsl.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:use_dsl, selector))
-      DataRunnerTaskHelpers.run_ruby_stage('inject.rb', selector, log_selectors: DataRunnerTaskHelpers.log_selectors(:inject, selector))
+      DataRunnerTaskHelpers.run_refresh(selector)
     end
   end
 

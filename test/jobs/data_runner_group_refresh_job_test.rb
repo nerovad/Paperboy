@@ -58,7 +58,7 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
         active += 1
         maximum_active = [maximum_active, active].max
       end
-      sleep 0.02
+      sleep 0.5
       success
     ensure
       lock.synchronize { active -= 1 }
@@ -93,7 +93,7 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
         maximum_active = [maximum_active, active].max
         environments << environment
       end
-      sleep 0.02
+      sleep 0.5
       success
     ensure
       lock.synchronize { active -= 1 }
