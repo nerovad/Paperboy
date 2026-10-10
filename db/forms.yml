@@ -1274,6 +1274,47 @@ forms:
     attach_media: false
     position: 0
   copy_recipients: []
+- class_name: GsaAuthorizationFormForm
+  name: GSA Authorization Form
+  page_count: 3
+  page_headers:
+  - Requested Authorizations
+  submission_type: database
+  description: Intake form for the GSA Authorization form
+  form_number: GSA-103
+  form_type: Authorization
+  agency_id: GSA
+  division_id: '4660'
+  department_id: '4661'
+  unit_id: '4661'
+  approval_routing_to:
+  approval_employee_id:
+  status_transition_mode: automatic
+  inbox_buttons:
+  - view_pdf
+  - approve
+  - deny
+  - status_history
+  tags: parking permit,badges,ids,id
+  records_table: false
+  skip_code_generation: false
+  fields:
+  - field_name: employee
+    field_type: text
+    label: Employee
+    page_number: 3
+    position: 0
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+  statuses: []
+  routing_steps: []
+  emails: []
+  email_steps: []
+  copy_recipients: []
 - class_name: GymLockerForm
   name: Gym Locker
   page_count: 4
@@ -4221,8 +4262,6 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: hca_safety
-    approve_button_label: Edit
-    deny_button_label: Review
     inbox_buttons:
     - view_pdf
     - edit

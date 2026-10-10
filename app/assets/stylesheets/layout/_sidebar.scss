@@ -520,7 +520,7 @@
      sidebar's own gradient at the sidebar's size, anchored to the same
      corner -- the slice it shows lines up with what is behind it. */
   .sidebar-footer {
-    --sidebar-footer-height: 64px;
+    --sidebar-footer-height: 76px;
 
     position: sticky;
     top: calc(100vh - var(--sidebar-footer-height));
@@ -546,7 +546,7 @@
   }
 
   .sidebar-footer__name {
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -555,7 +555,7 @@
   .paperboy-version {
     overflow: hidden;
     color: rgba(255, 255, 255, 0.65);
-    font-size: 0.6875rem;
+    font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
     text-overflow: ellipsis;
     white-space: nowrap;

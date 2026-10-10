@@ -39,6 +39,9 @@
       <%= render "acl/authorization_console_permissions",
             consoles: @authorization_consoles, selected_keys: @authorization_console_keys %>
 
+      <%= render "acl/environment_permissions", environments: @environment_items,
+            selected_keys: @environment_keys, scope_label: "members of this group" %>
+
       <details id="profile-dropdown-items" class="acl-permission-subgroup">
         <summary>Profile Dropdown Items</summary>
         <div class="acl-permissions-section" data-controller="select-all">

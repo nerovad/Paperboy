@@ -212,6 +212,7 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
     @feature_apps = feature_apps
+    @environment_items = EnvironmentAccess::ENVIRONMENTS
     @authorization_consoles = AuthorizationConsole.permission_catalog
     @record_table_items = record_table_items
     @all_forms = build_all_forms_list
@@ -221,6 +222,7 @@ class AclController < ApplicationController
     @form_keys = Array(by_type['form']).to_set(&:last)
     @application_keys = Array(by_type['application']).to_set(&:last)
     @feature_keys = Array(by_type['feature']).to_set(&:last)
+    @environment_keys = Array(by_type[EnvironmentAccess::PERMISSION_TYPE]).to_set(&:last)
     @authorization_console_keys = Array(by_type[AuthorizationConsole::PERMISSION_TYPE]).to_set(&:last)
     @record_view_keys = Array(by_type['record_view']).to_set(&:last)
     @record_edit_keys = Array(by_type['record_edit']).to_set(&:last)
@@ -243,6 +245,7 @@ class AclController < ApplicationController
       'form' => Array(params[:form_permissions]),
       'application' => Array(params[:application_permissions]),
       'feature' => permitted_feature_keys,
+      EnvironmentAccess::PERMISSION_TYPE => permitted_environment_keys,
       AuthorizationConsole::PERMISSION_TYPE => permitted_authorization_console_keys,
       'record_view' => Array(params[:record_view_permissions]),
       'record_edit' => Array(params[:record_edit_permissions]),
@@ -268,6 +271,7 @@ class AclController < ApplicationController
     @dropdown_items = DROPDOWN_ITEMS
     @application_items = APPLICATION_ITEMS
     @feature_apps = feature_apps
+    @environment_items = EnvironmentAccess::ENVIRONMENTS
     @authorization_consoles = AuthorizationConsole.permission_catalog
     @all_forms = build_all_forms_list
 
@@ -299,6 +303,7 @@ class AclController < ApplicationController
     @org_form_keys = Array(by_type['form']).to_set(&:last)
     @org_application_keys = Array(by_type['application']).to_set(&:last)
     @org_feature_keys = Array(by_type['feature']).to_set(&:last)
+    @org_environment_keys = Array(by_type[EnvironmentAccess::PERMISSION_TYPE]).to_set(&:last)
     @org_authorization_console_keys = Array(by_type[AuthorizationConsole::PERMISSION_TYPE]).to_set(&:last)
     @org_submission_action_keys = Array(by_type[Forms::SubmissionPolicy::PERMISSION_TYPE]).to_set(&:last)
     load_submission_form_catalog
@@ -321,6 +326,7 @@ class AclController < ApplicationController
       'form' => Array(params[:form_permissions]),
       'application' => Array(params[:application_permissions]),
       'feature' => permitted_feature_keys,
+      EnvironmentAccess::PERMISSION_TYPE => permitted_environment_keys,
       AuthorizationConsole::PERMISSION_TYPE => permitted_authorization_console_keys,
       Forms::SubmissionPolicy::PERMISSION_TYPE => permitted_submission_action_keys
     }
@@ -425,6 +431,10 @@ class AclController < ApplicationController
   def permitted_authorization_console_keys
     known = AuthorizationConsole.permission_keys.to_set
     Array(params[:authorization_console_permissions]).select { |key| known.include?(key) }
+  end
+
+  def permitted_environment_keys
+    Array(params[:environment_permissions]) & EnvironmentAccess.permission_keys
   end
 
   def permitted_feature_keys

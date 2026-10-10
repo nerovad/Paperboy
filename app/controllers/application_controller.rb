@@ -9,6 +9,8 @@ class ApplicationController < ActionController::Base
   # token-served media endpoint. Pages used to opt in one by one, and most
   # never did: a Teams "View in Paperboy" link opened an incident for anyone.
   before_action :require_sign_in
+  # Development and Stage are for testing; see EnvironmentAccess.
+  before_action :require_environment_access
   before_action :prevent_caching_signed_in_pages
   helper_method :current_user, :inbox_count, :current_user_group_names, :current_user_group_ids, :current_user_org_chain,
                 :auth_console_admin?, :pcard_admin?, :current_user_dropdown_permissions,
@@ -331,6 +333,34 @@ class ApplicationController < ActionController::Base
 
     session[:return_to] = request.fullpath if request.get? || request.head?
     redirect_to signed_out_landing_path, alert: 'Please sign in to continue.'
+  end
+
+  # Signed in, but on a test server without the grant for it: send the visitor
+  # to the page that points them at Production. Asked on every request rather
+  # than at sign-in, so it covers every way of signing in and a grant taken
+  # away stops working on the next click. Anything but a page just gets a 403.
+  def require_environment_access
+    return unless current_user
+    return if environment_access_granted?
+    return head(:forbidden) unless request.format.html? && !turbo_frame_request?
+
+    redirect_to environment_access_path, status: :see_other
+  end
+
+  def environment_access_key
+    EnvironmentAccess.key_for(host: request.host)
+  end
+
+  # system_admins keeps blanket access so the ACL can always be reached to set
+  # the rest up. An emulation passes whoever is being emulated: starting one
+  # takes the 'emulate' grant from inside this server, and an admin has to be
+  # able to test as somebody who holds no grant here.
+  def environment_access_granted?
+    key = environment_access_key
+    return true if key.nil? || current_user_group_names.include?('system_admins')
+    return true if session[:impersonating] && session[:real_admin_id].present?
+
+    load_user_permissions(EnvironmentAccess::PERMISSION_TYPE).include?(key)
   end
 
   # Where require_sign_in sends a signed-out visitor. An app with its own
