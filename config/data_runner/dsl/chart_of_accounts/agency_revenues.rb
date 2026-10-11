@@ -41,7 +41,7 @@
       ['department',   'agency_id',    'nvarchar(3)',   'NOT NULL', nil],
       ['revenue_code', 'revenue_code', 'nvarchar(4)',   'NOT NULL', nil],
       ['long_name',    'long_name',    'nvarchar(100)', 'NOT NULL', nil],
-      ['short_name',   'short_name',   'nvarchar(10)',  'NOT NULL', nil],
+      ['short_name',   'short_name',   'nvarchar(15)',  'NOT NULL', nil],
       ['active',       'active',       'bit',           'NOT NULL', nil]
 
     ],

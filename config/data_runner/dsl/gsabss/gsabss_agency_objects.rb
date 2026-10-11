@@ -6,12 +6,12 @@
      steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {
@@ -31,8 +31,8 @@
       ['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil],
       ['object_id', 'object_id', 'int', 'NOT NULL', nil],
       ['agency_object_code', 'agency_object_code', 'nvarchar(4)', 'NOT NULL', nil],
-      ['agency_object_name', 'agency_object_name', 'nvarchar(50)', 'NOT NULL', nil],
-      ['rollup_object', 'rollup_object', 'nvarchar(50)', 'NOT NULL', nil],
+      ['agency_object_name', 'agency_object_name', 'nvarchar(51)', 'NOT NULL', nil],
+      ['rollup_object', 'rollup_object', 'nvarchar(51)', 'NOT NULL', nil],
       ['rollup_name', 'rollup_name', 'nvarchar(50)', 'NOT NULL', nil],
       ['active', 'active', 'bit', 'NOT NULL', nil]
     ],

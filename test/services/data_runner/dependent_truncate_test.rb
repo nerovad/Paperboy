@@ -30,6 +30,8 @@ class DataRunnerDependentTruncateTest < ActiveSupport::TestCase
 
     assert_equal ['[OK] Gsabss_tc60: truncated sql22.example.Paperboy.bss.TC60 before dependency inject'], messages
     assert_equal [
+      'SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; ' \
+      'SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF; SET TEXTSIZE 2147483647;',
       'USE [Paperboy]',
       'BEGIN TRAN',
       'TRUNCATE TABLE [bss].[TC60]',

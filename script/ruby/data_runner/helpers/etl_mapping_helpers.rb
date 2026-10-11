@@ -72,6 +72,7 @@ module EtlMappingHelpers
       {
         input: input.empty? ? nil : input,
         output: output,
+        data_type: entry[:data_type],
         identity: identity_column?(entry),
         default_value: entry[:default_value]
       }
@@ -84,5 +85,18 @@ module EtlMappingHelpers
   def validate_unique!(values, message)
     dupes = values.group_by(&:itself).select { |_key, entries| entries.size > 1 }.keys
     raise "#{message}: #{dupes.join(', ')}" unless dupes.empty?
+  end
+
+  def mapped_value_for(entry, value, row, row_number)
+    return default_value_for(entry[:default_value], row) if value.to_s.empty? && !entry[:default_value].nil?
+    return row_number if value.to_s.empty? && entry[:identity]
+
+    value
+  end
+
+  def default_value_for(default_value, row)
+    return default_value.call(row) if default_value.respond_to?(:call)
+
+    default_value
   end
 end

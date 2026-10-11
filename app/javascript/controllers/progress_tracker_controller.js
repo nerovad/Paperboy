@@ -22,9 +22,16 @@ export default class extends Controller {
       return
     }
 
+    const list = this.contentTarget.querySelector(".progress-tracker__items")
+    const scrollTop = list?.scrollTop ?? 0
+
     try {
       const response = await fetch(this.urlValue, { headers: { Accept: "text/html" } })
-      if (response.ok) this.contentTarget.innerHTML = await response.text()
+      if (response.ok) {
+        this.contentTarget.innerHTML = await response.text()
+        const nextList = this.contentTarget.querySelector(".progress-tracker__items")
+        if (nextList) nextList.scrollTop = scrollTop
+      }
     } finally {
       this.timer = window.setTimeout(() => this.poll(), 2000)
     }

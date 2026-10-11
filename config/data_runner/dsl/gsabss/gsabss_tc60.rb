@@ -6,12 +6,12 @@
     steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {

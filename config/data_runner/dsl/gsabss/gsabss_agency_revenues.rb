@@ -6,12 +6,12 @@
      steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {
@@ -31,7 +31,7 @@
       ['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil],
       ['revenue_code', 'revenue_code', 'nvarchar(4)', 'NOT NULL', nil],
       ['long_name', 'long_name', 'nvarchar(100)', 'NOT NULL', nil],
-      ['short_name', 'short_name', 'nvarchar(10)', 'NOT NULL', nil],
+      ['short_name', 'short_name', 'nvarchar(15)', 'NOT NULL', nil],
       ['active', 'active', 'bit', 'NOT NULL', nil]
     ],
     database_connections: [

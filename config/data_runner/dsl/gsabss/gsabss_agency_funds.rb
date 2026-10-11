@@ -6,12 +6,12 @@
      steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {
@@ -28,7 +28,7 @@
     },
     to_csv: { sheet: 0, header_row: 0, data_row: 1 },
     header: [
-      ['fund_id', 'fund_id', 'nvarchar(3)', 'NOT NULL', nil],
+      ['fund_id', 'fund_id', 'nvarchar(4)', 'NOT NULL', nil],
       ['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil]
     ],
     database_connections: [

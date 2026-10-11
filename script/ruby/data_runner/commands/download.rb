@@ -60,7 +60,7 @@ end
 # -------------------------------------------------------------------------- }}}
 # {{{ Validate locally staged file strategies.
 
-def validate_local_source?(name, target, location, local, label)
+def validate_local_source?(name, target, location, local, label, missing: :fail)
   if DOWNLOAD_STORE.target_exists?(local)
     backup_existing_download(name, target)
     puts "[#{label}] #{name}: #{target}"
@@ -69,18 +69,27 @@ def validate_local_source?(name, target, location, local, label)
 
   if location && location.to_s != local.to_s
     source_path = File.expand_path(location.to_s, DOWNLOAD_DIR)
-    if DOWNLOAD_STORE.target_exists?(File.basename(source_path))
+    if EtlHelpers.source_file?(source_path)
       backup_existing_download(name, target)
       DOWNLOAD_STORE.copy_source(source_path, local)
       puts "[#{label}] #{name}: #{source_path} -> #{target}"
       return true
     end
 
-    puts "[FAIL] #{name}: #{label.downcase} source required (missing #{target} or #{source_path})"
-    return false
+    return report_missing_source(name, label, missing, "missing #{target} or #{source_path}")
   end
 
-  puts "[FAIL] #{name}: #{label.downcase} source required (missing #{target})"
+  report_missing_source(name, label, missing, "missing #{target}")
+end
+
+def report_missing_source(name, label, missing, detail)
+  message = "#{label.downcase} source required (#{detail})"
+  if missing == :skip
+    puts "[SKIP] #{name}: #{message}"
+    return :skip
+  end
+
+  puts "[FAIL] #{name}: #{message}"
   false
 end
 
@@ -221,7 +230,11 @@ selected_entries.each do |name, cfg|
     validate_local_source?(name, target, location, local, 'MANUAL') ? stats.ok! : stats.fail!
 
   when :append
-    validate_local_source?(name, target, location, local, 'APPEND') ? stats.ok! : stats.fail!
+    case validate_local_source?(name, target, location, local, 'APPEND', missing: :skip)
+    when :skip then stats.skip!
+    when true then stats.ok!
+    else stats.fail!
+    end
 
   when :copy
     location_s = location.to_s.strip

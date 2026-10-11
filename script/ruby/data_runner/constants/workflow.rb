@@ -24,6 +24,21 @@ module Workflow
     inject
   ].freeze
 
+  # One streaming extract straight into the bcp applied file, then inject.
+  # Manual refresh uses this list. Scheduled replication stays disabled.
+  REPLICATE_STEPS = %i[
+    replicate
+    inject
+  ].freeze
+
+  REFRESH_SEQUENCE = [
+    [:replicate, 'replicate.rb'],
+    [:download, 'download.rb'],
+    [:to_csv, 'to_csv.rb'],
+    [:use_dsl, 'use_dsl.rb'],
+    [:inject, 'inject.rb']
+  ].freeze
+
   SCHEDULE_FREQUENCIES = %i[
     daily
     weekly
@@ -82,6 +97,11 @@ module Workflow
 
     steps = scheduled[:steps] || SCHEDULED_STEPS
     steps.include?(step)
+  end
+
+  def self.refresh_scripts(steps)
+    wanted = Array(steps)
+    REFRESH_SEQUENCE.filter_map { |step, script| script if wanted.include?(step) }
   end
 end
 

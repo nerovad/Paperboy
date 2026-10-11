@@ -38,7 +38,7 @@
     header: [
 
       ['fiscal_year',              nil,                        'nvarchar(4)',   'NOT NULL', nil],
-      ['appropriation_unit',       'appropriation_unit',       'nvarchar(8)',   'NOT NULL', nil],
+      ['appropriation_unit',       'appropriation_unit',       'nvarchar(9)',   'NOT NULL', nil],
       ['appropriation_name',       'appropriation_name',       'nvarchar(100)', 'NOT NULL', nil],
       ['appropriation_short_name', 'appropriation_short_name', 'nvarchar(50)',  'NOT NULL', nil],
       ['appropriation_class',      'appropriation_class',      'nvarchar(4)',   'NOT NULL', nil],

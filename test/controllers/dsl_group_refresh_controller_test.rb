@@ -54,6 +54,21 @@ class DslGroupRefreshControllerTest < ActionController::TestCase
     DataRunner::GroupRefresh.define_singleton_method(:restart!, original) if original
   end
 
+  test 'dependency cycle redirects back to the selected group' do
+    sign_in
+    original = DataRunner::GroupRefresh.method(:start!)
+    DataRunner::GroupRefresh.define_singleton_method(:start!) do |**|
+      raise DataRunner::GroupRefreshOrder::Error, 'circular refresh dependency: Alpha, Beta'
+    end
+
+    post :create, params: { group: 'paperboy' }
+
+    assert_redirected_to data_runner_root_path(group: 'paperboy')
+    assert_equal 'circular refresh dependency: Alpha, Beta', flash[:alert]
+  ensure
+    DataRunner::GroupRefresh.define_singleton_method(:start!, original) if original
+  end
+
   test 'queue outage redirects back to the selected group' do
     sign_in
     original = DataRunner::GroupRefresh.method(:start!)

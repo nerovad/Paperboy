@@ -68,12 +68,24 @@ module MssqlHelpers
     %w[1 true yes y on].include?(value.to_s.strip.downcase)
   end
 
-  def connect!(host = nil, database: nil, kerberos: nil)
+  # TinyTDS leaves these off. Indexed views, filtered indexes, and persisted
+  # computed columns reject writes until they are on. NUMERIC_ROUNDABORT stays OFF.
+  # FreeTDS TEXTSIZE defaults to 4096 bytes and would cut nvarchar(max) at 2048 characters.
+  SESSION_OPTIONS = 'SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; ' \
+                    'SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF; SET TEXTSIZE 2147483647;'
+
+  def connect!(host = nil, database: nil, kerberos: nil, timeout: :default)
     require 'tiny_tds'
 
     resolved_host = host.to_s.strip.empty? ? env_any!('MSSQL_HOST', 'GSABSS_HOST') : host
     use_kerberos = kerberos.nil? ? kerberos_host?(resolved_host) : kerberos
-    open_client(connection_options(resolved_host, database, use_kerberos), kerberos: use_kerberos)
+    client = open_client(connection_options(resolved_host, database, use_kerberos, timeout: timeout),
+                         kerberos: use_kerberos)
+    client.execute(SESSION_OPTIONS).do
+    client
+  rescue StandardError
+    client&.close
+    raise
   end
 
   # Auth mode mirrors config/database.yml: a username present means SQL/NTLM
@@ -81,16 +93,18 @@ module MssqlHelpers
   # the ticket in KRB5CCNAME. Kerberos needs tiny_tds built against the system
   # FreeTDS - the precompiled gem ships without GSSAPI support. SQL22_HOST is
   # reached with that ticket even when GSAETL is configured for GSASQL16.
-  def connection_options(host, database, use_kerberos)
-    timeout = env_any('MSSQL_TIMEOUT', 'GSABSS_TIMEOUT').to_s.strip
-    timeout_i = timeout.empty? ? nil : timeout.to_i
+  def connection_options(host, database, use_kerberos, timeout: :default)
+    # FreeTDS uses 0 to wait until the command finishes. TinyTDS replaces a
+    # missing timeout with 5 seconds, which cancels a multi-million-row publish.
+    raw = (timeout == :default ? env_any('MSSQL_TIMEOUT', 'GSABSS_TIMEOUT') : timeout).to_s.strip
+    timeout_i = raw.empty? ? nil : Integer(raw)
     opts = {
       host: host,
       port: (env_any('MSSQL_PORT', 'GSABSS_PORT') || '1433').to_i,
       tds_version: ENV['MSSQL_TDSVER'] || '7.4'
     }
     append_sql_login!(opts) unless use_kerberos
-    opts[:timeout] = timeout_i if timeout_i&.positive?
+    opts[:timeout] = timeout_i unless timeout_i.nil?
     opts[:encrypt] = env_bool('MSSQL_ENCRYPT', default: false) if ENV.key?('MSSQL_ENCRYPT')
     opts[:database] = selected_database(database, use_kerberos)
     opts.compact
@@ -109,7 +123,9 @@ module MssqlHelpers
     return requested unless requested.empty?
     return nil if use_kerberos
 
-    env_any('MSSQL_DATABASE', 'GSABSS_DATABASE').to_s.strip.presence
+    # Inject runs as plain Ruby, so this cannot use ActiveSupport's String#presence.
+    env_database = env_any('MSSQL_DATABASE', 'GSABSS_DATABASE').to_s.strip
+    env_database.empty? ? nil : env_database
   end
 
   def kerberos_host?(host)
