@@ -15,6 +15,46 @@
       box-shadow: 0 0 0 2px var(--sidebar-accent-ring);
     }
   }
+
+  /* The search-mode button with its star. The row takes over the spacing the
+     button carries on its own, so the two sit on one line. */
+  .pb-search-mode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+
+    .pb-advanced-trigger {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+      margin-bottom: 0;
+    }
+  }
+
+  /* Stars the search you are on as your Paperboy start page. */
+  .sidebar-star {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba($surface-base, 0.3);
+    border-radius: $radius-6;
+    background: rgba($surface-base, 0.1);
+    color: $surface-base;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover { background: rgba($surface-base, 0.2); }
+
+    &:focus-visible {
+      outline: 2px solid $surface-base;
+      outline-offset: 2px;
+    }
+
+    &.is-starred { color: $amber-accent; }
+  }
 }
 
 .pb-advanced-form {

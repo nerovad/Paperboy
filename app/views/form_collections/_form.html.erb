@@ -1,0 +1,46 @@
+<%# A collection's name, description and the forms in it. Only the forms the
+    editor may open are offered; one their ACL hides stays in the collection
+    untouched (Forms::Collection#replace_forms). %>
+<% chosen = @collection.form_keys %>
+<%= form_with model: @collection, scope: :collection,
+              url: @collection.persisted? ? form_collection_path(@collection) : form_collections_path do |f| %>
+  <% if @collection.errors.any? %>
+    <div class="form-collection__errors" role="alert">
+      <ul>
+        <% @collection.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name %>
+    <%= f.text_field :name, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, class: "form-control", rows: 2 %>
+  </div>
+
+  <fieldset class="pb-filter-set">
+    <legend>Forms in this collection</legend>
+    <div class="form-collection__forms">
+      <% @library.entries.each_with_index do |entry, index| %>
+        <label class="pb-checkbox">
+          <%= check_box_tag "collection[form_keys][]", entry.key, chosen.include?(entry.key),
+                            id: "form-collection-form-#{index}" %>
+          <span><%= entry.name %><% if entry.number.present? %> <small><%= entry.number %></small><% end %></span>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <%= link_to "Cancel",
+                @collection.persisted? ? form_library_collection_path(@collection) : form_library_path,
+                class: "btn" %>
+    <%= f.submit @collection.persisted? ? "Save collection" : "Create collection", class: "btn approve" %>
+  </div>
+<% end %>

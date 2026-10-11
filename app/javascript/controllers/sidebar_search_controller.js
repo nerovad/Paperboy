@@ -32,7 +32,8 @@ const REFERENCE_RE = /^([a-z]{2,8})?-?(\d{1,9})$/i
 
 export default class extends Controller {
   static targets = ["input", "formLink", "formsList", "destination", "destinationsList", "item",
-                    "emptyState", "command", "reference", "referenceLabel"]
+                    "emptyState", "command", "reference", "referenceLabel",
+                    "hiddenToggle", "showHidden"]
   static values = { debounce: { type: Number, default: 0 } }
 
   connect() {
@@ -70,6 +71,7 @@ export default class extends Controller {
     const searchTerm = this.inputTarget.value.toLowerCase().trim()
     this.filterReference(searchTerm)
     this.filterCommands(searchTerm)
+    this.offerHiddenForms(searchTerm)
 
     if (this.hasItemTarget) {
       this.filterItems()
@@ -99,7 +101,7 @@ export default class extends Controller {
         : rows
 
       ordered.forEach(row => {
-        row.style.display = this.facetHidden(row) ? "none" : ""
+        row.style.display = this.userHidden(row) ? "none" : ""
         this.renderRow(row, { matched: false })
         list.appendChild(row)
       })
@@ -115,10 +117,7 @@ export default class extends Controller {
     })
 
     scored.forEach(({ row, score, ...match }) => {
-      // A form the facets have excluded stays out however well its text
-      // matches — Advanced Search is the narrower question, and a search
-      // inside it should never reach back past it.
-      const visible = score > 0 && !this.facetHidden(row)
+      const visible = score > 0 && !this.userHidden(row)
       row.style.display = visible ? "" : "none"
       this.renderRow(row, { ...match, matched: visible })
       list.appendChild(row)
@@ -246,11 +245,23 @@ export default class extends Controller {
     command.click()
   }
 
-  // Whether Advanced Search has ruled this form out. Set by
-  // advanced_search_controller.js; absent everywhere else, which reads as
-  // "nothing has been ruled out".
-  facetHidden(row) {
-    return row.dataset.facetHidden === "true"
+  // "Show Hidden Forms" is a search option, not a view of the sidebar: the box
+  // is offered only while something is typed, and unticks itself when the
+  // search is cleared so the sidebar goes back to the list its owner chose.
+  offerHiddenForms(searchTerm) {
+    if (!this.hasHiddenToggleTarget) return
+
+    const searching = searchTerm !== ""
+    this.hiddenToggleTarget.hidden = !searching
+    if (!searching) this.showHiddenTarget.checked = false
+  }
+
+  // Whether this is a form its owner took off their sidebar and has not asked
+  // this search to bring back.
+  userHidden(row) {
+    if (row.dataset.userHidden !== "true") return false
+
+    return !(this.hasShowHiddenTarget && this.showHiddenTarget.checked)
   }
 
   // Says so when the filters between them leave nothing, rather than leaving a

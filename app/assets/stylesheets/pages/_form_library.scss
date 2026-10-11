@@ -1,0 +1,251 @@
+@use "base/tokens" as *;
+
+/* The Form Library — the full page behind the sidebar's Advanced Search
+   button. The forms and the collections are on the page; the filters take
+   over the sidebar while it is open.
+
+   The filters' fieldsets, checkboxes and selects are the shared Advanced
+   Search parts (components/_advanced_search.scss), recoloured at the end of
+   this file to sit on the sidebar's dark ground. */
+
+.form-library {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 0 24px;
+}
+
+.form-library__header {
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0 0 4px;
+    color: $text-strong;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted;
+  }
+}
+
+.form-library__crumbs {
+  margin-bottom: 6px;
+  color: $text-muted;
+  font-size: 0.85rem;
+
+  a { color: $brand-navy; }
+}
+
+.form-library__byline { font-size: 0.82rem; }
+
+.form-library__manage {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* --- Creating and editing a collection ---------------------------------- */
+
+.form-collection__forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px 16px;
+  max-height: 22rem;
+  overflow-y: auto;
+
+  small { color: $text-muted; }
+}
+
+.form-collection__errors {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid $form-error-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+
+  ul { margin: 0; padding-left: 18px; }
+}
+
+/* --- Collections --------------------------------------------------------- */
+
+.form-library__collections {
+  margin-bottom: 24px;
+
+  h2 {
+    margin: 0 0 10px;
+    color: $label-color;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.form-library__collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.form-library__collection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid $neutral-border-light;
+  border-left: 4px solid $brand-navy;
+  border-radius: $radius-6;
+  background: $surface-base;
+  color: $text-color;
+  text-decoration: none;
+  transition: box-shadow 0.16s ease-out, transform 0.16s ease-out;
+
+  &:hover {
+    box-shadow: $shadow-soft;
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+
+  strong { color: $brand-navy; }
+
+  span {
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  em {
+    margin-top: 4px;
+    color: $label-color;
+    font-size: 0.78rem;
+    font-style: normal;
+    font-weight: 600;
+  }
+}
+
+/* --- Results ------------------------------------------------------------- */
+
+.form-library__count {
+  margin: 0 0 10px;
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
+.form-library__empty {
+  padding: 32px;
+  border: 1px dashed $border-color;
+  border-radius: $radius-12;
+  color: $text-muted;
+  text-align: center;
+}
+
+.form-library__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 14px 18px;
+  border: 1px solid $neutral-border-light;
+  border-radius: $radius-6;
+  background: $surface-base;
+
+  &:hover { border-color: $brand-navy; }
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+
+    a {
+      color: $brand-navy;
+      text-decoration: none;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: $text-color;
+    font-size: 0.9rem;
+  }
+}
+
+.form-library__row-main { min-width: 0; }
+
+.form-library__row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.form-library__hidden {
+  margin-left: 8px;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-style: italic;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.form-library__number {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: $neutral-pill-bg;
+  color: $neutral-700;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.form-library__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.form-library__org { color: $label-color; }
+
+.form-library__tag {
+  color: $text-muted;
+  text-decoration: none;
+
+  &:hover {
+    color: $brand-navy;
+    text-decoration: underline;
+  }
+}
+
+/* --- Filters, in the sidebar --------------------------------------------- */
+
+.sidebar .form-library-filters {
+  .pb-filter-set {
+    min-width: 0;
+    border-color: rgba($surface-base, 0.25);
+
+    legend { color: $surface-base; }
+  }
+
+  /* The cascade lays its four levels side by side where it has the width; in
+     the sidebar they stack. */
+  .pb-filter-grid { grid-template-columns: 1fr; }
+
+  .pb-filter label,
+  .pb-checkbox { color: $surface-base; }
+
+  .pb-checkbox-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .pb-checkbox-row--scroll { max-height: 260px; }
+}
+
+.form-library-filters__clear { width: 100%; }

@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
-# Advanced Search over the forms you can *fill out* — the facets in the
-# sidebar's panel, and the rule for whether a form survives them.
+# Advanced Search over the forms you can *fill out* — the facets the Form
+# Library offers in the sidebar while it is open.
 #
 # Not to be confused with FormSearch, which searches forms already submitted
 # and lives on the Submissions list. This one never reads a submission row: it
-# narrows the sidebar's list of blank forms by the metadata an admin set on the
-# template in the form builder (see Forms::Template's FORM_TYPES and org
-# columns).
+# describes the blank forms by the metadata an admin set on the template in
+# the form builder (see Forms::Template's FORM_TYPES and org columns).
 #
 #   finder = FormFinder.new(visible_templates)
 #   finder.org_tree        # every org code in use, nested for the cascade
@@ -16,9 +15,8 @@
 #
 # Facets are built from the templates handed in — the ones that survived the
 # ACL for this viewer — rather than from every template in the database, so the
-# panel can never offer a choice that returns nothing. Narrowing itself happens
-# in the browser: the sidebar has already rendered every link the viewer may
-# use, so there is nothing to fetch and no round trip to wait on.
+# filters can never offer a choice that returns nothing. The narrowing itself
+# is FormLibrary's.
 class FormFinder
   # Each level of the cascade, paired with the model that names its codes and
   # how a chosen row is written out. Unit keeps its code in the label because a

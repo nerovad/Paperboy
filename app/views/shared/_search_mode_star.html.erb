@@ -1,0 +1,26 @@
+<%# The star beside the sidebar's search-mode button. It speaks for the page
+    you are on, not for the button next to it: that button names where you can
+    go, and the star says whether here is your Paperboy start page
+    (FormsController#home).
+
+    It is a submit button for a form rendered elsewhere in the sidebar
+    (#search-mode-form), because in Advanced Search mode this sits inside the
+    filters' own form and one form cannot hold another.
+
+    Quick Search is the start page until something else is starred, so its
+    star cannot be taken off — only moved. Un-starring Advanced Search moves
+    it back.
+
+    Locals:
+      mode     "quick" or "advanced" — the search this page is
+      starred  whether that search is the current start page %>
+<%
+  name = mode == "advanced" ? "Advanced Search" : "Quick Search"
+  label = starred ? "#{name} is your start page" : "Make #{name} your start page"
+%>
+<button type="submit" form="search-mode-form" name="mode"
+        value="<%= starred ? "quick" : mode %>"
+        class="sidebar-star<%= " is-starred" if starred %>"
+        aria-pressed="<%= starred %>" aria-label="<%= label %>" title="<%= label %>">
+  <%= starred ? "★" : "☆" %>
+</button>

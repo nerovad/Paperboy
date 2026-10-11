@@ -461,6 +461,13 @@ Rails.application.routes.draw do
   # Where a visitor without a Development or Stage grant is sent.
   get '/environment_access', to: 'environment_access#show', as: :environment_access
   get 'forms/home'
+  # Every form the viewer may fill out, on a page of its own. Looking at a
+  # collection is the same page narrowed to a named group of them; making and
+  # changing one is FormCollectionsController.
+  get '/form_library', to: 'form_library#index', as: :form_library
+  resources :form_collections, path: 'form_library/collections', except: %i[index show]
+  get '/form_library/collections/:collection', to: 'form_library#index', as: :form_library_collection,
+                                               constraints: { collection: /\d+/ }
   get '/form_success', to: 'shared#form_success', as: :form_success
   get '/ticket_success', to: 'shared#ticket_success', as: :ticket_success
 
@@ -628,6 +635,8 @@ Rails.application.routes.draw do
 
   # Per-user column/filter layout for the Inbox & Submissions tables
   patch '/settings/table_layout', to: 'settings#table_layout', as: :settings_table_layout
+  patch '/settings/sidebar_form', to: 'settings#sidebar_form', as: :settings_sidebar_form
+  patch '/settings/default_search', to: 'settings#default_search', as: :settings_default_search
 
   resources :form_submission_copies, only: [] do
     member do

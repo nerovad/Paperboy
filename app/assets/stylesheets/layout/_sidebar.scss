@@ -141,6 +141,28 @@
     font-style: italic;
     opacity: 0.75;
   }
+
+  /* "Show Hidden Forms" — offered under the search box while a search is on,
+     to someone who has taken forms off their own sidebar. */
+  .sidebar-show-hidden {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 0.85em;
+    cursor: pointer;
+
+    &[hidden] { display: none; }
+
+    input { margin: 0; }
+  }
+
+  /* A hidden form a search has brought back, marked so it does not read as
+     having returned to the sidebar for good. */
+  .nav-link[data-user-hidden="true"] {
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+    opacity: 0.8;
+  }
   
   .nav-link {
     display: block;

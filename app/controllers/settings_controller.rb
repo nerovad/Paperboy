@@ -33,6 +33,31 @@ class SettingsController < ApplicationController
     end
   end
 
+  # Takes one form off this person's sidebar, or puts it back. Reached from a
+  # row in the Form Library. Only a form they may open can be named: the list
+  # is theirs, but it is not somewhere to park arbitrary strings.
+  def sidebar_form
+    catalog = FormCatalog.new(admin: helpers.system_admin?,
+                              permitted_keys: current_user_form_permission_keys)
+    form_key = params[:form_key].to_s
+    return head :bad_request unless catalog.forms.any? { |name, _| catalog.key_for(name) == form_key }
+
+    current_user_settings.set_form_hidden(form_key, params[:hidden] == '1')
+    redirect_back fallback_location: form_library_path
+  end
+
+  # Stars one search as this person's Paperboy start page. Reached from the
+  # star in the sidebar, which stars the search the person is on.
+  def default_search
+    mode = params[:mode].to_s
+    return head :bad_request unless UserSetting::SEARCH_MODES.include?(mode)
+
+    settings = current_user_settings
+    settings.default_search_mode = mode
+    settings.save
+    redirect_back fallback_location: forms_home_path
+  end
+
   private
 
   # Normalize the incoming ordered field list into plain strings / hashes for

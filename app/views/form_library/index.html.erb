@@ -1,0 +1,105 @@
+<%# The Form Library — every form the viewer may fill out, with the metadata an
+    admin set on it in the form builder. The search box and facets that narrow
+    it are in the sidebar (form_library/_sidebar_filters).
+
+    A collection's page is this same view: the list arrives already narrowed
+    to the group, and the sidebar's filters work inside it. Every criterion is
+    a GET param, so whatever is on screen can be bookmarked or sent on. %>
+<%
+  collection  = @library.collection
+  search_path = collection ? form_library_collection_path(collection) : form_library_path
+  count       = @library.results.size
+%>
+<div class="form-library">
+  <header class="form-library__header">
+    <% if collection %>
+      <nav class="form-library__crumbs" aria-label="Breadcrumb">
+        <%= link_to "Form Library", form_library_path %> <span aria-hidden="true">›</span>
+        <span><%= collection.name %></span>
+      </nav>
+      <h1><%= collection.name %></h1>
+      <% if collection.description.present? %><p><%= collection.description %></p><% end %>
+      <p class="form-library__byline">
+        Created<%= " by #{collection.created_by_name}" if collection.created_by_name.present? %>
+        on <%= collection.created_at.strftime("%B %-d, %Y") %>
+      </p>
+      <% if @library.manager? %>
+        <div class="form-library__manage">
+          <%= link_to "Edit collection", edit_form_collection_path(collection), class: "btn edit compact" %>
+          <%= button_to "Delete collection", form_collection_path(collection), method: :delete,
+                        class: "btn deny compact",
+                        data: { turbo_confirm: "Delete #{collection.name}? The forms in it are not affected.",
+                                confirm_title: "Delete collection", confirm_label: "Delete" } %>
+        </div>
+      <% end %>
+    <% else %>
+      <h1>Form Library</h1>
+      <p>Every form you can fill out. Search and narrow them with the filters in the sidebar.</p>
+      <% if @library.manager? %>
+        <div class="form-library__manage">
+          <%= link_to "New collection", new_form_collection_path, class: "btn approve compact" %>
+        </div>
+      <% end %>
+    <% end %>
+  </header>
+
+  <% if collection.nil? && @library.matching_collections.any? %>
+    <section class="form-library__collections" aria-labelledby="form-library-collections-title">
+      <h2 id="form-library-collections-title">Collections</h2>
+      <div class="form-library__collection-grid">
+        <% @library.matching_collections.each do |group, form_count| %>
+          <%= link_to form_library_collection_path(group), class: "form-library__collection" do %>
+            <strong><%= group.name %></strong>
+            <span><%= group.description %></span>
+            <em><%= pluralize(form_count, "form") %></em>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+    <section class="form-library__results" aria-live="polite">
+      <p class="form-library__count">
+        <%= pluralize(count, "form") %><%= " of #{@library.entries.size}" if count != @library.entries.size %>
+      </p>
+
+      <% if @library.results.empty? %>
+        <p class="form-library__empty">
+          No forms match.
+          <%= link_to "Clear filters", search_path if @library.filtered? %>
+        </p>
+      <% end %>
+
+      <% @library.results.each do |entry| %>
+        <% org_path = @library.org_path(entry) %>
+        <article class="form-library__row">
+          <div class="form-library__row-main">
+            <h3>
+              <%= link_to entry.name, entry.path %>
+              <% if entry.number.present? %><span class="form-library__number"><%= entry.number %></span><% end %>
+              <% if @library.hidden_from_sidebar?(entry) %><span class="form-library__hidden">Hidden from your sidebar</span><% end %>
+            </h3>
+            <% if entry.description.present? %><p><%= entry.description %></p><% end %>
+            <% if org_path.present? || entry.form_type.present? || entry.tags.any? %>
+              <div class="form-library__meta">
+                <% if entry.form_type.present? %><span class="pb-search-chip"><%= entry.form_type %></span><% end %>
+                <% if org_path.present? %><span class="form-library__org"><%= org_path %></span><% end %>
+                <% entry.tags.each do |tag| %>
+                  <%= link_to "##{tag}", url_for(tag: [tag]), class: "form-library__tag" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+          <div class="form-library__row-actions">
+            <%# A preference, not a permission: it only takes the form off this
+                person's own sidebar list. %>
+            <% hidden = @library.hidden_from_sidebar?(entry) %>
+            <%= button_to hidden ? "Show in sidebar" : "Hide from sidebar", settings_sidebar_form_path,
+                          method: :patch, params: { form_key: entry.key, hidden: hidden ? "0" : "1" },
+                          class: "btn ghost compact" %>
+            <%= link_to "Open", entry.path, class: "btn pdf compact" %>
+          </div>
+        </article>
+      <% end %>
+    </section>
+</div>
