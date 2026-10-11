@@ -57,7 +57,7 @@ class SearchModeStarTest < ActionController::TestCase
     without_templates { get :home }
 
     assert_response :success
-    assert_select '.sidebar .sidebar-star[value=advanced][aria-pressed=false]', count: 1
+    assert_select '.sidebar .sidebar-star.is-starred[aria-pressed=true]', count: 1
   end
 
   test 'with advanced search starred the front door opens the form library' do
@@ -80,16 +80,21 @@ class SearchModeStarTest < ActionController::TestCase
     without_templates { get :home }
 
     assert_response :success
-    assert_select '.sidebar .sidebar-star.is-starred[value=quick]', count: 1
+    assert_select '.sidebar .sidebar-star[value=quick][aria-pressed=false]', count: 1
   end
 
-  test 'the library shows the quick search star, lit when quick is the start page' do
+  test 'the library star speaks for advanced search, the page it is on' do
     @controller = FormLibraryController.new
     sign_in
 
     without_templates { get :index }
 
-    assert_select '.sidebar .sidebar-star.is-starred[form=search-mode-form]', count: 1
+    assert_select '.sidebar .sidebar-star[value=advanced][aria-pressed=false][form=search-mode-form]', count: 1
     assert_select '.sidebar form#search-mode-form[action=?]', settings_default_search_path
+
+    star('advanced')
+    without_templates { get :index }
+
+    assert_select '.sidebar .sidebar-star.is-starred[value=quick]', count: 1
   end
 end

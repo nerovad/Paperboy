@@ -47,7 +47,7 @@ class SettingsController < ApplicationController
   end
 
   # Stars one search as this person's Paperboy start page. Reached from the
-  # star beside the sidebar's search-mode button.
+  # star in the sidebar, which stars the search the person is on.
   def default_search
     mode = params[:mode].to_s
     return head :bad_request unless UserSetting::SEARCH_MODES.include?(mode)

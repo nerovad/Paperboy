@@ -24,7 +24,7 @@
   <div class="pb-search-mode">
     <%= link_to "Quick Search", forms_home_path,
                 class: "btn secondary compact pb-advanced-trigger has-filters" %>
-    <%= render "shared/search_mode_star", mode: "quick", starred: search_mode == "quick" %>
+    <%= render "shared/search_mode_star", mode: "advanced", starred: search_mode == "advanced" %>
   </div>
 
   <% if library.finder.org_tree[:agencies].any? %>

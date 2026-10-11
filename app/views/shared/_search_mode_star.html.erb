@@ -1,5 +1,7 @@
-<%# The star beside the sidebar's search-mode button. Starring a mode makes it
-    this person's Paperboy start page (FormsController#home).
+<%# The star beside the sidebar's search-mode button. It speaks for the page
+    you are on, not for the button next to it: that button names where you can
+    go, and the star says whether here is your Paperboy start page
+    (FormsController#home).
 
     It is a submit button for a form rendered elsewhere in the sidebar
     (#search-mode-form), because in Advanced Search mode this sits inside the
@@ -10,8 +12,8 @@
     it back.
 
     Locals:
-      mode     "quick" or "advanced" — the mode the button beside it opens
-      starred  whether that mode is the current start page %>
+      mode     "quick" or "advanced" — the search this page is
+      starred  whether that search is the current start page %>
 <%
   name = mode == "advanced" ? "Advanced Search" : "Quick Search"
   label = starred ? "#{name} is your start page" : "Make #{name} your start page"

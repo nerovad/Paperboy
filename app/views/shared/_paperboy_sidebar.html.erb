@@ -56,7 +56,7 @@
     <div class="pb-search-mode">
       <%= link_to "Advanced Search", form_library_path,
                   class: "btn secondary compact pb-advanced-trigger" %>
-      <%= render "shared/search_mode_star", mode: "advanced", starred: search_mode == "advanced" %>
+      <%= render "shared/search_mode_star", mode: "quick", starred: search_mode == "quick" %>
     </div>
 
     <%# Offered only while something is typed in the box above, and only to
