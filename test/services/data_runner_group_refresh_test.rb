@@ -37,6 +37,32 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
     end
   end
 
+  test 'cancel destroys the running refresh and does not queue another' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
+                                       status: 'running', total_count: 2)
+    first = run.items.create!(dsl_name: 'First', dsl_slug: 'first', position: 0, status: 'running')
+    second = run.items.create!(dsl_name: 'Second', dsl_slug: 'second', position: 1)
+    enqueued = false
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) { enqueued = true }) do
+      assert DataRunner::GroupRefresh.cancel!(run)
+    end
+
+    assert_not enqueued
+    assert_nil DataRunner::GroupRun.find_by(id: run.id)
+    assert_nil DataRunner::GroupRunItem.find_by(id: first.id)
+    assert_nil DataRunner::GroupRunItem.find_by(id: second.id)
+  end
+
+  test 'cancel leaves a finished refresh in place' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
+                                       status: 'succeeded', total_count: 1, completed_count: 1,
+                                       completed_at: Time.current)
+
+    assert_not DataRunner::GroupRefresh.cancel!(run)
+    assert DataRunner::GroupRun.find_by(id: run.id)
+  end
+
   test 'raises queue unavailable when the job queue refuses the enqueue' do
     entry = Struct.new(:key, :slug).new('Sample', 'sample')
     error = StandardError.new('enqueue failed')

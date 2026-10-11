@@ -17,12 +17,13 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select 'ol.progress-tracker__items[tabindex=?][aria-label=?]', '0', 'Refresh progress'
     assert_select 'li.progress-tracker__item', count: 2
     assert_select '.progress-tracker__item-label', text: /Succeeded · 1.3s/
-    assert_select 'form[action=?]', data_runner_refresh_dsl_group_path(run.group_name, restart: 1) do
-      assert_select 'button.btn.warning', text: 'Restart interrupted refresh'
+    assert_select 'form[action=?]', cancel_data_runner_group_run_path(run) do
+      assert_select 'button.btn.deny', text: 'Cancel refresh'
     end
     assert_select '[data-turbo-confirm=?]',
-                  'Restart this refresh? The running refresh will stop and its progress will be cleared. ' \
-                  'Every DSL starts over.'
+                  'Cancel this refresh? The running refresh will stop and its progress will be cleared.'
+    assert_select '[data-confirm-title=?]', 'Cancel refresh'
+    assert_select '[data-confirm-label=?]', 'Cancel refresh'
     assert_select 'p', text: /Processing will continue/
   end
 
@@ -47,6 +48,32 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select '[data-progress-status=?]', 'running'
     assert_select 'ol.progress-tracker__items[aria-label=?]', 'Refresh progress'
     assert_select 'progress[max=?][value=?]', '2', '0'
+    assert_select 'button.btn.deny', text: 'Cancel refresh'
+  end
+
+  test 'cancel stops the running refresh and clears its queue' do
+    sign_in
+    run = create_run
+
+    post :cancel, params: { id: run.id }
+
+    assert_redirected_to data_runner_root_path(group: run.group_name)
+    assert_equal 'Chart of accounts refresh canceled.', flash[:notice]
+    assert_nil DataRunner::GroupRun.find_by(id: run.id)
+    assert_equal 0, DataRunner::GroupRunItem.where(group_run_id: run.id).count
+  end
+
+  test 'cancel leaves a finished refresh in place' do
+    sign_in
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'chart_of_accounts',
+                                       status: 'failed', total_count: 1, completed_count: 1,
+                                       failed_count: 1, completed_at: Time.current)
+
+    post :cancel, params: { id: run.id }
+
+    assert_redirected_to data_runner_group_run_path(run)
+    assert_equal 'Chart of accounts refresh is no longer running.', flash[:alert]
+    assert DataRunner::GroupRun.find_by(id: run.id)
   end
 
   test 'offers to restart a failed refresh' do

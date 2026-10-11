@@ -64,10 +64,18 @@
   </ol>
 
   <% if run.active? %>
+    <% action_path = local_assigns.fetch(:active_action_path) { interrupted_restart_path } %>
+    <% action_label = local_assigns.fetch(:active_action_label, "Restart interrupted refresh") %>
+    <% action_variant = local_assigns.fetch(:active_action_variant, "warning") %>
+    <% action_confirmation = local_assigns.fetch(:active_action_confirmation) do
+         "Restart this refresh? The running refresh will stop and its progress will be cleared. Every DSL starts over."
+       end %>
     <div class="progress-tracker__actions">
-      <%= button_to "Restart interrupted refresh", interrupted_restart_path,
-                    method: :post, class: "btn warning",
-                    data: { turbo_confirm: "Restart this refresh? The running refresh will stop and its progress will be cleared. Every DSL starts over." } %>
+      <%= button_to action_label, action_path,
+                    method: :post, class: "btn #{action_variant}",
+                    data: { turbo_confirm: action_confirmation,
+                            confirm_title: action_label,
+                            confirm_label: action_label } %>
     </div>
   <% end %>
 

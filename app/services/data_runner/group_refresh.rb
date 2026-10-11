@@ -13,6 +13,20 @@ module DataRunner
       create!(group: group, entries: entries, requested_by: requested_by, restart: true)
     end
 
+    # Stop this refresh and drop its queue. The worker sees the row is gone
+    # and kills the rake children. No replacement is queued.
+    def self.cancel!(run)
+      canceled = false
+      GroupRun.transaction do
+        locked = GroupRun.active.where(id: run.id).lock.first
+        next unless locked
+
+        locked.destroy!
+        canceled = true
+      end
+      canceled
+    end
+
     def self.create!(group:, entries:, requested_by:, restart: false)
       validate_entries!(group, entries)
       run = nil
