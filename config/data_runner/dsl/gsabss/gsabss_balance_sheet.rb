@@ -31,9 +31,9 @@
       ['balance_sheet_account_code', 'balance_sheet_account_code', 'nvarchar(4)', 'NOT NULL', nil],
       ['balance_sheet_account_name', 'balance_sheet_account_name', 'nvarchar(100)', 'NOT NULL', nil],
       ['balance_sheet_account_short_name', 'balance_sheet_account_short_name', 'nvarchar(50)', 'NOT NULL', nil],
-      ['balance_sheet_account_description', 'balance_sheet_account_description', 'nvarchar(100)', 'NOT NULL', nil],
+      ['balance_sheet_account_description', 'balance_sheet_account_description', 'nvarchar(100)', 'NULL', nil],
       ['active', 'active', 'bit', 'NOT NULL', nil],
-      ['bsg_cd', 'bsg_cd', 'nvarchar(10)', 'NOT NULL', nil]
+      ['bsg_cd', 'bsg_cd', 'nvarchar(10)', 'NULL', nil]
     ],
     database_connections: [
       {
