@@ -14,7 +14,7 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
     assert_match 'require an OMS number', error.message
   end
 
-  test 'restart fails the interrupted run and queues a replacement' do
+  test 'restart clears the interrupted run and queues a replacement from the start' do
     interrupted = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
                                                status: 'running', total_count: 1)
     item = interrupted.items.create!(dsl_name: 'Sample', dsl_slug: 'sample', position: 0,
@@ -27,14 +27,71 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
         group: 'sample', entries: [entry], requested_by: 'employee@example.com'
       )
 
-      assert_equal 'failed', interrupted.reload.status
-      assert_equal 1, interrupted.completed_count
-      assert_equal 1, interrupted.failed_count
-      assert_equal 'failed', item.reload.status
-      assert_equal 'Interrupted refresh was restarted', item.error_message
+      assert_nil DataRunner::GroupRun.find_by(id: interrupted.id)
+      assert_nil DataRunner::GroupRunItem.find_by(id: item.id)
       assert_equal 'queued', replacement.status
+      assert_equal 0, replacement.completed_count
+      assert_equal 0, replacement.failed_count
+      assert_equal ['pending'], replacement.items.pluck(:status)
       assert_equal replacement.id, enqueued_run_id
     end
+  end
+
+  test 'cancel destroys the running refresh and does not queue another' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
+                                       status: 'running', total_count: 2)
+    first = run.items.create!(dsl_name: 'First', dsl_slug: 'first', position: 0, status: 'running')
+    second = run.items.create!(dsl_name: 'Second', dsl_slug: 'second', position: 1)
+    enqueued = false
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) { enqueued = true }) do
+      assert DataRunner::GroupRefresh.cancel!(run)
+    end
+
+    assert_not enqueued
+    assert_nil DataRunner::GroupRun.find_by(id: run.id)
+    assert_nil DataRunner::GroupRunItem.find_by(id: first.id)
+    assert_nil DataRunner::GroupRunItem.find_by(id: second.id)
+  end
+
+  test 'cancel leaves a finished refresh in place' do
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid, group_name: 'sample',
+                                       status: 'succeeded', total_count: 1, completed_count: 1,
+                                       completed_at: Time.current)
+
+    assert_not DataRunner::GroupRefresh.cancel!(run)
+    assert DataRunner::GroupRun.find_by(id: run.id)
+  end
+
+  test 'stores a child after its parent when the child sorts first' do
+    child = refresh_entry('A_child', 'Z_parent')
+    middle = refresh_entry('M_middle')
+    parent = refresh_entry('Z_parent')
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) {}) do
+      run = DataRunner::GroupRefresh.start!(
+        group: 'ordered', entries: [child, middle, parent], requested_by: 'employee@example.com'
+      )
+
+      assert_equal %w[M_middle Z_parent A_child], run.items.order(:position).pluck(:dsl_name)
+    end
+  end
+
+  test 'does not queue a refresh whose dependencies cycle' do
+    enqueued = false
+    child = refresh_entry('Alpha', 'Beta')
+    parent = refresh_entry('Beta', 'Alpha')
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) { enqueued = true }) do
+      assert_raises(DataRunner::GroupRefreshOrder::Error) do
+        DataRunner::GroupRefresh.start!(
+          group: 'cycle', entries: [child, parent], requested_by: 'employee@example.com'
+        )
+      end
+    end
+
+    assert_not enqueued
+    assert_nil DataRunner::GroupRun.find_by(group_name: 'cycle')
   end
 
   test 'raises queue unavailable when the job queue refuses the enqueue' do
@@ -49,5 +106,13 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
         )
       end
     end
+  end
+
+  private
+
+  def refresh_entry(key, dependency = nil)
+    config = {}
+    config[:dependency] = dependency if dependency
+    Data.define(:key, :slug, :config).new(key: key, slug: key.downcase, config: config)
   end
 end

@@ -1,5 +1,5 @@
 <% if user_signed_in? %>
-  <div class="page-heading"><div><p class="eyebrow">ETL control center</p><h1><%= @selected_group ? @selected_group.humanize : "DataRunner DSLs" %></h1></div></div>
+  <div class="page-heading"><div><h1>ETL CONTROL CENTER: <%= @selected_group ? @selected_group.humanize : "DataRunner DSLs" %></h1></div></div>
   <% if @selected_group && !can_use_app_feature?("data_runner", "manage_groups") %>
     <%# Without the "Create and manage DSL groups" grant the group is still
         browsable — the editing toolbar, the drop zone and the rename/delete/

@@ -31,6 +31,28 @@ class WorkflowTest < ActiveSupport::TestCase
     ENV[Workflow::ORCHESTRATION_ENV] = previous
   end
 
+  test 'replicate steps stream the extract and then inject' do
+    assert_equal %i[replicate inject], Workflow::REPLICATE_STEPS
+    assert_not_includes Workflow::ALL_STEPS, :replicate
+    assert_equal %w[replicate.rb inject.rb], Workflow.refresh_scripts(Workflow::REPLICATE_STEPS)
+    assert_equal %w[download.rb to_csv.rb use_dsl.rb inject.rb], Workflow.refresh_scripts(Workflow::SCHEDULED_STEPS)
+
+    cfg = {
+      steps: {
+        manual: { enabled: true, steps: Workflow::REPLICATE_STEPS },
+        scheduled: { enabled: false, frequency: :daily, steps: Workflow::REPLICATE_STEPS }
+      }
+    }
+
+    assert Workflow.wants_step?(cfg, :replicate)
+    assert Workflow.wants_step?(cfg, :inject)
+    assert_not Workflow.wants_step?(cfg, :download)
+    assert_not Workflow.wants_step?(cfg, :to_csv)
+    assert_not Workflow.wants_step?(cfg, :use_dsl)
+    assert_not Workflow.wants_scheduled_step?(cfg, :replicate, :daily)
+    assert_not Workflow.wants_scheduled_step?(cfg, :inject, :daily)
+  end
+
   test 'normalizes legacy workflow settings' do
     legacy = {
       steps: {

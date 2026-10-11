@@ -7,14 +7,16 @@ class DatabaseDslCreator
 
   Preview = Data.define(
     :server, :database, :schema, :table,
-    :replicate, :target_server, :target_database, :target_schema, :target_table
+    :replicate, :target_server, :target_database, :target_schema, :target_table,
+    :slug, :key, :group, :local, :headers
   ) do
     def to_a = deconstruct
   end
   IDENTIFIER = /\A[A-Za-z0-9_]+\z/
 
   def initialize(server:, database:, table:, replicate: false, target: {}, catalog: DataRunnerDatabaseCatalog.new,
-                 dsl_directory: Rails.root.join('config/data_runner/dsl/other_dsls'))
+                 dsl_directory: Rails.root.join('config/data_runner/dsl/other_dsls'),
+                 dsl_root: Rails.root.join('config/data_runner/dsl'))
     @server = server.to_s.strip
     @database = database.to_s.strip
     @table = table.to_s.strip
@@ -26,21 +28,25 @@ class DatabaseDslCreator
     @target_table = @table.split('.', 2).last if @replicate && @target_table.empty?
     @catalog = catalog
     @dsl_directory = Pathname.new(dsl_directory)
+    @dsl_root = Pathname.new(dsl_root)
+    @headers = []
   end
 
   def create!
     preview = preview!
+    if preview.replicate
+      write_replication_dsl!(preview)
+      DslCatalog.reload!
+      return preview.slug
+    end
+
     table_name = preview.table
     create_initial_dsl!(preview) unless dsl_path(table_name).file?
-    unless preview.replicate
-      run_task!('DataRunner:dump_sql', table_name)
-      run_task!('DataRunner:use_sql', table_name)
-    end
+    run_task!('DataRunner:dump_sql', table_name)
+    run_task!('DataRunner:use_sql', table_name)
     run_task!('DataRunner:from_sql', table_name)
 
     DslCatalog.reload!
-    return table_name if preview.replicate
-
     entry = DslCatalog.find!(table_name)
     raise ImportFailed, 'The database DSL was created without column mappings.' if entry.config.fetch(:header, []).empty?
 
@@ -52,11 +58,15 @@ class DatabaseDslCreator
   def preview!
     validate_selection!
     schema, table_name = @table.split('.', 2)
+    slug = @replicate ? DatabaseReplicationDsl.slug_for(@database, table_name) : table_name
+    group = @replicate ? DatabaseReplicationDsl.group_name(@database) : nil
     Preview.new(
       server: @server, database: @database, schema: schema, table: table_name,
       replicate: @replicate,
       target_server: @target_server, target_database: @target_database,
-      target_schema: @target_schema, target_table: @target_table
+      target_schema: @target_schema, target_table: @target_table,
+      slug: slug, key: slug.to_s.sub(/\A./, &:upcase), group: group,
+      local: (@replicate ? "#{slug}.csv" : nil), headers: @headers
     )
   end
 
@@ -74,33 +84,17 @@ class DatabaseDslCreator
     @dsl_directory.join("#{table_name}.rb")
   end
 
-  def write_dsl!(preview)
-    File.write(dsl_path(preview.table), DatabaseReplicationDsl.render(preview))
-  end
-
-  def create_initial_dsl!(preview)
-    return write_dsl!(preview) if preview.replicate
-
-    qualified_name = [preview.server, preview.database, preview.schema, preview.table].join('.')
-    run_task!('DataRunner:dsl_stub', qualified_name)
+  def write_replication_dsl!(preview)
+    DatabaseReplicationDsl.write!(preview, @dsl_root)
+  rescue DatabaseReplicationDsl::AlreadyExists => e
+    raise ImportFailed, e.message
   end
 
   def validate_selection!
-    databases = @catalog.databases(@server)
-    raise ImportFailed, 'Select a database.' unless databases.include?(@database)
-    raise ImportFailed, 'Select a table.' unless @catalog.tables(@server, @database).include?(@table)
-
-    schema, table_name = @table.split('.', 2)
-    source_identifiers = [schema, table_name].all? { |value| value&.match?(IDENTIFIER) }
-    raise ImportFailed, 'The selected schema and table must use letters, numbers, and underscores.' unless source_identifiers
-    return unless @replicate
-
-    target_databases = @catalog.databases(@target_server)
-    raise ImportFailed, 'Select a target database.' unless target_databases.include?(@target_database)
-    return if [@target_schema, @target_table].all? { |value| value.match?(IDENTIFIER) }
-
-    raise ImportFailed, 'Target schema and table must use letters, numbers, and underscores.'
-  rescue DataRunnerDatabaseCatalog::ConnectionError => e
-    raise ImportFailed, e.message
+    selection = DatabaseDslSelection.new(
+      catalog: @catalog, server: @server, database: @database, table: @table, replicate: @replicate,
+      target: { server: @target_server, database: @target_database, schema: @target_schema, table: @target_table }
+    )
+    @headers = selection.headers
   end
 end

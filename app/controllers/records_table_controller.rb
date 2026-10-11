@@ -5,6 +5,8 @@
 # Inbox/Submissions. Tables that declare a `route:` (e.g. P-Cards) are bounced
 # to their own richer screen instead.
 class RecordsTableController < ApplicationController
+  include Pagy::Method
+
   before_action :set_table, only: :show
 
   def show
@@ -18,6 +20,8 @@ class RecordsTableController < ApplicationController
         @filter_options = view.filter_options
         @default_sort = view.default_sort
         @records = view.rows
+        @pagy, @grid_rows = pagy(:offset, @records,
+                                 limit: Pfa::Grid::Table::PAGE_ROWS, count: @records.size)
         @highlights = view.highlights
         @highlight_counts = view.highlight_counts
         @view_params = ScheduledRecordExport.view_params_from(request.query_parameters)

@@ -192,6 +192,31 @@ variable everyone needs is added to `LockBox/Paperboy.env`; one that belongs
 to a single machine or person goes in `.env.local`, which wins over `.env`
 and is never overwritten. `.env.local.example` lists the usual ones.
 
+## Test environments
+
+Development and Stage are for testing. Staff kept doing real work in Stage by
+accident, so neither opens to somebody just because they can sign in:
+`ApplicationController#require_environment_access` asks, on every request,
+for an `environment` grant keyed `dev` or `stage` (`EnvironmentAccess`). It
+is given in ACL > Test Environments, to a group or an org level. Someone
+without it lands on `/environment_access`, which points them at Production
+and the Paperboy-Support channel. Production, the test suite and localhost
+are never gated.
+
+Rules:
+
+- **Production never asks for this grant.** Do not add it to
+  `EnvironmentAccess::ENVIRONMENTS`.
+- **`system_admins` and an active emulation always pass**, so the ACL can
+  be repaired and an admin can test as somebody who holds no grant.
+- **A controller that must answer an ungranted, signed-in user** (signing
+  out, the landing page itself) says so with
+  `skip_before_action :require_environment_access`. Skipping
+  `require_sign_in` does not skip it.
+- Grants are authored on Dev and reach Stage in `db/acl.yml`. Contractor
+  memberships do not travel, so a contractor who tests on Stage is added to
+  a granted group on Stage itself.
+
 ## Stylesheets
 
 SCSS is compiled by **Dart Sass** (`dartsass-rails` + `sass-embedded`).

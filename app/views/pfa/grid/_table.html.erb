@@ -1,0 +1,51 @@
+<%# Generic table renderer. Callers own data access, filtering, and sorting.
+    locals: columns, rows,
+            header (column -> safe header content),
+            cell (column, row -> cell content),
+            cell_markup (optional; cell returns a complete td),
+            row_attributes (optional; row -> hash for the tr),
+            action_header, action_cell (optional pair),
+            filters (optional; per-column search row for a small table),
+            interactive (optional; client sort via the pfa-grid controller),
+            data_controller, table_class, wrapper_class, wrapper_target,
+            scrollport (optional, default true; false leaves overflow to the page). %>
+<% scrollport = local_assigns.fetch(:scrollport, true) %>
+<div class="<%= scrollport ? 'pfa-grid__scrollport' : 'pfa-grid__frame' %> <%= local_assigns[:wrapper_class] %>"
+     <% if local_assigns[:wrapper_target] %>data-column-customizer-target="tableContainer"<% end %>>
+  <table class="pfa-grid__table <%= local_assigns[:table_class] %>"
+         <%= tag.attributes(data: {
+               controller: local_assigns[:data_controller] || (local_assigns[:interactive] ? 'pfa-grid' : nil)
+             }) %>>
+    <thead>
+      <tr><% columns.each_with_index do |column, index| %><th scope="col" data-column-index="<%= index %>"
+            data-sort-type="<%= column.respond_to?(:sort_type) ? column.sort_type : 'text' %>">
+        <% if local_assigns[:interactive] %>
+          <button type="button" class="pfa-grid__sort" data-action="pfa-grid#sort" aria-sort="none">
+            <%= column.label %><span aria-hidden="true"></span>
+          </button>
+        <% else %><%= header.call(column) %><% end %>
+      </th><% end %>
+      <% if local_assigns[:action_header] %><th class="pfa-grid__actions"><%= local_assigns[:action_header] %></th><% end %>
+      </tr>
+      <% if local_assigns[:filters] %>
+        <tr class="pfa-grid__filters column-filters"><% columns.each_with_index do |column, index| %>
+          <th><input type="search" data-pfa-grid-target="filter" data-column-index="<%= index %>"
+                     placeholder="Filter <%= column.label %>" aria-label="Filter <%= column.label %>"></th>
+        <% end %>
+        <% if local_assigns[:action_header] %><th class="pfa-grid__actions"></th><% end %>
+        </tr>
+      <% end %>
+    </thead>
+    <tbody>
+      <% rows.each do |row| %>
+        <tr <%= tag.attributes(local_assigns[:row_attributes]&.call(row) || {}) %>>
+          <% columns.each do |column| %>
+            <% rendered_cell = cell.call(column, row) %>
+            <% if local_assigns[:cell_markup] %><%= rendered_cell %><% else %><td><%= rendered_cell %></td><% end %>
+          <% end %>
+          <% if local_assigns[:action_header] %><td class="pfa-grid__actions"><%= local_assigns[:action_cell].call(row) %></td><% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

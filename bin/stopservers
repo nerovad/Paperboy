@@ -19,14 +19,42 @@ is_supported_process() {
      $command == *"dartsass:watch"* || $command == *"sass-embedded"* ]]
 }
 
-process_belongs_to_app() {
-  local pid=$1 process_cwd command
+# DataRunner starts each refresh with its own process group, so stopping
+# Solid Queue does not reach the rake process or the inject child.
+command_is_datarunner() {
+  local command=$1
+
+  [[ $command == *'rake DataRunner:'* ||
+     $command == *'script/ruby/data_runner/commands/'* ]]
+}
+
+process_command() {
+  local pid=$1
+
+  tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null
+}
+
+process_in_app() {
+  local pid=$1 process_cwd
 
   process_cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || return 1
-  [[ $process_cwd == "$app_root" ]] || return 1
+  [[ $process_cwd == "$app_root" ]]
+}
 
-  command=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
-  is_supported_process "$command"
+process_belongs_to_app() {
+  local pid=$1 command
+
+  process_in_app "$pid" || return 1
+  command=$(process_command "$pid") || return 1
+  is_supported_process "$command" || command_is_datarunner "$command"
+}
+
+leader_is_datarunner() {
+  local pid=$1 command
+
+  process_in_app "$pid" || return 1
+  command=$(process_command "$pid") || return 1
+  command_is_datarunner "$command"
 }
 
 process_is_running() {
@@ -47,7 +75,12 @@ process_group_is_running() {
   local process_group=$1
 
   [[ -n "$process_group" ]] || return 1
-  ps -o pid= -g "$process_group" 2>/dev/null | grep -q '[0-9]'
+  # ps -g selects a session when given a number, not a process group.
+  # A zombie is already dead; init reaps it and it must not keep the stop open.
+  ps -eo pgid=,stat= | awk -v group="$process_group" '
+    $1 == group && $2 !~ /^Z/ { found = 1; exit }
+    END { exit !found }
+  '
 }
 
 stack_is_running() {
@@ -65,6 +98,8 @@ signal_process_group() {
   local pid=$1 signal=$2 process_group=${3:-}
 
   if [[ -n "$process_group" && "$process_group" == "$pid" ]]; then
+    kill -"$signal" -- "-$process_group" 2>/dev/null || true
+  elif [[ -n "$process_group" ]] && leader_is_datarunner "$process_group"; then
     kill -"$signal" -- "-$process_group" 2>/dev/null || true
   else
     kill -"$signal" "$pid" 2>/dev/null || true
@@ -120,58 +155,129 @@ find_processes() {
     port_is_in_command "$command" "$port" || continue
     printf '%s\n' "$pid"
   done
+
+  for process_dir in /proc/[0-9]*; do
+    pid=${process_dir##*/}
+    process_in_app "$pid" || continue
+    command=$(process_command "$pid") || continue
+    command_is_datarunner "$command" || continue
+    printf '%s\n' "$pid"
+  done
+}
+
+load_targets() {
+  local -n target_pids=$1
+  local -n target_groups=$2
+  local pid process_group
+
+  target_pids=()
+  target_groups=()
+  mapfile -t target_pids < <(find_processes "$port" | sort -n -u)
+  for pid in "${target_pids[@]}"; do
+    [[ -n "$pid" ]] || continue
+    process_group="$(process_group_for "$pid")"
+    target_groups["$pid"]="$process_group"
+  done
+}
+
+signal_targets() {
+  local signal=$1
+  local -n target_pids=$2
+  local -n target_groups=$3
+  local pid
+
+  for pid in "${target_pids[@]}"; do
+    signal_process_group "$pid" "$signal" "${target_groups[$pid]}"
+  done
+}
+
+wait_for_processes() {
+  local attempts=$1
+  local -n target_pids=$2
+  local _
+
+  for ((attempt = 0; attempt < attempts; attempt++)); do
+    if ! stack_is_running "${target_pids[@]}"; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+finish_stopped() {
+  rm -f "$pid_dir/paperboy-dev-$port.pids"
+  echo "Stopped Paperboy processes for port ${port}."
+}
+
+# A refresh forks its own process group while Solid Queue is exiting. The
+# stop is done only after a fresh scan finds no server and no rake task.
+signal_until_clear() {
+  local -a pids=()
+  local -A process_groups=()
+  local -A termed=()
+  local pid announced_kill=0 signaled=0 kill_rounds=0 passes=0 settle_deadline=0
+
+  while ((kill_rounds < 4 && passes < 20)); do
+    passes=$((passes + 1))
+    load_targets pids process_groups
+    if ((${#pids[@]} == 0)); then
+      if ((signaled == 0)); then
+        rm -f "$pid_dir/paperboy-dev-$port.pids"
+        echo "No Paperboy processes found for port ${port}."
+        return 0
+      fi
+      if ((settle_deadline == 0)); then
+        settle_deadline=$((SECONDS + 2))
+      fi
+      if ((SECONDS >= settle_deadline)); then
+        finish_stopped
+        return 0
+      fi
+      sleep 0.2
+      continue
+    fi
+
+    settle_deadline=0
+    signaled=1
+    announced_kill=0
+    for pid in "${pids[@]}"; do
+      [[ -n $pid ]] || continue
+      if [[ -n ${termed[$pid]:-} ]]; then
+        if ((announced_kill == 0)); then
+          echo "==> Graceful shutdown timed out; sending KILL to process groups" >&2
+          announced_kill=1
+          kill_rounds=$((kill_rounds + 1))
+        fi
+        signal_process_group "$pid" KILL "${process_groups[$pid]}"
+      else
+        signal_process_group "$pid" TERM "${process_groups[$pid]}"
+        termed[$pid]=1
+      fi
+    done
+    wait_for_processes 30 pids || true
+  done
+
+  load_targets pids process_groups
+  if ((${#pids[@]} == 0)); then
+    finish_stopped
+    return 0
+  fi
+
+  echo "==> Could not stop all Paperboy processes for port ${port}." >&2
+  echo "==> PID manifest retained at ${pid_dir}/paperboy-dev-${port}.pids." >&2
+  return 1
 }
 
 stop_servers() {
   local port=${1:-3001}
-  local -a pids=()
-  local -A process_groups=()
-  local pid process_group
 
   if [[ ! $port =~ ^[0-9]+$ ]]; then
     usage
     return 2
   fi
 
-  mapfile -t pids < <(find_processes "$port" | sort -n -u)
-  if ((${#pids[@]} == 0)); then
-    rm -f "$pid_dir/paperboy-dev-$port.pids"
-    echo "No Paperboy processes found for port ${port}."
-    return
-  fi
-
-  for pid in "${pids[@]}"; do
-    process_group="$(process_group_for "$pid")"
-    process_groups["$pid"]="$process_group"
-    signal_process_group "$pid" TERM "$process_group"
-  done
-
-  for _ in {1..50}; do
-    if ! stack_is_running "${pids[@]}"; then
-      rm -f "$pid_dir/paperboy-dev-$port.pids"
-      echo "Stopped Paperboy processes for port ${port}."
-      return
-    fi
-    sleep 0.1
-  done
-
-  echo "==> Graceful shutdown timed out; sending KILL to process groups" >&2
-  for pid in "${pids[@]}"; do
-    signal_process_group "$pid" KILL "${process_groups[$pid]}"
-  done
-
-  for _ in {1..10}; do
-    if ! stack_is_running "${pids[@]}"; then
-      rm -f "$pid_dir/paperboy-dev-$port.pids"
-      echo "Stopped Paperboy processes for port ${port}."
-      return
-    fi
-    sleep 0.1
-  done
-
-  echo "==> Could not stop all Paperboy processes for port ${port}." >&2
-  echo "==> PID manifest retained at ${pid_dir}/paperboy-dev-${port}.pids." >&2
-  return 1
+  signal_until_clear
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

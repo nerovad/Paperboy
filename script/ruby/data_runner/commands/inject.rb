@@ -5,7 +5,9 @@
 
 # {{{ Requirements and definitions.
 #
-# Loads output/data_runner/05_DSL_Applied/*.csv into SQL Server using TinyTDS.
+# Loads output/data_runner/05_DSL_Applied/*.csv into SQL Server with bcp.
+# bcp runs on this host. A staging table takes the load, and a short
+# transaction publishes it, so a failed bcp leaves the live rows in place.
 #
 # Modes:
 # - :truncate_insert : TRUNCATE + INSERT all rows
@@ -15,24 +17,20 @@
 # Connection is configured via ENV:
 #   MSSQL_HOST      (required default host) e.g. "gsasql16" or "gsasql16.ent.co.ventura.gsa"
 #   MSSQL_PORT      (optional)  default 1433
-#   MSSQL_USERNAME  (required)
-#   MSSQL_PASSWORD  (required)
+#   MSSQL_USERNAME  (required for SQL auth)
+#   MSSQL_PASSWORD  (required for SQL auth)
 #   MSSQL_TDSVER    (optional)  default "7.4"
 #   MSSQL_ENCRYPT   (optional)  "true"/"false" (TinyTDS supports :encrypt on newer stacks)
-#
-# Notes:
-# - Inserts are grouped into bounded multi-row statements.
+#   BCP_EXECUTABLE  (optional)  default "bcp"
 
-require 'csv'
-require 'bigdecimal'
-require 'date'
 require 'rbconfig'
-require 'time'
 require_relative 'dsl_map'
+require_relative '../helpers/bcp_character_file'
+require_relative '../helpers/bcp_load'
+require_relative '../helpers/bcp_stage'
 require_relative '../helpers/etl_helpers'
 require_relative '../helpers/etl_mapping_helpers'
 require_relative '../helpers/dependency_helpers'
-require_relative '../helpers/insert_batch_writer'
 require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
@@ -43,152 +41,10 @@ $LOAD_PATH.unshift(ROOT)
 APPLIED_DIR = WorkflowPaths::APPLIED_DIR
 
 # -------------------------------------------------------------------------- }}}
-# {{{ Helper: build batched insert SQL
-
-def insert_prefix(schema, table, columns)
-  cols_sql = columns.map { |c| MssqlHelpers.quote_ident(c) }.join(', ')
-  "INSERT INTO #{MssqlHelpers.sql_qualified(schema, table)} (#{cols_sql}) VALUES "
-end
-
-def insert_values_sql(client, columns, values, column_types = {})
-  vals_sql = columns.zip(values).map do |column, value|
-    sql_value_literal(client, value, column_types[column])
-  end.join(', ')
-  "(#{vals_sql})"
-end
-
-def sql_value_literal(client, value, data_type = nil)
-  return 'NULL' if value.nil?
-  return 'NULL' if nullable_blank_sql_type?(data_type) && value.to_s.strip.empty?
-
-  return numeric_sql_literal(value, data_type) if numeric_sql_type?(data_type)
-
-  normalized = value_for_sql_type(value, data_type)
-  "N'#{client.escape(normalized)}'"
-end
-
-def value_for_sql_type(value, data_type)
-  type_name = sql_type_name(data_type)
-  text = value.to_s.strip
-
-  case type_name
-  when 'date'
-    parse_sql_date(text).strftime('%Y-%m-%d')
-  when 'datetime', 'datetime2', 'smalldatetime', 'datetimeoffset'
-    format_sql_time(parse_sql_datetime(text), '%Y-%m-%dT%H:%M:%S')
-  when 'time'
-    format_sql_time(parse_sql_time(text), '%H:%M:%S')
-  else
-    value.to_s
-  end
-end
-
-def parse_sql_date(text)
-  case text
-  when %r{\A\d{1,2}/\d{1,2}/\d{4}\z}
-    Date.strptime(text, '%m/%d/%Y')
-  when %r{\A\d{1,2}/\d{1,2}/\d{2}\z}
-    Date.strptime(text, '%m/%d/%y')
-  when /\A\d{4}-\d{1,2}-\d{1,2}\z/
-    Date.strptime(text, '%Y-%m-%d')
-  else
-    Date.parse(text)
-  end
-end
-
-def parse_sql_datetime(text)
-  case text
-  when %r{\A\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}(?::\d{2})? [AP]M\z}i
-    Time.strptime(text, text.count(':') == 1 ? '%m/%d/%Y %I:%M %p' : '%m/%d/%Y %I:%M:%S %p')
-  when %r{\A\d{1,2}/\d{1,2}/\d{2} \d{1,2}:\d{2}(?::\d{2})? [AP]M\z}i
-    Time.strptime(text, text.count(':') == 1 ? '%m/%d/%y %I:%M %p' : '%m/%d/%y %I:%M:%S %p')
-  else
-    Time.parse(text)
-  end
-end
-
-def parse_sql_time(text)
-  case text
-  when /\A\d{1,2}:\d{2}(?::\d{2})? [AP]M\z/i
-    Time.strptime(text, text.count(':') == 1 ? '%I:%M %p' : '%I:%M:%S %p')
-  else
-    Time.parse(text)
-  end
-end
-
-def temporal_sql_type?(data_type)
-  %w[date datetime datetime2 smalldatetime datetimeoffset time].include?(sql_type_name(data_type))
-end
-
-def nullable_blank_sql_type?(data_type)
-  numeric_sql_type?(data_type) || temporal_sql_type?(data_type)
-end
-
-def numeric_sql_type?(data_type)
-  %w[
-    bigint bit decimal float int money numeric real smallint smallmoney tinyint
-  ].include?(sql_type_name(data_type))
-end
-
-def numeric_sql_literal(value, data_type)
-  text = value.to_s.strip
-  normalized = normalized_numeric_text(text)
-
-  if integer_sql_type?(data_type)
-    Integer(normalized, 10).to_s
-  elsif bit_sql_type?(data_type)
-    bit_sql_literal(normalized)
-  else
-    BigDecimal(normalized).to_s('F')
-  end
-rescue ArgumentError
-  raise "invalid #{data_type} value #{text.inspect}"
-end
-
-def normalized_numeric_text(text)
-  normalized = text.tr(',', '')
-  negative = normalized.start_with?('(') && normalized.end_with?(')')
-  normalized = normalized[1...-1] if negative
-  negative ||= normalized.start_with?('-')
-  normalized = normalized.delete_prefix('-')
-  normalized = normalized.delete_prefix('$')
-  normalized = "-#{normalized}" if negative
-  normalized
-end
-
-def integer_sql_type?(data_type)
-  %w[bigint int smallint tinyint].include?(sql_type_name(data_type))
-end
-
-def bit_sql_type?(data_type)
-  sql_type_name(data_type) == 'bit'
-end
-
-def bit_sql_literal(value)
-  case value.downcase
-  when '1', 'true', 't', 'yes', 'y' then '1'
-  when '0', 'false', 'f', 'no', 'n' then '0'
-  else
-    Integer(value, 10).then do |integer|
-      raise ArgumentError, 'bit value must be 0 or 1' unless [0, 1].include?(integer)
-
-      integer.to_s
-    end
-  end
-end
-
-def format_sql_time(time, base_format)
-  formatted = time.strftime(base_format)
-  fraction = time.nsec.zero? ? '' : ".#{time.nsec.to_s.rjust(9, '0')[0, 7].sub(/0+\z/, '')}"
-  "#{formatted}#{fraction}"
-end
-
-def sql_type_name(data_type)
-  data_type.to_s.strip.downcase[/\A\[?([^\](\s]+)/, 1]
-end
-
 def column_type_map(cfg)
-  EtlMappingHelpers.output_columns(cfg).to_h { |column| [column[:name], column[:data_type]] }
+  EtlMappingHelpers.output_columns(cfg).to_h do |column|
+    [column[:name], { data_type: column[:data_type], nullability: column[:nullability] }]
+  end
 end
 
 def identity_insert_sql(schema, table, enabled)
@@ -224,18 +80,31 @@ end
 
 def existing_row_sql(client, schema, table, columns, row, column_types)
   predicates = columns.map do |column|
-    value = row[column]
-    literal = sql_value_literal(client, value, column_types[column])
-    "#{MssqlHelpers.quote_ident(column)} = #{literal}"
+    existing_predicate(client, column, row[column], column_types[column])
   end
   "SELECT TOP 1 1 FROM #{MssqlHelpers.sql_qualified(schema, table)} WHERE #{predicates.join(' AND ')}"
+end
+
+def existing_predicate(client, column, value, spec)
+  data_type = DataRunner::BcpStage.column_type(spec)
+  quoted = MssqlHelpers.quote_ident(column)
+  text = value.nil? ? '' : value.to_s
+  if SqlValue.blank_becomes_null?(data_type)
+    return "#{quoted} IS NULL" if text.strip.empty?
+
+    literal = "N'#{client.escape(text)}'"
+    return "#{quoted} = CONVERT(#{DataRunner::BcpStage.sql_type(data_type)}, #{literal})"
+  end
+  return "#{quoted} IS NULL" if value.nil?
+
+  "#{quoted} = N'#{client.escape(text)}'"
 end
 
 def reject_existing!(client, target, columns, row, column_types)
   return if columns.empty?
 
-  missing = columns - row.headers.map(&:to_s)
-  raise "duplicate key columns missing from CSV: #{missing.join(', ')}" if missing.any?
+  missing = columns - row.keys.map(&:to_s)
+  raise "duplicate key columns missing from the applied file: #{missing.join(', ')}" if missing.any?
 
   sql = existing_row_sql(client, target.schema, target.table, columns, row, column_types)
   exists = client.execute(sql).each.any?
@@ -343,6 +212,154 @@ def acquire_atomic_inject_lock!(client)
   client.execute(sql).do
 end
 
+def import_applied_file(client, target, input, cfg, load)
+  header, first_values = BcpCharacterFile.header_and_first_row(input)
+  raise "#{input}: missing header row" if header.nil? || header.empty? || header.all?(&:empty?)
+
+  column_types = column_type_map(cfg)
+  duplicate_seconds = reject_first_row(client, target, cfg, header, first_values, column_types)
+  stage = DataRunner::BcpStage.name_for(target.table)
+  record = { host: target.host, database: target.database, schema: target.schema, table: stage }
+  load.fetch(:pending_stages) << record
+  load_stage!(load.fetch(:name), target, input, record, header)
+  inserted = publish_stage!(client, target, stage, header, column_types, load, needs_identity_insert?(cfg, header))
+  release_stage(record, load.fetch(:pending_stages)) unless load.fetch(:atomic)
+  [inserted, duplicate_seconds]
+end
+
+def reject_first_row(client, target, cfg, header, values, column_types)
+  columns = reject_existing_columns(cfg, target.connection)
+  return nil if columns.empty? || values.nil?
+
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  reject_existing!(client, target, columns, header.zip(values).to_h, column_types)
+  Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+end
+
+def load_stage!(name, target, input, record, header)
+  client = nil
+  begin
+    client = MssqlHelpers.connect!(target.host)
+    client.execute("USE #{MssqlHelpers.quote_ident(target.database)}").do
+    DataRunner::BcpStage.create!(client, record[:schema], record[:table], header)
+    argv = DataRunner::BcpLoad.command_for(
+      host: target.host, database: target.database, schema: record[:schema], table: record[:table], file: input
+    )
+    puts "[BCP] #{name}: #{DataRunner::BcpLoad.display(argv)}"
+    DataRunner::BcpLoad.run!(argv)
+  ensure
+    client&.close
+  end
+end
+
+def publish_stage!(client, target, stage, header, column_types, load, identity)
+  client.execute('BEGIN TRAN').do unless load.fetch(:atomic)
+  apply_inject_mode!(client, target, load.fetch(:mode), load.fetch(:where_sql))
+  omit_unreferenced_rows!(client, target, stage, header, column_types, load)
+  client.execute(identity_insert_sql(target.schema, target.table, true)).do if identity
+  begin
+    sql = DataRunner::BcpStage.insert_sql(target.schema, target.table, stage, header, column_types)
+    client.execute(sql).do
+  ensure
+    if identity
+      begin
+        client.execute(identity_insert_sql(target.schema, target.table, false)).do
+      rescue StandardError
+        nil
+      end
+    end
+  end
+  inserted = staged_count(client, target.schema, stage)
+  client.execute('COMMIT TRAN').do unless load.fetch(:atomic)
+  inserted
+end
+
+def validate_inject_mode!(mode, where_sql)
+  case mode
+  when :truncate_insert, :append
+    nil
+  when :delete_insert
+    raise 'inject mode :delete_insert requires inject.delete_where' if where_sql.empty?
+  else
+    raise "unknown inject mode: #{mode.inspect}"
+  end
+end
+
+def apply_inject_mode!(client, target, mode, where_sql)
+  case mode
+  when :truncate_insert
+    client.execute(truncate_sql(target.schema, target.table)).do
+  when :delete_insert
+    client.execute(delete_sql(target.schema, target.table, where_sql)).do
+  when :append
+    nil
+  else
+    raise "unknown inject mode: #{mode.inspect}"
+  end
+end
+
+def staged_count(client, schema, table)
+  query_count(client, DataRunner::BcpStage.count_sql(schema, table))
+end
+
+def query_count(client, sql)
+  count = 0
+  client.execute(sql).each do |row|
+    count = row.values.first
+  end
+  Integer(count)
+end
+
+def omit_unreferenced_rows!(client, target, stage, header, column_types, load)
+  Array(load[:references]).each do |reference|
+    column = reference.fetch(:column).to_s
+    parent_table = reference.fetch(:table).to_s
+    parent_column = reference.fetch(:parent_column, 'id').to_s
+    raise "#{load.fetch(:name)}: reference column #{column} is not in the applied file" unless header.include?(column)
+
+    spec = column_types[column]
+    raise "#{load.fetch(:name)}: reference column #{column} has no SQL type" if spec.nil?
+
+    data_type = DataRunner::BcpStage.column_type(spec)
+    arguments = [target.schema, stage, parent_table, column, parent_column, data_type]
+    skipped = query_count(client, DataRunner::BcpStage.missing_parent_count_sql(*arguments))
+    next if skipped.zero?
+
+    client.execute(DataRunner::BcpStage.missing_parent_delete_sql(*arguments)).do
+    puts "[WARN] #{load.fetch(:name)}: skipped #{skipped} #{column} rows absent from #{target.schema}.#{parent_table}"
+  end
+end
+
+def release_stage(record, pending_stages)
+  DataRunner::BcpStage.drop_record(record)
+  pending_stages.delete(record)
+rescue StandardError => e
+  warn "[WARN] bcp stage drop failed #{record[:table]}: #{e}"
+end
+
+def inject_source(name, cfg, stats)
+  unless Workflow.wants_step?(cfg, :inject)
+    puts "[SKIP] #{name}: step disabled (:inject)"
+    stats.skip!
+    return
+  end
+
+  csv_name = EtlHelpers.output_for(cfg)
+  input = File.join(APPLIED_DIR, csv_name)
+  if !File.exist?(input) && EtlHelpers.source_strategy(cfg) == :append
+    puts "[SKIP] #{name}: nothing to append (missing #{APPLIED_DIR}/#{csv_name})"
+    stats.skip!
+    return
+  end
+
+  DataRunnerDependencyHelpers.wait!(name, cfg)
+  return [csv_name, input] if File.exist?(input)
+
+  puts "[SKIP] #{name}: missing #{APPLIED_DIR}/#{csv_name}"
+  stats.fail!
+  nil
+end
+
 # -------------------------------------------------------------------------- }}}
 # {{{ Main logic
 
@@ -357,6 +374,7 @@ atomic_inject = MssqlHelpers.env_bool('DATARUNNER_ATOMIC_INJECT')
 atomic_target = nil
 atomic_client = nil
 atomic_committed = false
+pending_stages = []
 selected_entries = if atomic_inject
                      ARGV.to_h do |name|
                        [name, DSL_MAP.fetch(name) { raise "unknown DSL: #{name}" }]
@@ -366,22 +384,8 @@ selected_entries = if atomic_inject
                    end
 begin
   selected_entries.each do |name, cfg|
-    unless Workflow.wants_step?(cfg, :inject)
-      puts "[SKIP] #{name}: step disabled (:inject)"
-      stats.skip!
-      next
-    end
-
-    DataRunnerDependencyHelpers.wait!(name, cfg)
-
-    csv_name = EtlHelpers.output_for(cfg)
-    input    = File.join(APPLIED_DIR, csv_name)
-
-    unless File.exist?(input)
-      puts "[SKIP] #{name}: missing #{APPLIED_DIR}/#{csv_name}"
-      stats.fail!
-      next
-    end
+    csv_name, input = inject_source(name, cfg, stats)
+    next unless input
 
     EtlHelpers.database_targets(
       cfg,
@@ -393,7 +397,9 @@ begin
 
       mode = inject_mode(cfg, target.connection)
       inject = inject_cfg(cfg, target.connection)
-      client = clients[target.host] ||= MssqlHelpers.connect!(target.host)
+      # TinyTDS cancels a command after 5 seconds. Publishing millions of rows
+      # takes longer. Zero waits until that command finishes.
+      client = clients[target.host] ||= MssqlHelpers.connect!(target.host, timeout: 0)
 
       client.execute("USE #{MssqlHelpers.quote_ident(target.database)}").do
 
@@ -411,71 +417,27 @@ begin
           puts format('[TIMING] Atomic inject lock wait: %.3fs', lock_seconds)
           atomic_client = client
         end
-      else
-        client.execute('BEGIN TRAN').do
       end
 
       where_sql = delete_where(cfg, target.connection)
+      validate_inject_mode!(mode, where_sql)
 
-      case mode
-      when :truncate_insert
-        client.execute(truncate_sql(target.schema, target.table)).do
-
-      when :append
-        # no-op
-
-      when :delete_insert
-        raise 'inject mode :delete_insert requires inject.delete_where' if where_sql.empty?
-
-        client.execute(delete_sql(target.schema, target.table, where_sql)).do
-
-      else
-        raise "unknown inject mode: #{mode.inspect}"
-      end
-
-      inserted = 0
-      columns = nil
-      column_types = column_type_map(cfg)
-      duplicate_check_columns = reject_existing_columns(cfg, target.connection)
-      identity_insert_enabled = false
       insert_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      duplicate_check_seconds = nil
-      batch_writer = nil
-
-      CSV.foreach(input, headers: true, encoding: 'bom|utf-8').with_index(2) do |row, line_number|
-        if columns.nil?
-          columns = row.headers.map(&:to_s)
-          if duplicate_check_columns.any?
-            duplicate_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            reject_existing!(client, target, duplicate_check_columns, row, column_types)
-            duplicate_check_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - duplicate_started
-          end
-          if needs_identity_insert?(cfg, columns)
-            client.execute(identity_insert_sql(target.schema, target.table, true)).do
-            identity_insert_enabled = true
-          end
-          batch_writer = DataRunner::InsertBatchWriter.new(
-            client: client,
-            prefix: insert_prefix(target.schema, target.table, columns)
-          )
-        end
-
-        values = columns.map { |c| row[c] }
-
-        begin
-          tuple = insert_values_sql(client, columns, values, column_types)
-        rescue StandardError => e
-          raise "#{input}: CSV row #{line_number}: #{e.message}"
-        end
-        batch_writer.add(tuple)
-      end
-      inserted = batch_writer&.finish || 0
+      inserted, duplicate_check_seconds = import_applied_file(
+        client, target, input, cfg,
+        {
+          name: name,
+          mode: mode,
+          where_sql: where_sql,
+          atomic: atomic_inject,
+          pending_stages: pending_stages,
+          references: cfg[:references]
+        }
+      )
       insert_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - insert_started
       rows_per_second = insert_seconds.positive? ? inserted / insert_seconds : inserted
       puts inject_timing(name, duplicate_check_seconds, insert_seconds, rows_per_second)
 
-      client.execute(identity_insert_sql(target.schema, target.table, false)).do if identity_insert_enabled
-      client.execute('COMMIT TRAN').do unless atomic_inject
       run_post_inject_script(name, target, mode, input, inserted, inject)
       puts "[OK] #{name}: #{csv_name} -> #{target.label} (#{mode}, #{inserted} rows)"
       stats.ok!
@@ -485,11 +447,7 @@ begin
       rescue StandardError
         # ignore rollback failure
       end
-      begin
-        client.execute(identity_insert_sql(target.schema, target.table, false)).do if identity_insert_enabled
-      rescue StandardError
-        # ignore cleanup failure
-      end
+      DataRunner::BcpStage.release(pending_stages)
       puts "[FAIL] #{name}: #{MssqlHelpers.target_label(target&.host, target&.database, target&.schema,
                                                         target&.table)}: #{e}"
       stats.fail!
@@ -510,6 +468,7 @@ ensure
       # ignore rollback failure
     end
   end
+  DataRunner::BcpStage.release(pending_stages)
   clients.each_value(&:close)
 end
 

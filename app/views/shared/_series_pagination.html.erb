@@ -1,0 +1,10 @@
+<%# Centered page buttons and range, shared by Records and DataRunner.
+    locals: pagy %>
+<% if local_assigns[:pagy]&.pages.to_i > 1 %>
+  <div class="pagination-wrapper">
+    <%== pagy.series_nav %>
+    <p class="pagination-info">
+      Showing <%= pagy.from %>–<%= pagy.to %> of <%= pagy.count %> rows
+    </p>
+  </div>
+<% end %>

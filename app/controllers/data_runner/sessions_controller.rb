@@ -2,6 +2,9 @@
 
 module DataRunner
   class SessionsController < ApplicationController
+    # Signing out can't wait on a grant for this server.
+    skip_before_action :require_environment_access
+
     def setup
       head :not_found
     end

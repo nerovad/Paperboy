@@ -29,6 +29,9 @@ module DataRunner
       Rails.logger.error("Data Runner group refresh queue unavailable: #{e.message}")
       redirect_to data_runner_root_path(group: group),
                   alert: 'The refresh could not be queued because the job queue is unavailable.'
+    rescue GroupRefreshOrder::Error => e
+      Rails.logger.error("Data Runner group refresh order: #{e.message}")
+      redirect_to data_runner_root_path(group: group), alert: e.message
     end
   end
 end

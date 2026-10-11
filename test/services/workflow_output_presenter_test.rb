@@ -2,6 +2,7 @@
 
 require 'test_helper'
 require 'tmpdir'
+require_relative '../../script/ruby/data_runner/helpers/bcp_character_file'
 
 class WorkflowOutputPresenterTest < ActiveSupport::TestCase
   test 'presents CSV as headers and rows' do
@@ -12,6 +13,31 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
       assert_equal %w[name value], output.headers
       assert_equal [%w[Alpha 1], %w[Beta 2]], output.rows
       assert_not output.truncated?
+    end
+  end
+
+  test 'returns one page of a csv and the full row count' do
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    with_file('paged.csv', body) do |path|
+      output = WorkflowOutputPresenter.new(path, page: 2, per_page: 2)
+
+      assert_equal 5, output.row_count
+      assert_equal [['Row 2'], ['Row 3']], output.rows
+      assert_not output.truncated?
+      assert_not output.more?
+    end
+  end
+
+  test 'caps a preview at the requested row count' do
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    with_file('capped.csv', body) do |path|
+      output = WorkflowOutputPresenter.new(path, max_rows: 3)
+
+      assert_equal 3, output.max_rows
+      assert_equal [['Row 0'], ['Row 1'], ['Row 2']], output.rows
+      assert output.truncated?
     end
   end
 
@@ -87,6 +113,83 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
     Dir.mktmpdir do |directory|
       path = Pathname(directory).join(name)
       path.write(content)
+      yield path
+    end
+  end
+end
+
+class WorkflowOutputCsvPageTest < ActiveSupport::TestCase
+  test 'pages a comma separated file that sits in the applied directory' do
+    body = +"id\n"
+    3.times { |number| body << "#{number}\n" }
+    Dir.mktmpdir do |directory|
+      applied = Pathname(directory).join('05_DSL_Applied')
+      applied.mkpath
+      path = applied.join('employees.csv')
+      path.write(body)
+
+      output = WorkflowOutputPresenter.new(path, page: 1, per_page: 2)
+
+      assert_equal [['0'], ['1']], output.rows
+      assert_equal 3, output.row_count
+      assert_not output.more?
+    end
+  end
+
+  test 'reads an applied bcp file on its field and row terminators' do
+    note = "a, \"b\"\nc"
+    Dir.mktmpdir do |directory|
+      applied = Pathname(directory).join('05_DSL_Applied')
+      applied.mkpath
+      path = applied.join('sample.csv')
+      File.open(path, 'wb') do |io|
+        BcpCharacterFile.write_row(io, ['Note'], dsl: 'Sample', columns: ['Note'])
+        BcpCharacterFile.write_row(io, [note], dsl: 'Sample', columns: ['Note'])
+      end
+
+      output = WorkflowOutputPresenter.new(path)
+
+      assert_equal ['Note'], output.headers
+      assert_equal [[note]], output.rows
+    end
+  end
+
+  test 'stops a large csv after this page and one extra row' do
+    csv_file do |path|
+      WorkflowOutputPresenter.stub(:exact_csv_count?, false) do
+        output = WorkflowOutputPresenter.new(path, page: 1, per_page: 2)
+
+        assert_nil output.row_count
+        assert output.more?
+        assert_equal [['Row 0'], ['Row 1']], output.rows
+        assert_equal 1, output.page_from
+        assert_equal 2, output.page_to
+      end
+    end
+  end
+
+  test 'counts a large csv when the requested page reaches the end' do
+    csv_file do |path|
+      WorkflowOutputPresenter.stub(:exact_csv_count?, false) do
+        output = WorkflowOutputPresenter.new(path, page: 3, per_page: 2)
+
+        assert_equal 5, output.row_count
+        assert_not output.more?
+        assert_equal [['Row 4']], output.rows
+        assert_equal 5, output.page_from
+        assert_equal 5, output.page_to
+      end
+    end
+  end
+
+  private
+
+  def csv_file
+    body = +"name\n"
+    5.times { |number| body << "Row #{number}\n" }
+    Dir.mktmpdir do |directory|
+      path = Pathname(directory).join('large.csv')
+      path.write(body)
       yield path
     end
   end

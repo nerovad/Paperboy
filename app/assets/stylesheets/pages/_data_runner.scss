@@ -311,6 +311,28 @@
     }
   }
 
+  /* About 25 body rows, plus the column header. The page buttons stay
+     under the scrollport. A row is the 0.875rem type at 1.25 line-height
+     plus the 10px vertical padding on each side. */
+  &.page-dsls-output .output-grid {
+    min-width: 0;
+
+    .pfa-grid__table th,
+    .pfa-grid__table td {
+      line-height: 1.25;
+    }
+
+    .pfa-grid__scrollport {
+      --output-grid-row: calc(1.25 * 0.875rem + 20px);
+      max-height: calc(26 * var(--output-grid-row));
+    }
+
+    .dataTables_filter {
+      margin-bottom: 8px;
+      text-align: right;
+    }
+  }
+
   &.page-dsls-edit {
     .dsl-source-form {
       width: 100%;

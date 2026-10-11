@@ -296,6 +296,7 @@ Rails.application.routes.draw do
     resource :inbox_dsls, only: :create
     resource :database_dsls, only: %i[new create] do
       get :databases
+      get :schemas
       get :tables
     end
     resources :dsls, only: %i[index show new create edit update destroy], param: :name do
@@ -318,7 +319,10 @@ Rails.application.routes.draw do
     get '/group_refreshes', to: 'group_refreshes#index', as: :group_refreshes
     get '/runs/:id', to: 'runs#show', as: :run
     resources :group_runs, only: :show do
-      member { get :status }
+      member do
+        get :status
+        post :cancel
+      end
     end
   end
 
@@ -454,6 +458,8 @@ Rails.application.routes.draw do
   # navigates to on its own.
   get '/who_am_i', to: 'who_am_i#show', as: :who_am_i
   get '/command_palette', to: 'command_palette#show', as: :command_palette
+  # Where a visitor without a Development or Stage grant is sent.
+  get '/environment_access', to: 'environment_access#show', as: :environment_access
   get 'forms/home'
   # Every form the viewer may fill out, on a page of its own. Looking at a
   # collection is the same page narrowed to a named group of them; making and

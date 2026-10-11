@@ -22,8 +22,14 @@ end
 gem 'dartsass-rails', '~> 0.5'
 gem 'sprockets-rails'
 
-# Use sqlite3 as the database for Active Record
-# gem "sqlite3", ">= 2.1"
+# Workstation Solid Queue, Cache, and Cable. bin/dev sets PAPERBOY_LOCAL_SOLID.
+# Servers leave that variable unset and keep the primary SQL Server database.
+group :development do
+  gem 'sqlite3', '~> 2.1'
+
+  # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem 'web-console'
+end
 # gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'
@@ -121,11 +127,6 @@ group :development, :test do
   # Provides the task runner used by Paperboy and Rails maintenance tasks.
   # https://github.com/ruby/rake
   gem 'rake'
-end
-
-group :development do
-  # Use console on exceptions pages [https://github.com/rails/web-console]
-  gem 'web-console'
 end
 
 group :test do

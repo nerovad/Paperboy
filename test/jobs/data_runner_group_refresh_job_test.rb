@@ -16,11 +16,24 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
       selector == 'activities' ? success : failure
     end
 
-    TaskRunner.stub(:run_selector!, runner) do
-      DataRunner::GroupRefreshJob.perform_now(run.id)
+    order = []
+    order_lock = Mutex.new
+    TaskRunner.stub(:run_selector!, lambda { |**kwargs|
+      order_lock.synchronize { order << :refresh }
+      runner.call(**kwargs)
+    }) do
+      DataRunner::DependentTruncate.stub(:perform, lambda { |names|
+        order_lock.synchronize { order << names }
+        ['[OK] Agencies: truncated example.Paperboy.bss.agencies before dependency inject']
+      }) do
+        DataRunner::GroupRefreshJob.perform_now(run.id)
+      end
     end
 
     run.reload
+    assert_equal [%w[Activities Agencies], :refresh, :refresh], order
+    assert_includes TaskRunner.output!(run.run_id),
+                    'truncated example.Paperboy.bss.agencies before dependency inject'
     assert_equal 'failed', run.status
     assert_equal 2, run.completed_count
     assert_equal 1, run.failed_count
@@ -45,7 +58,7 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
         active += 1
         maximum_active = [maximum_active, active].max
       end
-      sleep 0.02
+      sleep 0.5
       success
     ensure
       lock.synchronize { active -= 1 }
@@ -80,7 +93,7 @@ class DataRunnerGroupRefreshJobTest < ActiveJob::TestCase
         maximum_active = [maximum_active, active].max
         environments << environment
       end
-      sleep 0.02
+      sleep 0.5
       success
     ensure
       lock.synchronize { active -= 1 }

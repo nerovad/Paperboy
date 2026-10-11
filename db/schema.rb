@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_09_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_221750) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -815,6 +815,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_140000) do
   create_table "data_runner_group_run_items", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.string "current_step"
     t.string "dsl_name", null: false
     t.string "dsl_slug", null: false
     t.integer "duration_ms"
@@ -2017,13 +2018,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_09_140000) do
     t.string "task_type", null: false
     t.string "to_employee_id", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "tasks", primary_key: ["agency_id", "task_id"], force: :cascade do |t|
-    t.string "agency_id", limit: 3, null: false
-    t.string "long_name", limit: 100, null: false
-    t.string "short_name", limit: 50, null: false
-    t.string "task_id", limit: 4, null: false
   end
 
   create_table "telework_log_form_hours", force: :cascade do |t|
