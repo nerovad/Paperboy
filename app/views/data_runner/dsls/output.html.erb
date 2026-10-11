@@ -26,6 +26,23 @@
                  data_controller: "output-table",
                  table_class: "output-table datatable-output" %>
       <%= render "shared/series_pagination", pagy: @pagy %>
+      <% if @pagy.nil? && @output.more? %>
+        <div class="pagination-wrapper">
+          <nav class="pagy series-nav" aria-label="Pages">
+            <% if @output.page_number > 1 %>
+              <%= link_to "<", output_data_runner_dsl_path(@dsl.slug, path: @output_relative_path,
+                                                                      page: @output.page_number - 1),
+                          aria: { label: "Previous" } %>
+            <% end %>
+            <%= link_to ">", output_data_runner_dsl_path(@dsl.slug, path: @output_relative_path,
+                                                                    page: @output.page_number + 1),
+                        aria: { label: "Next" } %>
+          </nav>
+          <p class="pagination-info">
+            Showing <%= number_with_delimiter(@output.page_from) %>–<%= number_with_delimiter(@output.page_to) %>
+          </p>
+        </div>
+      <% end %>
     </section>
   </div>
 <% end %>

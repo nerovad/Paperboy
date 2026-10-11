@@ -1,44 +1,43 @@
 # frozen_string_literal: true
 
 [
-  'Paperboy_dev_tasks',
+  'Gsa_scan_jobalias',
   {
      steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {
-      name: 'paperboy_dev'
+      name: 'gsa_scan'
     },
+    dependency: 'Gsa_scan_job',
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
-      database: 'Paperboy_Dev',
+      database: 'GSA Scan',
       schema: 'dbo',
-      table: 'tasks',
-      local: 'paperboy_dev_tasks.csv',
+      table: 'JobAlias',
+      local: 'gsa_scan_jobalias.csv',
       format: :csv,
       strategy: :replicate
     },
     to_csv: { sheet: 0, header_row: 0, data_row: 1 },
     header: [
-      ['agency_id', 'agency_id', 'nvarchar(3)', 'NOT NULL', nil],
-      ['task_id', 'task_id', 'nvarchar(4)', 'NOT NULL', nil],
-      ['long_name', 'long_name', 'nvarchar(100)', 'NOT NULL', nil],
-      ['short_name', 'short_name', 'nvarchar(50)', 'NOT NULL', nil]
+      ['JobID', 'JobID', 'varchar(50)', 'NOT NULL', nil],
+      ['Alias', 'Alias', 'varchar(100)', 'NOT NULL', nil]
     ],
     database_connections: [
       {
         host: 'gsa-sql22-tst.ent.co.ventura.ca.us',
         database: 'Paperboy',
-        schema: 'pb',
-        table: 'tasks',
+        schema: 'scan',
+        table: 'JobAlias',
         inject: { mode: :truncate_insert }
       }
     ]

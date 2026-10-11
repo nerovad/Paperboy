@@ -6,18 +6,21 @@
      steps: {
       manual: {
         enabled: true,
-        steps: Workflow::MANUAL_STEPS
+        steps: Workflow::REPLICATE_STEPS
       },
       scheduled: {
-        enabled: true,
+        enabled: false,
         frequency: :daily,
-        steps: Workflow::SCHEDULED_STEPS
+        steps: Workflow::REPLICATE_STEPS
       }
     },
     group: {
       name: 'paperboy_dev'
     },
     dependency: 'Paperboy_dev_solid_queue_jobs',
+    references: [
+      { column: 'job_id', table: 'solid_queue_jobs' }
+    ],
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'Paperboy_Dev',

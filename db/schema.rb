@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_221750) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -815,6 +815,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
   create_table "data_runner_group_run_items", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.string "current_step"
     t.string "dsl_name", null: false
     t.string "dsl_slug", null: false
     t.integer "duration_ms"
@@ -928,6 +929,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
     t.integer "year"
     t.index ["fleet_vehicle_garaging_form_id"], name: "index_fleet_vehicles_on_fleet_vehicle_garaging_form_id"
     t.index ["vehicle_number"], name: "index_fleet_vehicles_on_vehicle_number", unique: true, where: "([vehicle_number] IS NOT NULL)"
+  end
+
+  create_table "form_collection_forms", force: :cascade do |t|
+    t.string "added_by_id"
+    t.datetime "created_at", null: false
+    t.bigint "form_collection_id", null: false
+    t.string "form_key", null: false
+    t.index ["form_collection_id", "form_key"], name: "index_form_collection_forms_on_form_collection_id_and_form_key", unique: true
+    t.index ["form_collection_id"], name: "index_form_collection_forms_on_form_collection_id"
+  end
+
+  create_table "form_collections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_form_collections_on_name"
   end
 
   create_table "form_fields", force: :cascade do |t|
@@ -2000,13 +2020,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "tasks", primary_key: ["agency_id", "task_id"], force: :cascade do |t|
-    t.string "agency_id", limit: 3, null: false
-    t.string "long_name", limit: 100, null: false
-    t.string "short_name", limit: 50, null: false
-    t.string "task_id", limit: 4, null: false
-  end
-
   create_table "telework_log_form_hours", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "hours"
@@ -2064,7 +2077,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
     t.text "column_prefs"
     t.datetime "created_at", null: false
     t.integer "dam_storage_location_id"
+    t.string "default_search_mode"
     t.string "employee_id", null: false
+    t.text "hidden_form_keys"
     t.boolean "inbox_email_notifications", default: false, null: false
     t.string "theme", default: "light", null: false
     t.datetime "updated_at", null: false
@@ -2116,6 +2131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
   add_foreign_key "dam_publications", "dam_publish_targets", column: "publish_target_id"
   add_foreign_key "data_runner_group_run_items", "data_runner_group_runs", column: "group_run_id"
   add_foreign_key "fleet_vehicle_garaging_forms", "fleet_vehicles"
+  add_foreign_key "form_collection_forms", "form_collections"
   add_foreign_key "form_fields", "form_templates"
   add_foreign_key "form_subscription_opt_outs", "form_subscriptions", on_delete: :cascade
   add_foreign_key "form_template_copy_recipients", "form_templates"

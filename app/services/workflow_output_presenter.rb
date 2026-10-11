@@ -8,6 +8,8 @@ class WorkflowOutputPresenter
 
   MAX_ROWS = 500
   MAX_TEXT_BYTES = 1_000_000
+  # Above this size, page 1 does not parse the rest of the file for a count.
+  EXACT_COUNT_MAX_BYTES = 32 * 1024 * 1024
 
   attr_reader :path, :kind, :headers, :rows, :content, :max_rows, :row_count
 
@@ -23,8 +25,28 @@ class WorkflowOutputPresenter
     load_output
   end
 
+  def self.exact_csv_count?(path)
+    Pathname(path).size <= EXACT_COUNT_MAX_BYTES
+  end
+
   def truncated?
     @truncated
+  end
+
+  def more?
+    @more == true
+  end
+
+  def page_number
+    [@page.to_i, 1].max
+  end
+
+  def page_from
+    rows.empty? ? 0 : page_offset + 1
+  end
+
+  def page_to
+    page_offset + rows.size
   end
 
   # Adapt file output to the PFA grid contract without moving file parsing or
@@ -38,6 +60,10 @@ class WorkflowOutputPresenter
 
   private
 
+  def exact_csv_count?
+    self.class.exact_csv_count?(path)
+  end
+
   def load_output
     case kind
     when 'csv' then load_csv
@@ -48,6 +74,7 @@ class WorkflowOutputPresenter
   end
 
   def load_csv
+    return load_character_csv if BcpCharacterFile.applied_path?(path)
     return load_csv_page if paging?
 
     records = CSV.foreach(path, encoding: 'bom|utf-8').take(max_rows + 2)

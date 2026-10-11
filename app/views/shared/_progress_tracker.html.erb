@@ -45,13 +45,14 @@
     </p>
   <% end %>
 
-  <ol class="progress-tracker__items">
+  <ol class="progress-tracker__items" tabindex="0" aria-label="Refresh progress">
     <% run.items.sort_by(&:position).each do |item| %>
+      <% name = display_name.call(item) %>
       <li class="progress-tracker__item <%= item.status %>">
         <span class="progress-tracker__item-state" aria-hidden="true"><%= { "pending" => "○", "running" => "→", "succeeded" => "✓", "failed" => "✕" }.fetch(item.status) %></span>
-        <span><%= display_name.call(item) %></span>
+        <span class="progress-tracker__item-name" title="<%= name %>"><%= name %></span>
         <span class="progress-tracker__item-label">
-          <%= item.status.humanize %>
+          <%= item.status == "running" && item.current_step.present? ? "Running:#{item.current_step}" : item.status.humanize %>
           <% if item.status == "running" && item.started_at %>
             · <span data-progress-elapsed data-started-at="<%= item.started_at.iso8601(3) %>"><%= format_duration.call(Time.current - item.started_at) %></span>
           <% elsif item.duration_ms %>
@@ -63,10 +64,18 @@
   </ol>
 
   <% if run.active? %>
+    <% action_path = local_assigns.fetch(:active_action_path) { interrupted_restart_path } %>
+    <% action_label = local_assigns.fetch(:active_action_label, "Restart interrupted refresh") %>
+    <% action_variant = local_assigns.fetch(:active_action_variant, "warning") %>
+    <% action_confirmation = local_assigns.fetch(:active_action_confirmation) do
+         "Restart this refresh? The running refresh will stop and its progress will be cleared. Every DSL starts over."
+       end %>
     <div class="progress-tracker__actions">
-      <%= button_to "Restart interrupted refresh", interrupted_restart_path,
-                    method: :post, class: "btn warning",
-                    data: { turbo_confirm: "Restart this refresh? Only continue if processing was interrupted. The current run will be marked failed." } %>
+      <%= button_to action_label, action_path,
+                    method: :post, class: "btn #{action_variant}",
+                    data: { turbo_confirm: action_confirmation,
+                            confirm_title: action_label,
+                            confirm_label: action_label } %>
     </div>
   <% end %>
 

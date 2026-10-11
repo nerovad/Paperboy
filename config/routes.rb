@@ -319,7 +319,10 @@ Rails.application.routes.draw do
     get '/group_refreshes', to: 'group_refreshes#index', as: :group_refreshes
     get '/runs/:id', to: 'runs#show', as: :run
     resources :group_runs, only: :show do
-      member { get :status }
+      member do
+        get :status
+        post :cancel
+      end
     end
   end
 

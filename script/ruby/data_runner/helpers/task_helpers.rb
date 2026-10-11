@@ -22,6 +22,7 @@ module DataRunnerTaskHelpers
     'from_sql.rb' => 'script/ruby/data_runner/commands/from_sql.rb',
     'initial_dsl.rb' => 'script/ruby/data_runner/commands/initial_dsl.rb',
     'inject.rb' => 'script/ruby/data_runner/commands/inject.rb',
+    'replicate.rb' => 'script/ruby/data_runner/commands/replicate.rb',
     'to_csv.rb' => 'script/ruby/data_runner/commands/to_csv.rb',
     'to_sql.rb' => 'script/ruby/data_runner/commands/to_sql.rb',
     'use_dsl.rb' => 'script/ruby/data_runner/commands/use_dsl.rb',
@@ -65,6 +66,46 @@ module DataRunnerTaskHelpers
 
   def dsl_stub_selector(value)
     value.to_s.split('.').last
+  end
+
+  def run_refresh(selector)
+    refresh_scripts(selector).each do |stage, script|
+      record_refresh_step(stage)
+      run_ruby_stage(script, selector, log_selectors: log_selectors(stage, selector))
+    end
+  end
+
+  def record_refresh_step(stage)
+    item_id = ENV.fetch('DATARUNNER_ITEM_ID', nil).to_s.strip
+    return if item_id.empty?
+    return unless defined?(DataRunner::GroupRunItem)
+
+    DataRunner::GroupRunItem.record_step(item_id, stage)
+  end
+
+  def run_replicate_stage(selector)
+    run_stage_when_wanted(selector, :replicate, 'replicate.rb')
+  end
+
+  def refresh_scripts(selector)
+    require_relative '../constants/workflow'
+
+    entries = refresh_entries(selector)
+    Workflow::REFRESH_SEQUENCE.select do |step, _script|
+      entries.any? { |_name, cfg| Workflow.wants_step?(cfg, step) }
+    end
+  end
+
+  def run_stage_when_wanted(selector, stage, script)
+    require_relative '../constants/workflow'
+    return unless refresh_entries(selector).any? { |_name, cfg| Workflow.wants_step?(cfg, stage) }
+
+    run_ruby_stage(script, selector, log_selectors: log_selectors(stage, selector))
+  end
+
+  def refresh_entries(selector)
+    load_dsl_helpers
+    selector.nil? ? DSL_MAP : EtlHelpers.selected_dsl_entries(DSL_MAP, [selector])
   end
 
   def log_selectors(step, selector)

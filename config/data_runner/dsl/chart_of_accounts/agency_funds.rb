@@ -38,7 +38,7 @@
     header: [
 
       ['fiscal_year', nil,         'nvarchar(4)', 'NOT NULL', nil],
-      ['fund_code',   'fund_id',   'nvarchar(3)', 'NOT NULL', nil],
+      ['fund_code',   'fund_id',   'nvarchar(4)', 'NOT NULL', nil],
       ['department',  'agency_id', 'nvarchar(3)', 'NOT NULL', nil]
 
     ],

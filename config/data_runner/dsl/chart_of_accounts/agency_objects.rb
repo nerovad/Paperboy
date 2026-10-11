@@ -41,8 +41,8 @@
       ['department',             'agency_id',          'nvarchar(3)',  'NOT NULL', nil],
       ['object_code',            'object_id',          'int',          'NOT NULL', nil],
       ['department_object_code', 'agency_object_code', 'nvarchar(4)',  'NOT NULL', nil],
-      ['department_object_name', 'agency_object_name', 'nvarchar(50)', 'NOT NULL', nil],
-      ['rollup_object',          'rollup_object',      'nvarchar(50)', 'NOT NULL', nil],
+      ['department_object_name', 'agency_object_name', 'nvarchar(51)', 'NOT NULL', nil],
+      ['rollup_object',          'rollup_object',      'nvarchar(51)', 'NOT NULL', nil],
       ['rollup_name',            'rollup_name',        'nvarchar(50)', 'NOT NULL', nil],
       ['active',                 'active',             'bit',          'NOT NULL', nil]
 

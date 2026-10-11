@@ -13,8 +13,23 @@ module DataRunner
       create!(group: group, entries: entries, requested_by: requested_by, restart: true)
     end
 
+    # Stop this refresh and drop its queue. The worker sees the row is gone
+    # and kills the rake children. No replacement is queued.
+    def self.cancel!(run)
+      canceled = false
+      GroupRun.transaction do
+        locked = GroupRun.active.where(id: run.id).lock.first
+        next unless locked
+
+        locked.destroy!
+        canceled = true
+      end
+      canceled
+    end
+
     def self.create!(group:, entries:, requested_by:, restart: false)
       validate_entries!(group, entries)
+      entries = GroupRefreshOrder.entries(entries)
       run = nil
       GroupRun.transaction do
         active_run = GroupRun.active.where(group_name: group).lock.first
@@ -35,13 +50,12 @@ module DataRunner
       raise
     end
 
+    # Delete the run and its items. Marking them failed left the worker and its
+    # rake children going, and the next refresh still saw that run. The worker
+    # notices the row is gone, kills those children, and the replacement starts
+    # with every DSL pending.
     private_class_method def self.interrupt!(run)
-      now = Time.current
-      run.items.where(status: %w[pending running]).update_all(
-        status: 'failed', error_message: 'Interrupted refresh was restarted', completed_at: now, updated_at: now
-      )
-      run.update!(status: 'failed', current_dsl: nil, completed_count: run.total_count,
-                  failed_count: run.items.where(status: 'failed').count, completed_at: now)
+      run.destroy!
     end
 
     private_class_method def self.enqueue!(run_id)

@@ -93,6 +93,116 @@ class StopserversTest < Minitest::Test
     end
   end
 
+  def test_stops_a_datarunner_process_group_after_the_server_is_gone
+    other_root = Dir.mktmpdir('paperboy-stopservers-other-checkout')
+    Dir.mktmpdir('paperboy-stopservers-datarunner') do |root|
+      root = Pathname.new(root)
+      bin = root.join('bin')
+      bin.mkpath
+      FileUtils.cp(SCRIPT, bin.join('stopservers'))
+      FileUtils.chmod(0o755, bin.join('stopservers'))
+
+      refresh = spawn_named(root, 'ruby bin/rake DataRunner:refresh Sample', 'sleep 30 & wait')
+      child_pid = child_of(refresh)
+      assert child_pid.positive?, 'the refresh did not start a child'
+      bystander = Process.spawn('sleep', '30', chdir: root.to_s, pgroup: true)
+      other_refresh = spawn_named(other_root, 'ruby bin/rake DataRunner:refresh Other', 'sleep 30')
+
+      stdout, stderr, status = Open3.capture3(bin.join('stopservers').to_s, '3105', chdir: root.to_s)
+
+      assert status.success?, "stopservers failed: #{stdout}\n#{stderr}"
+      assert_process_stopped(refresh)
+      refute child_pid.positive? && process_alive?(child_pid), 'the inject child is still running'
+      assert_process_alive(bystander)
+      assert_process_alive(other_refresh)
+    ensure
+      [refresh, bystander, other_refresh].compact.each { |pid| stop_process(pid) }
+    end
+  ensure
+    FileUtils.remove_entry(other_root) if other_root
+  end
+
+  def test_kills_a_datarunner_group_forked_while_the_server_exits
+    Dir.mktmpdir('paperboy-stopservers-race') do |root|
+      root = Pathname.new(root)
+      bin = root.join('bin')
+      pid_dir = root.join('tmp/pids')
+      bin.mkpath
+      pid_dir.mkpath
+      FileUtils.cp(SCRIPT, bin.join('stopservers'))
+      FileUtils.chmod(0o755, bin.join('stopservers'))
+
+      jobs = spawn_named(root, 'bundle exec bin/jobs', <<~RUBY)
+        ruby -e '
+          trap("TERM") do
+            Process.fork do
+              Process.setpgid(0, 0)
+              File.write("refresh.pid", Process.pid)
+              exec(["sleep", "ruby bin/rake DataRunner:refresh Sample"], "30")
+            end
+          end
+          sleep 30
+        '
+      RUBY
+      pid_dir.join('paperboy-dev-3105.pids').write("#{jobs}\n")
+      bystander = Process.spawn('sleep', '30', chdir: root.to_s, pgroup: true)
+
+      stdout, stderr, status = Open3.capture3(bin.join('stopservers').to_s, '3105', chdir: root.to_s)
+
+      assert status.success?, "stopservers failed: #{stdout}\n#{stderr}"
+      assert_match(/sending KILL/, stderr)
+      assert_process_stopped(jobs)
+      refresh_pid = root.join('refresh.pid').read.to_i
+      refute process_alive?(refresh_pid), 'the refresh forked during shutdown is still running'
+      assert_process_alive(bystander)
+    ensure
+      stop_process(jobs) if jobs
+      stop_process(bystander) if bystander
+      refresh_pid = root.join('refresh.pid').read.to_i if root.join('refresh.pid').file?
+      stop_process(refresh_pid) if refresh_pid
+    end
+  end
+
+  def test_kills_a_datarunner_group_forked_as_the_server_exits
+    Dir.mktmpdir('paperboy-stopservers-exit-race') do |root|
+      root = Pathname.new(root)
+      bin = root.join('bin')
+      pid_dir = root.join('tmp/pids')
+      bin.mkpath
+      pid_dir.mkpath
+      FileUtils.cp(SCRIPT, bin.join('stopservers'))
+      FileUtils.chmod(0o755, bin.join('stopservers'))
+
+      jobs = spawn_named(root, 'bundle exec bin/jobs', <<~RUBY)
+        ruby -e '
+          trap("TERM") do
+            pid = Process.fork do
+              Process.setpgid(0, 0)
+              File.write("refresh.pid", Process.pid)
+              exec(["sleep", "ruby bin/rake DataRunner:refresh Sample"], "30")
+            end
+            Process.detach(pid)
+            exit
+          end
+          sleep 30
+        '
+      RUBY
+      pid_dir.join('paperboy-dev-3105.pids').write("#{jobs}\n")
+      sleep 0.2
+
+      stdout, stderr, status = Open3.capture3(bin.join('stopservers').to_s, '3105', chdir: root.to_s)
+
+      assert status.success?, "stopservers failed: #{stdout}\n#{stderr}"
+      assert_process_stopped(jobs)
+      refresh_pid = root.join('refresh.pid').read.to_i
+      refute process_alive?(refresh_pid), 'the refresh forked as the server exited is still running'
+    ensure
+      stop_process(jobs) if jobs
+      refresh_pid = root.join('refresh.pid').read.to_i if root.join('refresh.pid').file?
+      stop_process(refresh_pid) if refresh_pid
+    end
+  end
+
   def test_kills_a_stubborn_process_group_and_its_child
     Dir.mktmpdir('paperboy-stopservers-stubborn') do |root|
       root = Pathname.new(root)
@@ -126,6 +236,23 @@ class StopserversTest < Minitest::Test
   end
 
   private
+
+  def spawn_named(root, name, script)
+    Process.spawn('bash', '-c',
+                  "exec -a #{Shellwords.escape(name)} bash -c #{Shellwords.escape(script)}",
+                  chdir: root.to_s, pgroup: true)
+  end
+
+  def child_of(pid)
+    child_pid = 0
+    10.times do
+      child_pid = `pgrep -P #{pid}`.to_i
+      break if child_pid.positive?
+
+      sleep 0.1
+    end
+    child_pid
+  end
 
   def start_stack(root, port, pid_dir, components: %i[server jobs sass])
     pids = components.map do |component|
