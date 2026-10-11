@@ -3,7 +3,7 @@
 [
   'Gsa_scan_qa_time_log',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

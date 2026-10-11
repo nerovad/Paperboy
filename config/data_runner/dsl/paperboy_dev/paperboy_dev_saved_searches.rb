@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_saved_searches',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

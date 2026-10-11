@@ -9,7 +9,9 @@ trap 'rm -f "$summary_file"' EXIT
 status=0
 
 {
-  bundle exec rubocop || status=$?
+  # A linked worktree lives under worktrees/, which the main checkout
+  # excludes. RuboCop merges that parent Exclude and would inspect nothing.
+  bundle exec rubocop --ignore-parent-exclusion || status=$?
   bundle exec brakeman || status=$?
   bundle exec bundle-audit check || status=$?
   bundle exec rails test "$test_target" || status=$?

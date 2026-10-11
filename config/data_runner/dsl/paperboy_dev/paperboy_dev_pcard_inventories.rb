@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_pcard_inventories',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

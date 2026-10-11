@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_parking_lot_vehicles',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

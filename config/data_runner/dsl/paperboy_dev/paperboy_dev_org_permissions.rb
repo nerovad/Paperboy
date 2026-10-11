@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_org_permissions',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -64,6 +64,10 @@ class WorkflowOutputPresenter
     self.class.exact_csv_count?(path)
   end
 
+  def character_applied?(path)
+    BcpCharacterFile.applied_path?(path) && BcpCharacterFile.character_bytes?(path)
+  end
+
   def load_output
     case kind
     when 'csv' then load_csv
@@ -74,7 +78,7 @@ class WorkflowOutputPresenter
   end
 
   def load_csv
-    return load_character_csv if BcpCharacterFile.applied_path?(path)
+    return load_character_csv if character_applied?(path)
     return load_csv_page if paging?
 
     records = CSV.foreach(path, encoding: 'bom|utf-8').take(max_rows + 2)

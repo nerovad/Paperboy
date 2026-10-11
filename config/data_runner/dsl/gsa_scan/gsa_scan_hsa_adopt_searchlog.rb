@@ -3,7 +3,7 @@
 [
   'Gsa_scan_hsa_adopt_searchlog',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

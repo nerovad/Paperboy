@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_osha_300a_entries',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

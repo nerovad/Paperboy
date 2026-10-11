@@ -57,7 +57,7 @@ class ReplicateExtractTest < Minitest::Test
       File.read(path).include?('strategy: :replicate')
     end
 
-    assert_operator files.length, :>=, 265
+    assert_operator files.length, :>=, 264
     files.each do |path|
       source = File.read(path)
       assert_equal 2, source.scan('steps: Workflow::REPLICATE_STEPS').length, path

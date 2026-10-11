@@ -3,7 +3,7 @@
 [
   'Gsabss_agency_revenues',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

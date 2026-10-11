@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_creative_job_requests',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_authorized_approver_changes',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

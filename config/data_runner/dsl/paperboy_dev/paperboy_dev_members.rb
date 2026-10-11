@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_members',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

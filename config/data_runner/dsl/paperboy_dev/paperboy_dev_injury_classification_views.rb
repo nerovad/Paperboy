@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_injury_classification_views',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

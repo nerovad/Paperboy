@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_schema_migrations',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

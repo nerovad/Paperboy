@@ -3,7 +3,7 @@
 [
   'Gsap2m_moveresults',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

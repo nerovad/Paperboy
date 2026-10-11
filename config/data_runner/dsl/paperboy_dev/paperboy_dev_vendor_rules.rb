@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_vendor_rules',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

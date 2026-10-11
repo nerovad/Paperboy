@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_social_media_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

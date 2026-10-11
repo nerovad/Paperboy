@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_fleet_vehicle_garaging_form_locations',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -3,7 +3,7 @@
 [
   'Gsabss_bdmforcasts',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

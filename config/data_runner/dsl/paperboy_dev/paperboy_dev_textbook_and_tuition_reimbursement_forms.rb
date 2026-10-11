@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_textbook_and_tuition_reimbursement_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

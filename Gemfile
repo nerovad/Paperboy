@@ -26,6 +26,9 @@ gem 'sprockets-rails'
 # Servers leave that variable unset and keep the primary SQL Server database.
 group :development do
   gem 'sqlite3', '~> 2.1'
+
+  # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem 'web-console'
 end
 # gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
@@ -124,11 +127,6 @@ group :development, :test do
   # Provides the task runner used by Paperboy and Rails maintenance tasks.
   # https://github.com/ruby/rake
   gem 'rake'
-end
-
-group :development do
-  # Use console on exceptions pages [https://github.com/rails/web-console]
-  gem 'web-console'
 end
 
 group :test do

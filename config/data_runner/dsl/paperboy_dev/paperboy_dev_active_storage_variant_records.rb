@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_active_storage_variant_records',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

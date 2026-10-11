@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_sheriff_safety_reporting_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

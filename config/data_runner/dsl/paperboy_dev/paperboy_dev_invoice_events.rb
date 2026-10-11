@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_invoice_events',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

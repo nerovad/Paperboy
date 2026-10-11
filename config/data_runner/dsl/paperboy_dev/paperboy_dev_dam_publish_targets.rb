@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_dam_publish_targets',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

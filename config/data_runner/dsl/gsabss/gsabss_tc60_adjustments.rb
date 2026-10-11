@@ -3,7 +3,7 @@
 [
   'Gsabss_tc60_adjustments',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

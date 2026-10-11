@@ -3,7 +3,7 @@
 [
   'Gsabss_p2m_oms_uploads',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

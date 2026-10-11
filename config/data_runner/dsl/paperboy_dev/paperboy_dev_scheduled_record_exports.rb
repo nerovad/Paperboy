@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_scheduled_record_exports',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS
