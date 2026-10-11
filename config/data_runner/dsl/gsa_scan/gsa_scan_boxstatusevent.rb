@@ -17,7 +17,7 @@
     group: {
       name: 'gsa_scan'
     },
-    dependency: %w[Gsa_scan_boxstatuschoice Gsa_scan_boxstatusemployee],
+    dependency: %w[Gsa_scan_boxstatuschoice Gsa_scan_boxstatusemployee Gsa_scan_job],
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSA Scan',

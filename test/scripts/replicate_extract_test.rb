@@ -35,6 +35,22 @@ class ReplicateExtractTest < Minitest::Test
     ], rows
   end
 
+  def test_binary_fields_are_hex_so_terminators_stay_in_the_value
+    raw = "\x00\x1E\x1Fhash".b
+    cfg = {
+      header: [
+        ['PayloadHash', 'PayloadHash', 'binary(32)', 'NOT NULL', nil]
+      ]
+    }
+    client = RecordingClient.new([[raw]])
+
+    rows = write_rows(client, cfg)
+
+    assert_equal [%w[PayloadHash], [raw.unpack1('H*')]], rows
+    refute_includes rows[1][0], "\x1E"
+    refute_includes rows[1][0], "\x1F"
+  end
+
   def test_replicate_strategy_uses_replicate_steps
     root = File.expand_path('../../config/data_runner/dsl', __dir__)
     files = Dir[File.join(root, '**', '*.rb')].select do |path|

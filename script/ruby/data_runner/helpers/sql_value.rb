@@ -5,11 +5,13 @@ require 'date'
 require 'time'
 
 # Canonical text for a bcp character field. Blank numbers and times become
-# empty, which the staging insert stores as NULL. Strings keep an empty field.
+# empty, which the staging insert stores as NULL. Binary values are hex so a
+# 0x1E or 0x1F byte is not a field or row terminator. Strings keep an empty field.
 module SqlValue
   module_function
 
   def canonical(value, data_type = nil)
+    return binary_text(value) if binary?(data_type)
     return '' if value.nil?
 
     text = cell_text(value)
@@ -43,6 +45,26 @@ module SqlValue
 
   def blank_becomes_null?(data_type)
     numeric?(data_type) || temporal?(data_type)
+  end
+
+  def binary?(data_type)
+    %w[binary varbinary image timestamp rowversion].include?(type_name(data_type))
+  end
+
+  def character?(data_type)
+    %w[char nchar varchar nvarchar sysname text ntext].include?(type_name(data_type))
+  end
+
+  def not_null_text?(data_type, nullability)
+    character?(data_type) && nullability.to_s.match?(/\bNOT\s+NULL\b/i)
+  end
+
+  # Hex with no 0x prefix. CONVERT(type, hex, 2) restores the original bytes.
+  def binary_text(value)
+    return '' if value.nil?
+
+    text = value.is_a?(String) ? value : value.to_s
+    text.b.unpack1('H*')
   end
 
   def numeric?(data_type)

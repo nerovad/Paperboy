@@ -42,7 +42,9 @@ APPLIED_DIR = WorkflowPaths::APPLIED_DIR
 
 # -------------------------------------------------------------------------- }}}
 def column_type_map(cfg)
-  EtlMappingHelpers.output_columns(cfg).to_h { |column| [column[:name], column[:data_type]] }
+  EtlMappingHelpers.output_columns(cfg).to_h do |column|
+    [column[:name], { data_type: column[:data_type], nullability: column[:nullability] }]
+  end
 end
 
 def identity_insert_sql(schema, table, enabled)
@@ -83,7 +85,8 @@ def existing_row_sql(client, schema, table, columns, row, column_types)
   "SELECT TOP 1 1 FROM #{MssqlHelpers.sql_qualified(schema, table)} WHERE #{predicates.join(' AND ')}"
 end
 
-def existing_predicate(client, column, value, data_type)
+def existing_predicate(client, column, value, spec)
+  data_type = DataRunner::BcpStage.column_type(spec)
   quoted = MssqlHelpers.quote_ident(column)
   text = value.nil? ? '' : value.to_s
   if SqlValue.blank_becomes_null?(data_type)

@@ -53,15 +53,34 @@ module DataRunner
       "INSERT INTO #{live_sql} (#{destination}) SELECT #{selected} FROM #{stage_sql} AS stage"
     end
 
+    def self.column_type(spec)
+      return spec[:data_type] || spec['data_type'] if spec.is_a?(Hash)
+
+      spec
+    end
+
+    def self.column_nullability(spec)
+      return nil unless spec.is_a?(Hash)
+
+      spec[:nullability] || spec['nullability']
+    end
+
     def self.count_sql(schema, table)
       "SELECT COUNT_BIG(*) AS loaded FROM #{MssqlHelpers.sql_qualified(schema, table)}"
     end
 
-    def self.select_expr(column, data_type)
+    def self.select_expr(column, spec)
+      data_type = column_type(spec)
       quoted = "stage.#{MssqlHelpers.quote_ident(column)}"
-      return quoted unless SqlValue.blank_becomes_null?(data_type)
-
-      "CONVERT(#{sql_type(data_type)}, NULLIF(#{quoted}, N''))"
+      if SqlValue.binary?(data_type)
+        "CONVERT(#{sql_type(data_type)}, NULLIF(#{quoted}, N''), 2)"
+      elsif SqlValue.blank_becomes_null?(data_type)
+        "CONVERT(#{sql_type(data_type)}, NULLIF(#{quoted}, N''))"
+      elsif SqlValue.not_null_text?(data_type, column_nullability(spec))
+        "ISNULL(#{quoted}, N'')"
+      else
+        quoted
+      end
     end
 
     def self.sql_type(data_type)

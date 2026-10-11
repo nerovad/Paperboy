@@ -76,4 +76,21 @@ class BcpLoadTest < Minitest::Test
     assert_includes sql, 'SELECT stage.[Note], CONVERT(bigint, NULLIF(stage.[Amount], N\'\'))'
     assert_includes sql, 'FROM [p2m].[Companion_bcp_ab12] AS stage'
   end
+
+  def test_insert_keeps_empty_not_null_strings_and_restores_binary
+    sql = DataRunner::BcpStage.insert_sql(
+      'scan', 'TimeTrackingRequest', 'TimeTrackingRequest_bcp_ab12',
+      %w[Comment PayloadHash Note],
+      {
+        'Comment' => { data_type: 'nvarchar(1000)', nullability: 'NOT NULL' },
+        'PayloadHash' => { data_type: 'binary(32)', nullability: 'NOT NULL' },
+        'Note' => { data_type: 'nvarchar(100)', nullability: 'NULL' }
+      }
+    )
+
+    assert_includes sql, 'ISNULL(stage.[Comment], N\'\')'
+    assert_includes sql, 'CONVERT(binary(32), NULLIF(stage.[PayloadHash], N\'\'), 2)'
+    assert_includes sql, 'stage.[Note]'
+    refute_includes sql, 'ISNULL(stage.[Note]'
+  end
 end

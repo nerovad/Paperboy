@@ -17,7 +17,7 @@
     group: {
       name: 'gsa_scan'
     },
-    dependency: %w[Gsa_scan_boxstatusemployee Gsa_scan_timetrackingactivity],
+    dependency: %w[Gsa_scan_boxstatusemployee Gsa_scan_timetrackingactivity Gsa_scan_job],
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSA Scan',
@@ -37,7 +37,8 @@
       ['State', 'State', 'varchar(12)', 'NOT NULL', nil],
       ['StartedAtUtc', 'StartedAtUtc', 'datetime2(3)', 'NOT NULL', nil],
       ['EndedAtUtc', 'EndedAtUtc', 'datetime2(3)', 'NULL', nil],
-      ['Version', 'Version', 'int', 'NOT NULL', nil]
+      ['Version', 'Version', 'int', 'NOT NULL', nil],
+      ['JobID', 'JobID', 'varchar(50)', 'NOT NULL', nil]
     ],
     database_connections: [
       {
