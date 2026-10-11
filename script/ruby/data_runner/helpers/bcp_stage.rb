@@ -89,5 +89,27 @@ module DataRunner
 
       raise "unsupported SQL type #{data_type.inspect}"
     end
+
+    # A child extract can contain keys created after its parent snapshot.
+    # Those rows are not in the loaded parent, so the schema foreign key
+    # would reject the whole insert.
+    def self.missing_parent_count_sql(schema, stage, parent_table, column, parent_column, data_type)
+      "SELECT COUNT_BIG(*) AS skipped FROM #{staged(schema, stage)} WHERE #{missing_parent_predicate(schema, parent_table, column, parent_column, data_type)}"
+    end
+
+    def self.missing_parent_delete_sql(schema, stage, parent_table, column, parent_column, data_type)
+      "DELETE stage FROM #{staged(schema, stage)} WHERE #{missing_parent_predicate(schema, parent_table, column, parent_column, data_type)}"
+    end
+
+    def self.staged(schema, stage)
+      "#{MssqlHelpers.sql_qualified(schema, stage)} AS stage"
+    end
+
+    def self.missing_parent_predicate(schema, parent_table, column, parent_column, data_type)
+      parent_sql = MssqlHelpers.sql_qualified(schema, parent_table)
+      converted = "TRY_CONVERT(#{sql_type(data_type)}, stage.#{MssqlHelpers.quote_ident(column)})"
+      parent_key = "parent.#{MssqlHelpers.quote_ident(parent_column)}"
+      "NOT EXISTS (SELECT 1 FROM #{parent_sql} AS parent WHERE #{parent_key} = #{converted})"
+    end
   end
 end

@@ -255,6 +255,7 @@ end
 def publish_stage!(client, target, stage, header, column_types, load, identity)
   client.execute('BEGIN TRAN').do unless load.fetch(:atomic)
   apply_inject_mode!(client, target, load.fetch(:mode), load.fetch(:where_sql))
+  omit_unreferenced_rows!(client, target, stage, header, column_types, load)
   client.execute(identity_insert_sql(target.schema, target.table, true)).do if identity
   begin
     sql = DataRunner::BcpStage.insert_sql(target.schema, target.table, stage, header, column_types)
@@ -298,11 +299,35 @@ def apply_inject_mode!(client, target, mode, where_sql)
 end
 
 def staged_count(client, schema, table)
+  query_count(client, DataRunner::BcpStage.count_sql(schema, table))
+end
+
+def query_count(client, sql)
   count = 0
-  client.execute(DataRunner::BcpStage.count_sql(schema, table)).each do |row|
+  client.execute(sql).each do |row|
     count = row.values.first
   end
   Integer(count)
+end
+
+def omit_unreferenced_rows!(client, target, stage, header, column_types, load)
+  Array(load[:references]).each do |reference|
+    column = reference.fetch(:column).to_s
+    parent_table = reference.fetch(:table).to_s
+    parent_column = reference.fetch(:parent_column, 'id').to_s
+    raise "#{load.fetch(:name)}: reference column #{column} is not in the applied file" unless header.include?(column)
+
+    spec = column_types[column]
+    raise "#{load.fetch(:name)}: reference column #{column} has no SQL type" if spec.nil?
+
+    data_type = DataRunner::BcpStage.column_type(spec)
+    arguments = [target.schema, stage, parent_table, column, parent_column, data_type]
+    skipped = query_count(client, DataRunner::BcpStage.missing_parent_count_sql(*arguments))
+    next if skipped.zero?
+
+    client.execute(DataRunner::BcpStage.missing_parent_delete_sql(*arguments)).do
+    puts "[WARN] #{load.fetch(:name)}: skipped #{skipped} #{column} rows absent from #{target.schema}.#{parent_table}"
+  end
 end
 
 def release_stage(record, pending_stages)
@@ -400,7 +425,14 @@ begin
       insert_started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       inserted, duplicate_check_seconds = import_applied_file(
         client, target, input, cfg,
-        { name: name, mode: mode, where_sql: where_sql, atomic: atomic_inject, pending_stages: pending_stages }
+        {
+          name: name,
+          mode: mode,
+          where_sql: where_sql,
+          atomic: atomic_inject,
+          pending_stages: pending_stages,
+          references: cfg[:references]
+        }
       )
       insert_seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - insert_started
       rows_per_second = insert_seconds.positive? ? inserted / insert_seconds : inserted

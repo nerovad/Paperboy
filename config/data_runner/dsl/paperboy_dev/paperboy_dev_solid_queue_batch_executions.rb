@@ -18,6 +18,10 @@
       name: 'paperboy_dev'
     },
     dependency: %w[Paperboy_dev_solid_queue_batches Paperboy_dev_solid_queue_jobs],
+    references: [
+      { column: 'job_id', table: 'solid_queue_jobs' },
+      { column: 'batch_id', table: 'solid_queue_batches' }
+    ],
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'Paperboy_Dev',

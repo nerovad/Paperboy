@@ -18,6 +18,9 @@
       name: 'paperboy_dev'
     },
     dependency: 'Paperboy_dev_solid_queue_jobs',
+    references: [
+      { column: 'job_id', table: 'solid_queue_jobs' }
+    ],
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'Paperboy_Dev',
