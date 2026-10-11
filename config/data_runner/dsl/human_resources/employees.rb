@@ -4,8 +4,8 @@
   'Employees',
   {
     steps: {
-      manual: { enabled: true, steps: Workflow::MANUAL_STEPS },
-      scheduled: { enabled: true, frequency: :daily, steps: Workflow::SCHEDULED_STEPS }
+      manual: { enabled: true, steps: Workflow::REPLICATE_STEPS },
+      scheduled: { enabled: false, frequency: :daily, steps: Workflow::REPLICATE_STEPS }
     },
     group: {
       name: 'human_resources'

@@ -35,18 +35,20 @@ class ReplicateExtractTest < Minitest::Test
     ], rows
   end
 
-  def test_gsap2m_refresh_uses_replicate_steps
-    root = File.expand_path('../../config/data_runner/dsl/gsap2m', __dir__)
-    files = Dir[File.join(root, '*.rb')]
+  def test_replicate_strategy_uses_replicate_steps
+    root = File.expand_path('../../config/data_runner/dsl', __dir__)
+    files = Dir[File.join(root, '**', '*.rb')].select do |path|
+      File.read(path).include?('strategy: :replicate')
+    end
 
-    assert_operator files.length, :>=, 24
+    assert_operator files.length, :>=, 265
     files.each do |path|
       source = File.read(path)
-      assert_includes source, 'steps: Workflow::REPLICATE_STEPS', path
-      assert_includes source, "scheduled: {\n        enabled: false,", path
+      assert_equal 2, source.scan('steps: Workflow::REPLICATE_STEPS').length, path
+      assert_match(/manual:\s*\{\s*enabled: true,/, source, path)
+      assert_match(/scheduled:\s*\{\s*enabled: false,/, source, path)
       refute_includes source, 'MANUAL_STEPS', path
       refute_includes source, 'SCHEDULED_STEPS', path
-      assert_includes source, 'strategy: :replicate', path
     end
   end
 
