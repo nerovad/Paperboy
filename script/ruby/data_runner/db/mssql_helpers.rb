@@ -70,8 +70,9 @@ module MssqlHelpers
 
   # TinyTDS leaves these off. Indexed views, filtered indexes, and persisted
   # computed columns reject writes until they are on. NUMERIC_ROUNDABORT stays OFF.
+  # FreeTDS TEXTSIZE defaults to 4096 bytes and would cut nvarchar(max) at 2048 characters.
   SESSION_OPTIONS = 'SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON; ' \
-                    'SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF;'
+                    'SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF; SET TEXTSIZE 2147483647;'
 
   def connect!(host = nil, database: nil, kerberos: nil, timeout: :default)
     require 'tiny_tds'
