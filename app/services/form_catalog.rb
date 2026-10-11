@@ -14,8 +14,8 @@
 #   catalog.finder              # FormFinder over exactly those templates
 #
 # Every list is filtered by the ACL first, so nothing downstream — the sidebar's
-# links, Advanced Search's facets, the palette's results — can offer a form the
-# viewer may not open.
+# links, the Form Library's rows and facets, the palette's results — can offer
+# a form the viewer may not open.
 class FormCatalog
   include Rails.application.routes.url_helpers
 
@@ -67,22 +67,8 @@ class FormCatalog
     }
   end
 
-  # What Advanced Search filters on. Only the sidebar renders these — the
-  # palette matches text and has no facet panel.
-  def facet_data(name)
-    template = template_for(name)
-
-    {
-      form_type: template&.form_type.to_s,
-      agency: template&.agency_id.to_s,
-      division: template&.division_id.to_s,
-      department: template&.department_id.to_s,
-      unit: template&.unit_id.to_s
-    }
-  end
-
-  # Facets built from the templates behind the links actually rendered, so
-  # Advanced Search can never offer a choice that finds nothing.
+  # Facets built from the templates behind the forms actually offered, so the
+  # Form Library's filters can never offer a choice that finds nothing.
   def finder
     @finder ||= FormFinder.new(forms.filter_map { |name, _| templates_by_name[name] })
   end

@@ -131,7 +131,7 @@ class FormLibrary
   private
 
   # Every criterion set has to hold; within the type and tag boxes any one
-  # ticked value will do — the rule the sidebar panel used.
+  # ticked value will do.
   def matches?(entry)
     in_collection?(entry) && matches_query?(entry) && matches_org?(entry) &&
       matches_any?([entry.form_type], form_types) &&

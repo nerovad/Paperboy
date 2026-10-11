@@ -85,7 +85,6 @@ import DamSelectionController from "controllers/dam_selection_controller"
 import PublishTargetController from "controllers/publish_target_controller"
 import PublishFormController from "controllers/publish_form_controller"
 import OrgCascadeController from "controllers/org_cascade_controller"
-import AdvancedSearchController from "controllers/advanced_search_controller"
 import CoaBillingLookupController from "controllers/coa_billing_lookup_controller"
 import CoaBillingStringController from "controllers/coa_billing_string_controller"
 import CoaAccountHierarchyController from "controllers/coa_account_hierarchy_controller"
@@ -211,7 +210,6 @@ application.register("dam-selection", DamSelectionController)
 application.register("publish-target", PublishTargetController)
 application.register("publish-form", PublishFormController)
 application.register("org-cascade", OrgCascadeController)
-application.register("advanced-search", AdvancedSearchController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
 application.register("aim-move-modal", AimMoveModalController)

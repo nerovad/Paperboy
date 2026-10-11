@@ -7,9 +7,6 @@
 // gsabss_selects_controller.js uses, because those replace fixed DOM ids and so
 // can only appear once on a page — this one can be rendered anywhere, as many
 // times as needed. Render it with the shared "shared/org_cascade" partial.
-//
-// advanced_search_controller.js subclasses this and adds the sidebar panel's
-// open/close behaviour on top, so the two cascades can never drift apart.
 import { Controller } from "@hotwired/stimulus"
 
 export default class OrgCascadeController extends Controller {

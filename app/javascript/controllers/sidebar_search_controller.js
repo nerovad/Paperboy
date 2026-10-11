@@ -101,7 +101,7 @@ export default class extends Controller {
         : rows
 
       ordered.forEach(row => {
-        row.style.display = this.facetHidden(row) || this.userHidden(row) ? "none" : ""
+        row.style.display = this.userHidden(row) ? "none" : ""
         this.renderRow(row, { matched: false })
         list.appendChild(row)
       })
@@ -117,10 +117,7 @@ export default class extends Controller {
     })
 
     scored.forEach(({ row, score, ...match }) => {
-      // A form the facets have excluded stays out however well its text
-      // matches — Advanced Search is the narrower question, and a search
-      // inside it should never reach back past it.
-      const visible = score > 0 && !this.facetHidden(row) && !this.userHidden(row)
+      const visible = score > 0 && !this.userHidden(row)
       row.style.display = visible ? "" : "none"
       this.renderRow(row, { ...match, matched: visible })
       list.appendChild(row)
@@ -246,13 +243,6 @@ export default class extends Controller {
 
     event.preventDefault()
     command.click()
-  }
-
-  // Whether Advanced Search has ruled this form out. Set by
-  // advanced_search_controller.js; absent everywhere else, which reads as
-  // "nothing has been ruled out".
-  facetHidden(row) {
-    return row.dataset.facetHidden === "true"
   }
 
   // "Show Hidden Forms" is a search option, not a view of the sidebar: the box
