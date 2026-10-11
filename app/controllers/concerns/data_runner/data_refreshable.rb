@@ -30,6 +30,9 @@ module DataRunner
     rescue GroupRefresh::QueueUnavailable => e
       Rails.logger.error("#{data_refresh_app_label} data refresh queue unavailable: #{e.message}")
       redirect_to data_refresh_form_path, alert: 'The data refresh could not be queued because the job queue is unavailable.'
+    rescue GroupRefreshOrder::Error => e
+      Rails.logger.error("#{data_refresh_app_label} data refresh order: #{e.message}")
+      redirect_to data_refresh_form_path, alert: e.message
     rescue ActionController::ParameterMissing, ArgumentError, KeyError => e
       Rails.logger.error("#{data_refresh_app_label} data refresh failed: #{e.class}: #{e.message}")
       redirect_to data_refresh_form_path, alert: 'The data refresh could not be started.'
@@ -42,6 +45,9 @@ module DataRunner
       run = GroupRefresh.restart!(group: data_refresh_service.group_run_name, entries: entries,
                                   requested_by: current_user.email)
       redirect_to data_refresh_progress_path(run), notice: "Data refresh restarted for #{run.total_count} DSLs."
+    rescue GroupRefreshOrder::Error => e
+      Rails.logger.error("#{data_refresh_app_label} data refresh order: #{e.message}")
+      redirect_to data_refresh_form_path, alert: e.message
     rescue ActiveRecord::RecordNotFound, ActionController::ParameterMissing, KeyError => e
       Rails.logger.error("#{data_refresh_app_label} data refresh restart failed: #{e.class}: #{e.message}")
       redirect_to data_refresh_form_path, alert: 'The data refresh could not be restarted.'

@@ -63,6 +63,37 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
     assert DataRunner::GroupRun.find_by(id: run.id)
   end
 
+  test 'stores a child after its parent when the child sorts first' do
+    child = refresh_entry('A_child', 'Z_parent')
+    middle = refresh_entry('M_middle')
+    parent = refresh_entry('Z_parent')
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) {}) do
+      run = DataRunner::GroupRefresh.start!(
+        group: 'ordered', entries: [child, middle, parent], requested_by: 'employee@example.com'
+      )
+
+      assert_equal %w[M_middle Z_parent A_child], run.items.order(:position).pluck(:dsl_name)
+    end
+  end
+
+  test 'does not queue a refresh whose dependencies cycle' do
+    enqueued = false
+    child = refresh_entry('Alpha', 'Beta')
+    parent = refresh_entry('Beta', 'Alpha')
+
+    DataRunner::GroupRefreshJob.stub(:perform_later, ->(*) { enqueued = true }) do
+      assert_raises(DataRunner::GroupRefreshOrder::Error) do
+        DataRunner::GroupRefresh.start!(
+          group: 'cycle', entries: [child, parent], requested_by: 'employee@example.com'
+        )
+      end
+    end
+
+    assert_not enqueued
+    assert_nil DataRunner::GroupRun.find_by(group_name: 'cycle')
+  end
+
   test 'raises queue unavailable when the job queue refuses the enqueue' do
     entry = Struct.new(:key, :slug).new('Sample', 'sample')
     error = StandardError.new('enqueue failed')
@@ -75,5 +106,13 @@ class DataRunnerGroupRefreshTest < ActiveSupport::TestCase
         )
       end
     end
+  end
+
+  private
+
+  def refresh_entry(key, dependency = nil)
+    config = {}
+    config[:dependency] = dependency if dependency
+    Data.define(:key, :slug, :config).new(key: key, slug: key.downcase, config: config)
   end
 end

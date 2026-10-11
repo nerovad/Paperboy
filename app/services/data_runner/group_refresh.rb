@@ -29,6 +29,7 @@ module DataRunner
 
     def self.create!(group:, entries:, requested_by:, restart: false)
       validate_entries!(group, entries)
+      entries = GroupRefreshOrder.entries(entries)
       run = nil
       GroupRun.transaction do
         active_run = GroupRun.active.where(group_name: group).lock.first
