@@ -51,7 +51,7 @@
         <span class="progress-tracker__item-state" aria-hidden="true"><%= { "pending" => "○", "running" => "→", "succeeded" => "✓", "failed" => "✕" }.fetch(item.status) %></span>
         <span><%= display_name.call(item) %></span>
         <span class="progress-tracker__item-label">
-          <%= item.status.humanize %>
+          <%= item.status == "running" && item.current_step.present? ? "Running:#{item.current_step}" : item.status.humanize %>
           <% if item.status == "running" && item.started_at %>
             · <span data-progress-elapsed data-started-at="<%= item.started_at.iso8601(3) %>"><%= format_duration.call(Time.current - item.started_at) %></span>
           <% elsif item.duration_ms %>

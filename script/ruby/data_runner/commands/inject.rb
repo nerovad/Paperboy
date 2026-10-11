@@ -369,7 +369,9 @@ begin
 
       mode = inject_mode(cfg, target.connection)
       inject = inject_cfg(cfg, target.connection)
-      client = clients[target.host] ||= MssqlHelpers.connect!(target.host)
+      # TinyTDS cancels a command after 5 seconds. Publishing millions of rows
+      # takes longer. Zero waits until that command finishes.
+      client = clients[target.host] ||= MssqlHelpers.connect!(target.host, timeout: 0)
 
       client.execute("USE #{MssqlHelpers.quote_ident(target.database)}").do
 

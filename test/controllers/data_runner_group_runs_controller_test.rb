@@ -25,6 +25,17 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_select 'p', text: /Processing will continue/
   end
 
+  test 'shows the running DSL step on its timer' do
+    sign_in
+    run = create_run
+    run.items.first.update!(status: 'running', started_at: Time.current, current_step: 'download')
+
+    get :show, params: { id: run.id }
+
+    assert_response :success
+    assert_select '.progress-tracker__item-label', text: /Running:download/
+  end
+
   test 'returns refreshable progress markup' do
     sign_in
     run = create_run

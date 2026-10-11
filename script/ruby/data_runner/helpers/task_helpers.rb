@@ -70,8 +70,17 @@ module DataRunnerTaskHelpers
 
   def run_refresh(selector)
     refresh_scripts(selector).each do |stage, script|
+      record_refresh_step(stage)
       run_ruby_stage(script, selector, log_selectors: log_selectors(stage, selector))
     end
+  end
+
+  def record_refresh_step(stage)
+    item_id = ENV.fetch('DATARUNNER_ITEM_ID', nil).to_s.strip
+    return if item_id.empty?
+    return unless defined?(DataRunner::GroupRunItem)
+
+    DataRunner::GroupRunItem.record_step(item_id, stage)
   end
 
   def run_replicate_stage(selector)

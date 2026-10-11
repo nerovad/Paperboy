@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_10_190000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -815,6 +815,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_225815) do
   create_table "data_runner_group_run_items", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.string "current_step"
     t.string "dsl_name", null: false
     t.string "dsl_slug", null: false
     t.integer "duration_ms"

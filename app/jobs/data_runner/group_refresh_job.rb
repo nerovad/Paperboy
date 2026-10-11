@@ -50,7 +50,8 @@ module DataRunner
       workspace = item_workspace(run, item)
       environment = {
         'DATARUNNER_RUN_ID' => run.run_id,
-        'DATARUNNER_RUN_DSLS' => dsl_names
+        'DATARUNNER_RUN_DSLS' => dsl_names,
+        'DATARUNNER_ITEM_ID' => item.id.to_s
       }
       environment['DATARUNNER_OUTPUT_ROOT'] = workspace.to_s if workspace
       oms_number = item.dsl_name.match(/\AOMS (\d{8,9})\z/)&.[](1)
