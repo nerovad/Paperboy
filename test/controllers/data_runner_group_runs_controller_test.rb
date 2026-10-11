@@ -14,6 +14,7 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
     assert_response :success
     assert_select '[data-controller=?]', 'progress-tracker'
     assert_select '[data-progress-status=?]', 'running'
+    assert_select 'ol.progress-tracker__items[tabindex=?][aria-label=?]', '0', 'Refresh progress'
     assert_select 'li.progress-tracker__item', count: 2
     assert_select '.progress-tracker__item-label', text: /Succeeded · 1.3s/
     assert_select 'form[action=?]', data_runner_refresh_dsl_group_path(run.group_name, restart: 1) do
@@ -44,6 +45,7 @@ class DataRunnerGroupRunsControllerTest < ActionController::TestCase
 
     assert_response :success
     assert_select '[data-progress-status=?]', 'running'
+    assert_select 'ol.progress-tracker__items[aria-label=?]', 'Refresh progress'
     assert_select 'progress[max=?][value=?]', '2', '0'
   end
 
