@@ -3,7 +3,7 @@
 [
   'Gsa_scan_aim_processing_logs',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

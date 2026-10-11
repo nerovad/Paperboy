@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_active_storage_attachments',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

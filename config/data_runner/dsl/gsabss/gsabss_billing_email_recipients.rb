@@ -3,7 +3,7 @@
 [
   'Gsabss_billing_email_recipients',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

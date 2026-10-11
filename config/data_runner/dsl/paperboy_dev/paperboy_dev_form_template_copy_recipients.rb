@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_form_template_copy_recipients',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

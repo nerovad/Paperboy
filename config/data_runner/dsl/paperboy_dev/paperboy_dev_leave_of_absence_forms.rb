@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_leave_of_absence_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_status_changes',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

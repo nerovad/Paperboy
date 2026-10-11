@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_ar_internal_metadata',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

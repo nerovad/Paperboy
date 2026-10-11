@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_solid_queue_ready_executions',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

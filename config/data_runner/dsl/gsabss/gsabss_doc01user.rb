@@ -3,7 +3,7 @@
 [
   'Gsabss_doc01user',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

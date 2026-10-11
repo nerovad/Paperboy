@@ -3,7 +3,7 @@
 [
   'Gsabss_planvsactual',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

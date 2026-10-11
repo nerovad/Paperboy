@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_critical_information_authorizations',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

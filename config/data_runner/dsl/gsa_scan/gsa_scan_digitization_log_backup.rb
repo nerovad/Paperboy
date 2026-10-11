@@ -3,7 +3,7 @@
 [
   'Gsa_scan_digitization_log_backup',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

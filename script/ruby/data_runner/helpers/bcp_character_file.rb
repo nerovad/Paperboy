@@ -56,6 +56,23 @@ module BcpCharacterFile
     path.to_s.split(%r{[\\/]}).include?(APPLIED_DIR_NAME)
   end
 
+  # Applied output is a character file only when the header row ends on the
+  # row terminator. A comma-separated file in the same directory starts with
+  # a newline, and reading it as one character record drops every data row.
+  def character_bytes?(path)
+    File.open(path, 'rb') do |io|
+      pending = +''.b
+      while pending.bytesize < 1_048_576 && (chunk = io.read(8192))
+        pending << chunk
+        row_at = pending.index(ROW_BYTES)
+        newline_at = pending.index("\n".b)
+        return true if row_at && (newline_at.nil? || row_at < newline_at)
+        return false if newline_at
+      end
+    end
+    false
+  end
+
   def decode_fields(part)
     part.force_encoding(Encoding::UTF_8).scrub.split(FIELD, -1)
   end

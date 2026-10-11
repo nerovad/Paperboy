@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_data_runner_group_run_items',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

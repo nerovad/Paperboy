@@ -3,7 +3,7 @@
 [
   'Gsap2m_tc60',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

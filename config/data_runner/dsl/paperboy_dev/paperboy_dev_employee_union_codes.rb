@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_employee_union_codes',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

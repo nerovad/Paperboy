@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_solid_cache_entries',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

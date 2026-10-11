@@ -3,7 +3,7 @@
 [
   'Gsa_scan_timetrackingrequest',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

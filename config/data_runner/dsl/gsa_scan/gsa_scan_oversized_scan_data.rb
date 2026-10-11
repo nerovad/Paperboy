@@ -3,7 +3,7 @@
 [
   'Gsa_scan_oversized_scan_data',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

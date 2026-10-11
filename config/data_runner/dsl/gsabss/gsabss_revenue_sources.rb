@@ -3,7 +3,7 @@
 [
   'Gsabss_revenue_sources',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

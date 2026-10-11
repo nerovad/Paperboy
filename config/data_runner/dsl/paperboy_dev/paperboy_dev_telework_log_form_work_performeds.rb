@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_telework_log_form_work_performeds',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -3,7 +3,7 @@
 [
   'Gsabss_billing_reporting_period',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

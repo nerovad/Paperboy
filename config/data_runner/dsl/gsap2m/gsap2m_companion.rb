@@ -3,7 +3,7 @@
 [
   'Gsap2m_companion',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

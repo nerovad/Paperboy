@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_dam_storage_locations',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

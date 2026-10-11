@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_safety_report_authorizations',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

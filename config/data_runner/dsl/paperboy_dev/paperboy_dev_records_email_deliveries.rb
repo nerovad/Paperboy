@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_records_email_deliveries',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_bike_locker_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

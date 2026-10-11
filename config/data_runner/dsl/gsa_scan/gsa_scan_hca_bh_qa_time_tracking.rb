@@ -3,7 +3,7 @@
 [
   'Gsa_scan_hca_bh_qa_time_tracking',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

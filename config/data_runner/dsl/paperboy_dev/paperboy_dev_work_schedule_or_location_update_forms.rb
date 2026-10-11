@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_work_schedule_or_location_update_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

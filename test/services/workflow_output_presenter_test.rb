@@ -119,6 +119,23 @@ class WorkflowOutputPresenterTest < ActiveSupport::TestCase
 end
 
 class WorkflowOutputCsvPageTest < ActiveSupport::TestCase
+  test 'pages a comma separated file that sits in the applied directory' do
+    body = +"id\n"
+    3.times { |number| body << "#{number}\n" }
+    Dir.mktmpdir do |directory|
+      applied = Pathname(directory).join('05_DSL_Applied')
+      applied.mkpath
+      path = applied.join('employees.csv')
+      path.write(body)
+
+      output = WorkflowOutputPresenter.new(path, page: 1, per_page: 2)
+
+      assert_equal [['0'], ['1']], output.rows
+      assert_equal 3, output.row_count
+      assert_not output.more?
+    end
+  end
+
   test 'reads an applied bcp file on its field and row terminators' do
     note = "a, \"b\"\nc"
     Dir.mktmpdir do |directory|

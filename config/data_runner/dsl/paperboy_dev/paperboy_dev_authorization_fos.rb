@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_authorization_fos',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

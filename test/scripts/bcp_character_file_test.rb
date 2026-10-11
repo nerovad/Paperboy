@@ -48,6 +48,23 @@ class BcpCharacterFileTest < Minitest::Test
     end
   end
 
+  def test_character_bytes_follow_the_first_row_terminator
+    Dir.mktmpdir do |directory|
+      applied = File.join(directory, '05_DSL_Applied')
+      Dir.mkdir(applied)
+      character = File.join(applied, 'sample.csv')
+      comma = File.join(applied, 'plain.csv')
+      File.open(character, 'wb') do |io|
+        BcpCharacterFile.write_row(io, ['Note'], dsl: 'Sample', columns: ['Note'])
+        BcpCharacterFile.write_row(io, ["a, \"b\"\nc"], dsl: 'Sample', columns: ['Note'])
+      end
+      File.write(comma, "id\n1\n")
+
+      assert BcpCharacterFile.character_bytes?(character)
+      refute BcpCharacterFile.character_bytes?(comma)
+    end
+  end
+
   def test_pass_path_writes_a_character_file_instead_of_copying_csv
     Dir.mktmpdir do |directory|
       source = File.join(directory, 'source.csv')

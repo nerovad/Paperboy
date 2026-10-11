@@ -3,7 +3,7 @@
 [
   'Gsabss_object_inferences',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

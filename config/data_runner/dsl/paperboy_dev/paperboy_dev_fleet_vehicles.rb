@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_fleet_vehicles',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

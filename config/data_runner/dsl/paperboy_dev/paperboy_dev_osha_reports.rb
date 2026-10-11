@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_osha_reports',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

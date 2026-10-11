@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_task_reassignments',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

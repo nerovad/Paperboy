@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_coding_lines',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS

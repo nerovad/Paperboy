@@ -3,7 +3,7 @@
 [
   'Paperboy_dev_workplace_violence_forms',
   {
-     steps: {
+    steps: {
       manual: {
         enabled: true,
         steps: Workflow::REPLICATE_STEPS
