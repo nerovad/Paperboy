@@ -179,7 +179,7 @@ module Billing
       pdf.fill_rectangle([0, top], widths.sum, ROW_HEIGHT)
       pdf.fill_color('000000')
       pdf.font('Helvetica', style: :bold, size: 5)
-      draw_row(pdf, ['Line#'] + result.columns, widths, alignments)
+      draw_row(pdf, ['Line#'] + result.columns, widths, alignments, header: true)
       pdf.font('Helvetica', style: :normal, size: 5)
       rows.each_with_index do |row, index|
         draw_row(pdf, [offset + index + 1] + printable_row(row), widths, alignments)
@@ -187,12 +187,12 @@ module Billing
       draw_grid_lines(pdf, widths, top, rows.length + 1)
     end
 
-    def draw_row(pdf, values, widths, alignments)
+    def draw_row(pdf, values, widths, alignments, header: false)
       y = pdf.cursor
       x = 0
       values.each_with_index do |value, index|
         width = widths.fetch(index)
-        draw_cell(pdf, value, x, y, width, alignments.fetch(index))
+        draw_cell(pdf, value, x, y, width, alignments.fetch(index), header: header)
         x += width
       end
       pdf.move_down(ROW_HEIGHT)
@@ -208,17 +208,52 @@ module Billing
       end
     end
 
-    def draw_cell(pdf, value, x, y, width, alignment)
-      text = truncate(pdf_value(value), width)
-      text_width = [text.length * 2.5, width - 2].min
+    def draw_cell(pdf, value, x, y, width, alignment, header: false)
+      text = header ? fitted_header(pdf, value, width) : truncate(pdf_value(value), width)
+      text_width = header ? pdf.width_of(text) : [text.length * 2.5, width - 2].min
       text_x = aligned_x(x, width, text_width, alignment)
       encoded_text = pdf.font.normalize_encoding(text)
       pdf.send(:draw_text!, encoded_text, at: [text_x, y - ROW_HEIGHT + 7], kerning: false)
     end
 
+    # Bold header glyphs are wider than the data-row estimate. Measuring the
+    # current font keeps a right-aligned header inside its cell.
+    def fitted_header(pdf, value, width)
+      text = pdf_value(value)
+      limit = [width - 2, 0].max
+      return text if pdf.width_of(text) <= limit
+
+      text.each_char.with_object(+'') do |char, kept|
+        break kept if pdf.width_of(kept + char) > limit
+
+        kept << char
+      end
+    end
+
     def printable_row(row)
-      row.each_with_index.map do |value, index|
-        text_column?(index) ? value.to_s : value
+      row.each_with_index.map { |value, index| printable_value(value, index) }
+    end
+
+    def printable_value(value, index)
+      return value.to_s if text_column?(index)
+
+      formatted = decimal_text(value, ExportDecimalPlaces.for(result.columns[index]))
+      formatted.nil? ? value : formatted
+    end
+
+    def decimal_text(value, places)
+      return if places.nil? || value.nil?
+
+      format(decimal_format(places), Float(value))
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def decimal_format(places)
+      case places
+      when 3 then '%.3f'
+      when 4 then '%.4f'
+      else '%.2f'
       end
     end
 

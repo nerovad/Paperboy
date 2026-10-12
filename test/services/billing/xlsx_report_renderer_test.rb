@@ -16,7 +16,7 @@ module Billing
       columns[25] = 'COST'
       rows = Array.new(2) { Array.new(26) }
       rows[0].values_at(7, 23, 24, 25).each_index do |index|
-        rows[0][[7, 23, 24, 25][index]] = [10.50, 2.25, 3.50, 12.50][index]
+        rows[0][[7, 23, 24, 25][index]] = [10.50, 2.251, 3.5075, 12.50][index]
       end
       rows[1][25] = 7.25
       result = ActiveRecord::Result.new(columns, rows)
@@ -27,9 +27,12 @@ module Billing
       sheet = worksheet(files)
       assert_equal '19.75', sheet.at_xpath("//c[@r='AC1']/v").text
       assert_equal '2', sheet.at_xpath("//c[@r='AC2']/v").text
-      decimal_styles = %w[H2 X2 Y2 Z2].map { |cell| sheet.at_xpath("//c[@r='#{cell}']")['s'] }
-      assert_equal 1, decimal_styles.uniq.length
-      assert_includes files.fetch('xl/styles.xml'), 'numFmtId="2"'
+      assert_equal '0.00', number_format(files, sheet.at_xpath("//c[@r='H2']")['s'])
+      assert_equal '0.000', number_format(files, sheet.at_xpath("//c[@r='X2']")['s'])
+      assert_equal '0.0000', number_format(files, sheet.at_xpath("//c[@r='Y2']")['s'])
+      assert_equal '0.00', number_format(files, sheet.at_xpath("//c[@r='Z2']")['s'])
+      assert_includes sheet.at_xpath("//c[@r='X2']/v").text, '2.251'
+      assert_includes sheet.at_xpath("//c[@r='Y2']/v").text, '3.5075'
       %w[95DCF7 D9F2D0 F1CEEE B3E5A1 F6C6AD E49EDD].each do |color|
         assert_includes files.fetch('xl/styles.xml'), color
       end
@@ -82,6 +85,15 @@ module Billing
     end
 
     private
+
+    def number_format(files, style_index)
+      styles = Nokogiri::XML(files.fetch('xl/styles.xml'))
+      styles.remove_namespaces!
+      num_fmt_id = styles.xpath('//cellXfs/xf')[style_index.to_i]['numFmtId']
+      return '0.00' if num_fmt_id == '2'
+
+      styles.at_xpath("//numFmt[@numFmtId='#{num_fmt_id}']")['formatCode']
+    end
 
     def worksheet(files)
       Nokogiri::XML(files.fetch('xl/worksheets/sheet1.xml')).tap(&:remove_namespaces!)
