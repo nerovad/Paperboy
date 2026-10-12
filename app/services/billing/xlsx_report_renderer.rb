@@ -8,7 +8,6 @@ module Billing
   class XlsxReportRenderer
     DATE_FORMAT = '%m/%d/%y'
     BILLING_LABEL_INDEX = 27
-    DECIMAL_COLUMN_INDEXES = [7, 23, 24, 25].freeze
     TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVITY
                       CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
     COST_COLUMN_INDEX = 25
@@ -57,7 +56,16 @@ module Billing
         label: sheet.styles.add_style(b: true),
         currency: sheet.styles.add_style(num_fmt: 4),
         count: sheet.styles.add_style(num_fmt: 3),
-        decimal: sheet.styles.add_style(num_fmt: 2)
+        decimals: decimal_styles(sheet)
+      }
+    end
+
+    # Built-in format 2 is 0.00. Three and four places are custom formats.
+    def decimal_styles(sheet)
+      {
+        2 => sheet.styles.add_style(num_fmt: 2),
+        3 => sheet.styles.add_style(format_code: '0.000', num_fmt: 164),
+        4 => sheet.styles.add_style(format_code: '0.0000', num_fmt: 165)
       }
     end
 
@@ -90,10 +98,9 @@ module Billing
     end
 
     def data_styles(styles)
-      Array.new(result.columns.length).tap do |values|
-        DECIMAL_COLUMN_INDEXES.each do |index|
-          values[index] = styles[:decimal] if index < values.length
-        end
+      result.columns.map do |column|
+        places = ExportDecimalPlaces.for(column)
+        styles[:decimals][places] if places
       end
     end
 
