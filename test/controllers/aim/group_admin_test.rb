@@ -99,7 +99,10 @@ module Aim
       get :show, params: { id: group.id, tab: 'bu_people' }
 
       assert_response :success
-      assert_select 'h2#bu-4641'
+      assert_select 'details#bu-4641:not([open])'
+
+      get :show, params: { id: group.id, tab: 'bu_people', open: '4641' }
+      assert_select 'details#bu-4641[open]'
       assert_select 'a[href=?]', aim_member_path(person.id)
       assert_select 'form[action=?]', assign_aim_agency_group_path(group)
     end

@@ -12,7 +12,7 @@ module Aim
       group = Aim::AgencyGroup.find(params[:id])
       unit = params[:budget_unit].to_s
       employee = Employee.find_by(id: params[:employee_id].presence&.to_i)
-      back = aim_agency_group_path(group, tab: 'bu_people', anchor: "bu-#{unit}")
+      back = aim_agency_group_path(group, tab: 'bu_people', open: unit, anchor: "bu-#{unit}")
       return redirect_to(back, alert: 'Pick a person.') if employee.nil?
       return redirect_to(back, alert: 'You do not manage that budget unit.') unless assignable?(group, unit)
 

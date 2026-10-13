@@ -1819,3 +1819,13 @@ ul.aim-agency-group-columns {
   font-size: 0.82rem;
   padding: 3px 6px;
 }
+
+// A group's BUs & People tab: each BU folds away; the person picker's list
+// opens past the section's edge.
+.aim-bu-people {
+  overflow: visible;
+
+  > summary .aim-page-header__pills {
+    margin-left: auto;
+  }
+}
