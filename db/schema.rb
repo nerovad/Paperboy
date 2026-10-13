@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_200000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -56,6 +56,54 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
+  end
+
+  create_table "aim.agency_group_coverages", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.bigint "covered_group_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "covered_group_id"], name: "index_aim_agency_group_coverages_on_pair", unique: true
+    t.index ["covered_group_id"], name: "index_aim_agency_group_coverages_on_covered"
+  end
+
+  create_table "aim.agency_group_roles", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "employee_id", null: false
+    t.string "granted_by", limit: 255
+    t.string "role", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "employee_id", "role"], name: "index_aim_agency_group_roles_on_group_person_role", unique: true
+    t.index ["employee_id"], name: "index_aim_agency_group_roles_on_employee"
+  end
+
+  create_table "aim.agency_group_units", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.string "agency_id", limit: 10, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id"], name: "index_aim_agency_group_units_on_group"
+    t.index ["agency_id", "budget_unit"], name: "index_aim_agency_group_units_on_agency_and_unit", unique: true
+  end
+
+  create_table "aim.agency_groups", force: :cascade do |t|
+    t.string "agency_id", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.boolean "custom", default: false, null: false
+    t.text "export_columns"
+    t.string "export_format", limit: 10, default: "csv", null: false
+    t.text "hold_reasons"
+    t.string "name", limit: 100, null: false
+    t.string "required_fields", limit: 500
+    t.text "tag_suggestions"
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_id", "custom"], name: "index_aim_agency_groups_on_agency_and_custom"
+    t.index ["name"], name: "index_aim_agency_groups_on_name", unique: true
   end
 
   create_table "aim.coding_imports", force: :cascade do |t|
@@ -260,6 +308,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false
     t.index ["employee_id"], name: "index_aim_members_on_employee_id", unique: true
+  end
+
+  create_table "aim.report_templates", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.text "export_columns"
+    t.string "export_format", limit: 10, default: "csv", null: false
+    t.string "name", limit: 100, null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_group_id", "name"], name: "index_aim_report_templates_on_group_and_name", unique: true
   end
 
   create_table "aim.user_budget_units", force: :cascade do |t|
@@ -1962,6 +2021,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "sql_dashboard_cards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "sql_dashboard_id", null: false
+    t.bigint "sql_dashboard_query_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "width", default: "half", null: false
+    t.index ["sql_dashboard_id"], name: "index_sql_dashboard_cards_on_sql_dashboard_id"
+    t.index ["sql_dashboard_query_id"], name: "index_sql_dashboard_cards_on_sql_dashboard_query_id"
+  end
+
+  create_table "sql_dashboard_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "database_key"
+    t.integer "duration_ms"
+    t.string "employee_id"
+    t.string "employee_name"
+    t.text "error_message"
+    t.string "query_name"
+    t.integer "row_count"
+    t.bigint "sql_dashboard_query_id"
+    t.text "statement"
+    t.index ["created_at"], name: "index_sql_dashboard_events_on_created_at"
+    t.index ["sql_dashboard_query_id"], name: "index_sql_dashboard_events_on_sql_dashboard_query_id"
+  end
+
+  create_table "sql_dashboard_queries", force: :cascade do |t|
+    t.string "chart_type", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.string "database_key", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.text "statement", null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by_id"
+    t.string "updated_by_name"
+    t.index ["name"], name: "index_sql_dashboard_queries_on_name"
+  end
+
+  create_table "sql_dashboards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_sql_dashboards_on_name"
+  end
+
   create_table "status_changes", force: :cascade do |t|
     t.string "changed_by_id"
     t.string "changed_by_name"
@@ -2075,6 +2186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   end
 
   create_table "user_settings", force: :cascade do |t|
+    t.text "app_homes"
     t.text "column_prefs"
     t.datetime "created_at", null: false
     t.integer "dam_storage_location_id"
@@ -2152,4 +2264,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id"
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id"
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id"
+  add_foreign_key "sql_dashboard_cards", "sql_dashboard_queries"
+  add_foreign_key "sql_dashboard_cards", "sql_dashboards"
 end
