@@ -1,0 +1,50 @@
+<%# The SQL editor. Run posts the form to #preview and puts the answer in the
+    frame below, without saving; Save writes the query. %>
+<%= form_with model: @query, scope: :query, class: "sql-editor",
+              url: @query.persisted? ? sql_dashboards_query_path(@query) : sql_dashboards_queries_path do |f| %>
+  <%= render "sql_dashboards/shared/errors", record: @query %>
+
+  <div class="sql-editor__fields">
+    <div class="form-group">
+      <%= f.label :name %>
+      <%= f.text_field :name, class: "form-control", required: true %>
+    </div>
+    <div class="form-group">
+      <%= f.label :database_key, "Database" %>
+      <%= f.select :database_key, SqlDashboards::Database.options, {}, class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <%= f.label :chart_type, "Chart" %>
+      <%= f.select :chart_type, SqlDashboards::Query::CHART_TYPES.invert.to_a, {}, class: "form-control" %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_field :description, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :statement, "SQL" %>
+    <%= f.text_area :statement, class: "form-control sql-editor__sql", rows: 14, required: true,
+                                spellcheck: false, autocapitalize: "off", autocomplete: "off" %>
+    <small class="help-text">
+      The first column is the label or x value, the second is the value, and an optional third names the
+      series. A scatter plot takes two numbers. The query runs read-only, stops after
+      <%= SqlDashboards::Database.timeout %> seconds and keeps the first
+      <%= number_with_delimiter(SqlDashboards::Database.row_limit) %> rows.
+    </small>
+  </div>
+
+  <div class="form-actions">
+    <%= link_to "Back to queries", sql_dashboards_queries_path, class: "btn" %>
+    <%= f.button "Run", type: :submit, class: "btn pdf", formmethod: :post, formnovalidate: true,
+                        formaction: preview_sql_dashboards_queries_path(query_id: @query.id),
+                        data: { turbo_frame: "sql_dashboard_preview" } %>
+    <%= f.submit "Save query", class: "btn approve" %>
+  </div>
+<% end %>
+
+<%= turbo_frame_tag "sql_dashboard_preview", class: "sql-editor__preview" do %>
+  <p class="sql-dashboards__empty">Run the query to see its rows and its chart.</p>
+<% end %>

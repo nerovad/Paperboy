@@ -30,9 +30,12 @@ DEVELOPMENT_APP_FEATURES = [
 ].freeze
 
 # Paperboy itself is open to everyone, so it has no Applications grant to pair
-# with; this is the one control inside it that is handed out.
+# with; these are the controls inside it that are handed out. Looking at a
+# SQL dashboard and writing the SQL behind one are separate grants.
 PAPERBOY_APP_FEATURES = [
-  { key: 'form_collections', label: 'Form Collections (create and manage)' }
+  { key: 'form_collections', label: 'Form Collections (create and manage)' },
+  { key: 'sql_dashboards', label: 'SQL Dashboards (view)' },
+  { key: 'sql_dashboard_queries', label: 'SQL Dashboards (write SQL and build)' }
 ].freeze
 
 class AppFeature

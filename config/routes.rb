@@ -658,6 +658,17 @@ Rails.application.routes.draw do
   # ============================================================================
   get '/dashboards', to: 'dashboards#index', as: :dashboards
 
+  # SQL Dashboards: saved SQL drawn as charts (#129)
+  namespace :sql_dashboards do
+    root 'dashboards#index'
+    resources :dashboards do
+      resources :cards, only: %i[show create update destroy]
+    end
+    resources :queries, except: :show do
+      match :preview, on: :collection, via: %i[post patch]
+    end
+  end
+
   # ============================================================================
   # Form Templates & Builder
   # ============================================================================

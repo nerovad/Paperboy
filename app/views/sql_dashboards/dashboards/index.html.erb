@@ -1,0 +1,33 @@
+<div class="sql-dashboards">
+  <div class="sql-dashboards__header">
+    <h1>SQL Dashboards</h1>
+    <% if sql_dashboards_author? %>
+      <div class="sql-dashboards__actions">
+        <%= link_to "Queries", sql_dashboards_queries_path, class: "btn pdf" %>
+        <%= link_to "New dashboard", new_sql_dashboards_dashboard_path, class: "btn approve" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @dashboards.any? %>
+    <ul class="sql-dashboards__list">
+      <% @dashboards.each do |dashboard| %>
+        <li>
+          <%= link_to sql_dashboards_dashboard_path(dashboard), class: "sql-dashboards__tile" do %>
+            <strong><%= dashboard.name %></strong>
+            <% if dashboard.description.present? %>
+              <span><%= dashboard.description %></span>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="sql-dashboards__empty">
+      There are no dashboards yet.
+      <% if sql_dashboards_author? %>
+        Save a query, then make a dashboard to put it on.
+      <% end %>
+    </p>
+  <% end %>
+</div>

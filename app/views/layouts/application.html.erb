@@ -151,6 +151,9 @@
                 <% if system_admin? || current_user_dropdown_permissions.include?('dashboards') %>
                   <%= link_to "Dashboards", dashboards_path %>
                 <% end %>
+                <% if sql_dashboards_viewer? %>
+                  <%= link_to "SQL Dashboards", sql_dashboards_dashboards_path %>
+                <% end %>
                 <%# Lands on the console picker, which forwards straight through
                     for users who only hold one console. %>
                 <% if available_authorization_consoles.any? %>

@@ -1,0 +1,4 @@
+<%= turbo_frame_tag dom_id(@card, :result), class: "sql-card__body" do %>
+  <%= render "sql_dashboards/shared/result", result: @result, query: @card.query, rows: false,
+                                             dom_key: dom_id(@card) %>
+<% end %>

@@ -95,6 +95,14 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     assert_equal %w[Paperboy Inbox Help], labels(subject)
   end
 
+  test 'SQL Dashboards is offered to a viewer and to an author' do
+    %w[sql_dashboards sql_dashboard_queries].each do |feature|
+      subject = catalog(apps: [{ key: 'paperboy', label: 'Paperboy', path: '/' }], features: ["paperboy:#{feature}"])
+
+      assert_equal ['Paperboy', 'SQL Dashboards'], labels(subject)
+    end
+  end
+
   test 'every Chart of Accounts table is a destination of its own' do
     subject = catalog(apps: [{ key: 'coa', label: 'Chart of Accounts', path: '/coa' }],
                       features: ['coa:billing_lookup', 'coa:funds'])

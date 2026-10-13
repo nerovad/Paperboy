@@ -17,6 +17,7 @@ require_relative 'support/isolated_dsl_catalog'
 require_relative 'support/dam/fake_catalog'
 require_relative 'support/dam/resource_space_bundle'
 require_relative 'support/dam/controller_sign_in'
+require_relative 'support/sql_dashboards/test_access'
 
 # Existing tests use callable objects as stubbed return values (for example,
 # service doubles exposing #call). minitest-mock treats every callable value as

@@ -1,0 +1,4 @@
+<%= turbo_frame_tag "sql_dashboard_preview", class: "sql-editor__preview" do %>
+  <%= render "sql_dashboards/shared/result", result: @result, query: @query, rows: true,
+                                             dom_key: "sql-dashboard-preview" %>
+<% end %>
