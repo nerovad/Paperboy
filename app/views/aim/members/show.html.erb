@@ -30,20 +30,24 @@
 
   <%= render 'roles', name: name %>
 
-  <%# The Fiscal switch (item f): who works the Fiscal queue. AIM Admins set it. %>
-  <% if @member && aim_user_admin? %>
-    <%= turbo_frame_tag 'aim-fiscal-switch' do %>
-    <%= render 'aim/shared/frame_flash' %>
+  <%# Fiscal and Group Admin live on the agency groups (#131); set there. %>
+  <% group_roles = aim_agency_group_roles_of(@employee_id) %>
+  <% if group_roles.any? || aim_user_admin? %>
     <section class="aim-panel aim-profile-fiscal">
       <div>
-        <strong>Fiscal</strong>
-        <%= @member.fiscal ? "#{name} works the Fiscal queue." : "#{name} does not work the Fiscal queue." %>
+        <strong>Agency groups</strong>
+        <% if group_roles.empty? %>
+          <%= name %> is not Fiscal or Group Admin in any agency group.
+        <% else %>
+          <% group_roles.each do |group, labels| %>
+            <span class="badge is-scheduled"><%= group.name %>: <%= labels.to_sentence %></span>
+          <% end %>
+        <% end %>
       </div>
-      <%= button_to @member.fiscal ? 'Take away Fiscal' : 'Make Fiscal', fiscal_aim_member_path(@employee_id),
-                    method: :patch, params: { fiscal: @member.fiscal ? '0' : '1' },
-                    class: "btn #{@member.fiscal ? 'deny' : 'approve'} compact" %>
+      <% if aim_group_admin? %>
+        <%= link_to 'Agency Groups', aim_agency_groups_path, class: 'btn compact' %>
+      <% end %>
     </section>
-    <% end %>
   <% end %>
 
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>

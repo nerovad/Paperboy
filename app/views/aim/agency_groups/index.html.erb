@@ -1,0 +1,51 @@
+<%# Admin -> Agency Groups (#131): every agency's own group, and custom
+    groups of an agency's BUs. Each serves its BUs' invoices with its own
+    Fiscal people, Group Admins and Fiscal settings. %>
+<% resolver = aim_agency_groups %>
+<div class="aim-page aim-people-page" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Agency Groups</h1>
+      <p class="aim-page-subtitle">
+        Who works Fiscal and the coding rules for which budget units, and how. Every budget unit is in one group:
+        its agency's, unless it is ticked into a custom group.
+      </p>
+    </div>
+    <span class="aim-count-pill"><%= pluralize(@groups.size, 'group') %></span>
+  </header>
+
+  <% if aim_user_admin? %>
+    <section class="aim-panel aim-admin-add-panel">
+      <%= form_with url: aim_agency_groups_path, method: :post, local: true, class: 'aim-inline-form' do %>
+        <strong class="aim-admin-add-panel__label">New custom group</strong>
+        <%= text_field_tag :name, nil, placeholder: 'Name, e.g. Sheriff Patrol', required: true, maxlength: 100,
+                                       aria: { label: 'Group name' } %>
+        <%= select_tag :agency_id, options_for_select(@agencies.map { |a| [Aim::Units.new.agency_label(a), a] }),
+                       aria: { label: 'Agency' }, required: true %>
+        <button type="submit" class="btn approve compact">Make group</button>
+      <% end %>
+    </section>
+  <% end %>
+
+  <%= render 'aim/invoices/search_box', placeholder: 'Search group or agency…', empty: 'No group matches.' %>
+
+  <section class="aim-panel aim-queue-panel">
+    <table class="submission-table aim-queue-table aim-people-table">
+      <thead>
+        <tr><th>Group</th><th>Kind</th><th>Budget units</th><th>Fiscal</th><th>Group Admins</th><th>Fiscal also processes</th></tr>
+      </thead>
+      <tbody>
+        <% @groups.each do |group| %>
+          <tr data-aim-queue-filter-target="row" data-search="<%= "#{group.name} #{group.agency_id}" %>">
+            <td class="is-strong"><%= link_to group.name, aim_agency_group_path(group) %></td>
+            <td><%= group.kind_label %></td>
+            <td><%= resolver.units_of(group).size %></td>
+            <td><%= @people.fetch([group.id, 'fiscal'], 0) %></td>
+            <td><%= @people.fetch([group.id, 'admin'], 0) %></td>
+            <td><%= resolver.covers(group).map(&:name).to_sentence.presence || '—' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</div>

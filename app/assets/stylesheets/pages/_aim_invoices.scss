@@ -1643,3 +1643,40 @@
 [data-aim-count][hidden] {
   display: none;
 }
+
+// "Managing" (#131): which agency group a Fiscal or Lookups page shows.
+.aim-managing {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+
+  label,
+  span {
+    color: $text-muted;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  select {
+    max-width: min(28rem, 100%);
+  }
+}
+
+// Admin -> Agency Groups (#131).
+.aim-agency-group-meta {
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
+.aim-agency-group-columns {
+  display: grid;
+  gap: 0.25rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.aim-agency-group-settings textarea {
+  min-height: 6rem;
+  width: 100%;
+}

@@ -7,7 +7,10 @@
       <h1 class="aim-page-title"><%= Aim::FiscalRecord::STATUS_LABELS[@status] %></h1>
       <p class="aim-page-subtitle"><%= aim_fiscal_description(@status) %></p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@records.size, 'invoice') %></span>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <span class="aim-count-pill"><%= pluralize(@records.size, 'invoice') %></span>
+    </div>
   </header>
 
   <% if @records.empty? %>

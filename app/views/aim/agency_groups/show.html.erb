@@ -1,0 +1,168 @@
+<%# One agency group (#131): its budget units, its people, and its Fiscal
+    settings. AIM Admins change everything; a Group Admin its Fiscal people
+    and settings. %>
+<% admin = aim_user_admin? %>
+<% own_units = @resolver.units_of(@group) %>
+<% agency_units = @units.all.select { |unit| unit.agency == @group.agency_id } %>
+<% elsewhere = Aim::AgencyGroupUnit.includes(:agency_group).where(agency_id: @group.agency_id)
+                                 .where.not(agency_group_id: @group.id).to_h { |row| [row.budget_unit, row.agency_group] } %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= @group.name %></h1>
+      <p class="aim-page-subtitle">
+        <%= @group.kind_label %> · <%= @units.agency_label(@group.agency_id) %>
+        <% covered_by = @resolver.covered_by(@group) %>
+        <% if covered_by.any? %> · Fiscal also done by <%= covered_by.map(&:name).to_sentence %><% end %>
+      </p>
+    </div>
+    <%= link_to 'Back to Agency Groups', aim_agency_groups_path, class: 'btn compact' %>
+  </header>
+
+  <% if admin && @group.custom %>
+    <section class="aim-panel aim-admin-add-panel">
+      <%= form_with url: aim_agency_group_path(@group), method: :patch, local: true, class: 'aim-inline-form' do %>
+        <strong class="aim-admin-add-panel__label">Name</strong>
+        <%= text_field_tag :name, @group.name, required: true, maxlength: 100, aria: { label: 'Group name' } %>
+        <button type="submit" class="btn compact">Rename</button>
+      <% end %>
+      <%= button_to 'Delete group', aim_agency_group_path(@group), method: :delete, class: 'btn deny compact',
+                    data: { turbo_confirm: "Delete #{@group.name}? Its budget units go back to their agency's group, " \
+                                           'and its people lose their roles in it.', confirm_label: 'Delete' } %>
+    </section>
+  <% end %>
+
+  <h2 class="aim-profile-heading" id="units">Budget units</h2>
+  <section class="aim-panel">
+    <% if @group.custom && admin %>
+      <p class="aim-agency-group-meta">Tick the units this group serves. They leave <%= @group.agency_id %>'s own group; untick to send one back.</p>
+      <%= form_with url: units_aim_agency_group_path(@group), method: :patch, local: true do %>
+        <div class="aim-agency-units__grid" data-controller="select-all">
+          <% agency_units.each do |unit| %>
+            <% other = elsewhere[unit.unit] %>
+            <label title="<%= "In #{other.name}" if other %>">
+              <%= check_box_tag 'units[]', unit.unit, own_units.include?(unit.unit), id: "group-unit-#{unit.unit}",
+                                disabled: other.present? %>
+              <%= unit.label %><%= " (in #{other.name})" if other %>
+            </label>
+          <% end %>
+        </div>
+        <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save budget units</button></div>
+      <% end %>
+    <% else %>
+      <% if !@group.custom %>
+        <p class="aim-agency-group-meta">
+          Every active <%= @group.agency_id %> unit no custom group has, new ones included.
+          To give some units their own Fiscal, make a custom group and tick them there.
+        </p>
+      <% end %>
+      <div class="aim-agency-units__grid">
+        <% agency_units.each do |unit| %>
+          <% other = elsewhere[unit.unit] %>
+          <% next if @group.custom && !own_units.include?(unit.unit) %>
+          <label>
+            <%= check_box_tag "unit-#{unit.unit}", '1', own_units.include?(unit.unit), disabled: true, id: "group-unit-#{unit.unit}" %>
+            <%= unit.label %>
+            <% if other %>(in <%= admin ? link_to(other.name, aim_agency_group_path(other)) : other.name %>)<% end %>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <h2 class="aim-profile-heading" id="people">People</h2>
+  <section class="aim-panel aim-profile-roles">
+    <table class="submission-table aim-queue-table aim-people-table">
+      <thead><tr><th>Person</th><th>Role</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+      <tbody>
+        <% @roles.each do |row| %>
+          <% person = @employees[row.employee_id] %>
+          <tr>
+            <td class="is-strong">
+              <%= link_to (person ? Employee.format_picker_label(person.id, person.first_name, person.last_name) : "Employee #{row.employee_id}"),
+                          aim_member_path(row.employee_id) %>
+            </td>
+            <td><%= row.label %></td>
+            <td class="aim-people-table__actions">
+              <% if admin || row.role == 'fiscal' %>
+                <%= button_to 'Take away', aim_agency_group_role_path(@group, row), method: :delete, class: 'btn deny compact',
+                              data: { turbo_confirm: "Take #{row.label} in #{@group.name} away?", confirm_label: 'Take away' } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @roles.empty? %>
+          <tr><td colspan="3">Nobody yet. AIM Admins work every group.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= form_with url: aim_agency_group_roles_path(@group), method: :post, local: true, class: 'aim-inline-form' do %>
+      <%= select_tag :employee_id, options_for_select(@candidates), include_blank: 'Add someone who works AIM…',
+                     required: true, aria: { label: 'Person' } %>
+      <%= select_tag :role, options_for_select(Aim::AgencyGroup::ROLES.select { |role, _| admin || role == 'fiscal' }.map(&:reverse), 'fiscal'),
+                     aria: { label: 'Role' } %>
+      <button type="submit" class="btn approve compact">Add</button>
+    <% end %>
+    <p class="aim-agency-group-meta">
+      Fiscal works this group's Fiscal stage and coding rules. A Group Admin does that too, and sets its Fiscal people and settings.
+    </p>
+  </section>
+
+  <h2 class="aim-profile-heading" id="settings">Fiscal settings</h2>
+  <section class="aim-panel aim-agency-group-settings">
+    <%= form_with url: settings_aim_agency_group_path(@group), method: :patch, local: true do %>
+      <% if admin %>
+        <fieldset class="aim-field">
+          <legend>Fiscal also processes</legend>
+          <p class="aim-agency-group-meta">This group's Fiscal people and Group Admins also work the groups ticked here.</p>
+          <%= hidden_field_tag 'covered_group_ids[]', '' %>
+          <div class="aim-agency-group-columns">
+            <% covered = @resolver.covers(@group).map(&:id) %>
+            <% (@resolver.all - [@group]).each do |other| %>
+              <label><%= check_box_tag 'covered_group_ids[]', other.id, covered.include?(other.id), id: "cover-#{other.id}" %> <%= other.name %></label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <fieldset class="aim-field">
+        <legend>Report format</legend>
+        <% Aim::AgencyGroup::EXPORT_FORMATS.each do |format, label| %>
+          <label><%= radio_button_tag :export_format, format, @group.export_format == format %> <%= label %></label>
+        <% end %>
+      </fieldset>
+
+      <fieldset class="aim-field">
+        <legend>Report columns</legend>
+        <div class="aim-agency-group-columns">
+          <% chosen = @group.export_column_list %>
+          <% Aim::FiscalExport::COLUMNS.each_with_index do |column, index| %>
+            <label><%= check_box_tag 'export_columns[]', column, chosen.include?(column), id: "column-#{index}" %> <%= column %></label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset class="aim-field">
+        <legend>Needed before archive</legend>
+        <div class="aim-agency-group-columns">
+          <% required = @group.required_field_list %>
+          <% Aim::FiscalRecord::EDITABLE_FIELDS.each do |field| %>
+            <label><%= check_box_tag 'required_fields[]', field, required.include?(field), id: "required-#{field}" %> <%= aim_fiscal_field_label(field) %></label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <div class="aim-field">
+        <%= label_tag :hold_reasons, 'Hold reasons offered (one per line; anything may still be typed)' %>
+        <%= text_area_tag :hold_reasons, @group.hold_reason_list.join("\n") %>
+      </div>
+
+      <div class="aim-field">
+        <%= label_tag :tag_suggestions, 'Tags offered (one per line)' %>
+        <%= text_area_tag :tag_suggestions, @group.tag_suggestion_list.join("\n") %>
+      </div>
+
+      <div class="aim-form-actions"><button type="submit" class="btn approve">Save settings</button></div>
+    <% end %>
+  </section>
+</div>

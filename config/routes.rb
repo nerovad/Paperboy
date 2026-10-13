@@ -159,6 +159,7 @@ Rails.application.routes.draw do
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
     patch 'mode', to: 'modes#update', as: :mode
+    patch 'managing', to: 'managing#update', as: :managing
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
     get 'admin/budget_units', to: 'enabled_units#index', as: :enabled_units
@@ -167,9 +168,15 @@ Rails.application.routes.draw do
       member do
         patch :deactivate, to: 'member_statuses#deactivate'
         patch :reactivate, to: 'member_statuses#reactivate'
-        patch :fiscal, to: 'member_fiscal#update'
       end
       resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
+    end
+    resources :agency_groups, only: %i[index show create update destroy], path: 'admin/agency_groups' do
+      member do
+        patch :units, to: 'agency_group_units#update'
+        patch :settings, to: 'agency_group_settings#update'
+      end
+      resources :roles, only: %i[create destroy], controller: 'agency_group_roles'
     end
     resources :uploads, only: %i[new create]
     get 'fiscal', to: 'fiscal#index', as: :fiscal

@@ -54,14 +54,6 @@ module Aim
       assert_redirected_to aim_root_path
     end
 
-    test 'a person marked Fiscal gets in' do
-      as_groups
-      Aim::Member.create!(employee_id: 42, fiscal: true)
-      get :index
-
-      assert_response :success
-    end
-
     test 'the Fiscal page saves what Fiscal types, the invoice\'s fields too, with a history line' do
       get :show, params: { id: @invoice.batch_id }
       assert_response :success
@@ -146,6 +138,62 @@ module Aim
     end
   end
 
+  # The Fiscal stage by agency group (#131): Fiscal sees its groups' invoices
+  # and those its group also processes; each group's own archive rules.
+  class FiscalAgencyGroupsTest < ActionController::TestCase
+    include FiscalTestGroups
+
+    tests Aim::FiscalController
+
+    setup do
+      session[:user] = { 'email' => 'fiscal@example.com', 'employee_id' => 42 }
+      as_groups 'aim_admin'
+      @invoice = Aim::Invoice.create!(batch_id: '4641.F-1', state: 'approved', actor: 'test', budget_unit: '4641',
+                                      vendor_name: 'ACME', invoice_number: 'A-1')
+    end
+
+    test 'Fiscal in an agency group gets in, and sees only that group\'s invoices' do
+      as_groups
+      gsa = Aim::AgencyGroup.for_agency!('GSA')
+      gsa.roles.create!(employee_id: 42, role: 'fiscal')
+      @invoice.update!(agency: 'GSA')
+      Aim::Invoice.create!(batch_id: '2500.F-9', state: 'approved', actor: 'test', budget_unit: '2500', agency: 'SHF')
+      get :index
+
+      assert_response :success
+      assert_equal [@invoice.id], @controller.instance_variable_get(:@records).map(&:invoice_id)
+
+      get :show, params: { id: '2500.F-9' }
+      assert_redirected_to aim_fiscal_path
+    end
+
+    test 'a group whose Fiscal also processes another sees both' do
+      as_groups
+      gsa = Aim::AgencyGroup.for_agency!('GSA')
+      gsa.roles.create!(employee_id: 42, role: 'fiscal')
+      sheriff = Aim::AgencyGroup.for_agency!('SHF')
+      gsa.coverages.create!(covered_group: sheriff)
+      @invoice.update!(agency: 'GSA')
+      other = Aim::Invoice.create!(batch_id: '2500.F-9', state: 'approved', actor: 'test', budget_unit: '2500', agency: 'SHF')
+      get :index
+
+      assert_equal [@invoice.id, other.id].sort, @controller.instance_variable_get(:@records).map(&:invoice_id).sort
+    end
+
+    test 'Archive waits for what the agency group needs' do
+      @invoice.update!(agency: 'GSA')
+      Aim::AgencyGroup.for_agency!('GSA').update!(required_field_list: %w[check_number])
+      record = Aim::FiscalRecord.create!(invoice: @invoice, status: 'exported')
+
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'archive' }
+      assert_match(/needs Check Number before archive/, flash[:alert])
+      assert_equal 'exported', record.reload.status
+
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'archive', fiscal_record: { check_number: '501' } }
+      assert_equal 'archived', record.reload.status
+    end
+  end
+
   # The export: ticked invoices, one file, and the ready ones become exported.
   class FiscalExportsControllerTest < ActionController::TestCase
     include FiscalTestGroups
@@ -177,39 +225,33 @@ module Aim
       assert_equal 'ready', @record.reload.status
     end
 
+    test 'the report follows the agency group: its columns and its format' do
+      @record.invoice.update!(agency: 'GSA')
+      Aim::AgencyGroup.for_agency!('GSA').update!(export_format: 'tab', export_column_list: ['Invoice Number', 'Title'])
+      post :create, params: { record_ids: [@record.id] }
+
+      assert_match(/filename="AIM_Fiscal_Report_\d+_\d+\.txt"/, response.headers['Content-Disposition'])
+      text = response.body.dup.force_encoding('UTF-16LE').encode('UTF-8').delete_prefix("\uFEFF")
+      header, row = CSV.parse(text, col_sep: "\t")
+      assert_equal ['Title', 'Invoice Number'], header, 'the catalogue\'s order, whatever order they were ticked in'
+      assert_equal 'E-1', row.last
+    end
+
+    test 'invoices of two groups with different reports are not mixed' do
+      @record.invoice.update!(agency: 'GSA')
+      other = Aim::Invoice.create!(batch_id: '2500.E-2', state: 'exported', actor: 'test', budget_unit: '2500', agency: 'SHF')
+      second = Aim::FiscalRecord.create!(invoice: other, status: 'ready')
+      post :create, params: { record_ids: [@record.id, second.id] }
+
+      assert_match(/different reports/, flash[:alert])
+      assert_equal 'ready', @record.reload.status
+    end
+
     test 'an invoice still in the Fiscal Queue is not exported' do
       @record.update!(status: 'review')
       post :create, params: { record_ids: [@record.id] }
 
       assert_match(/Tick at least one/, flash[:alert])
-    end
-  end
-
-  # The Fiscal switch on a profile: AIM admins only.
-  class MemberFiscalControllerTest < ActionController::TestCase
-    include FiscalTestGroups
-
-    tests Aim::MemberFiscalController
-
-    setup do
-      session[:user] = { 'email' => 'aim.admin@example.com', 'employee_id' => 1 }
-      @member = Aim::Member.create!(employee_id: 77)
-    end
-
-    test 'an AIM admin switches Fiscal on and off' do
-      as_groups 'aim_admin'
-      patch :update, params: { id: 77, fiscal: '1' }
-      assert @member.reload.fiscal
-
-      patch :update, params: { id: 77, fiscal: '0' }
-      assert_not @member.reload.fiscal
-    end
-
-    test 'nobody else can' do
-      as_groups
-      patch :update, params: { id: 77, fiscal: '1' }
-
-      assert_not @member.reload.fiscal
     end
   end
 end

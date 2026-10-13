@@ -3,14 +3,14 @@
 module Aim
   # Loading a lookup file on screen (item b.3): upload, see the report,
   # accept any row the COA objects to, apply, and undo. Fiscal and AIM
-  # Admins. The file is kept on the import row between preview and apply.
+  # Admins; a row for a BU outside the loader's agency groups is refused. The file is kept on the import row between preview and apply.
   class CodingImportsController < BaseController
     before_action :require_fiscal
     before_action :set_import, only: %i[show apply undo destroy]
     KINDS = %w[add edit unchanged refused].freeze
 
     def index
-      @imports = Aim::CodingImport.newest_first.to_a
+      @imports = Aim::CodingImport.newest_first.to_a.select { |import| reachable_agency?(import.agency) }
     end
 
     # A CSV to fill in: the headings the reader expects, and one example row.
@@ -25,13 +25,14 @@ module Aim
     # The agencies AIM works (AIM's Budget Units), not the whole COA.
     def new
       @units = Aim::Units.new
-      @agencies = @units.agencies
+      @agencies = @units.agencies.select { |agency| reachable_agency?(agency) }
     end
 
     # Reads the file and keeps it with its report: nothing is loaded yet.
     def create
       file = params[:file]
       return redirect_to(new_aim_coding_import_path, alert: 'Choose a CSV file.') if file.blank?
+      return redirect_to(new_aim_coding_import_path, alert: 'That agency is outside your agency groups.') unless reachable_agency?(params[:agency].to_s.upcase)
 
       import = Aim::CodingImport.new(agency: params[:agency].to_s.upcase, file_name: file.original_filename.to_s,
                                      imported_by: current_user_email, effective_option: effective_option,
@@ -91,11 +92,21 @@ module Aim
 
     def set_import
       @import = Aim::CodingImport.find(params[:id])
+      return if reachable_agency?(@import.agency)
+
+      redirect_to aim_coding_imports_path, alert: 'That import is for an agency outside your agency groups.'
     end
 
     def lookup(import, path, accept: :none)
       Aim::LookupImport.new(path, agency: import.agency, effective: import.effective_option,
-                                  effective_date: import.effective_from, budget_unit: import.default_unit, accept: accept)
+                                  effective_date: import.effective_from, budget_unit: import.default_unit, accept: accept,
+                                  unit_allowed: ->(agency, unit) { group_serves_unit?(agency, unit) })
+    end
+
+    # An agency one of this person's agency groups serves (#131).
+    def reachable_agency?(agency)
+      groups = helpers.aim_fiscal_reach
+      groups.nil? || groups.any? { |group| group.agency_id == agency }
     end
 
     def effective_option

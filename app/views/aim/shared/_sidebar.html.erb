@@ -8,6 +8,7 @@
 <% current = if controller_name == "invoices" || (controller_name == "budget_units" && aim_queue_access?) then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin members enabled_units].include?(controller_name) then "admin"
+              elsif controller_name == "agency_groups" then (aim_user_admin? ? "admin" : "fiscal")
               elsif controller_name == "fiscal" then "fiscal"
               elsif %w[coding_rules coding_imports].include?(controller_name) then "lookups"
               else "aim"
@@ -79,6 +80,9 @@
             <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
           <% end %>
         <% end %>
+        <% if aim_group_admin? && !aim_user_admin? %>
+          <%= link_to "Agency Groups", aim_agency_groups_path, class: "nav-link#{' active' if controller_name == 'agency_groups'}" %>
+        <% end %>
       </details>
     <% end %>
 
@@ -108,9 +112,11 @@
                  data-default-open="false" data-current="<%= current == "admin" %>">
           <summary><span class="nav-group-label">Admin</span></summary>
           <%= link_to "Users & Queues", aim_admin_path,
-                      class: "nav-link#{' active' if current == 'admin' && controller_name != 'enabled_units'}" %>
+                      class: "nav-link#{' active' if current == 'admin' && %w[enabled_units agency_groups].exclude?(controller_name)}" %>
           <%= link_to "AIM's Budget Units", aim_enabled_units_path,
                       class: "nav-link#{' active' if controller_name == 'enabled_units'}" %>
+          <%= link_to "Agency Groups", aim_agency_groups_path,
+                      class: "nav-link#{' active' if controller_name == 'agency_groups'}" %>
         </details>
       <% end %>
     <% end %>

@@ -24,8 +24,11 @@ module Aim
     attr_reader :agency, :file_name, :outcomes, :effective_option, :effective_date
 
     # budget_unit: the BU for rows that name none (Facilities' file has no
-    # column for it).
-    def initialize(path, agency:, effective: 'bdo', effective_date: nil, budget_unit: nil, accept: :none)
+    # column for it). unit_allowed: called with (agency, unit), false refuses
+    # the row -- a BU outside the agency groups of whoever loads it (#131).
+    def initialize(path, agency:, effective: 'bdo', effective_date: nil, budget_unit: nil, accept: :none,
+                   unit_allowed: nil)
+      @unit_allowed = unit_allowed
       @path = path
       @file_name = File.basename(path)
       @agency = agency.to_s.upcase
@@ -91,6 +94,7 @@ module Aim
         row.notes << "budget unit #{@default_unit} given at import"
       end
       reasons = REQUIRED.reject { |field| values[field].present? }.map { |field| "no #{field.humanize.downcase}" }
+      reasons += outside_groups(values['budget_unit'].to_s.strip)
       objections = []
       objections << 'no coding and no encumbrance' if (Aim::CodingRule::CODING_FIELDS + %w[encumbrance_type]).none? { |f| values[f].present? }
       bad = @coa.invalid_fields(values.slice(*Aim::CoaCodes::LISTS.keys))
@@ -102,6 +106,12 @@ module Aim
       rule = Aim::CodingRule.new(attributes.merge(effective_from: effective_from_for(values, row.notes)))
       rule.vendor_key = Aim::CodingRule.key_for(rule.vendor_name)
       Outcome.new(row: row, rule: rule, reasons: reasons, objections: objections, notes: row.notes, accepted: accepted)
+    end
+
+    def outside_groups(unit)
+      return [] if unit.blank? || @unit_allowed.nil? || @unit_allowed.call(agency, unit)
+
+      ["budget unit #{unit} is outside your agency groups"]
     end
 
     def accepted?(row_number)

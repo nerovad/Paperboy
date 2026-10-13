@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_10_221750) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_180000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -56,6 +56,54 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_221750) do
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
+  end
+
+  create_table "aim.agency_group_coverages", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.bigint "covered_group_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "covered_group_id"], name: "index_aim_agency_group_coverages_on_pair", unique: true
+    t.index ["covered_group_id"], name: "index_aim_agency_group_coverages_on_covered"
+  end
+
+  create_table "aim.agency_group_roles", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "employee_id", null: false
+    t.string "granted_by", limit: 255
+    t.string "role", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "employee_id", "role"], name: "index_aim_agency_group_roles_on_group_person_role", unique: true
+    t.index ["employee_id"], name: "index_aim_agency_group_roles_on_employee"
+  end
+
+  create_table "aim.agency_group_units", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.string "agency_id", limit: 10, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id"], name: "index_aim_agency_group_units_on_group"
+    t.index ["agency_id", "budget_unit"], name: "index_aim_agency_group_units_on_agency_and_unit", unique: true
+  end
+
+  create_table "aim.agency_groups", force: :cascade do |t|
+    t.string "agency_id", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.boolean "custom", default: false, null: false
+    t.text "export_columns"
+    t.string "export_format", limit: 10, default: "csv", null: false
+    t.text "hold_reasons"
+    t.string "name", limit: 100, null: false
+    t.string "required_fields", limit: 500
+    t.text "tag_suggestions"
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_id", "custom"], name: "index_aim_agency_groups_on_agency_and_custom"
+    t.index ["name"], name: "index_aim_agency_groups_on_name", unique: true
   end
 
   create_table "aim.coding_imports", force: :cascade do |t|
@@ -255,7 +303,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_10_221750) do
     t.string "deactivated_by", limit: 255
     t.string "deactivation_reason", limit: 500
     t.integer "employee_id", null: false
-    t.boolean "fiscal", default: false, null: false
     t.string "fusion_roles", limit: 255
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false

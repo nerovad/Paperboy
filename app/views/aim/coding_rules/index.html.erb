@@ -9,6 +9,7 @@
       <p class="aim-page-subtitle">What each vendor's invoices are coded with, by budget unit. Open a rule to change or retire it.</p>
     </div>
     <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
       <% if @units_without_rules.any? %>
         <details class="aim-actions-menu aim-alert-chip" name="aim-rules-alerts">
           <summary class="aim-count-pill aim-count-pill--warn">⚠ <%= pluralize(@units_without_rules.size, 'BU') %> with no rules</summary>

@@ -132,6 +132,19 @@ module Aim
       assert_not r.in_effect?
       assert_equal 'retired', r.changes_made.last.kind
     end
+
+    test 'Fiscal in an agency group sees and opens only its budget units\' rules' do
+      sign_in_nobody
+      Aim::AgencyGroup.for_agency!('GSA').roles.create!(employee_id: 43, role: 'fiscal')
+      mine = rule
+      theirs = rule(agency: 'SHF', budget_unit: '2500', vendor_name: 'OTHER')
+      get :index
+
+      assert_equal [mine.id], @controller.instance_variable_get(:@rules).map(&:id)
+
+      get :show, params: { id: theirs.id }
+      assert_redirected_to aim_coding_rules_path
+    end
   end
 
   class CodingImportsControllerTest < ActionController::TestCase
@@ -240,6 +253,18 @@ module Aim
     test 'no file is refused' do
       post :create, params: { agency: 'GSA' }
       assert_redirected_to new_aim_coding_import_path
+    end
+
+    test 'a row for a BU outside the loader\'s agency groups is refused' do
+      sign_in_nobody
+      group = Aim::AgencyGroup.create!(name: 'Docs', agency_id: 'GSA', custom: true)
+      group.units.create!(agency_id: 'GSA', budget_unit: '4601')
+      group.roles.create!(employee_id: 43, role: 'fiscal')
+      import = previewed_import
+      post :apply, params: { id: import.id }
+
+      assert_equal 0, Aim::CodingRule.count
+      assert_match(/outside your agency groups/, import.reload.report.to_s)
     end
   end
 end
