@@ -28,6 +28,8 @@
       <%= form_with url: aim_fiscal_export_path, method: :post, local: true, class: 'aim-fiscal-export',
                     data: { turbo: false } do %>
         <div class="aim-fiscal-export__bar">
+          <%= select_tag :report_template, grouped_options_for_select(aim_report_template_options),
+                         include_blank: 'Each group\'s Default', aria: { label: 'Report template' } %>
           <button type="submit" class="btn approve compact">
             <%= @status == 'ready' ? 'Download report (CSV)' : 'Download again (CSV)' %>
           </button>

@@ -1,0 +1,53 @@
+<%# Fiscal report templates (#131): each agency group's Default and its saved
+    layouts, for the groups picked in Managing. %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Report Templates</h1>
+      <p class="aim-page-subtitle">Saved report layouts, by agency group. Pick one when you download the report.</p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <%= link_to 'New template', new_aim_report_template_path, class: 'btn approve compact' %>
+    </div>
+  </header>
+
+  <% @groups.each do |group| %>
+    <h2 class="aim-profile-heading"><%= group.name %></h2>
+    <section class="aim-panel aim-agency-group-panel">
+      <table class="submission-table aim-queue-table aim-people-table">
+        <thead><tr><th>Template</th><th>Format</th><th>Columns</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="is-strong">Default</td>
+            <td><%= Aim::ReportLayout::EXPORT_FORMATS[group.export_format] %></td>
+            <td><%= group.export_column_list.size %></td>
+            <td class="aim-people-table__actions">
+              <div class="aim-profile-roles__buttons">
+                <%= link_to 'Copy', new_aim_report_template_path(agency_group_id: group.id), class: 'btn compact' %>
+                <% if aim_admin_groups.nil? || aim_admin_groups.include?(group) %>
+                  <%= link_to 'Edit', aim_agency_group_path(group, anchor: 'settings'), class: 'btn edit compact' %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+          <% @templates.fetch(group.id, []).each do |template| %>
+            <tr>
+              <td class="is-strong"><%= link_to template.name, edit_aim_report_template_path(template) %></td>
+              <td><%= Aim::ReportLayout::EXPORT_FORMATS[template.export_format] %></td>
+              <td><%= template.export_column_list.size %></td>
+              <td class="aim-people-table__actions">
+                <div class="aim-profile-roles__buttons">
+                  <%= link_to 'Copy', new_aim_report_template_path(agency_group_id: group.id, copy: template.id), class: 'btn compact' %>
+                  <%= link_to 'Edit', edit_aim_report_template_path(template), class: 'btn edit compact' %>
+                  <%= button_to 'Delete', aim_report_template_path(template), method: :delete, class: 'btn deny compact',
+                                data: { turbo_confirm: "Delete the #{template.name} template?", confirm_label: 'Delete' } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

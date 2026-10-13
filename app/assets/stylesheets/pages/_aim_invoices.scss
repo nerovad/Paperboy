@@ -1726,15 +1726,25 @@ ul.aim-agency-group-columns {
     padding: 0;
   }
 
-  textarea {
+  textarea,
+  input[type="text"]:not(.aim-column-order__header),
+  select {
     border: 1px solid $neutral-border-subtle;
     border-radius: $radius-6;
     box-sizing: border-box;
     font: inherit;
     font-size: 0.85rem;
-    min-height: 6rem;
     padding: 6px 8px;
     width: 100%;
+  }
+
+  textarea {
+    min-height: 6rem;
+  }
+
+  input[type="text"]:not(.aim-column-order__header),
+  select {
+    max-width: 28rem;
   }
 }
 

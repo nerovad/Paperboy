@@ -180,6 +180,7 @@ Rails.application.routes.draw do
     end
     resources :uploads, only: %i[new create]
     get 'fiscal', to: 'fiscal#index', as: :fiscal
+    resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
     post 'fiscal/export', to: 'fiscal_exports#create', as: :fiscal_export
     resources :fiscal_invoices, path: 'fiscal', controller: 'fiscal', only: %i[show update],
                                 constraints: { id: %r{[^/]+} } do

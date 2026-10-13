@@ -1,0 +1,30 @@
+<%# A report template's name, group and layout. %>
+<% if @template.errors.any? %>
+  <div class="aim-readonly-banner" role="alert">
+    <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+    <div><strong>Not saved</strong><p><%= @template.errors.full_messages.to_sentence %></p></div>
+  </div>
+<% end %>
+<section class="aim-panel aim-agency-group-panel aim-agency-group-settings">
+  <%= form_with url: @template.persisted? ? aim_report_template_path(@template) : aim_report_templates_path,
+                method: @template.persisted? ? :patch : :post, local: true do %>
+    <fieldset>
+      <legend><%= label_tag :name, 'Name' %></legend>
+      <%= text_field_tag :name, @template.name, required: true, maxlength: 100, placeholder: 'e.g. Payment upload' %>
+    </fieldset>
+    <% if @template.persisted? %>
+      <p class="aim-agency-group-meta">For <%= @template.agency_group.name %>.</p>
+    <% else %>
+      <fieldset>
+        <legend><%= label_tag :agency_group_id, 'Agency group' %></legend>
+        <% groups = aim_fiscal_reach || aim_agency_groups.all %>
+        <%= select_tag :agency_group_id, options_for_select(groups.map { |g| [g.name, g.id] }, @template.agency_group_id) %>
+      </fieldset>
+    <% end %>
+    <%= render 'aim/shared/report_layout_fields', layout: @template, title: 'Report' %>
+    <div class="aim-form-actions">
+      <%= link_to 'Cancel', aim_report_templates_path, class: 'btn' %>
+      <button type="submit" class="btn approve">Save template</button>
+    </div>
+  <% end %>
+</section>

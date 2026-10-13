@@ -5,8 +5,9 @@ module Aim
   # those in the Report Queue become exported. Exported ones can be downloaded
   # again and stay as they are.
   #
-  # The report is laid out as one agency group says (#131): the group picked
-  # in Managing, or the one whose Fiscal works every invoice ticked.
+  # The report is laid out as one agency group says (#131): the template
+  # picked on the page, the group picked in Managing, or the one whose Fiscal
+  # works every invoice ticked.
   class FiscalExportsController < BaseController
     before_action :require_fiscal
 
@@ -16,7 +17,7 @@ module Aim
                                  .where(id: Array(params[:record_ids]), status: %w[ready exported]).to_a
       return redirect_to(back_path, alert: 'Tick at least one invoice for the report.') if records.empty?
 
-      group = report_group(records)
+      group = picked_layout || report_group(records)
       if group == :mixed
         return redirect_to(back_path, alert: 'Those invoices belong to agency groups with different reports. ' \
                                              'Pick one group under Managing, then download.')
@@ -33,6 +34,18 @@ module Aim
     end
 
     private
+
+    # The layout picked on the page: a group's Default ("g<id>") or one of its
+    # templates ("t<id>"), from the groups this person works; nil for none.
+    def picked_layout
+      kind, id = params[:report_template].to_s.match(/\A([gt])(\d+)\z/)&.captures
+      return if kind.nil?
+
+      groups = helpers.aim_fiscal_reach
+      layout = kind == 'g' ? Aim::AgencyGroup.find_by(id: id) : Aim::ReportTemplate.find_by(id: id)
+      owner = kind == 'g' ? layout : layout&.agency_group
+      layout if owner && (groups.nil? || groups.any? { |g| g.id == owner.id })
+    end
 
     # The group whose report this is: the one picked in Managing, or of the
     # invoices' groups the one whose Fiscal also processes all the others;
