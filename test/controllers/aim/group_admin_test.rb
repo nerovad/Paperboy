@@ -12,8 +12,10 @@ module Aim
       @controller.helpers.define_singleton_method(:can_access_app?) { |*| true }
     end
 
-    # A custom GSA group of one unit, with employee 5 its Group Admin.
+    # A custom GSA group of one unit, with employee 5 its Group Admin. AIM
+    # uses every GSA unit.
     def docs_group(unit)
+      Aim::EnabledUnit.find_or_create_by!(agency_id: 'GSA', unit_id: nil)
       group = Aim::AgencyGroup.create!(name: 'Docs', agency_id: 'GSA', custom: true)
       group.units.create!(agency_id: 'GSA', budget_unit: unit)
       group.roles.create!(employee_id: 5, role: 'admin')

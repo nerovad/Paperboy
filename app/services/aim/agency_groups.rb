@@ -59,12 +59,14 @@ module Aim
       group.present? && groups.map(&:id).include?(group.id)
     end
 
-    # The budget units a group serves: a custom group's own; for an agency's
-    # group, the agency's active COA units no custom group has.
+    # The budget units a group serves, of those AIM uses (AIM's Budget Units):
+    # a custom group's own; for an agency's group, the agency's units no
+    # custom group has.
     def units_of(group)
-      return custom_units(group.agency_id, group.id) if group.custom
+      used = @units.units_of(group.agency_id)
+      return custom_units(group.agency_id, group.id) & used if group.custom
 
-      coa_units(group.agency_id) - custom_units(group.agency_id)
+      used - custom_units(group.agency_id)
     end
 
     # The invoices +groups+ serve (nil: every invoice), as one query.

@@ -117,22 +117,25 @@ module Aim
       @all = Coa::Unit.where(agency_id: 'GSA', active: true).distinct.pluck(:unit_id)
     end
 
-    test 'unticked units move to the custom group picked, and ticking one brings it back' do
-      docs = Aim::AgencyGroup.create!(name: 'Docs', agency_id: 'GSA', custom: true)
-      patch :update, params: { id: @agency.id, units: @all - @units.first(2), move_to: docs.id }
-      assert_equal @units.first(2).sort, docs.units.pluck(:budget_unit).sort
-
+    test 'the agency group\'s ticks are AIM\'s Budget Units: unticking stops AIM using a unit' do
       patch :update, params: { id: @agency.id, units: @all - [@units.first] }
-      assert_equal [@units.first], docs.units.pluck(:budget_unit)
+
+      assert_not_includes Aim::Units.new.units_of('GSA'), @units.first
+      assert_equal (@all - [@units.first]).sort, Aim::EnabledUnit.where(agency_id: 'GSA').pluck(:unit_id).sort
+
+      patch :update, params: { id: @agency.id, units: @all }
+      assert_equal [nil], Aim::EnabledUnit.where(agency_id: 'GSA').pluck(:unit_id), 'every unit is the whole agency'
     end
 
-    test 'unticking with nowhere to go is refused; a new group can be named' do
-      patch :update, params: { id: @agency.id, units: @all - [@units.first] }
-      assert_match(/Pick the custom group/, flash[:alert])
-      assert_equal 0, Aim::AgencyGroupUnit.count
+    test 'units in custom groups stay in use, and ticking one into a custom group turns it on' do
+      docs = Aim::AgencyGroup.create!(name: 'Docs', agency_id: 'GSA', custom: true)
+      docs.units.create!(agency_id: 'GSA', budget_unit: @units.first)
+      patch :update, params: { id: @agency.id, units: [@units.second] }
+      assert_equal [@units.first, @units.second].sort, Aim::Units.new.units_of('GSA').sort
 
-      patch :update, params: { id: @agency.id, units: @all - [@units.first], move_to: 'new', new_group_name: 'Fresh' }
-      assert_equal [@units.first], Aim::AgencyGroup.find_by!(name: 'Fresh').units.pluck(:budget_unit)
+      patch :update, params: { id: docs.id, units: [@units.first, @units.third] }
+      assert_includes Aim::Units.new.units_of('GSA'), @units.third
+      assert_equal [@units.first, @units.third].sort, Aim::AgencyGroups.new.units_of(docs).sort
     end
   end
 
