@@ -1111,6 +1111,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: step.condition_operator,
         condition_value: step.condition_value,
         inbox_buttons: step.inbox_buttons.sort,
+        button_labels: step.button_labels,
         complete_on_edit: step.complete_on_edit?,
         completion_rule: step.completion_rule,
         deny_rule: step.deny_rule,
@@ -1133,6 +1134,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step).sort,
+        button_labels: extract_step_button_labels(step),
         complete_on_edit: step[:complete_on_edit] == '1',
         routes: step_route_attrs(step),
         **step_rules(step)

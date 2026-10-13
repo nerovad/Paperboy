@@ -58,4 +58,23 @@ class FormTemplatesButtonLabelsTest < ActionController::TestCase
     assert_equal({}, labels(%w[status_dropdown bogus], %w[Status Other]))
     assert_equal({}, labels(nil, nil))
   end
+
+  # update rebuilds the routing steps only when this says they changed.
+  def routing_changed?(keys, texts)
+    step = { routing_type: 'supervisor', button_label_keys: keys, button_label_texts: texts }
+    @controller.params = ActionController::Parameters.new(form_template: { submission_type: 'database' },
+                                                          routing_steps: [step])
+    @controller.instance_variable_set(:@form_template, @template)
+    @controller.send(:routing_fields_changed?)
+  end
+
+  test 'a label is a routing change, so a save that only renames a button is kept' do
+    @template.routing_steps.create!(step_number: 1, routing_type: 'supervisor',
+                                    button_labels: { 'approve' => 'Permit Printed' })
+
+    assert_not routing_changed?(%w[approve], ['Permit Printed'])
+    assert routing_changed?(%w[approve], ['Permit Issued'])
+    assert routing_changed?(%w[approve edit], ['Permit Printed', 'Amend'])
+    assert routing_changed?(%w[approve], [''])
+  end
 end
