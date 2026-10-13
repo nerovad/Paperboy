@@ -25,6 +25,14 @@
   padding-bottom: 120px;
 }
 
+/* A scrolling page keeps everything at its full height: left to the column's
+   default, a panel shrinks to fit the screen and .aim-panel's overflow:
+   hidden cuts off whatever no longer fits. The queue panel is the one meant
+   to fill the rest of the page and scroll inside (.aim-queue-panel). */
+.aim-page:not(.aim-review-page) > :not(.aim-queue-panel) {
+  flex-shrink: 0;
+}
+
 /* The bottom padding clears the fixed "Powered by GSA" badge, which sits
    bottom-right at z-index 900 and would otherwise cover the action row. */
 .aim-review-page {
@@ -1671,10 +1679,9 @@
   margin: 0 0 10px;
 }
 
-// AIM pages are a fixed-height column that scrolls; a panel left free to
-// shrink is cut off at whatever height fits instead.
+// The person picker's list opens below its box, past the panel's edge.
 .aim-agency-group-panel {
-  flex-shrink: 0;
+  overflow: visible;
   padding: 14px 16px;
 }
 
