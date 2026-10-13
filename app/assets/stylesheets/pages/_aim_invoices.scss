@@ -1750,3 +1750,42 @@ ul.aim-agency-group-columns {
     flex: 1 1 24rem;
   }
 }
+
+// Report columns in their order (aim_column_order_controller): one per row,
+// dragged by the handle.
+.aim-column-order {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  max-width: 28rem;
+  padding: 0;
+}
+
+.aim-column-order__item {
+  align-items: center;
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+
+  label {
+    align-items: center;
+    display: flex;
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+
+  input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+  }
+}
+
+.aim-column-order__handle {
+  color: $text-muted;
+  cursor: grab;
+  user-select: none;
+}

@@ -100,6 +100,7 @@ import AimOwnerChoiceController from "controllers/aim_owner_choice_controller"
 import AimPresenceController from "controllers/aim_presence_controller"
 import AimReasonController from "controllers/aim_reason_controller"
 import AimSidebarController from "controllers/aim_sidebar_controller"
+import AimColumnOrderController from "controllers/aim_column_order_controller"
 import AimActionsMenuController from "controllers/aim_actions_menu_controller"
 import AimGroupedSearchController from "controllers/aim_grouped_search_controller"
 import AimCodingChoiceController from "controllers/aim_coding_choice_controller"
@@ -221,6 +222,7 @@ application.register("aim-owner-choice", AimOwnerChoiceController)
 application.register("aim-presence", AimPresenceController)
 application.register("aim-reason", AimReasonController)
 application.register("aim-sidebar", AimSidebarController)
+application.register("aim-column-order", AimColumnOrderController)
 application.register("aim-actions-menu", AimActionsMenuController)
 application.register("aim-grouped-search", AimGroupedSearchController)
 application.register("aim-coding-choice", AimCodingChoiceController)

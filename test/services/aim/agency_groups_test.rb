@@ -60,12 +60,13 @@ module Aim
       assert_not other.units.build(agency_id: 'SHF', budget_unit: '2500').valid?
     end
 
-    test 'settings default to AIM\'s and keep the report\'s order' do
+    test 'settings default to AIM\'s, and the columns keep the group\'s order' do
       assert_equal Aim::FiscalExport::COLUMNS, @gsa.export_column_list
       assert_equal Aim::FiscalRecord::TAG_SUGGESTIONS, @gsa.tag_suggestion_list
 
       @gsa.update!(export_column_list: %w[Total Title Nonsense], required_field_list: %w[check_number nonsense])
-      assert_equal %w[Title Total], @gsa.reload.export_column_list
+      assert_equal %w[Total Title], @gsa.reload.export_column_list
+      assert_equal ['Total', 'Title', 'Invoice Number'], @gsa.export_column_order.first(3)
       assert_equal %w[check_number], @gsa.required_field_list
 
       @gsa.export_column_list = []

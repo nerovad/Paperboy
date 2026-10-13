@@ -63,17 +63,21 @@ module Aim
 
     # Fiscal settings. Blank means AIM's defaults, which are GSA's.
 
+    # The report's columns, in the group's order.
     def export_column_list
       list = JSON.parse(export_columns.presence || 'null')
-      list.is_a?(Array) && list.any? ? Aim::FiscalExport::COLUMNS & list : Aim::FiscalExport::COLUMNS
+      list.is_a?(Array) && list.any? ? list.uniq & Aim::FiscalExport::COLUMNS : Aim::FiscalExport::COLUMNS
     rescue JSON::ParserError
       Aim::FiscalExport::COLUMNS
     end
 
     def export_column_list=(names)
-      picked = Aim::FiscalExport::COLUMNS & Array(names).map(&:to_s)
+      picked = Array(names).map(&:to_s).uniq & Aim::FiscalExport::COLUMNS
       self.export_columns = picked == Aim::FiscalExport::COLUMNS ? nil : picked.to_json
     end
+
+    # Every column, the group's first in its order, then the ones left out.
+    def export_column_order = export_column_list | Aim::FiscalExport::COLUMNS
 
     def hold_reason_list = lines(hold_reasons)
 

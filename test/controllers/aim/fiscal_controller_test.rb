@@ -233,8 +233,8 @@ module Aim
       assert_match(/filename="AIM_Fiscal_Report_\d+_\d+\.txt"/, response.headers['Content-Disposition'])
       text = response.body.dup.force_encoding('UTF-16LE').encode('UTF-8').delete_prefix("\uFEFF")
       header, row = CSV.parse(text, col_sep: "\t")
-      assert_equal ['Title', 'Invoice Number'], header, 'the catalogue\'s order, whatever order they were ticked in'
-      assert_equal 'E-1', row.last
+      assert_equal ['Invoice Number', 'Title'], header, 'the group\'s order'
+      assert_equal 'E-1', row.first
     end
 
     test 'invoices of two groups with different reports are not mixed' do
