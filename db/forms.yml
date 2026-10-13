@@ -3907,11 +3907,12 @@ forms:
     options: {}
     read_only: none
     has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
+    visible_to_filler: true
+    restricted_to_type: group
     conditional_values:
     - Other
     conditional_field: investigator_name
+    restricted_to_group: HCA_Safety_Officers
   - field_name: investigator_title
     field_type: text
     label: Investigator Title
@@ -4132,11 +4133,12 @@ forms:
     options: {}
     read_only: none
     has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
+    visible_to_filler: true
+    restricted_to_type: group
     conditional_values:
     - Other
     conditional_field: person_responsible_for_corrective_action
+    restricted_to_group: HCA_Safety_Officers
   - field_name: title
     field_type: text
     label: Title
@@ -4288,7 +4290,13 @@ forms:
     subject: New Safety Reporting Form Submission
     body: "Hello, \n\nA new Safety Reporting form has been submitted. Please see the
       attached PDF for more information."
-  email_steps: []
+  email_steps:
+  - trigger_event: submit
+    recipient_type: authorization
+    authorization_service_type: hca_safety
+    attach_pdf: true
+    attach_media: true
+    position: 0
   copy_recipients:
   - recipient_type: group
     trigger_event: submit
