@@ -303,6 +303,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_180000) do
     t.string "deactivated_by", limit: 255
     t.string "deactivation_reason", limit: 500
     t.integer "employee_id", null: false
+    t.boolean "fiscal", default: false, null: false
     t.string "fusion_roles", limit: 255
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false

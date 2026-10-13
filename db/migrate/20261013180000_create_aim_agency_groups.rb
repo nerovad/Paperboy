@@ -8,7 +8,9 @@
 # what must be filled in before archive), and may process other groups too.
 #
 # The Fiscal switch on aim.members becomes the fiscal role in the GSA group:
-# GSA is the only agency working Fiscal in AIM today.
+# GSA is the only agency working Fiscal in AIM today. The old column stays,
+# ignored, so Paperboy_Dev keeps working for master until this merges; a
+# later migration drops it.
 #
 # No database foreign keys and explicit index names: see
 # test/lib/aim/schema_conventions_test.rb.
@@ -19,7 +21,6 @@ class CreateAimAgencyGroups < ActiveRecord::Migration[8.1]
     create_roles
     create_coverages
     move_fiscal_switch
-    remove_column 'aim.members', :fiscal
   end
 
   def create_groups
@@ -93,11 +94,6 @@ class CreateAimAgencyGroups < ActiveRecord::Migration[8.1]
   end
 
   def down
-    add_column 'aim.members', :fiscal, :boolean, default: false, null: false
-    execute <<~SQL.squish
-      UPDATE m SET fiscal = 1 FROM aim.members m
-      WHERE EXISTS (SELECT 1 FROM aim.agency_group_roles r WHERE r.employee_id = m.employee_id AND r.role = 'fiscal')
-    SQL
     drop_table 'aim.agency_group_coverages'
     drop_table 'aim.agency_group_roles'
     drop_table 'aim.agency_group_units'

@@ -8,6 +8,10 @@ module Aim
   # stay, they drop out of the picker and the queues, and they can come back.
   # Deleting is for mistakes.
   class Member < Record
+    # Replaced by the fiscal role in an agency group (#131); dropped once
+    # that is on every server.
+    self.ignored_columns += %w[fiscal]
+
     validates :employee_id, presence: true, uniqueness: true
 
     # Invoices that keep a person from being removed: the ones they own that a
