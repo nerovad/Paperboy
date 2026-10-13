@@ -32,6 +32,7 @@ export default class extends Controller {
     if (this.hasModeButtonTarget) {
       this.modeButtonTarget.textContent = this.editing ? "Done editing" : "Edit";
       this.modeButtonTarget.classList.toggle("approve", this.editing);
+      this.modeButtonTarget.classList.toggle("secondary", !this.editing);
     }
   }
 
