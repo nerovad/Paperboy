@@ -32,46 +32,50 @@
     </section>
   <% end %>
 
-  <h2 class="aim-profile-heading" id="units">Budget units</h2>
-  <section class="aim-panel">
+  <h2 class="aim-profile-heading" id="units">Budget units (<%= own_units.size %>)</h2>
+  <section class="aim-panel aim-agency-group-panel">
     <% if @group.custom && admin %>
       <p class="aim-agency-group-meta">Tick the units this group serves. They leave <%= @group.agency_id %>'s own group; untick to send one back.</p>
       <%= form_with url: units_aim_agency_group_path(@group), method: :patch, local: true do %>
-        <div class="aim-agency-units__grid" data-controller="select-all">
+        <div class="aim-agency-group-columns">
           <% agency_units.each do |unit| %>
             <% other = elsewhere[unit.unit] %>
-            <label title="<%= "In #{other.name}" if other %>">
+            <label>
               <%= check_box_tag 'units[]', unit.unit, own_units.include?(unit.unit), id: "group-unit-#{unit.unit}",
                                 disabled: other.present? %>
-              <%= unit.label %><%= " (in #{other.name})" if other %>
+              <span><%= unit.label %><%= " (in #{other.name})" if other %></span>
             </label>
           <% end %>
         </div>
         <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save budget units</button></div>
       <% end %>
     <% else %>
-      <% if !@group.custom %>
+      <% unless @group.custom %>
         <p class="aim-agency-group-meta">
           Every active <%= @group.agency_id %> unit no custom group has, new ones included.
           To give some units their own Fiscal, make a custom group and tick them there.
         </p>
       <% end %>
-      <div class="aim-agency-units__grid">
-        <% agency_units.each do |unit| %>
-          <% other = elsewhere[unit.unit] %>
-          <% next if @group.custom && !own_units.include?(unit.unit) %>
-          <label>
-            <%= check_box_tag "unit-#{unit.unit}", '1', own_units.include?(unit.unit), disabled: true, id: "group-unit-#{unit.unit}" %>
-            <%= unit.label %>
-            <% if other %>(in <%= admin ? link_to(other.name, aim_agency_group_path(other)) : other.name %>)<% end %>
-          </label>
+      <ul class="aim-agency-group-columns">
+        <% agency_units.select { |unit| own_units.include?(unit.unit) }.each do |unit| %>
+          <li><%= unit.label %></li>
         <% end %>
-      </div>
+      </ul>
+      <% taken = agency_units.select { |unit| elsewhere[unit.unit] } %>
+      <% if taken.any? && !@group.custom %>
+        <p class="aim-agency-group-meta">In custom groups:</p>
+        <ul class="aim-agency-group-columns">
+          <% taken.each do |unit| %>
+            <% other = elsewhere[unit.unit] %>
+            <li><%= unit.label %> — <%= admin ? link_to(other.name, aim_agency_group_path(other)) : other.name %></li>
+          <% end %>
+        </ul>
+      <% end %>
     <% end %>
   </section>
 
   <h2 class="aim-profile-heading" id="people">People</h2>
-  <section class="aim-panel aim-profile-roles">
+  <section class="aim-panel aim-agency-group-panel">
     <table class="submission-table aim-queue-table aim-people-table">
       <thead><tr><th>Person</th><th>Role</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
       <tbody>
@@ -96,7 +100,7 @@
         <% end %>
       </tbody>
     </table>
-    <%= form_with url: aim_agency_group_roles_path(@group), method: :post, local: true, class: 'aim-inline-form' do %>
+    <%= form_with url: aim_agency_group_roles_path(@group), method: :post, local: true, class: 'aim-agency-group-add' do %>
       <%= render 'aim/shared/grouped_person_select', name: :employee_id, label: 'Person to add' %>
       <%= select_tag :role, options_for_select(Aim::AgencyGroup::ROLES.select { |role, _| admin || role == 'fiscal' }.map(&:reverse), 'fiscal'),
                      aria: { label: 'Role' } %>
@@ -108,10 +112,10 @@
   </section>
 
   <h2 class="aim-profile-heading" id="settings">Fiscal settings</h2>
-  <section class="aim-panel aim-agency-group-settings">
+  <section class="aim-panel aim-agency-group-panel aim-agency-group-settings">
     <%= form_with url: settings_aim_agency_group_path(@group), method: :patch, local: true do %>
       <% if admin %>
-        <fieldset class="aim-field">
+        <fieldset>
           <legend>Fiscal also processes</legend>
           <p class="aim-agency-group-meta">This group's Fiscal people and Group Admins also work the groups ticked here.</p>
           <%= hidden_field_tag 'covered_group_ids[]', '' %>
@@ -124,14 +128,16 @@
         </fieldset>
       <% end %>
 
-      <fieldset class="aim-field">
+      <fieldset>
         <legend>Report format</legend>
-        <% Aim::AgencyGroup::EXPORT_FORMATS.each do |format, label| %>
-          <label><%= radio_button_tag :export_format, format, @group.export_format == format %> <%= label %></label>
-        <% end %>
+        <div class="aim-agency-group-columns">
+          <% Aim::AgencyGroup::EXPORT_FORMATS.each do |format, label| %>
+            <label><%= radio_button_tag :export_format, format, @group.export_format == format %> <%= label %></label>
+          <% end %>
+        </div>
       </fieldset>
 
-      <fieldset class="aim-field">
+      <fieldset>
         <legend>Report columns</legend>
         <div class="aim-agency-group-columns">
           <% chosen = @group.export_column_list %>
@@ -141,7 +147,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="aim-field">
+      <fieldset>
         <legend>Needed before archive</legend>
         <div class="aim-agency-group-columns">
           <% required = @group.required_field_list %>
@@ -151,15 +157,16 @@
         </div>
       </fieldset>
 
-      <div class="aim-field">
-        <%= label_tag :hold_reasons, 'Hold reasons offered (one per line; anything may still be typed)' %>
+      <fieldset>
+        <legend><%= label_tag :hold_reasons, 'Hold reasons' %></legend>
+        <p class="aim-agency-group-meta">Offered when Fiscal puts an invoice on hold, one per line. Anything may still be typed.</p>
         <%= text_area_tag :hold_reasons, @group.hold_reason_list.join("\n") %>
-      </div>
-
-      <div class="aim-field">
-        <%= label_tag :tag_suggestions, 'Tags offered (one per line)' %>
+      </fieldset>
+      <fieldset>
+        <legend><%= label_tag :tag_suggestions, 'Tags' %></legend>
+        <p class="aim-agency-group-meta">Offered as Fiscal types a tag, one per line.</p>
         <%= text_area_tag :tag_suggestions, @group.tag_suggestion_list.join("\n") %>
-      </div>
+      </fieldset>
 
       <div class="aim-form-actions"><button type="submit" class="btn approve">Save settings</button></div>
     <% end %>
