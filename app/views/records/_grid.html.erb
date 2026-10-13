@@ -40,10 +40,10 @@
       <div class="records-bar__actions">
         <%= local_assigns[:actions] %>
         <% if editable %>
-          <%= link_to 'Changes', records_table_changes_path(table.slug), class: 'btn status-history' %>
+          <%= link_to 'Changes', records_table_changes_path(table.slug), class: 'btn secondary' %>
         <% end %>
         <% if editable && highlight_counts %>
-          <button type="button" class="btn" data-action="records-highlights#open">Highlights</button>
+          <button type="button" class="btn secondary" data-action="records-highlights#open">Highlights</button>
         <% end %>
         <% if editable && local_assigns[:emailable] %>
           <button type="button" class="btn secondary" data-action="records-email#open">Email</button>
@@ -53,7 +53,7 @@
                   data-action="records-export#open">Export</button>
         <% end %>
         <% if editable && rows.any? %>
-          <button type="button" class="btn"
+          <button type="button" class="btn secondary"
                   data-records-edit-target="modeButton"
                   data-action="records-edit#toggleMode">Edit</button>
         <% end %>
@@ -61,7 +61,7 @@
     </div>
   <% elsif editable && rows.any? %>
     <div class="records-editbar">
-      <button type="button" class="btn"
+      <button type="button" class="btn secondary"
               data-records-edit-target="modeButton"
               data-action="records-edit#toggleMode">Edit</button>
     </div>
