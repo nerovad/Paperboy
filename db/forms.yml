@@ -135,6 +135,7 @@ forms:
   - step_number: 1
     routing_type: employee
     employee_id: 134622
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -348,6 +349,7 @@ forms:
   - step_number: 1
     routing_type: employee
     employee_id: 134622
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -1559,6 +1561,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: supervisor
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -1572,6 +1575,7 @@ forms:
   - step_number: 2
     routing_type: employee
     employee_id: 104236
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2052,6 +2056,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: group
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2272,6 +2277,7 @@ forms:
   - step_number: 1
     routing_type: employee
     employee_id: 123385
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2749,6 +2755,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: supervisor
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2861,6 +2868,7 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: P
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2875,6 +2883,7 @@ forms:
   - step_number: 2
     routing_type: employee
     employee_id: 104236
+    button_labels: {}
     condition_field_name: permit_types
     condition_operator: not_equals
     condition_value: R Lot
@@ -2891,8 +2900,7 @@ forms:
     deny_rule: form
   - step_number: 3
     routing_type: group
-    button_labels:
-      approve: Permit Printed
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -2905,8 +2913,7 @@ forms:
     group: GSA_Security
   - step_number: 4
     routing_type: group
-    button_labels:
-      approve: Permit Picked Up
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -3154,6 +3161,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: supervisor
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -4264,6 +4272,7 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: hca_safety
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
@@ -5249,6 +5258,7 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: hca_safety
+    button_labels: {}
     condition_field_name: bloodborne_pathogen_exposure
     condition_operator: equals
     condition_value: 'Yes'
@@ -5691,6 +5701,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: supervisor
+    button_labels: {}
     inbox_buttons: []
     complete_on_edit: false
     completion_rule: all
@@ -6433,6 +6444,7 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: group
+    button_labels: {}
     inbox_buttons:
     - view_pdf
     - edit
