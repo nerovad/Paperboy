@@ -2299,13 +2299,13 @@ forms:
   - Physician Information
   - Case Information
   submission_type: approval
-  description:
-  form_number:
-  form_type:
-  agency_id:
-  division_id:
-  department_id:
-  unit_id:
+  description: ''
+  form_number: ''
+  form_type: ''
+  agency_id: ''
+  division_id: ''
+  department_id: ''
+  unit_id: ''
   approval_routing_to:
   approval_employee_id:
   status_transition_mode: automatic
@@ -2755,15 +2755,15 @@ forms:
   routing_steps:
   - step_number: 1
     routing_type: supervisor
-    button_labels: {}
+    button_labels:
+      edit: Review
     inbox_buttons:
     - view_pdf
     - edit
-    - approve
     - deny
     - reassign
     - take_back
-    complete_on_edit: false
+    complete_on_edit: true
     completion_rule: all
     deny_rule: form
   emails: []
@@ -2900,7 +2900,8 @@ forms:
     deny_rule: form
   - step_number: 3
     routing_type: group
-    button_labels: {}
+    button_labels:
+      approve: Permit Printed
     inbox_buttons:
     - view_pdf
     - edit
@@ -2913,7 +2914,8 @@ forms:
     group: GSA_Security
   - step_number: 4
     routing_type: group
-    button_labels: {}
+    button_labels:
+      approve: Permit Picked Up
     inbox_buttons:
     - view_pdf
     - edit
@@ -3308,25 +3310,11 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
-  - field_name: medical_record_number_for_the_employee
-    field_type: number
-    label: Medical record number for the Employee
-    page_number: 3
-    position: 1
-    required: false
-    options: {}
-    read_only: none
-    has_custom_view: false
-    visible_to_filler: false
-    restricted_to_type: none
-    conditional_values:
-    - 'Yes'
-    conditional_field: bloodborne_pathogen_exposure
   - field_name: impacted_employee
     field_type: choices_dropdown
     label: Impacted Employee
     page_number: 3
-    position: 2
+    position: 1
     required: false
     options:
       custom_lookup:
@@ -3346,11 +3334,25 @@ forms:
     has_custom_view: false
     visible_to_filler: false
     restricted_to_type: none
+  - field_name: medical_record_number_for_the_employee
+    field_type: number
+    label: Medical record number for the Employee
+    page_number: 3
+    position: 1
+    required: false
+    options: {}
+    read_only: none
+    has_custom_view: false
+    visible_to_filler: false
+    restricted_to_type: none
+    conditional_values:
+    - 'Yes'
+    conditional_field: bloodborne_pathogen_exposure
   - field_name: impacted_employees_email
     field_type: email
     label: Impacted Employee's Email
     page_number: 3
-    position: 3
+    position: 2
     required: false
     options:
       answer_lookup:
@@ -3369,7 +3371,7 @@ forms:
     field_type: phone
     label: Impacted Employee's Phone
     page_number: 3
-    position: 4
+    position: 3
     required: false
     options:
       answer_lookup:
@@ -3388,7 +3390,7 @@ forms:
     field_type: text
     label: Impacted Employee's Supervisor
     page_number: 4
-    position: 5
+    position: 4
     required: false
     options:
       answer_lookup:
@@ -3408,7 +3410,7 @@ forms:
     field_type: text
     label: Witness Name
     page_number: 4
-    position: 6
+    position: 5
     required: false
     options: {}
     read_only: none
@@ -3419,7 +3421,7 @@ forms:
     field_type: phone
     label: Witness Phone
     page_number: 4
-    position: 7
+    position: 6
     required: false
     options: {}
     read_only: none
@@ -3430,7 +3432,7 @@ forms:
     field_type: date
     label: Date of Injury or Illness
     page_number: 5
-    position: 8
+    position: 7
     required: false
     options: {}
     read_only: none
@@ -3441,7 +3443,7 @@ forms:
     field_type: date
     label: Date Employer Notified
     page_number: 5
-    position: 9
+    position: 8
     required: false
     options: {}
     read_only: none
@@ -3452,7 +3454,7 @@ forms:
     field_type: date
     label: Date DWC-1 Given
     page_number: 5
-    position: 10
+    position: 9
     required: false
     options: {}
     read_only: none
@@ -3463,7 +3465,7 @@ forms:
     field_type: dropdown
     label: Who Gave the DWC-1
     page_number: 5
-    position: 11
+    position: 10
     required: false
     options:
       custom_lookup:
@@ -3487,7 +3489,7 @@ forms:
     field_type: date
     label: Date Last Worked
     page_number: 5
-    position: 12
+    position: 11
     required: false
     options: {}
     read_only: none
@@ -3498,7 +3500,7 @@ forms:
     field_type: date
     label: Date Returned to Work
     page_number: 5
-    position: 13
+    position: 12
     required: false
     options: {}
     read_only: none
@@ -3509,7 +3511,7 @@ forms:
     field_type: dropdown
     label: 'Missed Full Work Day? '
     page_number: 5
-    position: 14
+    position: 13
     required: false
     options:
       values:
@@ -3523,7 +3525,7 @@ forms:
     field_type: dropdown
     label: Still off Work?
     page_number: 5
-    position: 15
+    position: 14
     required: false
     options:
       values:
@@ -3540,7 +3542,7 @@ forms:
     field_type: text_box
     label: Specific Injury and Body Part Affected
     page_number: 6
-    position: 16
+    position: 15
     required: false
     options:
       rows: 5
@@ -3552,7 +3554,7 @@ forms:
     field_type: dropdown
     label: Location of Incident
     page_number: 6
-    position: 17
+    position: 16
     required: false
     options:
       custom_lookup:
@@ -3580,7 +3582,7 @@ forms:
     field_type: text_box
     label: Location Description
     page_number: 6
-    position: 18
+    position: 17
     required: false
     options:
       rows: 3
@@ -3592,7 +3594,7 @@ forms:
     field_type: dropdown
     label: On Employer Premises?
     page_number: 6
-    position: 19
+    position: 18
     required: false
     options:
       values:
@@ -3606,7 +3608,7 @@ forms:
     field_type: dropdown
     label: Department Where Event Occurred
     page_number: 6
-    position: 20
+    position: 19
     required: false
     options:
       custom_lookup:
@@ -3629,7 +3631,7 @@ forms:
     field_type: text_box
     label: Activity at Time of Incident
     page_number: 6
-    position: 21
+    position: 20
     required: false
     options:
       rows: 5
@@ -3641,7 +3643,7 @@ forms:
     field_type: text_box
     label: How the Injury Occurred
     page_number: 6
-    position: 22
+    position: 21
     required: false
     options:
       rows: 5
@@ -3653,7 +3655,7 @@ forms:
     field_type: dropdown
     label: Bloodborne Pathogen Exposure?
     page_number: 7
-    position: 23
+    position: 22
     required: false
     options:
       values:
@@ -3667,7 +3669,7 @@ forms:
     field_type: dropdown
     label: Is the source blood tested?
     page_number: 7
-    position: 24
+    position: 23
     required: false
     options:
       values:
@@ -3684,7 +3686,7 @@ forms:
     field_type: dropdown
     label: Is the employees blood tested?
     page_number: 7
-    position: 25
+    position: 24
     required: false
     options:
       values:
@@ -3701,7 +3703,7 @@ forms:
     field_type: text
     label: Source Patient Medical Number
     page_number: 7
-    position: 26
+    position: 25
     required: false
     options: {}
     read_only: none
@@ -3715,7 +3717,7 @@ forms:
     field_type: text
     label: Employee Medical Number
     page_number: 7
-    position: 27
+    position: 26
     required: false
     options: {}
     read_only: none
@@ -3729,7 +3731,7 @@ forms:
     field_type: text
     label: Physician Name
     page_number: 7
-    position: 28
+    position: 27
     required: false
     options: {}
     read_only: none
@@ -3740,7 +3742,7 @@ forms:
     field_type: text
     label: Physician Address
     page_number: 7
-    position: 29
+    position: 28
     required: false
     options: {}
     read_only: none
@@ -3751,7 +3753,7 @@ forms:
     field_type: phone
     label: Physician Phone
     page_number: 7
-    position: 30
+    position: 29
     required: false
     options: {}
     read_only: none
@@ -3762,7 +3764,7 @@ forms:
     field_type: dropdown
     label: Hospital Name
     page_number: 7
-    position: 31
+    position: 30
     required: false
     options:
       values:
@@ -3778,7 +3780,7 @@ forms:
     field_type: text
     label: Other Hospital
     page_number: 7
-    position: 32
+    position: 31
     required: false
     options: {}
     read_only: none
@@ -3792,7 +3794,7 @@ forms:
     field_type: dropdown
     label: Hospital Address
     page_number: 7
-    position: 33
+    position: 32
     required: false
     options:
       values:
@@ -3812,7 +3814,7 @@ forms:
     field_type: text
     label: Other Hospital Address
     page_number: 7
-    position: 34
+    position: 33
     required: false
     options: {}
     read_only: none
@@ -3826,7 +3828,7 @@ forms:
     field_type: dropdown
     label: Hospital Phone
     page_number: 7
-    position: 35
+    position: 34
     required: false
     options:
       values:
@@ -3846,7 +3848,7 @@ forms:
     field_type: phone
     label: Other Hospital Phone
     page_number: 7
-    position: 36
+    position: 35
     required: false
     options: {}
     read_only: none
@@ -3860,7 +3862,7 @@ forms:
     field_type: dropdown
     label: Hospitalized Overnight?
     page_number: 7
-    position: 37
+    position: 36
     required: false
     options:
       values:
@@ -3874,7 +3876,7 @@ forms:
     field_type: dropdown
     label: Investigator Name
     page_number: 8
-    position: 38
+    position: 37
     required: false
     options:
       custom_lookup:
@@ -3902,7 +3904,7 @@ forms:
     field_type: text
     label: Other Investigator Name
     page_number: 8
-    position: 39
+    position: 38
     required: false
     options: {}
     read_only: none
@@ -3917,7 +3919,7 @@ forms:
     field_type: text
     label: Investigator Title
     page_number: 8
-    position: 40
+    position: 39
     required: false
     options: {}
     read_only: none
@@ -3930,7 +3932,7 @@ forms:
     field_type: phone
     label: Investigator Phone
     page_number: 8
-    position: 41
+    position: 40
     required: false
     options: {}
     read_only: none
@@ -3943,7 +3945,7 @@ forms:
     field_type: choices_dropdown
     label: Nature of Incident
     page_number: 8
-    position: 42
+    position: 41
     required: false
     options:
       custom_lookup:
@@ -3968,7 +3970,7 @@ forms:
     field_type: choices_dropdown
     label: Cause of Incident
     page_number: 8
-    position: 43
+    position: 42
     required: false
     options:
       custom_lookup:
@@ -3993,7 +3995,7 @@ forms:
     field_type: choices_dropdown
     label: Root Cause
     page_number: 9
-    position: 44
+    position: 43
     required: false
     options:
       custom_lookup:
@@ -4018,7 +4020,7 @@ forms:
     field_type: choices_dropdown
     label: Assessment of Future Severity Potential
     page_number: 9
-    position: 45
+    position: 44
     required: false
     options:
       custom_lookup:
@@ -4043,7 +4045,7 @@ forms:
     field_type: choices_dropdown
     label: Assessment of Probability of Recurrence
     page_number: 9
-    position: 46
+    position: 45
     required: false
     options:
       custom_lookup:
@@ -4068,7 +4070,7 @@ forms:
     field_type: dropdown
     label: Unsafe condition corrected immediately?
     page_number: 10
-    position: 47
+    position: 46
     required: false
     options:
       values:
@@ -4084,7 +4086,7 @@ forms:
     field_type: dropdown
     label: Checklist/procedures/training modified?
     page_number: 10
-    position: 48
+    position: 47
     required: false
     options:
       values:
@@ -4100,7 +4102,7 @@ forms:
     field_type: dropdown
     label: Person Responsible for Corrective Action
     page_number: 10
-    position: 49
+    position: 48
     required: false
     options:
       custom_lookup:
@@ -4128,7 +4130,7 @@ forms:
     field_type: text
     label: Other Person Responsible
     page_number: 10
-    position: 50
+    position: 49
     required: false
     options: {}
     read_only: none
@@ -4143,7 +4145,7 @@ forms:
     field_type: text
     label: Title
     page_number: 10
-    position: 51
+    position: 50
     required: false
     options: {}
     read_only: none
@@ -4155,7 +4157,7 @@ forms:
     field_type: date
     label: Targeted Completion Date
     page_number: 10
-    position: 52
+    position: 51
     required: false
     options: {}
     read_only: none
@@ -4168,7 +4170,7 @@ forms:
     field_type: date
     label: Actual Completion Date
     page_number: 10
-    position: 53
+    position: 52
     required: false
     options: {}
     read_only: none
@@ -4181,7 +4183,7 @@ forms:
     field_type: dropdown
     label: OSHA Recordable
     page_number: 11
-    position: 54
+    position: 53
     required: false
     options:
       values:
@@ -4197,7 +4199,7 @@ forms:
     field_type: dropdown
     label: OSHA Reportable
     page_number: 11
-    position: 55
+    position: 54
     required: false
     options:
       values:
@@ -4213,7 +4215,7 @@ forms:
     field_type: choices_dropdown
     label: Reportable Injury Codes
     page_number: 11
-    position: 56
+    position: 55
     required: false
     options:
       custom_lookup:
@@ -4274,7 +4276,8 @@ forms:
   - step_number: 1
     routing_type: authorization
     authorization_service_type: hca_safety
-    button_labels: {}
+    button_labels:
+      edit: Review
     inbox_buttons:
     - view_pdf
     - edit
