@@ -104,6 +104,38 @@ module Aim
     end
   end
 
+  class AgencyGroupUnitsOnAgencyGroupTest < ActionController::TestCase
+    include AgencyGroupsTestSession
+
+    tests Aim::AgencyGroupUnitsController
+
+    setup do
+      sign_in 1, 'aim_admin'
+      @units = Coa::Unit.where(agency_id: 'GSA', active: true).distinct.order(:unit_id).limit(3).pluck(:unit_id)
+      skip 'need three GSA units in the COA' if @units.size < 3
+      @agency = Aim::AgencyGroup.for_agency!('GSA')
+      @all = Coa::Unit.where(agency_id: 'GSA', active: true).distinct.pluck(:unit_id)
+    end
+
+    test 'unticked units move to the custom group picked, and ticking one brings it back' do
+      docs = Aim::AgencyGroup.create!(name: 'Docs', agency_id: 'GSA', custom: true)
+      patch :update, params: { id: @agency.id, units: @all - @units.first(2), move_to: docs.id }
+      assert_equal @units.first(2).sort, docs.units.pluck(:budget_unit).sort
+
+      patch :update, params: { id: @agency.id, units: @all - [@units.first] }
+      assert_equal [@units.first], docs.units.pluck(:budget_unit)
+    end
+
+    test 'unticking with nowhere to go is refused; a new group can be named' do
+      patch :update, params: { id: @agency.id, units: @all - [@units.first] }
+      assert_match(/Pick the custom group/, flash[:alert])
+      assert_equal 0, Aim::AgencyGroupUnit.count
+
+      patch :update, params: { id: @agency.id, units: @all - [@units.first], move_to: 'new', new_group_name: 'Fresh' }
+      assert_equal [@units.first], Aim::AgencyGroup.find_by!(name: 'Fresh').units.pluck(:budget_unit)
+    end
+  end
+
   class AgencyGroupRolesControllerTest < ActionController::TestCase
     include AgencyGroupsTestSession
 

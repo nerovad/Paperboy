@@ -32,45 +32,46 @@
     </section>
   <% end %>
 
-  <h2 class="aim-profile-heading" id="units">Budget units (<%= own_units.size %>)</h2>
+  <h2 class="aim-profile-heading" id="units">Budget units in this group (<%= own_units.size %>)</h2>
   <section class="aim-panel aim-agency-group-panel">
-    <% if @group.custom && admin %>
-      <p class="aim-agency-group-meta">Tick the units this group serves. They leave <%= @group.agency_id %>'s own group; untick to send one back.</p>
+    <% if admin %>
+      <% customs = @resolver.all.select { |g| g.custom && g.agency_id == @group.agency_id && g != @group } %>
+      <p class="aim-agency-group-meta">
+        <% if @group.custom %>
+          Ticked units are this group's. Untick one to send it back to <%= @group.agency_id %>'s own group.
+        <% else %>
+          Ticked units are <%= @group.agency_id %>'s own; new <%= @group.agency_id %> units join them on their own.
+          Untick units to move them to a custom group, chosen below. Tick one to bring it back.
+        <% end %>
+      </p>
       <%= form_with url: units_aim_agency_group_path(@group), method: :patch, local: true do %>
         <div class="aim-agency-group-columns">
           <% agency_units.each do |unit| %>
             <% other = elsewhere[unit.unit] %>
             <label>
               <%= check_box_tag 'units[]', unit.unit, own_units.include?(unit.unit), id: "group-unit-#{unit.unit}",
-                                disabled: other.present? %>
-              <span><%= unit.label %><%= " (in #{other.name})" if other %></span>
+                                disabled: @group.custom && other.present? %>
+              <span><%= unit.label %><% if other %> <em class="aim-agency-group-meta">(in <%= other.name %>)</em><% end %></span>
             </label>
           <% end %>
         </div>
+        <% unless @group.custom %>
+          <div class="aim-agency-group-add">
+            <label for="move_to">Unticked units go to</label>
+            <%= select_tag :move_to, options_for_select(customs.map { |g| [g.name, g.id] } + [['A new custom group…', 'new']]),
+                           include_blank: 'Pick a custom group', id: 'move_to' %>
+            <%= text_field_tag :new_group_name, nil, placeholder: 'New group name, e.g. Sheriff Detention', maxlength: 100,
+                                                     aria: { label: 'New custom group name' } %>
+          </div>
+        <% end %>
         <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save budget units</button></div>
       <% end %>
     <% else %>
-      <% unless @group.custom %>
-        <p class="aim-agency-group-meta">
-          Every active <%= @group.agency_id %> unit no custom group has, new ones included.
-          To give some units their own Fiscal, make a custom group and tick them there.
-        </p>
-      <% end %>
       <ul class="aim-agency-group-columns">
         <% agency_units.select { |unit| own_units.include?(unit.unit) }.each do |unit| %>
           <li><%= unit.label %></li>
         <% end %>
       </ul>
-      <% taken = agency_units.select { |unit| elsewhere[unit.unit] } %>
-      <% if taken.any? && !@group.custom %>
-        <p class="aim-agency-group-meta">In custom groups:</p>
-        <ul class="aim-agency-group-columns">
-          <% taken.each do |unit| %>
-            <% other = elsewhere[unit.unit] %>
-            <li><%= unit.label %> — <%= admin ? link_to(other.name, aim_agency_group_path(other)) : other.name %></li>
-          <% end %>
-        </ul>
-      <% end %>
     <% end %>
   </section>
 
