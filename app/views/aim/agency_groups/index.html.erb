@@ -24,6 +24,10 @@
                        aria: { label: 'Agency' }, required: true %>
         <button type="submit" class="btn approve compact">Make group</button>
       <% end %>
+      <p class="aim-agency-group-meta">
+        A custom group is part of one agency's budget units. Agencies come from
+        <%= link_to "AIM's Budget Units", aim_enabled_units_path %>: turn one on there and its own group appears here.
+      </p>
     </section>
   <% end %>
 
