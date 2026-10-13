@@ -1154,6 +1154,11 @@ class FormTemplatesController < ApplicationController
         label: f.label, field_type: f.field_type, page_number: f.page_number,
         required: f.required, read_only: f.read_only || 'none',
         has_custom_view: f.has_custom_view, options: f.options,
+        restricted_to_type: f.restricted_to_type.presence || 'none',
+        restricted_to_employee_id: f.restricted_to_employee_id,
+        restricted_to_group_id: f.restricted_to_group_id,
+        restricted_to_org_filter_level: f.restricted_to_org_filter_level.presence,
+        visible_to_filler: f.visible_to_filler,
         # Conditional dependency normalized to the *label* of the target field so
         # it can be compared against the field_N index refs the builder submits.
         conditional_on: f.conditional_field&.label,
@@ -1186,20 +1191,26 @@ class FormTemplatesController < ApplicationController
         conditional_values: Array(f[:conditional_values]).reject(&:blank?).map(&:to_s).sort,
         conditional_answer_on: resolve_ref_label.call(f[:conditional_answer_field_id]),
         conditional_answer_mappings: normalize_conditional_mappings(f[:conditional_answer_mappings]),
-        options: case f[:field_type]
-                 when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown', 'choices_dropdown' then dropdown_options_from_params(f)
-                 when 'information'
-                   {
-                     'information_text' => f[:information_text].to_s,
-                     'acknowledgeable' => f[:acknowledgeable] == '1'
-                   }
-                 else {}
-                 end
+        options: options_as_stored(f),
+        restricted_to_type: f[:restricted_to_type].presence || 'none',
+        restricted_to_employee_id: f[:restricted_to_employee_id].presence&.to_i,
+        restricted_to_group_id: f[:restricted_to_group_id].presence&.to_i,
+        restricted_to_org_filter_level: f[:restricted_to_type] == 'group' ? f[:restricted_to_org_filter_level].presence : nil,
+        visible_to_filler: f[:visible_to_filler] == '1'
       }
     end.reject { |f| f[:label].blank? }
 
     current_fields != new_fields
+  end
+
+  # A posted field's options as rebuild_form_fields would leave them in the
+  # table: built the same way, then given the defaults Forms::Field fills in
+  # on save. A field that was not touched then compares equal to its row,
+  # whatever its options hold.
+  def options_as_stored(field_data)
+    field = Forms::Field.new(field_type: field_data[:field_type], options: build_field_options(field_data))
+    field.send(:set_default_options)
+    field.options
   end
 
   # Normalize conditional-answer mappings (from a DB JSON hash or submitted
