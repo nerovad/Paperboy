@@ -6,6 +6,7 @@
       <p class="aim-page-subtitle">Each file loaded, what it did, and Undo.</p>
     </div>
     <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
       <%= link_to 'Load a file', new_aim_coding_import_path, class: 'btn approve compact' %>
       <%= link_to 'Coding Rules', aim_coding_rules_path, class: 'btn compact' %>
     </div>

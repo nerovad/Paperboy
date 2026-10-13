@@ -27,7 +27,8 @@ module Aim
       reading_database("list the #{@queue} queue", alert: 'The invoice database could not be read.',
                                                    empty: { invoices: [], reason_counts: {} }) do
         # The reason filter is on the page itself; every Action Needed row is sent.
-        @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
+        # Narrowed to the agency groups picked in Managing (#131).
+        @invoices = helpers.aim_agency_groups.invoices(helpers.aim_managing_groups).in_queue(@queue).newest_first.to_a
         @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
         # Budget unit -> shared queue and each person -> invoices, as on By BU.
         @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'

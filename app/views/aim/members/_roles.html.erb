@@ -4,6 +4,8 @@
 <%# AIM admins change everything; a BU Admin adds and takes away their own BUs only. %>
 <% full = aim_managed_units.nil? %>
 <% mine = ->(unit) { full || aim_managed_units.include?(unit) } %>
+<%# Group Admins (#131) appoint BU Admins in their groups' units. %>
+<% appoints = ->(unit) { full || aim_appoints_bu_admin?(unit) } %>
 <% rows = @budget_units.index_by(&:budget_unit) %>
 <% extra = @budget_units.reject { |row| row.budget_unit == @home_unit } %>
 <%= turbo_frame_tag 'aim-roles' do %>
@@ -29,6 +31,12 @@
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
               <% if !full %>
+                <% if appoints.call(@home_unit) && !home_row&.hidden %>
+                  <%= button_to home_row&.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
+                                home_row ? aim_member_budget_unit_path(@employee_id, home_row) : aim_member_budget_units_path(@employee_id),
+                                method: home_row ? :patch : :post,
+                                params: { budget_unit: @home_unit, bu_admin: home_row&.bu_admin ? '0' : '1' }, class: 'btn compact' %>
+                <% end %>
               <% elsif home_row&.hidden %>
                 <%= button_to 'Show', aim_member_budget_unit_path(@employee_id, home_row), method: :patch,
                               params: { hidden: '0' }, class: 'btn compact' %>
@@ -57,12 +65,12 @@
           <td><%= render 'shared_queue_cell', employee_id: @employee_id, unit: row.budget_unit, row: row, can_change: mine.call(row.budget_unit) %></td>
           <td class="aim-people-table__actions">
             <div class="aim-profile-roles__buttons">
-              <% if full %>
+              <% if appoints.call(row.budget_unit) %>
                 <%= button_to row.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
                               aim_member_budget_unit_path(@employee_id, row), method: :patch,
                               params: { bu_admin: row.bu_admin ? '0' : '1' }, class: 'btn compact' %>
               <% end %>
-              <% if full || (mine.call(row.budget_unit) && !row.bu_admin) %>
+              <% if full || (mine.call(row.budget_unit) && (!row.bu_admin || appoints.call(row.budget_unit))) %>
                 <%= button_to 'Take away', aim_member_budget_unit_path(@employee_id, row), method: :delete,
                               data: { turbo_confirm: "Take #{row.budget_unit} away from #{name}?", confirm_label: 'Take away' },
                               class: 'btn deny compact' %>
@@ -82,7 +90,7 @@
     <% offered = @units.all.map(&:unit).reject { |unit| taken.include?(unit) || !mine.call(unit) } %>
     <%= select_tag :budget_unit, grouped_options_for_select(@units.grouped_options(only: offered)),
                    include_blank: 'Add a budget unit…', aria: { label: 'Budget unit to add' } %>
-    <% if full %>
+    <% if full || aim_group_admin_units.present? %>
       <label><%= check_box_tag :bu_admin, '1', false %> as BU Admin</label>
     <% end %>
     <button type="submit" class="btn approve compact">Add</button>

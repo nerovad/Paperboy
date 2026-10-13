@@ -227,13 +227,14 @@ module Aim
 
     test 'the report follows the agency group: its columns and its format' do
       @record.invoice.update!(agency: 'GSA')
-      Aim::AgencyGroup.for_agency!('GSA').update!(export_format: 'tab', export_column_list: ['Invoice Number', 'Title'])
+      Aim::AgencyGroup.for_agency!('GSA').update!(export_format: 'tab', export_column_list: ['Invoice Number', 'Title'],
+                                                  export_headers: { 'Invoice Number' => 'Inv #' })
       post :create, params: { record_ids: [@record.id] }
 
       assert_match(/filename="AIM_Fiscal_Report_\d+_\d+\.txt"/, response.headers['Content-Disposition'])
       text = response.body.dup.force_encoding('UTF-16LE').encode('UTF-8').delete_prefix("\uFEFF")
       header, row = CSV.parse(text, col_sep: "\t")
-      assert_equal ['Invoice Number', 'Title'], header, 'the group\'s order'
+      assert_equal ['Inv #', 'Title'], header, 'the group\'s order and names'
       assert_equal 'E-1', row.first
     end
 

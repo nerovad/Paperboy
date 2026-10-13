@@ -5,6 +5,7 @@
       <p class="aim-page-subtitle">Everyone who works AIM. Open a person to set their budget units and roles.</p>
     </div>
     <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
       <%= render 'aim/shared/units_without_admin' %>
       <span class="aim-count-pill"><%= pluralize(@people.length, 'person') %></span>
     </div>
@@ -14,6 +15,10 @@
     <%= form_with url: aim_members_path, method: :post, local: true, class: 'aim-inline-form' do |form| %>
       <strong class="aim-admin-add-panel__label">Add a person</strong>
       <%= render 'aim/shared/person_picker', name: :employee_id, label: 'Add a person', url: aim_admin_employees_path %>
+      <% unless aim_managed_units.nil? %>
+        <%= select_tag :budget_unit, grouped_options_for_select(Aim::Units.new.grouped_options(only: aim_managed_units)),
+                       include_blank: 'To budget unit…', required: true, aria: { label: 'Budget unit' } %>
+      <% end %>
       <%= form.submit 'Add to AIM', class: 'btn approve compact' %>
     <% end %>
   </section>

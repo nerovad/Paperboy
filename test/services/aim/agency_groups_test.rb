@@ -69,6 +69,11 @@ module Aim
       assert_equal ['Total', 'Title', 'Invoice Number'], @gsa.export_column_order.first(3)
       assert_equal %w[check_number], @gsa.required_field_list
 
+      @gsa.update!(export_headers: { 'Total' => ' Amount ', 'Title' => 'Title', 'Nonsense' => 'x' })
+      assert_equal({ 'Total' => 'Amount' }, @gsa.reload.export_headers)
+      assert_equal(%w[Amount Title], @gsa.export_column_list.map { |c| @gsa.export_header(c) })
+      assert_equal %w[Total Title], @gsa.export_column_list, 'renaming keeps the order'
+
       @gsa.export_column_list = []
       assert_not @gsa.valid?
     end

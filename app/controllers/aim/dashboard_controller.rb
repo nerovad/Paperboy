@@ -11,7 +11,8 @@ module Aim
     def index
       @dashboard_queues = Aim::Invoice::QUEUES
       reading_database('read the invoices for the dashboard', empty: { review_reasons: {} }, errors: StandardError) do
-        @review_reasons = Aim::Invoice.in_queue('needs_review').group(:review_reason).count
+        invoices = helpers.aim_agency_groups.invoices(helpers.aim_managing_groups)
+        @review_reasons = invoices.in_queue('needs_review').group(:review_reason).count
       end
     end
   end

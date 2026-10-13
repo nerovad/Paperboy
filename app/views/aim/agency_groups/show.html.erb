@@ -139,13 +139,18 @@
 
       <fieldset>
         <legend>Report columns</legend>
-        <p class="aim-agency-group-meta">Tick the columns the report has. Drag ⠿ to put them in the report's order, left to right.</p>
+        <p class="aim-agency-group-meta">
+          Tick the columns the report has. Drag ⠿ to put them in the report's order, left to right.
+          Type a header to rename a column in the report; leave it blank to keep AIM's name.
+        </p>
         <ol class="aim-column-order" data-controller="aim-column-order">
           <% chosen = @group.export_column_list %>
           <% @group.export_column_order.each_with_index do |column, index| %>
             <li class="aim-column-order__item">
               <span class="aim-column-order__handle" title="Drag to move" aria-hidden="true">⠿</span>
               <label><%= check_box_tag 'export_columns[]', column, chosen.include?(column), id: "column-#{index}" %> <%= column %></label>
+              <%= text_field_tag "export_headers[#{column}]", @group.export_headers[column], placeholder: 'Header in the report',
+                                 class: 'aim-column-order__header', aria: { label: "Header for #{column}" } %>
             </li>
           <% end %>
         </ol>

@@ -111,7 +111,25 @@ module Aim
       return [] if aim_approver_mode?
       return nil if aim_queue_access?
 
-      @aim_bu_admin_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+      @aim_bu_admin_units ||= (Aim::Users.administered_budget_units(aim_session_employee_id) +
+                               aim_group_admin_units).uniq
+    end
+
+    # The budget units of the agency groups this person is Group Admin in
+    # (#131): they manage those units' people and appoint their BU Admins.
+    # Every unit (nil) for AIM Admins.
+    def aim_group_admin_units
+      groups = aim_admin_groups
+      return nil if groups.nil?
+
+      @aim_group_admin_units ||= groups.flat_map { |group| aim_agency_groups.units_of(group) }.uniq
+    end
+
+    # Whether this person may make someone BU Admin of +unit+: AIM Admins
+    # anywhere, Group Admins in their groups' units.
+    def aim_appoints_bu_admin?(unit)
+      units = aim_group_admin_units
+      units.nil? || units.include?(unit.to_s)
     end
 
     # The budget units whose people this person manages: every one (nil) for
@@ -121,7 +139,29 @@ module Aim
       return [] if aim_approver_mode?
       return nil if aim_user_admin?
 
-      @aim_managed_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+      @aim_managed_units ||= (Aim::Users.administered_budget_units(aim_session_employee_id) +
+                              aim_group_admin_units).uniq
+    end
+
+    # The budget units of the group picked in Managing and those it
+    # processes, for the people screens; nil when none is picked, which
+    # leaves those screens to what the person manages.
+    def aim_managing_units
+      picked = aim_managing_group
+      return nil if picked.nil?
+
+      @aim_managing_units ||= aim_agency_groups.reach([picked]).flat_map { |group| aim_agency_groups.units_of(group) }.uniq
+    end
+
+    # The units a people screen shows: those this person manages, narrowed to
+    # the groups picked in Managing. nil is every unit.
+    def aim_people_units
+      managed = aim_managed_units
+      picked = aim_managing_units
+      return managed if picked.nil?
+      return picked if managed.nil?
+
+      managed & picked
     end
 
     # Every BU this person works is one the current user manages: what a BU

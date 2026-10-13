@@ -10,7 +10,10 @@ module Aim
     KINDS = %w[add edit unchanged refused].freeze
 
     def index
-      @imports = Aim::CodingImport.newest_first.to_a.select { |import| reachable_agency?(import.agency) }
+      groups = helpers.aim_managing_groups
+      @imports = Aim::CodingImport.newest_first.to_a.select do |import|
+        reachable_agency?(import.agency) && (groups.nil? || groups.any? { |group| group.agency_id == import.agency })
+      end
     end
 
     # A CSV to fill in: the headings the reader expects, and one example row.

@@ -2,14 +2,16 @@
 
 module Aim
   # AIM administration: who works AIM (item a.1). Budget unit coverage and
-  # each BU's shared queue follow in a.2 and a.3. Only AIM admins reach it.
+  # each BU's shared queue follow in a.2 and a.3. AIM admins see everyone; a
+  # Group Admin (#131) the people of their groups' units. Managing narrows
+  # either to the groups picked.
   #
   # Two views of the same people: a list, sortable and filterable, and one
   # collapsible group per budget unit. The choice is kept in the session.
   class AdminController < BaseController
     include Filterable
 
-    before_action :require_aim_user_admin
+    before_action :require_people_manager
 
     VIEWS = %w[list bu].freeze
     ROLES = ['AIM Admin', 'BU Admin', 'User'].freeze
@@ -67,7 +69,7 @@ module Aim
       @all_people ||= begin
         members = Aim::Member.all.index_by(&:employee_id)
         via_groups = Aim::Users.group_employee_ids.to_set
-        ids = (members.keys + via_groups.to_a).uniq
+        ids = in_people_units((members.keys + via_groups.to_a).uniq)
         employees = Employee.where(id: ids).index_by(&:id)
         open = open_counts(ids)
         roles = Aim::Users.roles_by_person(ids)
@@ -76,6 +78,17 @@ module Aim
     end
 
     def coa = (@coa ||= Aim::Units.new)
+
+    # The people working in the units this page shows (aim_people_units): all
+    # of them when that is every unit.
+    def in_people_units(ids)
+      units = helpers.aim_people_units
+      return ids if units.nil?
+
+      people = Employee.where(id: ids).pluck(:id, :agency, :unit)
+      grants = Aim::UserBudgetUnit.where(employee_id: ids).pluck(:employee_id, :budget_unit, :hidden)
+      helpers.aim_people_by_unit(people, grants).slice(*units).values.flatten.uniq
+    end
 
     def person(id, employee, member, via_group, open, roles)
       unit = employee&.unit.presence

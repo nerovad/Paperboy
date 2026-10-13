@@ -1758,7 +1758,7 @@ ul.aim-agency-group-columns {
   gap: 4px;
   list-style: none;
   margin: 0;
-  max-width: 28rem;
+  max-width: 40rem;
   padding: 0;
 }
 
@@ -1788,4 +1788,17 @@ ul.aim-agency-group-columns {
   color: $text-muted;
   cursor: grab;
   user-select: none;
+}
+
+.aim-column-order__item label {
+  flex: 1;
+}
+
+.aim-column-order__header {
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  flex: 0 1 16rem;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 3px 6px;
 }

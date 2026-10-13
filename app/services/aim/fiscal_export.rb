@@ -31,6 +31,7 @@ module Aim
     def initialize(records, group: nil)
       @records = records.to_a
       @columns = group ? group.export_column_list : COLUMNS
+      @headers = group ? @columns.map { |column| group.export_header(column) } : COLUMNS
       @format = group&.export_format || 'csv'
       @stamps = self.class.approval_stamps(@records.map(&:invoice_id))
     end
@@ -63,7 +64,7 @@ module Aim
     def rows = records.map { |record| picked(defused(row(record))) }
 
     def to_csv
-      CSV.generate(col_sep: tab? ? "\t" : ',') { |csv| ([columns] + rows).each { |line| csv << line } }
+      CSV.generate(col_sep: tab? ? "\t" : ',') { |csv| ([@headers] + rows).each { |line| csv << line } }
     end
 
     # What is sent: UTF-8, or for the tab format UTF-16 with its byte-order

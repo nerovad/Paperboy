@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Aim
-  # An agency group's Fiscal settings (#131): the report's columns and format,
+  # An agency group's Fiscal settings (#131): the report's columns, their
+  # order and header names, and its format,
   # hold reasons, tag suggestions, and what must be filled in before archive.
   # Group Admins and AIM Admins. Which groups its Fiscal also processes is
   # AIM Admins' alone.
@@ -32,6 +33,7 @@ module Aim
       {
         export_format: params[:export_format].presence || @group.export_format,
         export_column_list: Array(params[:export_columns]),
+        export_headers: params.fetch(:export_headers, {}).permit(*Aim::FiscalExport::COLUMNS).to_h,
         hold_reasons: params[:hold_reasons].to_s.strip.presence,
         tag_suggestions: params.key?(:tag_suggestions) ? params[:tag_suggestions].to_s.strip : @group.tag_suggestions,
         required_field_list: Array(params[:required_fields])
