@@ -595,9 +595,13 @@ Rules:
   (`SQL_DASHBOARDS_ROW_LIMIT`, default 2000), writes the `Event`, and returns
   a `Result` instead of raising, so a failed query is shown where its chart
   would have been.
-- **Paperboy and GSABSS only.** A third database is an entry in
-  `SqlDashboards::Database::ALL` and a connection class. Billing is left out
-  on purpose.
+- **The login decides what can be read, not the picker.** The editor offers
+  Paperboy and GSABSS as the database a query starts in. Billing's tables
+  are in GSABSS, so billing is covered. A query may name any other database
+  on the server in full (`[GSA Scan].dbo.…`) and it works wherever the
+  read-only login has been given a user. A stored procedure runs only if the
+  login was granted `EXECUTE` on it. A database on another server is an
+  entry in `SqlDashboards::Database::ALL` and a connection class.
 - **The column order picks the chart; there is no chart builder.** First
   column label or x, second the value, optional third the series
   (`SqlDashboards::ChartData`). A new chart type is added there and to

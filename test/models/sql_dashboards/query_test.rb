@@ -13,8 +13,9 @@ module SqlDashboards
       assert_equal %i[chart_type database_key name statement], query.errors.attribute_names.sort
     end
 
-    test 'billing is not a database SQL may run against' do
+    test 'a query starts in Paperboy or GSABSS, which is where billing lives' do
       assert_equal %w[paperboy gsabss], Database.keys
+      assert_equal BillingBase.connection_db_config.database, GsabssBase.connection_db_config.database
       assert_nil Database.find('billing')
     end
 

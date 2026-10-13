@@ -14,10 +14,12 @@ module SqlDashboards
     DEFAULT_TIMEOUT = 30
     DEFAULT_ROW_LIMIT = 2000
 
+    # The database a query starts in. Billing has no entry of its own: the
+    # application's billing pool is a second connection to GSABSS.
     ALL = {
       'paperboy' => { label: 'Paperboy', source: 'ApplicationRecord',
                       connection: 'SqlDashboards::PaperboyConnection' },
-      'gsabss' => { label: 'GSABSS', source: 'GsabssBase',
+      'gsabss' => { label: 'GSABSS (org and billing)', source: 'GsabssBase',
                     connection: 'SqlDashboards::GsabssConnection' }
     }.freeze
 
