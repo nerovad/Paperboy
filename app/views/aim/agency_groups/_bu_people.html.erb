@@ -1,0 +1,64 @@
+<%# The BUs & People tab (#131): each budget unit in the group, who works it,
+    as what, and whether they pick up its shared queue. Whoever manages the
+    group's people adds someone to a BU here, switches shared queues, appoints
+    BU Admins and takes a BU away; the same switches as a person's profile. %>
+<% manages = ->(unit) { aim_managed_units.nil? || aim_managed_units.include?(unit) } %>
+<% if @bu_units.empty? %>
+  <section class="aim-panel aim-agency-group-panel"><p>No budget units in this group yet.</p></section>
+<% end %>
+<% @bu_units.each do |unit| %>
+  <% ids = @by_unit.fetch(unit, []).sort_by { |id| @names[id].to_s.downcase } %>
+  <h2 class="aim-profile-heading" id="bu-<%= unit %>">
+    <%= @units.label(unit) %>
+    <span class="aim-count-pill"><%= pluralize(ids.size, 'person') %></span>
+    <span class="aim-count-pill"><%= ids.count { |id| @rows[[id, unit]]&.then { |r| r.shared_queue || r.bu_admin } } %> on the shared queue</span>
+  </h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <% if ids.any? %>
+      <table class="submission-table aim-queue-table aim-people-table">
+        <thead>
+          <tr><th>Person</th><th>Role</th><th title="Whether they pick up this BU's unowned invoices">Shared queue</th>
+              <th class="aim-people-table__actions" aria-label="Actions"></th></tr>
+        </thead>
+        <tbody>
+          <% ids.each do |id| %>
+            <% row = @rows[[id, unit]] %>
+            <% home = @homes[id] == unit %>
+            <tr>
+              <td class="is-strong"><%= link_to @names[id], aim_member_path(id) %><%= ' · home unit' if home %></td>
+              <td><%= row&.bu_admin ? 'BU Admin' : 'User' %></td>
+              <td><%= render 'aim/members/shared_queue_cell', employee_id: id, unit: unit, row: row, can_change: manages.call(unit) %></td>
+              <td class="aim-people-table__actions">
+                <div class="aim-profile-roles__buttons">
+                  <% if aim_appoints_bu_admin?(unit) %>
+                    <%= button_to row&.bu_admin ? 'Remove BU Admin' : 'Make BU Admin',
+                                  row ? aim_member_budget_unit_path(id, row) : aim_member_budget_units_path(id),
+                                  method: row ? :patch : :post, params: { budget_unit: unit, bu_admin: row&.bu_admin ? '0' : '1' },
+                                  class: 'btn compact' %>
+                  <% end %>
+                  <% if row && !home && manages.call(unit) && (!row.bu_admin || aim_appoints_bu_admin?(unit)) %>
+                    <%= button_to 'Take away', aim_member_budget_unit_path(id, row), method: :delete, class: 'btn deny compact',
+                                  data: { turbo_confirm: "Take #{unit} away from #{@names[id]}?", confirm_label: 'Take away' } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="aim-agency-group-meta">Nobody works this BU in AIM yet.</p>
+    <% end %>
+    <% if manages.call(unit) %>
+      <%= form_with url: assign_aim_agency_group_path(@group), method: :post, local: true, class: 'aim-agency-group-add' do %>
+        <%= hidden_field_tag :budget_unit, unit, id: "assign-unit-#{unit}" %>
+        <%= render 'aim/shared/grouped_person_select', name: :employee_id, label: "Person to add to #{unit}" %>
+        <label><%= check_box_tag :shared_queue, '1', true, id: "assign-shared-#{unit}" %> Shared queue</label>
+        <% if aim_appoints_bu_admin?(unit) %>
+          <label><%= check_box_tag :bu_admin, '1', false, id: "assign-admin-#{unit}" %> as BU Admin</label>
+        <% end %>
+        <button type="submit" class="btn approve compact">Add to <%= unit %></button>
+      <% end %>
+    <% end %>
+  </section>
+<% end %>

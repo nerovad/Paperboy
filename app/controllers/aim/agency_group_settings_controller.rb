@@ -13,9 +13,9 @@ module Aim
       @group.assign_attributes(settings.merge(updated_by: current_user_email))
       cover if params.key?(:covered_group_ids) && helpers.aim_user_admin?
       @group.save!
-      redirect_to aim_agency_group_path(@group, anchor: 'settings'), notice: 'Settings saved.'
+      redirect_to aim_agency_group_path(@group, tab: 'settings'), notice: 'Settings saved.'
     rescue ActiveRecord::RecordInvalid => e
-      redirect_to aim_agency_group_path(@group, anchor: 'settings'), alert: e.record.errors.full_messages.to_sentence
+      redirect_to aim_agency_group_path(@group, tab: 'settings'), alert: e.record.errors.full_messages.to_sentence
     end
 
     private

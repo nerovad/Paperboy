@@ -18,9 +18,9 @@ module Aim
       offered = Coa::Unit.where(agency_id: @group.agency_id, active: true).distinct.pluck(:unit_id)
       picked = Array(params[:units]).map(&:to_s) & offered
       Aim::AgencyGroupUnit.transaction { @group.custom ? update_custom(picked) : update_agency(picked) }
-      redirect_to aim_agency_group_path(@group, anchor: 'units'), notice: 'Budget units saved.'
+      redirect_to aim_agency_group_path(@group, tab: 'units'), notice: 'Budget units saved.'
     rescue ActiveRecord::RecordInvalid => e
-      redirect_to aim_agency_group_path(@group, anchor: 'units'), alert: e.message
+      redirect_to aim_agency_group_path(@group, tab: 'units'), alert: e.message
     end
 
     private

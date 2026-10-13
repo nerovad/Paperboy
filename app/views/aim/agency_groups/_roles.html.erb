@@ -1,0 +1,37 @@
+<%# Who is Fiscal or Group Admin in the group (#131). %>
+  <h2 class="aim-profile-heading" id="people">Group roles</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <table class="submission-table aim-queue-table aim-people-table">
+      <thead><tr><th>Person</th><th>Role</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+      <tbody>
+        <% @roles.each do |row| %>
+          <% person = @employees[row.employee_id] %>
+          <tr>
+            <td class="is-strong">
+              <%= link_to (person ? Employee.format_picker_label(person.id, person.first_name, person.last_name) : "Employee #{row.employee_id}"),
+                          aim_member_path(row.employee_id) %>
+            </td>
+            <td><%= row.label %></td>
+            <td class="aim-people-table__actions">
+              <% if admin || row.role == 'fiscal' %>
+                <%= button_to 'Take away', aim_agency_group_role_path(@group, row), method: :delete, class: 'btn deny compact',
+                              data: { turbo_confirm: "Take #{row.label} in #{@group.name} away?", confirm_label: 'Take away' } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @roles.empty? %>
+          <tr><td colspan="3">Nobody yet. AIM Admins work every group.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= form_with url: aim_agency_group_roles_path(@group), method: :post, local: true, class: 'aim-agency-group-add' do %>
+      <%= render 'aim/shared/grouped_person_select', name: :employee_id, label: 'Person to add' %>
+      <%= select_tag :role, options_for_select(Aim::AgencyGroup::ROLES.select { |role, _| admin || role == 'fiscal' }.map(&:reverse), 'fiscal'),
+                     aria: { label: 'Role' } %>
+      <button type="submit" class="btn approve compact">Add</button>
+    <% end %>
+    <p class="aim-agency-group-meta">
+      Fiscal works this group's Fiscal stage and coding rules. A Group Admin does that too, and sets its Fiscal people and settings.
+    </p>
+  </section>

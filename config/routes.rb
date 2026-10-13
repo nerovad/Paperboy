@@ -175,6 +175,7 @@ Rails.application.routes.draw do
       member do
         patch :units, to: 'agency_group_units#update'
         patch :settings, to: 'agency_group_settings#update'
+        post :assign, to: 'agency_group_assignments#create'
       end
       resources :roles, only: %i[create destroy], controller: 'agency_group_roles'
     end

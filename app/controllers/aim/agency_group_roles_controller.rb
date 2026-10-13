@@ -46,6 +46,6 @@ module Aim
 
     def refuse = back(alert: 'Only AIM Admins make Group Admins.')
 
-    def back(**flash) = redirect_to(aim_agency_group_path(@group, anchor: 'people'), **flash)
+    def back(**flash) = redirect_to(aim_agency_group_path(@group, tab: 'roles'), **flash)
   end
 end

@@ -53,13 +53,18 @@ module Aim
       group.units.create!(agency_id: 'GSA', budget_unit: '4641')
       group.roles.create!(employee_id: 42, role: 'fiscal')
       Aim::AgencyGroup.for_agency!('GSA').coverages.create!(covered_group: group)
+      Aim::EnabledUnit.create!(agency_id: 'GSA')
       get :show, params: { id: group.id }
 
       assert_response :success
       assert_select 'input[type=checkbox][name=?][value=?][checked]', 'units[]', '4641'
-      assert_select 'td', text: 'Fiscal'
-      assert_select 'input[name=?]', 'covered_group_ids[]'
       assert_select '.aim-page-subtitle', text: /Fiscal also done by GSA/
+
+      get :show, params: { id: group.id, tab: 'roles' }
+      assert_select 'td', text: 'Fiscal'
+
+      get :show, params: { id: group.id, tab: 'settings' }
+      assert_select 'input[name=?]', 'covered_group_ids[]'
     end
 
     test 'nobody else gets in' do

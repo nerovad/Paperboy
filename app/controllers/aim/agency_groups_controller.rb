@@ -10,6 +10,9 @@ module Aim
     before_action :require_aim_user_admin, only: %i[create update destroy]
     before_action :set_group, only: %i[show update destroy]
 
+    TABS = { 'units' => 'Budget units', 'bu_people' => 'BUs & People', 'roles' => 'Group roles',
+             'settings' => 'Fiscal settings' }.freeze
+
     def index
       reading_database('list the agency groups', alert: 'The agency groups could not be read.', empty: { groups: [] }) do
         Aim::AgencyGroup.ensure_agency_groups! if helpers.aim_user_admin?
@@ -21,10 +24,12 @@ module Aim
     end
 
     def show
+      @tab = TABS.key?(params[:tab]) ? params[:tab] : 'units'
       @units = Aim::Units.new(every_agency: true)
       @resolver = helpers.aim_agency_groups
       @roles = @group.roles.order(:role, :employee_id).to_a
       @employees = Employee.where(id: @roles.map(&:employee_id)).index_by(&:id)
+      bu_people if @tab == 'bu_people'
     end
 
     # A custom group of an agency's BUs; its BUs are ticked on its page.
@@ -52,6 +57,20 @@ module Aim
     end
 
     private
+
+    # The BUs & People tab: each of the group's units with the AIM users who
+    # work it (home unit unless hidden, or granted), as the BU page counts
+    # them, and their rows for the BU Admin and shared queue switches.
+    def bu_people
+      @bu_units = @resolver.units_of(@group).sort
+      people = Aim::Users.all.pluck(:id, :agency, :unit, :first_name, :last_name)
+      @names = people.to_h { |id, _, _, first, last| [id, Employee.format_picker_label(id, first, last)] }
+      grants = Aim::UserBudgetUnit.where(employee_id: @names.keys).pluck(:employee_id, :budget_unit, :hidden)
+      @by_unit = helpers.aim_people_by_unit(people.map { |id, agency, unit, _, _| [id, agency, unit] }, grants)
+                        .slice(*@bu_units)
+      @rows = Aim::UserBudgetUnit.where(budget_unit: @bu_units).index_by { |row| [row.employee_id, row.budget_unit] }
+      @homes = Aim::Users.home_units(people.to_h { |id, agency, unit, _, _| [id, [agency, unit]] })
+    end
 
     def require_group_admin
       return if helpers.aim_group_admin?

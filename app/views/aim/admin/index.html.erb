@@ -39,6 +39,8 @@
                      include_blank: 'All agencies', aria: { label: 'Agency' } %>
       <%= select_tag :unit, options_for_select(@units, @filters['unit']),
                      include_blank: 'All units', aria: { label: 'Unit' } %>
+      <%= select_tag :agency_group, options_for_select(@agency_groups, @filters['agency_group']),
+                     include_blank: 'All agency groups', aria: { label: 'Agency group' } %>
       <%= select_tag :role, options_for_select(Aim::AdminController::ROLES, @filters['role']),
                      include_blank: 'All roles', aria: { label: 'Role' } %>
       <label><%= check_box_tag :has_open, '1', @filters['has_open'] == '1' %> Has invoices</label>

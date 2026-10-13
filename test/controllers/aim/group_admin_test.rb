@@ -84,6 +84,76 @@ module Aim
     end
   end
 
+  class GroupBuPeopleTest < ActionController::TestCase
+    include GroupAdminSession
+
+    tests Aim::AgencyGroupsController
+
+    test 'the BUs & People tab lists who works each unit' do
+      person = Employee.where.not(last_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      Aim::UserBudgetUnit.create!(employee_id: person.id, budget_unit: '4641', shared_queue: true)
+      group = docs_group('4641')
+      sign_in 5
+
+      get :show, params: { id: group.id, tab: 'bu_people' }
+
+      assert_response :success
+      assert_select 'h2#bu-4641'
+      assert_select 'a[href=?]', aim_member_path(person.id)
+      assert_select 'form[action=?]', assign_aim_agency_group_path(group)
+    end
+
+    test 'every tab draws' do
+      group = docs_group('4641')
+      sign_in 1, 'aim_admin'
+      Aim::AgencyGroupsController::TABS.each_key do |tab|
+        get :show, params: { id: group.id, tab: tab }
+        assert_response :success, tab
+      end
+    end
+  end
+
+  class GroupAssignmentTest < ActionController::TestCase
+    include GroupAdminSession
+
+    tests Aim::AgencyGroupAssignmentsController
+
+    test 'a Group Admin adds someone to a unit of the group, shared queue on; not to another unit' do
+      person = Employee.where.not(unit: '4641').order(:id).first || skip('no employee')
+      group = docs_group('4641')
+      sign_in 5
+
+      post :create, params: { id: group.id, employee_id: person.id, budget_unit: '4641', shared_queue: '1', bu_admin: '1' }
+      row = Aim::UserBudgetUnit.find_by!(employee_id: person.id, budget_unit: '4641')
+      assert [row.shared_queue, row.bu_admin].all?
+      assert Aim::Member.exists?(employee_id: person.id)
+
+      post :create, params: { id: group.id, employee_id: person.id, budget_unit: '4601' }
+      assert_nil Aim::UserBudgetUnit.find_by(employee_id: person.id, budget_unit: '4601')
+    end
+  end
+
+  class GroupFilterUsersTest < ActionController::TestCase
+    include GroupAdminSession
+
+    tests Aim::AdminController
+
+    test 'Users & Queues filters by agency group' do
+      inside, outside = Employee.where.not(unit: [nil, '', '4641']).order(:id).limit(2).to_a
+      skip 'need two employees' if outside.nil?
+      [inside, outside].each { |e| Aim::Member.create!(employee_id: e.id) }
+      Aim::UserBudgetUnit.create!(employee_id: inside.id, budget_unit: '4641')
+      group = docs_group('4641')
+      sign_in 1, 'aim_admin'
+
+      get :index, params: { agency_group: group.id }
+
+      assert_equal [inside.id], @controller.instance_variable_get(:@people).map(&:employee_id)
+      assert_select 'select[name=agency_group] option[selected][value=?]', group.id.to_s
+    end
+  end
+
   class ManagingQueuesTest < ActionController::TestCase
     include GroupAdminSession
 

@@ -29,6 +29,7 @@ module Aim
     FILTERS = [
       { param: :agency, extractor: :agency.to_proc },
       { param: :unit, extractor: :unit.to_proc },
+      { param: :agency_group, extractor: :group_ids.to_proc },
       { param: :role, extractor: :roles.to_proc },
       { param: :has_open, extractor: ->(p) { '1' if p.open.positive? } },
       { param: :via_group, extractor: ->(p) { '1' if p.via_group } },
@@ -36,8 +37,9 @@ module Aim
     ].freeze
 
     # unit_label and agency come from the Chart of Accounts (Aim::Units).
+    # group_ids: the agency groups of the units they work (#131).
     Person = Struct.new(:employee_id, :first_name, :last_name, :unit, :unit_label, :agency, :member, :via_group,
-                        :open, :missing, :roles, :inactive, keyword_init: true) do
+                        :open, :missing, :roles, :inactive, :group_ids, keyword_init: true) do
       def name = missing ? "Employee #{employee_id}" : Employee.format_sort_name(first_name, last_name)
       def search_text = [name, first_name, employee_id, unit_label, agency, *roles].compact.join(' ')
     end
@@ -45,13 +47,15 @@ module Aim
     def index
       @view = choose_view
       @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'name'
-      @filters = params.permit(:agency, :unit, :role, :has_open, :via_group, :missing, :inactive).to_h.compact_blank
+      @filters = params.permit(:agency, :unit, :agency_group, :role, :has_open, :via_group, :missing, :inactive).to_h.compact_blank
       reading_database('list its users', alert: 'The AIM users could not be read.',
-                                         empty: { people: [], units: [], agencies: [], groups: [] }) do
+                                         empty: { people: [], units: [], agencies: [], groups: [], agency_groups: [] }) do
         @people = filtered(sort_collection(all_people, @sort, 'asc', SORTS, default_sort: 'name'))
         @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
         in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
         @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
+        held = all_people.flat_map(&:group_ids).uniq
+        @agency_groups = helpers.aim_agency_groups.all.select { |group| held.include?(group.id.to_s) }.map { |g| [g.name, g.id.to_s] }
         @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
       end
     end
@@ -73,11 +77,26 @@ module Aim
         employees = Employee.where(id: ids).index_by(&:id)
         open = open_counts(ids)
         roles = Aim::Users.roles_by_person(ids)
-        ids.map { |id| person(id, employees[id], members[id], via_groups.include?(id), open, roles[id]) }
+        groups = group_ids_by_person(employees.values)
+        ids.map do |id|
+          person(id, employees[id], members[id], via_groups.include?(id), open, roles[id]).tap { |p| p.group_ids = groups.fetch(id, []) }
+        end
       end
     end
 
     def coa = (@coa ||= Aim::Units.new)
+
+    # { employee_id => [agency group id, ...] }: the groups of the units each
+    # person works, home unit and granted ones, as the BU page counts them.
+    def group_ids_by_person(employees)
+      grants = Aim::UserBudgetUnit.where(employee_id: employees.map(&:id)).pluck(:employee_id, :budget_unit, :hidden)
+      resolver = helpers.aim_agency_groups
+      by_unit = helpers.aim_people_by_unit(employees.map { |e| [e.id, e.agency, e.unit] }, grants)
+      by_unit.each_with_object(Hash.new { |h, k| h[k] = [] }) do |(unit, ids), out|
+        group = resolver.for(nil, unit)
+        ids.each { |id| out[id] |= [group.id.to_s] } if group
+      end
+    end
 
     # The people working in the units this page shows (aim_people_units): all
     # of them when that is every unit.

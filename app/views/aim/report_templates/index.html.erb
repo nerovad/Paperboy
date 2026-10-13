@@ -26,7 +26,7 @@
               <div class="aim-profile-roles__buttons">
                 <%= link_to 'Copy', new_aim_report_template_path(agency_group_id: group.id), class: 'btn compact' %>
                 <% if aim_admin_groups.nil? || aim_admin_groups.include?(group) %>
-                  <%= link_to 'Edit', aim_agency_group_path(group, anchor: 'settings'), class: 'btn edit compact' %>
+                  <%= link_to 'Edit', aim_agency_group_path(group, tab: 'settings'), class: 'btn edit compact' %>
                 <% end %>
               </div>
             </td>
