@@ -35,9 +35,9 @@ module Paperboy
                         columns: %w[name category position is_initial is_end auto_generated] },
         'routing_steps' => { label: 'routing step', key: 'step_number', order: %i[step_number id], group: true,
                              columns: %w[routing_type employee_id org_filter_level authorization_service_type
-                                         display_name approve_button_label deny_button_label condition_field_name
-                                         condition_operator condition_value inbox_buttons complete_on_edit
-                                         completion_rule deny_rule],
+                                         display_name button_labels condition_field_name condition_operator
+                                         condition_value inbox_buttons complete_on_edit completion_rule
+                                         deny_rule],
                              routes: true },
         'emails' => { label: 'email', key: 'kind', order: %i[kind id], columns: %w[subject body] },
         'email_steps' => { label: 'email rule', order: %i[position id], group: true,
