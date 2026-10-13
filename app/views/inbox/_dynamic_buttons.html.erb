@@ -48,7 +48,7 @@
 <% if button_source.inbox_button?('view_pdf') %>
   <% pdf_path = inbox_pdf_path(submission) %>
   <% if pdf_path %>
-    <%= link_to "View PDF", pdf_path, class: "btn pdf", target: "_blank", data: { turbo: false } %>
+    <%= link_to button_source.button_text('view_pdf'), pdf_path, class: "btn pdf", target: "_blank", data: { turbo: false } %>
   <% end %>
 <% end %>
 
@@ -63,7 +63,7 @@
 <% if button_source.inbox_button?('edit') && can_edit_submission?(submission, routing_step: current_step) %>
   <% edit_path = inbox_edit_path(submission) %>
   <% if edit_path %>
-    <%= link_to "Edit", edit_path, class: "btn edit", data: { turbo: false } %>
+    <%= link_to button_source.button_text('edit'), edit_path, class: "btn edit", data: { turbo: false } %>
   <% end %>
 
   <% if submission.class.include?(AuditableEdits) %>
@@ -99,8 +99,7 @@
 <% if button_source.inbox_button?('approve') %>
   <% approve_path = inbox_approve_path(submission) %>
   <% if approve_path %>
-    <% approve_label = button_source.respond_to?(:approve_button_text) ? button_source.approve_button_text : "Approve" %>
-    <%= button_to approve_label,
+    <%= button_to button_source.button_text('approve'),
           approve_path,
           method: :patch,
           class: "btn approve" %>
@@ -111,13 +110,12 @@
 <% if button_source.inbox_button?('deny') %>
   <% deny_path = inbox_deny_path(submission) %>
   <% if deny_path %>
-    <% deny_label = button_source.respond_to?(:deny_button_text) ? button_source.deny_button_text : "Deny" %>
     <button type="button"
             class="btn deny"
             data-action="click->deny-modal#open"
             data-deny-path="<%= deny_path %>"
             data-record-title="<%= "#{submission.class.name.demodulize.titleize} #{inbox_reference(submission)}" %>">
-      <%= deny_label %>
+      <%= button_source.button_text('deny') %>
     </button>
   <% end %>
 <% end %>
@@ -132,14 +130,14 @@
           data-task-type="<%= submission.class.name %>"
           data-task-id="<%= submission.id %>"
           data-current-assignee="<%= submission.respond_to?(:current_assignee_id) ? submission.current_assignee_id : '' %>">
-    Reassign
+    <%= button_source.button_text('reassign') %>
   </button>
 <% end %>
 
 <!-- Take Back -->
 <% if button_source.inbox_button?('take_back') %>
   <% if submission.respond_to?(:can_take_back?) && submission.can_take_back?(session.dig(:user, "employee_id")) %>
-    <%= button_to "Take Back",
+    <%= button_to button_source.button_text('take_back'),
           take_back_task_reassignments_path,
           method: :post,
           params: {
@@ -160,7 +158,7 @@
           data-history-url="<%= inbox_status_history_path(type: submission.class.name, id: submission.id) %>"
           data-history-label="Status History"
           data-record-title="<%= "#{submission.class.name.demodulize.titleize} ##{submission.id}" %>">
-    Status History
+    <%= button_source.button_text('status_history') %>
   </button>
 <% end %>
 <% end %>

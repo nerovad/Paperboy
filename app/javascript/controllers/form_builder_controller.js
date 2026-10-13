@@ -458,6 +458,40 @@ export default class extends Controller {
     }
   }
 
+  // Add another "button = label" row to a routing step, preselecting a
+  // button the step has not renamed yet
+  addButtonLabel(event) {
+    event.preventDefault()
+    const list = event.target.closest('.step-button-labels')?.querySelector('.step-button-label-list')
+    const firstRow = list?.querySelector('.step-button-label-row')
+    if (!firstRow) return
+
+    const used = Array.from(list.querySelectorAll('.step-button-label-key')).map(select => select.value)
+    const row = firstRow.cloneNode(true)
+    const select = row.querySelector('.step-button-label-key')
+    const unused = Array.from(select.options).find(option => !used.includes(option.value))
+    select.value = (unused || select.options[0]).value
+
+    const text = row.querySelector('.step-button-label-text')
+    text.value = ''
+    list.appendChild(row)
+    text.focus()
+  }
+
+  // Remove a "button = label" row. The last one is emptied rather than
+  // removed, so there is always a row to type into.
+  removeButtonLabel(event) {
+    event.preventDefault()
+    const row = event.target.closest('.step-button-label-row')
+    if (!row) return
+
+    if (row.parentElement.querySelectorAll('.step-button-label-row').length > 1) {
+      row.remove()
+    } else {
+      row.querySelector('.step-button-label-text').value = ''
+    }
+  }
+
   // Remove a routing step
   removeRoutingStep(event) {
     event.preventDefault()

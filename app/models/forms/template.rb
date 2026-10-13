@@ -95,6 +95,15 @@ module Forms
       'status_history' => { label: 'Status History', description: 'View the workflow status timeline in a modal' }
     }.freeze
 
+    # The buttons whose text a routing step may replace. The status dropdown
+    # is a select and shows no text of its own.
+    LABELED_INBOX_BUTTONS = INBOX_BUTTON_TYPES.except('status_dropdown').freeze
+
+    # The stock text of an inbox button.
+    def self.inbox_button_text(button_type)
+      INBOX_BUTTON_TYPES.dig(button_type.to_s, :label)
+    end
+
     has_many :form_fields, class_name: 'Forms::Field', foreign_key: :form_template_id, dependent: :destroy
     has_many :routing_steps, -> { order(:step_number) }, class_name: 'Forms::TemplateRoutingStep',
                                                          foreign_key: :form_template_id, dependent: :destroy
@@ -174,6 +183,11 @@ module Forms
 
     def enabled_inbox_buttons
       inbox_buttons || []
+    end
+
+    # A template carries no labels of its own; only a routing step does.
+    def button_text(button_type)
+      self.class.inbox_button_text(button_type)
     end
 
     def table_name

@@ -1,0 +1,40 @@
+<%# Custom inbox button text for one routing step: a row per renamed button.
+    `step` is nil in the template a new step is cloned from. The two inputs
+    of a row post as parallel lists; FormTemplatesController pairs them up. %>
+<% rows = step&.button_labels.presence&.to_a || [["approve", nil]] %>
+<div class="step-button-labels" style="margin-top: 8px;">
+  <div style="font-size: 0.85em; color: #495057; font-weight: 600; margin-bottom: 6px;">Custom button labels</div>
+  <div class="step-button-label-list">
+    <% rows.each do |button_type, text| %>
+      <div class="step-button-label-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <select name="routing_steps[][button_label_keys][]"
+                class="form-control form-control-sm step-button-label-key"
+                style="width: auto;"
+                aria-label="Button">
+          <% Forms::Template::LABELED_INBOX_BUTTONS.each do |key, config| %>
+            <option value="<%= key %>" <%= 'selected' if key == button_type %>><%= config[:label] %></option>
+          <% end %>
+        </select>
+        <span aria-hidden="true" style="font-weight: 600; color: #495057;">=</span>
+        <input type="text"
+               name="routing_steps[][button_label_texts][]"
+               class="form-control form-control-sm step-button-label-text"
+               style="flex: 1; min-width: 140px;"
+               placeholder="Custom label"
+               aria-label="Custom label"
+               value="<%= text %>">
+        <button type="button"
+                class="btn deny compact"
+                data-action="click->form-builder#removeButtonLabel"
+                aria-label="Remove this label"
+                title="Remove this label">&#x2715;</button>
+      </div>
+    <% end %>
+  </div>
+  <button type="button"
+          class="btn compact"
+          data-action="click->form-builder#addButtonLabel"
+          aria-label="Add another custom label"
+          title="Add another custom label">+</button>
+  <small style="display: block; color: #6c757d; margin-top: 4px;">Optional &mdash; e.g. Approve = "Permit Printed". The button still does what it always did. A row left blank keeps the usual text.</small>
+</div>

@@ -1253,8 +1253,7 @@ class FormTemplatesController < ApplicationController
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
-        approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence,
+        button_labels: extract_step_button_labels(step_data),
         **step_rules(step_data)
       )
       step_route_attrs(step_data).each_with_index do |route, position|
@@ -1356,6 +1355,15 @@ class FormTemplatesController < ApplicationController
     return [] if raw.blank?
 
     Array(raw).map(&:to_s).reject(&:blank?) & Forms::Template::INBOX_BUTTON_TYPES.keys
+  end
+
+  # The builder posts one button and one label per row, as two lists in step.
+  # A row with no label, or naming no known button, is dropped.
+  def extract_step_button_labels(step_data)
+    keys = Array(step_data[:button_label_keys]).map(&:to_s)
+    texts = Array(step_data[:button_label_texts]).map { |text| text.to_s.strip }
+
+    keys.zip(texts).to_h.slice(*Forms::Template::LABELED_INBOX_BUTTONS.keys).compact_blank
   end
 
   def save_copy_recipients(form_template)
@@ -1637,8 +1645,7 @@ class FormTemplatesController < ApplicationController
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
-        approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence,
+        button_labels: extract_step_button_labels(step_data),
         **step_rules(step_data)
       )
       step_route_attrs(step_data).each_with_index do |route, position|

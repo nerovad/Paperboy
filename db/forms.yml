@@ -2891,7 +2891,8 @@ forms:
     deny_rule: form
   - step_number: 3
     routing_type: group
-    approve_button_label: Permit Printed
+    button_labels:
+      approve: Permit Printed
     inbox_buttons:
     - view_pdf
     - edit
@@ -2904,7 +2905,8 @@ forms:
     group: GSA_Security
   - step_number: 4
     routing_type: group
-    approve_button_label: Permit Picked Up
+    button_labels:
+      approve: Permit Picked Up
     inbox_buttons:
     - view_pdf
     - edit
