@@ -1829,3 +1829,20 @@ ul.aim-agency-group-columns {
     margin-left: auto;
   }
 }
+
+// The Fiscal report preview (#131): the report scrolls inside the dialog.
+.aim-report-preview__scroll {
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  margin-bottom: 12px;
+  max-height: min(24rem, 50vh);
+  overflow: auto;
+
+  .aim-queue-table {
+    min-width: max-content;
+  }
+
+  td {
+    white-space: nowrap;
+  }
+}

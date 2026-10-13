@@ -38,7 +38,7 @@ module Aim
       get :index, params: { status: 'ready' }
 
       assert_response :success
-      assert_select 'form[action=?]', aim_fiscal_export_path do
+      assert_select 'form[action=?][data-turbo-frame=aim-report-preview]', aim_fiscal_export_preview_path do
         assert_select 'input[type=checkbox][name=?][value=?]', 'record_ids[]', record.id.to_s
         assert_select 'input[data-select-all-target=selectAll]'
       end
@@ -207,19 +207,46 @@ module Aim
       @record = Aim::FiscalRecord.create!(invoice: invoice, status: 'ready')
     end
 
-    test 'exporting downloads the file and marks the ready ones exported' do
-      post :create, params: { record_ids: [@record.id] }
+    test 'the preview changes nothing and offers both downloads' do
+      post :preview, params: { record_ids: [@record.id] }
+
+      assert_response :success
+      assert_select 'turbo-frame#aim-report-preview table td', text: 'E-1'
+      assert_select 'button[name=report_action][value=draft]'
+      assert_select 'button[name=report_action][value=process]'
+      assert_equal 'ready', @record.reload.status
+      assert_equal 0, Aim::FiscalReport.count
+    end
+
+    test 'Download only gives a draft: nothing saved, nothing moved' do
+      post :create, params: { record_ids: [@record.id], report_action: 'draft' }
 
       assert_response :success
       assert_equal 'text/csv', response.media_type
-      assert_match(/attachment; filename="AIM_Fiscal_Report_\d+_\d+\.csv"/, response.headers['Content-Disposition'])
+      assert_match(/attachment; filename="AIM_Fiscal_Report_DRAFT_\d+_\d+\.csv"/, response.headers['Content-Disposition'])
       assert_equal 2, CSV.parse(response.body).size
+      assert_equal 'ready', @record.reload.status
+      assert_equal 0, Aim::FiscalReport.count
+    end
+
+    test 'Download and process saves a numbered report, moves the invoice and names it in the history' do
+      post :create, params: { record_ids: [@record.id], report_action: 'process' }
+
+      report = Aim::FiscalReport.sole
+      assert_redirected_to aim_fiscal_report_path(report, download: 1)
       assert_equal 'exported', @record.reload.status
       assert_not_nil @record.exported_at
+      assert_equal [@record.invoice_id], report.invoices.pluck(:id)
+      assert_equal "AIM_Fiscal_Report_#{format('%06d', report.id)}.csv", report.file_name
+      assert_includes @record.invoice.events.pluck(:note).join("\n"), "In Fiscal report #{report.number}"
+      assert_in_delta 1.year.from_now, report.expires_at, 1.minute
     end
 
     test 'nothing ticked is refused' do
-      post :create
+      post :preview
+      assert_select '.pb-modal__message', text: /Tick at least one/
+
+      post :create, params: { report_action: 'process' }
 
       assert_match(/Tick at least one/, flash[:alert])
       assert_equal 'ready', @record.reload.status
@@ -229,9 +256,9 @@ module Aim
       @record.invoice.update!(agency: 'GSA')
       Aim::AgencyGroup.for_agency!('GSA').update!(export_format: 'tab', export_column_list: ['Invoice Number', 'Title'],
                                                   export_headers: { 'Invoice Number' => 'Inv #' })
-      post :create, params: { record_ids: [@record.id] }
+      post :create, params: { record_ids: [@record.id], report_action: 'draft' }
 
-      assert_match(/filename="AIM_Fiscal_Report_\d+_\d+\.txt"/, response.headers['Content-Disposition'])
+      assert_match(/filename="AIM_Fiscal_Report_DRAFT_\d+_\d+\.txt"/, response.headers['Content-Disposition'])
       text = response.body.dup.force_encoding('UTF-16LE').encode('UTF-8').delete_prefix("\uFEFF")
       header, row = CSV.parse(text, col_sep: "\t")
       assert_equal ['Inv #', 'Title'], header, 'the group\'s order and names'
@@ -242,7 +269,7 @@ module Aim
       @record.invoice.update!(agency: 'GSA')
       other = Aim::Invoice.create!(batch_id: '2500.E-2', state: 'exported', actor: 'test', budget_unit: '2500', agency: 'SHF')
       second = Aim::FiscalRecord.create!(invoice: other, status: 'ready')
-      post :create, params: { record_ids: [@record.id, second.id] }
+      post :create, params: { record_ids: [@record.id, second.id], report_action: 'process' }
 
       assert_match(/different reports/, flash[:alert])
       assert_equal 'ready', @record.reload.status
@@ -250,7 +277,7 @@ module Aim
 
     test 'an invoice still in the Fiscal Queue is not exported' do
       @record.update!(status: 'review')
-      post :create, params: { record_ids: [@record.id] }
+      post :create, params: { record_ids: [@record.id], report_action: 'process' }
 
       assert_match(/Tick at least one/, flash[:alert])
     end

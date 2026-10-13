@@ -18,6 +18,7 @@ module Aim
     EXEMPT = {
       'aim.coding_lines' => 'an invoice\'s coding: the invoice\'s agency',
       'aim.coding_rule_changes' => 'a rule\'s history: the rule\'s agency',
+      'aim.fiscal_report_invoices' => 'a report\'s invoices: the report\'s agency group',
       'aim.fiscal_records' => 'an invoice\'s Fiscal record: the invoice\'s agency',
       'aim.invoice_events' => 'an invoice\'s history: the invoice\'s agency',
       'aim.members' => 'people, who work in units through aim.user_budget_units',

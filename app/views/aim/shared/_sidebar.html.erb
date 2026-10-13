@@ -9,7 +9,7 @@
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin agency_groups].include?(controller_name) && !aim_user_admin? then "fiscal"
               elsif %w[admin members enabled_units agency_groups].include?(controller_name) then "admin"
-              elsif %w[fiscal report_templates].include?(controller_name) then "fiscal"
+              elsif %w[fiscal report_templates fiscal_reports].include?(controller_name) then "fiscal"
               elsif %w[coding_rules coding_imports].include?(controller_name) then "lookups"
               else "aim"
               end %>
@@ -80,6 +80,7 @@
             <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
           <% end %>
         <% end %>
+        <%= link_to "Reports", aim_fiscal_reports_path, class: "nav-link#{' active' if controller_name == 'fiscal_reports'}" %>
         <%= link_to "Report Templates", aim_report_templates_path, class: "nav-link#{' active' if controller_name == 'report_templates'}" %>
         <% if aim_group_admin? && !aim_user_admin? %>
           <%= link_to "Agency Groups", aim_agency_groups_path, class: "nav-link#{' active' if controller_name == 'agency_groups'}" %>

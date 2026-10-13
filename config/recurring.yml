@@ -34,6 +34,11 @@ production: &production
     queue: default
     schedule: every 10 minutes
     description: Codes AIM invoices waiting for approval from the coding rules
+  aim_purge_fiscal_reports:
+    class: Aim::PurgeFiscalReportsJob
+    queue: default
+    schedule: at 3am every day
+    description: Purges the files of AIM Fiscal reports a year old
   dam_watch_folders:
     class: Dam::WatchFolderIngestJob
     queue: default

@@ -47,6 +47,8 @@ module Aim
       @stamp = Aim::FiscalExport.approval_stamps([@invoice.id])[@invoice.id]
       @pdf_present = stored_pdf_path.present?
       @events = @invoice.events.to_a
+      @reports = Aim::FiscalReport.where(id: Aim::FiscalReportInvoice.where(invoice_id: @invoice.id).select(:fiscal_report_id))
+                                  .order(:id).to_a
       @line = @invoice.coding || @invoice.coding_lines.build(source: 'fiscal')
       @coa = Aim::CoaCodes.new(@invoice.agency!.to_s)
     end

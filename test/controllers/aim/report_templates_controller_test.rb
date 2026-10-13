@@ -83,7 +83,7 @@ module Aim
         Aim::FiscalRecord.create!(invoice: invoice, status: 'ready')
       end
 
-      post :create, params: { record_ids: records.map(&:id), report_template: "t#{template.id}" }
+      post :create, params: { record_ids: records.map(&:id), report_template: "t#{template.id}", report_action: 'draft' }
 
       assert_equal [['Invoice Number'], ['4641.T-1'], ['2500.T-2']].sort, CSV.parse(response.body).sort
     end

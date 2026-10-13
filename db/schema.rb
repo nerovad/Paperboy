@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_220000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -230,6 +230,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_200000) do
     t.string "updated_by", limit: 255
     t.index ["invoice_id"], name: "index_aim_fiscal_records_on_invoice_id", unique: true
     t.index ["status"], name: "index_aim_fiscal_records_on_status"
+  end
+
+  create_table "aim.fiscal_report_invoices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "fiscal_report_id", null: false
+    t.bigint "invoice_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fiscal_report_id", "invoice_id"], name: "index_aim_fiscal_report_invoices_on_pair", unique: true
+    t.index ["invoice_id"], name: "index_aim_fiscal_report_invoices_on_invoice"
+  end
+
+  create_table "aim.fiscal_reports", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.binary "content"
+    t.datetime "created_at", null: false
+    t.string "created_by", limit: 255, null: false
+    t.datetime "expires_at", null: false
+    t.string "export_format", limit: 10, null: false
+    t.string "file_name", limit: 255, null: false
+    t.integer "invoice_count", default: 0, null: false
+    t.string "layout_name", limit: 150, null: false
+    t.datetime "purged_at"
+    t.bigint "replaces_report_id"
+    t.bigint "report_template_id"
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id"], name: "index_aim_fiscal_reports_on_group"
+    t.index ["expires_at"], name: "index_aim_fiscal_reports_on_expires_at"
   end
 
   create_table "aim.invoice_events", force: :cascade do |t|

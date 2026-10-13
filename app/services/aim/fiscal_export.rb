@@ -57,7 +57,15 @@ module Aim
 
     def tab? = @format == 'tab'
 
-    def filename = "AIM_Fiscal_Report_#{Time.current.strftime('%Y%m%d_%H%M%S')}.#{tab? ? 'txt' : 'csv'}"
+    # AIM_Fiscal_Report_000124.csv for a saved report (#131), a dated draft
+    # otherwise.
+    def filename(number = nil)
+      stem = number ? format('%06d', number) : "DRAFT_#{Time.current.strftime('%Y%m%d_%H%M%S')}"
+      "AIM_Fiscal_Report_#{stem}.#{tab? ? 'txt' : 'csv'}"
+    end
+
+    # The header row, as the layout names the columns.
+    def header_row = @headers
 
     def content_type = tab? ? 'text/tab-separated-values' : 'text/csv'
 

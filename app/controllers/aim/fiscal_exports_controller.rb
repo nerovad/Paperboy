@@ -1,39 +1,51 @@
 # frozen_string_literal: true
 
 module Aim
-  # Fiscal's report: tick invoices, download the CSV (Aim::FiscalExport), and
-  # those in the Report Queue become exported. Exported ones can be downloaded
-  # again and stay as they are.
+  # Fiscal's report (#131): tick invoices, preview the report, then either
+  # download a draft (nothing saved, nothing moved) or process it -- saved,
+  # numbered (Aim::FiscalReport), every invoice's history naming it, and the
+  # Report Queue's moved to Exported. Processing lands on the saved report,
+  # which downloads.
   #
-  # The report is laid out as one agency group says (#131): the template
-  # picked on the page, the group picked in Managing, or the one whose Fiscal
-  # works every invoice ticked.
+  # The report is laid out as one agency group says: the template picked on
+  # the page, the group picked in Managing, or the one whose Fiscal works
+  # every invoice ticked.
   class FiscalExportsController < BaseController
     before_action :require_fiscal
+    before_action :prepare
+
+    ACTIONS = %w[draft process].freeze
+
+    # The report as it will come out, in a dialog with the two downloads.
+    def preview
+      render 'aim/fiscal/report_preview', layout: false
+    end
 
     def create
-      invoices = helpers.aim_agency_groups.invoices(helpers.aim_fiscal_reach)
-      records = Aim::FiscalRecord.includes(:invoice).served_by(invoices)
-                                 .where(id: Array(params[:record_ids]), status: %w[ready exported]).to_a
-      return redirect_to(back_path, alert: 'Tick at least one invoice for the report.') if records.empty?
+      return redirect_to(back_path, alert: @problem) if @problem
+      return redirect_to(back_path, alert: 'Unknown action.') unless ACTIONS.include?(params[:report_action])
 
-      group = picked_layout || report_group(records)
-      if group == :mixed
-        return redirect_to(back_path, alert: 'Those invoices belong to agency groups with different reports. ' \
-                                             'Pick one group under Managing, then download.')
-      end
+      return send_data(@export.body, filename: @export.filename, type: @export.content_type, disposition: 'attachment') if params[:report_action] == 'draft'
 
-      export = Aim::FiscalExport.new(records, group: group)
-      body = export.body
-      Aim::FiscalRecord.transaction do
-        records.select { |record| record.status == 'ready' }.each do |record|
-          record.move_to!('exported', actor: current_user_email, note: 'in the report', exported_at: Time.current)
-        end
-      end
-      send_data body, filename: export.filename, type: export.content_type, disposition: 'attachment'
+      report = Aim::FiscalReport.process!(@export, layout: @layout, by: current_user_email)
+      redirect_to aim_fiscal_report_path(report, download: 1), notice: "Report #{report.number} saved; it is downloading."
     end
 
     private
+
+    # @records, @layout and @export from the page's ticks and template, or
+    # @problem saying why there is no report.
+    def prepare
+      invoices = helpers.aim_agency_groups.invoices(helpers.aim_fiscal_reach)
+      @records = Aim::FiscalRecord.includes(:invoice).served_by(invoices)
+                                  .where(id: Array(params[:record_ids]), status: %w[ready exported]).to_a
+      @layout = picked_layout || report_group(@records)
+      @problem = if @records.empty? then 'Tick at least one invoice for the report.'
+                 elsif @layout == :mixed
+                   'Those invoices belong to agency groups with different reports. Pick a template, or one group under Managing.'
+                 end
+      @export = Aim::FiscalExport.new(@records, group: @layout) unless @problem
+    end
 
     # The layout picked on the page: a group's Default ("g<id>") or one of its
     # templates ("t<id>"), from the groups this person works; nil for none.

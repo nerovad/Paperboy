@@ -182,6 +182,13 @@ Rails.application.routes.draw do
     resources :uploads, only: %i[new create]
     get 'fiscal', to: 'fiscal#index', as: :fiscal
     resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
+    resources :fiscal_reports, only: %i[index show], path: 'fiscal/reports', constraints: { id: /\d+/ } do
+      member do
+        get :download
+        post :regenerate
+      end
+    end
+    post 'fiscal/export/preview', to: 'fiscal_exports#preview', as: :fiscal_export_preview
     post 'fiscal/export', to: 'fiscal_exports#create', as: :fiscal_export
     resources :fiscal_invoices, path: 'fiscal', controller: 'fiscal', only: %i[show update],
                                 constraints: { id: %r{[^/]+} } do

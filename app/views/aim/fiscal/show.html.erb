@@ -111,6 +111,14 @@
           <% end %>
         </div>
 
+        <% if @reports.any? %>
+          <%# The saved reports this invoice was in (#131). %>
+          <h3 class="aim-fiscal-heading">Reports</h3>
+          <p class="aim-coding__source">
+            <%= safe_join(@reports.map { |r| link_to("#{r.number} (#{r.created_at.in_time_zone.strftime('%m/%d/%Y')})", aim_fiscal_report_path(r)) }, ', ') %>
+          </p>
+        <% end %>
+
         <%= render 'aim/shared/history', events: @events %>
       </div>
 
