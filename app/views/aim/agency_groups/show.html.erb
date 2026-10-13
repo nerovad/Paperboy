@@ -97,8 +97,7 @@
       </tbody>
     </table>
     <%= form_with url: aim_agency_group_roles_path(@group), method: :post, local: true, class: 'aim-inline-form' do %>
-      <%= select_tag :employee_id, options_for_select(@candidates), include_blank: 'Add someone who works AIM…',
-                     required: true, aria: { label: 'Person' } %>
+      <%= render 'aim/shared/grouped_person_select', name: :employee_id, label: 'Person to add' %>
       <%= select_tag :role, options_for_select(Aim::AgencyGroup::ROLES.select { |role, _| admin || role == 'fiscal' }.map(&:reverse), 'fiscal'),
                      aria: { label: 'Role' } %>
       <button type="submit" class="btn approve compact">Add</button>

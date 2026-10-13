@@ -25,8 +25,6 @@ module Aim
       @resolver = helpers.aim_agency_groups
       @roles = @group.roles.order(:role, :employee_id).to_a
       @employees = Employee.where(id: @roles.map(&:employee_id)).index_by(&:id)
-      @candidates = Aim::Users.all.pluck(:id, :first_name, :last_name)
-                              .map { |id, first, last| [Employee.format_picker_label(id, first, last), id] }
     end
 
     # A custom group of an agency's BUs; its BUs are ticked on its page.
