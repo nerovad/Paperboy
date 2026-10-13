@@ -51,16 +51,21 @@ module Aim
       reading_database('list its users', alert: 'The AIM users could not be read.',
                                          empty: { people: [], units: [], agencies: [], groups: [], agency_groups: [] }) do
         @people = filtered(sort_collection(all_people, @sort, 'asc', SORTS, default_sort: 'name'))
-        @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
-        in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
-        @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
-        held = all_people.flat_map(&:group_ids).uniq
-        @agency_groups = helpers.aim_agency_groups.all.select { |group| held.include?(group.id.to_s) }.map { |g| [g.name, g.id.to_s] }
+        filter_options
         @groups = @people.group_by(&:unit_label).sort_by { |label, _| label } if @view == 'bu'
       end
     end
 
     private
+
+    # What each filter offers: only values someone on the list has.
+    def filter_options
+      @agencies = all_people.filter_map(&:agency).uniq.sort.map { |agency| [coa.agency_label(agency), agency] }
+      in_agency = all_people.select { |person| person.unit && (@filters['agency'].nil? || person.agency == @filters['agency']) }
+      @units = in_agency.map { |person| [person.unit_label, person.unit] }.uniq.sort_by(&:last)
+      held = all_people.flat_map(&:group_ids).uniq
+      @agency_groups = helpers.aim_agency_groups.all.select { |group| held.include?(group.id.to_s) }.map { |g| [g.name, g.id.to_s] }
+    end
 
     def choose_view
       session[:aim_admin_view] = params[:view] if VIEWS.include?(params[:view])
