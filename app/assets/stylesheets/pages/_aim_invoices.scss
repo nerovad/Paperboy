@@ -1671,7 +1671,10 @@
   margin: 0 0 10px;
 }
 
+// AIM pages are a fixed-height column that scrolls; a panel left free to
+// shrink is cut off at whatever height fits instead.
 .aim-agency-group-panel {
+  flex-shrink: 0;
   padding: 14px 16px;
 }
 
