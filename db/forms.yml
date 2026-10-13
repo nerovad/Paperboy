@@ -5265,12 +5265,11 @@ forms:
     inbox_buttons:
     - view_pdf
     - edit
-    - approve
     - deny
     - reassign
     - take_back
     - status_history
-    complete_on_edit: false
+    complete_on_edit: true
     completion_rule: all
     deny_rule: form
   emails: []
