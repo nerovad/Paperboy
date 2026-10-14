@@ -5,12 +5,12 @@
 
 wt() {
   local paperboy_bin_dir
-  paperboy_bin_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+  paperboy_bin_dir="$(builtin cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
   if [[ $# -eq 1 && "$1" =~ ^[0-9]+$ ]]; then
     local worktree_path
     worktree_path="$("${paperboy_bin_dir}/wt" "$@")" || return
-    cd -- "${worktree_path}"
+    builtin cd -- "${worktree_path}"
     return
   fi
 
