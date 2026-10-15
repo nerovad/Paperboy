@@ -92,5 +92,20 @@ module Aim
       assert_response :success
       %w[start roles groups upload working duplicates fiscal setup alerts faq].each { |id| assert_select "section##{id}" }
     end
+
+    # Every screenshot the page names is in git (#144): .gitignore drops PNGs
+    # unless a folder is allowed, and a missing one just vanishes from the page.
+    test 'every Help screenshot is there and tracked' do
+      view = Rails.root.join('app/views/aim/help/show.html.erb').read
+      names = view.scan(/aim_help_shot\('([a-z_]+)'/).flatten
+      tracked = `git -C #{Rails.root} ls-files app/assets/images/aim/help`.lines.map { |line| File.basename(line.strip, '.png') }
+
+      assert_operator names.size, :>=, 6
+      assert_empty names - tracked, "Help screenshots not in git: #{(names - tracked).join(', ')}"
+
+      sign_in 9
+      get :show
+      assert_select 'figure.aim-help__shot img', names.size
+    end
   end
 end
