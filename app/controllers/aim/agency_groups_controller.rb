@@ -11,7 +11,7 @@ module Aim
     before_action :set_group, only: %i[show update destroy]
 
     TABS = { 'units' => 'Budget units', 'bu_people' => 'BUs & People', 'roles' => 'Group roles',
-             'settings' => 'Fiscal settings' }.freeze
+             'settings' => 'Fiscal settings', 'alerts' => 'Alerts' }.freeze
 
     def index
       reading_database('list the agency groups', alert: 'The agency groups could not be read.', empty: { groups: [] }) do
@@ -30,6 +30,7 @@ module Aim
       @roles = @group.roles.order(:role, :employee_id).to_a
       @employees = Employee.where(id: @roles.map(&:employee_id)).index_by(&:id)
       bu_people if @tab == 'bu_people'
+      alerts if @tab == 'alerts'
     end
 
     # A custom group of an agency's BUs; its BUs are ticked on its page.
@@ -57,6 +58,16 @@ module Aim
     end
 
     private
+
+    # The Alerts tab: the group's settings, each BU's override, and who would
+    # be emailed today (a preview; nothing is sent from here).
+    def alerts
+      @alert_units = @resolver.units_of(@group).sort
+      @group_alerts = Aim::AlertSetting.effective(@group)
+      @overridden = Aim::AlertSetting.overridden_units(@group)
+      @preview = Aim::Alerts.new(groups: @resolver).digests(only: [@group])
+      @preview_names = Employee.where(id: @preview.keys).to_h { |e| [e.id, Employee.format_picker_label(e.id, e.first_name, e.last_name)] }
+    end
 
     # The BUs & People tab: each of the group's units with the AIM users who
     # work it (home unit unless hidden, or granted), as the BU page counts

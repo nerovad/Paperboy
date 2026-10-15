@@ -253,4 +253,27 @@ module Aim
       assert_equal ['Duplicate invoice', 'Not an invoice'], Aim::RejectReason.offered_for(nil)
     end
   end
+
+  class AgencyGroupAlertsTest < ActionController::TestCase
+    include AgencyGroupsTestSession
+
+    tests Aim::AgencyGroupAlertsController
+
+    test 'a Group Admin sets the group\'s alerts and a BU\'s own, and puts it back' do
+      group = Aim::AgencyGroup.for_agency!('GSA')
+      Aim::EnabledUnit.create!(agency_id: 'GSA')
+      group.roles.create!(employee_id: 5, role: 'admin')
+      sign_in 5
+
+      patch :update, params: { id: group.id, on: { 'owner_past_due' => '1' }, days: { 'owner_past_due' => '10' } }
+      assert_equal({ on: true, days: 10 }, Aim::AlertSetting.effective(group)['owner_past_due'])
+      assert_not Aim::AlertSetting.effective(group)['second_approval'][:on], 'unticked is off'
+
+      patch :update, params: { id: group.id, budget_unit: '4601', on: { 'second_approval' => '1' } }
+      assert Aim::AlertSetting.effective(group, '4601')['second_approval'][:on]
+
+      patch :update, params: { id: group.id, budget_unit: '4601', use_group: '1' }
+      assert_not Aim::AlertSetting.effective(group, '4601')['second_approval'][:on]
+    end
+  end
 end

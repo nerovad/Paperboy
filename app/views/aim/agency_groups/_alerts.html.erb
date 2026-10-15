@@ -1,0 +1,70 @@
+<%# The Alerts tab (#131): the group's email alerts, each BU's override, and
+    who would be emailed today. Sending waits on AIM_EMAIL_ALERTS. %>
+<% editable = aim_admin_groups.nil? || aim_admin_groups.include?(@group) %>
+<% open = params[:open].to_s.split(',') %>
+<% if Aim::Alerts.enabled? %>
+  <p class="aim-agency-group-meta">Email alerts are <strong>on</strong>: the digest goes out at 7am.</p>
+<% else %>
+  <div class="aim-readonly-banner aim-manual-banner" role="status" id="alerts">
+    <span class="aim-readonly-banner__mark" aria-hidden="true">✉</span>
+    <div>
+      <strong>Email alerts are off</strong>
+      <p>Nothing is emailed until Paperboy's email is settled and AIM_EMAIL_ALERTS is turned on. Set them up now and check the preview below.</p>
+    </div>
+  </div>
+<% end %>
+
+<h2 class="aim-profile-heading">The group's alerts</h2>
+<section class="aim-panel aim-agency-group-panel">
+  <%= form_with url: alerts_aim_agency_group_path(@group), method: :patch, local: true do %>
+    <%= render 'alert_fields', values: @group_alerts, prefix: 'group' %>
+    <% if editable %><div class="aim-form-actions"><button type="submit" class="btn approve compact">Save alerts</button></div><% end %>
+  <% end %>
+</section>
+
+<h2 class="aim-profile-heading">Budget units</h2>
+<div data-controller="aim-open-sections">
+  <% @alert_units.each do |unit| %>
+    <% overridden = @overridden.include?(unit) %>
+    <details class="aim-panel aim-agency-units aim-bu-people" id="alerts-<%= unit %>" data-key="<%= unit %>"
+             <%= 'open' if open.include?(unit) %>
+             data-aim-open-sections-target="section" data-action="toggle->aim-open-sections#toggled">
+      <summary>
+        <strong><%= @units.label(unit) %></strong>
+        <span class="aim-count-pill"><%= overridden ? 'Its own alerts' : "The group's alerts" %></span>
+      </summary>
+      <div class="aim-agency-group-panel">
+        <%= form_with url: alerts_aim_agency_group_path(@group), method: :patch, local: true do %>
+          <%= hidden_field_tag :budget_unit, unit, id: nil %>
+          <%= render 'alert_fields', values: Aim::AlertSetting.effective(@group, unit), prefix: "unit-#{unit}" %>
+          <% if editable %>
+            <div class="aim-form-actions">
+              <% if overridden %><button type="submit" name="use_group" value="1" class="btn compact">Use the group's</button><% end %>
+              <button type="submit" class="btn approve compact">Save <%= unit %>'s alerts</button>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+</div>
+
+<h2 class="aim-profile-heading">Who would be emailed today</h2>
+<section class="aim-panel aim-agency-group-panel">
+  <% if @preview.empty? %>
+    <p class="aim-agency-group-meta">Nobody: nothing in this group's BUs meets an alert today.</p>
+  <% else %>
+    <table class="submission-table aim-people-table">
+      <thead><tr><th>Person</th><% Aim::AlertSetting::KINDS.except('second_approval').each_value do |info| %><th><%= info[:what].capitalize.delete_suffix(' longer than').delete_suffix(' older than') %></th><% end %></tr></thead>
+      <tbody>
+        <% @preview.sort_by { |id, _| @preview_names[id].to_s }.each do |id, kinds| %>
+          <tr>
+            <td class="is-strong"><%= link_to @preview_names[id] || "Employee #{id}", aim_member_path(id) %></td>
+            <% Aim::AlertSetting::KINDS.except('second_approval').each_key do |kind| %><td><%= kinds[kind].uniq.size.nonzero? %></td><% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="aim-agency-group-meta">Second approvers are emailed when a high-dollar invoice reaches them, not in the digest.</p>
+  <% end %>
+</section>

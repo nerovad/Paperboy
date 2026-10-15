@@ -33,6 +33,7 @@ module Aim
     # The high-dollar second approval (#131): this approval is the first.
     def second_approval_first
       @invoice.first_approve!(actor: current_user_email, by: current_user_employee_id)
+      Aim::Alerts.second_approval_reached(@invoice)
       finish("First approval recorded. It is over the BU's amount, so it goes to " \
              "#{@invoice.second_approval_setting.second_approver_name} for a second approval.")
     end
