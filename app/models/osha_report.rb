@@ -2,8 +2,6 @@
 
 class OshaReport < ApplicationRecord
   include TrackableStatus
-  include Reassignable
-  include Registry
 
   enum :status, {
     in_progress: 'in_progress',
@@ -11,6 +9,8 @@ class OshaReport < ApplicationRecord
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress
+  include Reassignable
+  include Registry
 
   belongs_to :safety_report, optional: true
 

@@ -1202,6 +1202,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
   create_table "form_template_routing_steps", force: :cascade do |t|
     t.string "approve_button_label"
     t.string "authorization_service_type"
+    t.text "button_labels"
     t.boolean "complete_on_edit", default: false, null: false
     t.string "completion_rule", default: "all", null: false
     t.string "condition_field_name"
@@ -2088,6 +2089,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "sql_dashboard_cards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "sql_dashboard_id", null: false
+    t.bigint "sql_dashboard_query_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "width", default: "half", null: false
+    t.index ["sql_dashboard_id"], name: "index_sql_dashboard_cards_on_sql_dashboard_id"
+    t.index ["sql_dashboard_query_id"], name: "index_sql_dashboard_cards_on_sql_dashboard_query_id"
+  end
+
+  create_table "sql_dashboard_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "database_key"
+    t.integer "duration_ms"
+    t.string "employee_id"
+    t.string "employee_name"
+    t.text "error_message"
+    t.string "query_name"
+    t.integer "row_count"
+    t.bigint "sql_dashboard_query_id"
+    t.text "statement"
+    t.index ["created_at"], name: "index_sql_dashboard_events_on_created_at"
+    t.index ["sql_dashboard_query_id"], name: "index_sql_dashboard_events_on_sql_dashboard_query_id"
+  end
+
+  create_table "sql_dashboard_queries", force: :cascade do |t|
+    t.string "chart_type", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.string "database_key", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.text "statement", null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by_id"
+    t.string "updated_by_name"
+    t.index ["name"], name: "index_sql_dashboard_queries_on_name"
+  end
+
+  create_table "sql_dashboards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "created_by_id"
+    t.string "created_by_name"
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_sql_dashboards_on_name"
+  end
+
   create_table "status_changes", force: :cascade do |t|
     t.string "changed_by_id"
     t.string "changed_by_name"
@@ -2279,4 +2332,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id"
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id"
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id"
+  add_foreign_key "sql_dashboard_cards", "sql_dashboard_queries"
+  add_foreign_key "sql_dashboard_cards", "sql_dashboards"
 end

@@ -1111,6 +1111,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: step.condition_operator,
         condition_value: step.condition_value,
         inbox_buttons: step.inbox_buttons.sort,
+        button_labels: step.button_labels,
         complete_on_edit: step.complete_on_edit?,
         completion_rule: step.completion_rule,
         deny_rule: step.deny_rule,
@@ -1133,6 +1134,7 @@ class FormTemplatesController < ApplicationController
         condition_operator: condition_field_name ? step[:condition_operator].presence : nil,
         condition_value: condition_field_name ? step[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step).sort,
+        button_labels: extract_step_button_labels(step),
         complete_on_edit: step[:complete_on_edit] == '1',
         routes: step_route_attrs(step),
         **step_rules(step)
@@ -1152,6 +1154,11 @@ class FormTemplatesController < ApplicationController
         label: f.label, field_type: f.field_type, page_number: f.page_number,
         required: f.required, read_only: f.read_only || 'none',
         has_custom_view: f.has_custom_view, options: f.options,
+        restricted_to_type: f.restricted_to_type.presence || 'none',
+        restricted_to_employee_id: f.restricted_to_employee_id,
+        restricted_to_group_id: f.restricted_to_group_id,
+        restricted_to_org_filter_level: f.restricted_to_org_filter_level.presence,
+        visible_to_filler: f.visible_to_filler,
         # Conditional dependency normalized to the *label* of the target field so
         # it can be compared against the field_N index refs the builder submits.
         conditional_on: f.conditional_field&.label,
@@ -1184,20 +1191,26 @@ class FormTemplatesController < ApplicationController
         conditional_values: Array(f[:conditional_values]).reject(&:blank?).map(&:to_s).sort,
         conditional_answer_on: resolve_ref_label.call(f[:conditional_answer_field_id]),
         conditional_answer_mappings: normalize_conditional_mappings(f[:conditional_answer_mappings]),
-        options: case f[:field_type]
-                 when 'text_box' then { 'rows' => f[:rows].to_i }
-                 when 'dropdown', 'choices_dropdown' then dropdown_options_from_params(f)
-                 when 'information'
-                   {
-                     'information_text' => f[:information_text].to_s,
-                     'acknowledgeable' => f[:acknowledgeable] == '1'
-                   }
-                 else {}
-                 end
+        options: options_as_stored(f),
+        restricted_to_type: f[:restricted_to_type].presence || 'none',
+        restricted_to_employee_id: f[:restricted_to_employee_id].presence&.to_i,
+        restricted_to_group_id: f[:restricted_to_group_id].presence&.to_i,
+        restricted_to_org_filter_level: f[:restricted_to_type] == 'group' ? f[:restricted_to_org_filter_level].presence : nil,
+        visible_to_filler: f[:visible_to_filler] == '1'
       }
     end.reject { |f| f[:label].blank? }
 
     current_fields != new_fields
+  end
+
+  # A posted field's options as rebuild_form_fields would leave them in the
+  # table: built the same way, then given the defaults Forms::Field fills in
+  # on save. A field that was not touched then compares equal to its row,
+  # whatever its options hold.
+  def options_as_stored(field_data)
+    field = Forms::Field.new(field_type: field_data[:field_type], options: build_field_options(field_data))
+    field.send(:set_default_options)
+    field.options
   end
 
   # Normalize conditional-answer mappings (from a DB JSON hash or submitted
@@ -1253,8 +1266,7 @@ class FormTemplatesController < ApplicationController
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
-        approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence,
+        button_labels: extract_step_button_labels(step_data),
         **step_rules(step_data)
       )
       step_route_attrs(step_data).each_with_index do |route, position|
@@ -1356,6 +1368,15 @@ class FormTemplatesController < ApplicationController
     return [] if raw.blank?
 
     Array(raw).map(&:to_s).reject(&:blank?) & Forms::Template::INBOX_BUTTON_TYPES.keys
+  end
+
+  # The builder posts one button and one label per row, as two lists in step.
+  # A row with no label, or naming no known button, is dropped.
+  def extract_step_button_labels(step_data)
+    keys = Array(step_data[:button_label_keys]).map(&:to_s)
+    texts = Array(step_data[:button_label_texts]).map { |text| text.to_s.strip }
+
+    keys.zip(texts).to_h.slice(*Forms::Template::LABELED_INBOX_BUTTONS.keys).compact_blank
   end
 
   def save_copy_recipients(form_template)
@@ -1637,8 +1658,7 @@ class FormTemplatesController < ApplicationController
         condition_value: condition_field_name ? step_data[:condition_value].presence : nil,
         inbox_buttons: extract_step_inbox_buttons(step_data),
         complete_on_edit: step_data[:complete_on_edit] == '1',
-        approve_button_label: step_data[:approve_button_label].presence,
-        deny_button_label: step_data[:deny_button_label].presence,
+        button_labels: extract_step_button_labels(step_data),
         **step_rules(step_data)
       )
       step_route_attrs(step_data).each_with_index do |route, position|
