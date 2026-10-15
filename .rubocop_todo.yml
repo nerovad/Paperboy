@@ -39,12 +39,6 @@ Lint/EmptyClass:
     - 'app/reports/base/base.rb'
 
 # Offense count: 2
-# Configuration parameters: AllowComments, AllowNil.
-Lint/SuppressedException:
-  Exclude:
-    - 'lib/tasks/sync_status_enums.rake'
-
-# Offense count: 2
 Lint/UselessConstantScoping:
   Exclude:
     - 'app/controllers/authorization_console_controller.rb'
@@ -79,14 +73,12 @@ Metrics/BlockLength:
     - 'db/queue_schema.rb'
     - 'db/schema.rb'
     - 'lib/tasks/reports.rake'
-    - 'lib/tasks/sync_status_enums.rake'
 
 # Offense count: 3
 # Configuration parameters: CountBlocks, CountModifierForms, Max.
 Metrics/BlockNesting:
   Exclude:
     - 'app/controllers/form_templates_controller.rb'
-    - 'lib/tasks/sync_status_enums.rake'
 
 # Offense count: 36
 # Configuration parameters: CountComments, Max, CountAsOne.
