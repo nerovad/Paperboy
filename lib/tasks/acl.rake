@@ -37,6 +37,9 @@ namespace :acl do
     end
   end
 
+  # Safe to run again: it runs in one transaction, so a crash writes nothing,
+  # and once the database matches the file a run prints "Already in sync."
+  # PRUNE=1 also deletes grants and memberships that are missing from the file.
   desc 'Apply db/acl.yml to this environment (additive). DRY_RUN=1 previews; PRUNE=1 also removes grants and memberships missing from the file'
   task sync: :environment do
     dry = ENV['DRY_RUN'].present?

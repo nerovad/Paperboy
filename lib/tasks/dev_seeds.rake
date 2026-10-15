@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Not safe to run again: every run adds another batch of random rows, and
+# REPLANT=1 first deletes every existing row in the tables it seeds.
 namespace :dev do
   desc 'Seed Parking Lot only (SUBMISSIONS=n, REPLANT=1 optional)'
   task 'seed:parking' => :environment do

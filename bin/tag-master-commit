@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Safe to run again: it exits 0 when the tag already exists on origin. A run
+# that stopped after creating the tag but before pushing it leaves the tag
+# local, and the next run then exits 0 without pushing it; push it by hand.
 set -euo pipefail
 
 usage() {
