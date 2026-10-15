@@ -27,16 +27,67 @@ module Aim
       Aim::Users.member?(aim_session_employee_id)
     end
 
-    # Who works the Fiscal stage (item f): the people an AIM Admin has marked
-    # Fiscal on their profile, and the AIM Admins themselves.
+    # Who works the Fiscal stage and the coding rules (item f, #131): the
+    # AIM Admins, and Fiscal people and Group Admins in their agency groups.
     def aim_fiscal?
-      return true if aim_queue_access?
-      return @aim_fiscal unless @aim_fiscal.nil?
+      groups = aim_fiscal_groups
+      groups.nil? || groups.any?
+    end
 
-      id = aim_session_employee_id
-      @aim_fiscal = id.present? && Aim::Member.active.exists?(employee_id: id, fiscal: true)
+    # Who sets an agency group's Fiscal people and settings: the AIM Admins,
+    # and Group Admins in theirs.
+    def aim_group_admin?
+      groups = aim_admin_groups
+      groups.nil? || groups.any?
+    end
+
+    # The agency groups this person is Fiscal or Group Admin in: every one
+    # (nil) for AIM Admins. What "Managing" offers.
+    def aim_fiscal_groups
+      return nil if aim_queue_access?
+
+      @aim_fiscal_groups ||= aim_groups_held(Aim::AgencyGroup::ROLES.keys)
+    end
+
+    # The groups whose Fiscal stage and coding rules this person works: theirs,
+    # and those their groups' Fiscal also processes. Every one (nil) for AIM
+    # Admins.
+    def aim_fiscal_reach = aim_agency_groups.reach(aim_fiscal_groups)
+
+    def aim_agency_groups = (@aim_agency_groups ||= Aim::AgencyGroups.new)
+
+    # The agency groups this person administers: every one (nil) for AIM
+    # Admins, otherwise those they are Group Admin in.
+    def aim_admin_groups
+      return nil if aim_queue_access?
+
+      @aim_admin_groups ||= aim_groups_held(%w[admin])
+    end
+
+    # The agency group picked in "Managing" (Aim::ManagingController), when it
+    # is one of this person's; nil means all of them.
+    def aim_managing_group
+      id = session[:aim_agency_group_id]
+      return if id.blank?
+
+      groups = aim_fiscal_groups
+      groups.nil? ? Aim::AgencyGroup.find_by(id: id) : groups.find { |group| group.id == id.to_i }
     rescue ActiveRecord::ActiveRecordError
-      false
+      nil
+    end
+
+    # What the Fiscal and Lookups pages show: the group picked and those it
+    # processes, or all this person works (nil: every group).
+    def aim_managing_groups
+      picked = aim_managing_group
+      picked ? aim_agency_groups.reach([picked]) : aim_fiscal_reach
+    end
+
+    def aim_groups_held(roles)
+      ids = Aim::Users.agency_group_ids(aim_session_employee_id, roles: roles)
+      ids.empty? ? [] : Aim::AgencyGroup.where(id: ids).by_name.to_a
+    rescue ActiveRecord::ActiveRecordError
+      []
     end
 
     # Who manages AIM's people. One role since 2026-09-25: the AIM Admins,
@@ -60,7 +111,25 @@ module Aim
       return [] if aim_approver_mode?
       return nil if aim_queue_access?
 
-      @aim_bu_admin_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+      @aim_bu_admin_units ||= (Aim::Users.administered_budget_units(aim_session_employee_id) +
+                               aim_group_admin_units).uniq
+    end
+
+    # The budget units of the agency groups this person is Group Admin in
+    # (#131): they manage those units' people and appoint their BU Admins.
+    # Every unit (nil) for AIM Admins.
+    def aim_group_admin_units
+      groups = aim_admin_groups
+      return nil if groups.nil?
+
+      @aim_group_admin_units ||= groups.flat_map { |group| aim_agency_groups.units_of(group) }.uniq
+    end
+
+    # Whether this person may make someone BU Admin of +unit+: AIM Admins
+    # anywhere, Group Admins in their groups' units.
+    def aim_appoints_bu_admin?(unit)
+      units = aim_group_admin_units
+      units.nil? || units.include?(unit.to_s)
     end
 
     # The budget units whose people this person manages: every one (nil) for
@@ -70,7 +139,29 @@ module Aim
       return [] if aim_approver_mode?
       return nil if aim_user_admin?
 
-      @aim_managed_units ||= Aim::Users.administered_budget_units(aim_session_employee_id)
+      @aim_managed_units ||= (Aim::Users.administered_budget_units(aim_session_employee_id) +
+                              aim_group_admin_units).uniq
+    end
+
+    # The budget units of the group picked in Managing and those it
+    # processes, for the people screens; nil when none is picked, which
+    # leaves those screens to what the person manages.
+    def aim_managing_units
+      picked = aim_managing_group
+      return nil if picked.nil?
+
+      @aim_managing_units ||= aim_agency_groups.reach([picked]).flat_map { |group| aim_agency_groups.units_of(group) }.uniq
+    end
+
+    # The units a people screen shows: those this person manages, narrowed to
+    # the groups picked in Managing. nil is every unit.
+    def aim_people_units
+      managed = aim_managed_units
+      picked = aim_managing_units
+      return managed if picked.nil?
+      return picked if managed.nil?
+
+      managed & picked
     end
 
     # Every BU this person works is one the current user manages: what a BU

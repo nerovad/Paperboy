@@ -4,6 +4,8 @@
 <% read_only = status == 'archived' %>
 <%# The pay doc number comes back from VCFMS after the upload; a check number does not (DocuShare's own records, 2026-09-28). %>
 <% missing = [('pay doc number' if @record.pay_doc_number.blank?)].compact %>
+<%# What the invoice's agency group requires before archive (#131): Archive refuses without it. %>
+<% required_missing = @record.missing_for_archive(@group).map { |field| aim_fiscal_field_label(field) } %>
 <div class="aim-page aim-review-page">
   <header class="aim-page-header">
     <div class="aim-review-heading">
@@ -13,6 +15,17 @@
       <% @record.tag_list.each do |tag| %><span class="badge is-scheduled"><%= tag %></span><% end %>
     </div>
   </header>
+
+  <% if @invoice.manual_entry %>
+    <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
+    <div class="aim-readonly-banner aim-manual-banner" role="status">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+      <div>
+        <strong>Manual Data Entry Needed</strong>
+        <p>Uploaded straight to Fiscal: type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>. It is billed and filed once they are in.</p>
+      </div>
+    </div>
+  <% end %>
 
   <% if status == 'on_hold' && @record.hold_reason.present? %>
     <div class="aim-readonly-banner" role="alert">
@@ -87,14 +100,14 @@
         <div class="aim-fields aim-fiscal-grid">
           <% Aim::FiscalRecord::EDITABLE_FIELDS.each do |field| %>
             <div class="aim-field<%= ' aim-fiscal-grid__wide' if %w[tags description].include?(field) %>">
-              <%= label_tag "fiscal_record_#{field}", aim_fiscal_field_label(field) %>
+              <%= label_tag "fiscal_record_#{field}", aim_fiscal_field_label(field) + (@group&.required_field_list&.include?(field) ? ' (needed to archive)' : '') %>
               <% case field %>
               <% when 'tags' %>
                 <%= text_field_tag 'fiscal_record[tags]', @record.tags, id: 'fiscal_record_tags', disabled: read_only,
                                    list: 'aim-fiscal-tag-suggestions', autocomplete: 'off',
                                    placeholder: 'Anything you like, separated by commas' %>
                 <datalist id="aim-fiscal-tag-suggestions">
-                  <% Aim::FiscalRecord::TAG_SUGGESTIONS.each do |tag| %><option value="<%= tag %>"></option><% end %>
+                  <% (@group&.tag_suggestion_list || Aim::FiscalRecord::TAG_SUGGESTIONS).each do |tag| %><option value="<%= tag %>"></option><% end %>
                 </datalist>
               <% when 'check_date' %>
                 <%= date_field_tag 'fiscal_record[check_date]', @record.check_date, id: 'fiscal_record_check_date', disabled: read_only %>
@@ -108,6 +121,14 @@
             </div>
           <% end %>
         </div>
+
+        <% if @reports.any? %>
+          <%# The saved reports this invoice was in (#131). %>
+          <h3 class="aim-fiscal-heading">Reports</h3>
+          <p class="aim-coding__source">
+            <%= safe_join(@reports.map { |r| link_to("#{r.number} (#{r.created_at.in_time_zone.strftime('%m/%d/%Y')})", aim_fiscal_report_path(r)) }, ', ') %>
+          </p>
+        <% end %>
 
         <%= render 'aim/shared/history', events: @events %>
       </div>
@@ -137,14 +158,20 @@
             <% if status == 'exported' %>
               <%# Check and pay doc numbers come back after payment, so Archive is where a gap matters. %>
               <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve',
+                                        disabled: required_missing.any?,
+                                        title: ("#{@group.name} needs #{required_missing.to_sentence} before archive" if required_missing.any?),
                                         data: { turbo_confirm: missing.any? ? "There is no #{missing.join(' or ')} yet. Archive it anyway?" : 'Archive this invoice? It is finished after this.',
                                                 confirm_label: 'Archive' } %>
+              <% if required_missing.any? %>
+                <span class="aim-fiscal-export__hint">Fill in <%= required_missing.to_sentence %> and save to archive.</span>
+              <% end %>
             <% end %>
           <% end %>
         </div>
       </div>
       <%= render 'aim/shared/reason_modal', id: 'aim-hold', title: 'Put on hold', placeholder: 'What is it waiting on?',
-                                            submit: 'Hold', name: 'fiscal_action', value: 'hold' unless read_only %>
+                                            submit: 'Hold', name: 'fiscal_action', value: 'hold',
+                                            suggestions: @group&.hold_reason_list unless read_only %>
     <% end %>
     <% end %>
   </div>

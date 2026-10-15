@@ -1,0 +1,6 @@
+<%# Today's movement (#131). Locals: today ({ label => count }). %>
+<section class="aim-today" aria-label="Today">
+  <% today.each do |label, count| %>
+    <div class="aim-today__item"><strong><%= count %></strong> <%= label %> today</div>
+  <% end %>
+</section>

@@ -1,0 +1,52 @@
+<%# The Fiscal report before anything happens (#131), drawn into the page's
+    aim-report-preview frame: the report as it will come out, then Download
+    only (a draft: nothing saved or moved) or Download and process (saved,
+    numbered, the Report Queue's moved to Exported). %>
+<% code = case @layout when Aim::ReportTemplate then "t#{@layout.id}" when Aim::AgencyGroup then "g#{@layout.id}" end %>
+<%= turbo_frame_tag 'aim-report-preview' do %>
+  <div class="pb-modal-backdrop" data-controller="aim-dismiss">
+    <div class="pb-modal pb-modal--xl aim-report-preview" role="dialog" aria-modal="true" aria-labelledby="aim-report-preview-title">
+      <div class="pb-modal__header">
+        <h3 id="aim-report-preview-title"><%= @problem ? 'No report' : 'Report preview' %></h3>
+        <button type="button" class="pb-modal__close" data-action="aim-dismiss#close" aria-label="Close">✕</button>
+      </div>
+      <div class="pb-modal__body">
+        <% if @problem %>
+          <p class="pb-modal__message"><%= @problem %></p>
+          <div class="pb-modal__actions"><button type="button" class="btn" data-action="aim-dismiss#close">Close</button></div>
+        <% else %>
+          <% ready = @records.count { |record| record.status == 'ready' } %>
+          <p class="pb-modal__message">
+            <%= pluralize(@records.size, 'invoice') %> ·
+            <%= Aim::FiscalReport.layout_attributes(@layout)[:layout_name] %> ·
+            <%= Aim::ReportLayout::EXPORT_FORMATS[@export.tab? ? 'tab' : 'csv'] %>
+          </p>
+          <div class="aim-report-preview__scroll">
+            <table class="submission-table aim-queue-table">
+              <thead><tr><% @export.header_row.each do |header| %><th><%= header %></th><% end %></tr></thead>
+              <tbody>
+                <% @export.rows.each do |row| %>
+                  <tr><% row.each do |cell| %><td><%= cell %></td><% end %></tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          <%= form_with url: aim_fiscal_export_path, method: :post, local: true, data: { turbo: false } do %>
+            <% @records.each do |record| %><%= hidden_field_tag 'record_ids[]', record.id, id: nil %><% end %>
+            <%= hidden_field_tag :report_template, code, id: nil %>
+            <p class="aim-agency-group-meta">
+              <strong>Download only</strong> gives you a draft to check; nothing is saved or moved.
+              <strong>Download and process</strong> saves it as a numbered report<%= ", moves #{pluralize(ready, 'invoice')} to Exported" if ready.positive? %>
+              and adds it to each invoice's history.
+            </p>
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="aim-dismiss#close">Cancel</button>
+              <button type="submit" name="report_action" value="draft" class="btn secondary">Download only</button>
+              <button type="submit" name="report_action" value="process" class="btn approve">Download and process</button>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

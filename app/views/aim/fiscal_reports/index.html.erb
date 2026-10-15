@@ -1,0 +1,46 @@
+<%# Fiscal > Reports (#131): every processed report, newest first, for the
+    agency groups picked in Managing. %>
+<div class="aim-page" data-controller="aim-queue-filter">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Fiscal Reports</h1>
+      <p class="aim-page-subtitle">
+        Every processed report. Download one again as it was made, or open it to see its invoices and regenerate it.
+        Files are kept for a year.
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <span class="aim-count-pill"><%= pluralize(@reports.size, 'report') %></span>
+    </div>
+  </header>
+
+  <%= render 'aim/invoices/search_box', placeholder: 'Search report #, group, template or person…', empty: 'No report matches.' %>
+
+  <% if @reports.empty? %>
+    <section class="aim-panel aim-empty-state"><p>No reports yet. Process one from the Report Queue.</p></section>
+  <% else %>
+    <section class="aim-panel aim-queue-panel">
+      <table class="submission-table aim-queue-table">
+        <thead><tr><th>Report</th><th>Made</th><th>By</th><th>Layout</th><th>Invoices</th><th>File</th><th></th></tr></thead>
+        <tbody>
+          <% @reports.each do |report| %>
+            <tr data-aim-queue-filter-target="row" data-search="<%= [report.number, report.layout_name, report.created_by].join(' ') %>">
+              <td class="is-strong"><%= link_to report.number, aim_fiscal_report_path(report) %></td>
+              <td><%= report.created_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %></td>
+              <td><%= report.created_by %></td>
+              <td><%= report.layout_name %><%= " (replaces #{report.replaces.number})" if report.replaces_report_id %></td>
+              <td><%= report.invoice_count %></td>
+              <td><%= report.purged? ? 'Purged' : "Until #{report.expires_at.in_time_zone.strftime('%m/%d/%Y')}" %></td>
+              <td>
+                <% unless report.purged? %>
+                  <%= link_to 'Download', download_aim_fiscal_report_path(report), class: 'btn secondary compact', data: { turbo: false } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+</div>

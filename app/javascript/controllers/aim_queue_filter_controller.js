@@ -16,6 +16,9 @@ export default class extends Controller {
       const open = group.tagName === "DETAILS" ? String(group.open) : toggle?.getAttribute("aria-expanded")
       group.dataset.startedOpen = open ?? "true"
     })
+    // A link may name a reason to start on (?reason=duplicate, from the dashboard).
+    const start = this.reasonTargets.find((button) => this.reasonValue && button.dataset.reason === this.reasonValue)
+    if (start) start.click()
   }
 
   // The reason buttons on Action Needed narrow the rows in place, no reload.

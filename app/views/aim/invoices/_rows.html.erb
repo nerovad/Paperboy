@@ -52,7 +52,11 @@
         <td><%= invoice.assigned_to.presence || 'Shared' %></td>
         <td><%= aim_invoice_date(invoice.invoice_date) || 'N/A' %></td>
         <td class="aim-total"><%= aim_currency(invoice.invoice_total) || 'N/A' %></td>
-        <td><span class="badge <%= badge_class %>"><%= badge_text %></span></td>
+        <td>
+          <span class="badge <%= badge_class %>"><%= badge_text %></span>
+          <% if invoice.awaiting_second_approval? %><span class="badge is-scheduled">Second approval</span><% end %>
+          <% if invoice.manual_entry %><span class="badge is-pending" title="The AI has not read it">Manual Data Entry Needed</span><% end %>
+        </td>
         <% if movable %>
           <td class="aim-select-cell">
             <input type="checkbox" value="<%= invoice.batch_id %>" data-budget-unit="<%= invoice.budget_unit %>" aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"

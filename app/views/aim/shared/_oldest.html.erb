@@ -1,0 +1,20 @@
+<%# The longest waiting (#131). Locals: oldest ([[invoice, days], ...]), path
+    (proc: invoice -> its page), owner (show whose queue). %>
+<% if oldest.any? %>
+  <table class="submission-table aim-people-table">
+    <thead><tr><th>Invoice</th><th>BU</th><th>Total</th><% if local_assigns[:owner] %><th>Queue</th><% end %><th>Waiting</th></tr></thead>
+    <tbody>
+      <% oldest.each do |invoice, days| %>
+        <tr>
+          <td class="is-strong"><%= link_to [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id, path.call(invoice) %></td>
+          <td><%= invoice.budget_unit %></td>
+          <td><%= number_to_currency(invoice.invoice_total) if invoice.invoice_total %></td>
+          <% if local_assigns[:owner] %><td><%= invoice.queue_owner %></td><% end %>
+          <td><%= days.zero? ? 'today' : pluralize(days, 'day') %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="aim-agency-group-meta">Nothing waiting.</p>
+<% end %>

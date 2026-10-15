@@ -49,6 +49,8 @@ module Aim
     validates :invoice_id, uniqueness: true
 
     scope :in_status, ->(status) { includes(:invoice).where(status: status) }
+    # Those of some invoices: an agency group's (Aim::AgencyGroups#invoices).
+    scope :served_by, ->(invoices) { where(invoice_id: invoices.select(:id)) }
 
     # Every approved invoice has a record; new approvals get one here. Returns
     # how many were created.
@@ -60,8 +62,8 @@ module Aim
     end
 
     # { 'fiscal_review' => 3, ... }: the sidebar's counts, keyed as it is.
-    def self.status_counts
-      by_status = group(:status).count
+    def self.status_counts(scope = all)
+      by_status = scope.group(:status).count
       STATUSES.to_h { |status| ["fiscal_#{status}", by_status.fetch(status, 0)] }
     end
 
@@ -94,6 +96,14 @@ module Aim
     def self.file_name_for(invoice) = "#{title_for(invoice).tr('\\/:*?"<>|', ' ').squish}.pdf"
 
     def tag_list = tags.to_s.split(',').map(&:strip).compact_blank
+
+    # The fields +group+ (its agency group, #131) needs before archive that
+    # are still blank.
+    def missing_for_archive(group)
+      return [] if group.nil?
+
+      group.required_field_list.select { |field| public_send(field).blank? }
+    end
 
     private
 

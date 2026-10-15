@@ -44,6 +44,15 @@ module Aim
       redirect_to aim_root_path, alert: 'Only AIM admins and BU Admins manage AIM users.'
     end
 
+    # Whether a BU of an agency is in +groups+ (nil: every group): the
+    # agency groups someone works, by default (#131).
+    def group_serves_unit?(agency, unit, groups = helpers.aim_fiscal_reach)
+      return true if groups.nil?
+
+      group = helpers.aim_agency_groups.for(agency, unit)
+      group.present? && groups.any? { |g| g.id == group.id }
+    end
+
     # A list page to come back to: remember_return(:aim_queue_page) on the
     # list, remembered_return(:aim_queue_page, '/aim/') { fallback } after the
     # work. Only a path under +prefix+ is honoured, so the session

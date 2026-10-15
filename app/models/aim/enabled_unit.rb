@@ -10,6 +10,20 @@ module Aim
     scope :whole_agencies, -> { where(unit_id: nil) }
     scope :single_units, -> { where.not(unit_id: nil) }
 
+    # Sets which of one agency's units AIM uses (#131, from its agency group's
+    # page): the whole agency when that is every active unit, so the COA's
+    # later units join too; otherwise those units one by one.
+    def self.set_agency_units!(agency, units, by:)
+      active = Coa::Unit.where(agency_id: agency, active: true).distinct.pluck(:unit_id)
+      units = units.map(&:to_s).uniq & active
+      transaction do
+        where(agency_id: agency).delete_all
+        if units.sort == active.sort then create!(agency_id: agency, enabled_by: by)
+        else units.each { |unit| create!(agency_id: agency, unit_id: unit, enabled_by: by) }
+        end
+      end
+    end
+
     # Replaces the setting: whole agencies, then single units of the others.
     def self.replace!(agencies:, units:, by:)
       transaction do

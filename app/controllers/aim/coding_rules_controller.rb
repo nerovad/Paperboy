@@ -3,7 +3,8 @@
 module Aim
   # The coding lookups (item b.3): the rules by agency and budget unit, one
   # rule to edit with the COA checking every code (Save anyway keeps the
-  # objection as a warning), its history, and Retire. Fiscal and AIM Admins.
+  # objection as a warning), its history, and Retire. Fiscal and AIM Admins,
+  # each in the BUs of their agency groups (#131).
   class CodingRulesController < BaseController
     before_action :require_fiscal
     before_action :set_rule, only: %i[show update retire]
@@ -19,17 +20,19 @@ module Aim
       @sort = SORTS.key?(params[:sort]) ? params[:sort] : 'budget_unit'
       reading_database('list the coding rules', alert: 'The coding rules could not be read.',
                                                 empty: { rules: [], agencies: [], units: [], units_without_rules: [] }) do
-        @agencies = Aim::CodingRule.distinct.order(:agency).pluck(:agency)
+        @units = Aim::CodingRule.distinct.order(:budget_unit).pluck(:agency, :budget_unit)
+                                .select { |agency, unit| managed_unit?(agency, unit) }
+        @agencies = @units.map(&:first).uniq.sort
         @agency = @agencies.include?(params[:agency]) ? params[:agency] : @agencies.first
         if request.format.csv?
-          @rules = filtered_rules.order(*SORTS[@sort], :id).to_a
+          @rules = managed(filtered_rules.order(*SORTS[@sort], :id))
           return send_data(export_csv, filename: "AIM_Coding_Rules_#{@agency}.csv", type: 'text/csv')
         end
 
-        # Every rule goes to the page; agency, BU and in-effect filter there,
-        # as you choose them (aim_queue_filter_controller facets).
-        @units = Aim::CodingRule.distinct.order(:budget_unit).pluck(:agency, :budget_unit)
-        @rules = Aim::CodingRule.order(*SORTS[@sort], :id).to_a
+        # Every rule of the agency groups picked in Managing goes to the page;
+        # agency, BU and in-effect filter there, as you choose them
+        # (aim_queue_filter_controller facets).
+        @rules = managed(Aim::CodingRule.order(*SORTS[@sort], :id))
 
         @coa = Aim::Units.new
         @units_without_rules = units_without_rules
@@ -74,7 +77,15 @@ module Aim
 
     def set_rule
       @rule = Aim::CodingRule.find(params[:id])
+      return if group_serves_unit?(@rule.agency, @rule.budget_unit)
+
+      redirect_to aim_coding_rules_path, alert: 'That rule is for a budget unit outside your agency groups.'
     end
+
+    # The rules and units of the agency groups picked in Managing (#131).
+    def managed_unit?(agency, unit) = group_serves_unit?(agency, unit, helpers.aim_managing_groups)
+
+    def managed(rules) = rules.to_a.select { |rule| managed_unit?(rule.agency, rule.budget_unit) }
 
     def filtered_rules
       scope = Aim::CodingRule.for_agency(@agency)
@@ -86,7 +97,7 @@ module Aim
     # AIM's budget units in this agency with no rule in effect.
     def units_without_rules
       covered = Aim::CodingRule.for_agency(@agency).in_effect.distinct.pluck(:budget_unit)
-      @coa.all.select { |unit| unit.agency == @agency }.map(&:unit) - covered
+      @coa.all.select { |unit| unit.agency == @agency && managed_unit?(unit.agency, unit.unit) }.map(&:unit) - covered
     rescue ActiveRecord::ActiveRecordError
       []
     end

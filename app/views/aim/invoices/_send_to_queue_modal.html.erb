@@ -1,0 +1,34 @@
+<%# Send to a queue (#131): an AIM Admin sends the invoice from wherever it is
+    to a person's queue, or a budget unit's shared one, in Ready for Approval,
+    optionally flagged Manual Data Entry Needed. Inside the review form, as
+    the other reason dialogs are (aim_reason_controller). %>
+<div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
+  <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="aim-send-title">
+    <div class="pb-modal__header">
+      <h3 id="aim-send-title" data-aim-reason-target="title">Send to a queue</h3>
+      <button type="button" class="pb-modal__close" data-action="aim-reason#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body">
+      <p class="pb-modal__message">
+        It goes to Ready for Approval in the queue you pick<%= ', and the AI stops working on it' if %w[received failed].include?(@invoice.state) %>.
+        Leave the person blank for the <%= @invoice.budget_unit %> shared queue.
+      </p>
+      <div class="form-group">
+        <label>Whose queue</label>
+        <%= render 'aim/shared/grouped_person_select', name: :send_owner, label: 'Whose queue' %>
+      </div>
+      <div class="form-group">
+        <label><%= check_box_tag :send_manual, '1', @invoice.manual_entry, id: 'aim-send-manual' %> Manual Data Entry Needed</label>
+      </div>
+      <div class="form-group">
+        <label for="aim-send-reason">Reason</label>
+        <textarea id="aim-send-reason" name="reason" class="form-control" rows="2" placeholder="Why it goes there"
+                  data-aim-reason-target="reason" disabled></textarea>
+      </div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
+        <button type="submit" name="invoice_action" value="send_to_queue" class="btn approve" data-aim-reason-target="submit">Send</button>
+      </div>
+    </div>
+  </div>
+</div>

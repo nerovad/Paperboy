@@ -17,6 +17,20 @@ module Aim
       @record.update!(tidy(permitted).merge(updated_by: current_user_email)) if permitted.any?
       save_invoice_fields
       save_coding_line(source: 'fiscal')
+      export_once_typed_in
+    end
+
+    # Uploaded straight to Fiscal (#131): once Fiscal has typed in what a user
+    # needs, the flag clears and the worker exports it as it would an
+    # approved one -- billing's final values, Laserfiche, the archive.
+    def export_once_typed_in
+      return unless @invoice.manual_entry
+
+      @invoice.finish_manual_entry!(actor: current_user_email)
+      return if @invoice.manual_entry || @invoice.state != 'approved' || @invoice.command.present?
+
+      @invoice.update!(command: 'export')
+      @invoice.events.create!(action: 'command', actor: current_user_email, note: 'typed in by Fiscal; export requested')
     end
 
     # Fiscal corrects the invoice's own fields too. What changed goes in the

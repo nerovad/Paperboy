@@ -83,10 +83,20 @@ module Aim
       []
     end
 
+    # The agency groups this person holds one of +roles+ in (#131). Nothing
+    # once deactivated.
+    def agency_group_ids(employee_id, roles: Aim::AgencyGroup::ROLES.keys)
+      return [] if employee_id.blank? || Aim::Member.inactive.exists?(employee_id: employee_id)
+
+      Aim::AgencyGroupRole.where(employee_id: employee_id, role: roles).distinct.pluck(:agency_group_id)
+    rescue ActiveRecord::ActiveRecordError
+      []
+    end
+
     # What a person is in AIM, for their profile and the Users & Queues list
     # (roles decided 2026-09-25): AIM Admin comes from ACL (aim_admin, or
     # system_admins), BU Admin from their BUs, and everyone else is a User.
-    # Fiscal (item f) is a switch on their profile, alongside the others.
+    # Group Admin and Fiscal come from their agency groups (#131).
     def roles_of(employee_id) = roles_by_person([employee_id]).fetch(employee_id.to_i)
 
     # The same for many people at once: { employee_id => [roles] }.
@@ -96,8 +106,13 @@ module Aim
       groups = EmployeeGroup.where(EmployeeID: ids).pluck(:EmployeeID, :GroupID)
                             .group_by(&:first).transform_values { |pairs| pairs.map { |_, id| names[id] } }
       admins = Aim::UserBudgetUnit.where(employee_id: ids).administered.distinct.pluck(:employee_id).to_set
-      fiscal = Aim::Member.active.where(employee_id: ids, fiscal: true).pluck(:employee_id).to_set
-      ids.index_with { |id| role_names(groups.fetch(id, []), admins.include?(id)) + (fiscal.include?(id) ? ['Fiscal'] : []) }
+      inactive = Aim::Member.inactive.where(employee_id: ids).pluck(:employee_id)
+      held = Aim::AgencyGroupRole.where(employee_id: ids).where.not(employee_id: inactive).distinct
+                                 .pluck(:employee_id, :role).group_by(&:first)
+      ids.index_with do |id|
+        role_names(groups.fetch(id, []), admins.include?(id)) +
+          Aim::AgencyGroup::ROLES.filter_map { |role, label| label if held.fetch(id, []).any? { |_, r| r == role } }
+      end
     rescue ActiveRecord::ActiveRecordError
       ids.index_with { ['User'] }
     end
