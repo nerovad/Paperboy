@@ -2,7 +2,6 @@
 
 class CreateDynamicForms < ActiveRecord::Migration[8.0]
   def change
-    # Carpool Forms
     create_table :carpool_forms do |t|
       t.string :employee_id
       t.string :name
@@ -16,7 +15,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Gym Locker Forms
     create_table :gym_locker_forms do |t|
       t.string :employee_id
       t.string :name
@@ -30,7 +28,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Social Media Forms
     create_table :social_media_forms do |t|
       t.string :employee_id
       t.string :name
@@ -44,7 +41,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Leave of Absence Forms
     create_table :leave_of_absence_forms do |t|
       t.string :employee_id
       t.string :name
@@ -80,7 +76,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
     add_index :work_schedule_or_location_update_forms, :employee_id
     add_index :work_schedule_or_location_update_forms, :approver_id
 
-    # Workplace Violence Forms
     create_table :workplace_violence_forms do |t|
       t.string :employee_id
       t.string :name
@@ -98,7 +93,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
     add_index :workplace_violence_forms, :employee_id
     add_index :workplace_violence_forms, :approver_id
 
-    # Notice of Change Forms
     create_table :notice_of_change_forms do |t|
       t.string :employee_id
       t.string :name
@@ -238,7 +232,6 @@ class CreateDynamicForms < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Authorization FOs
     create_table :authorization_fos do |t|
       t.string :employee_id
       t.string :name
