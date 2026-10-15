@@ -9,7 +9,7 @@
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
               elsif %w[admin agency_groups].include?(controller_name) && !aim_user_admin? then "fiscal"
               elsif %w[admin members enabled_units agency_groups].include?(controller_name) then "admin"
-              elsif %w[fiscal report_templates fiscal_reports].include?(controller_name) then "fiscal"
+              elsif %w[fiscal fiscal_dashboard report_templates fiscal_reports].include?(controller_name) then "fiscal"
               elsif %w[coding_rules coding_imports].include?(controller_name) then "lookups"
               else "aim"
               end %>
@@ -73,6 +73,7 @@
       <details class="nav-group" <%= "open" if current == "fiscal" %> data-aim-sidebar-target="group" data-key="fiscal"
                data-default-open="false" data-current="<%= current == "fiscal" %>">
         <summary><span class="nav-group-label">Fiscal</span></summary>
+        <%= link_to "Dashboard", aim_fiscal_dashboard_path, class: "nav-link#{' active' if controller_name == 'fiscal_dashboard'}" %>
         <% Aim::FiscalRecord::STATUS_LABELS.each do |status, label| %>
           <%= link_to aim_fiscal_path(status: status),
                       class: "nav-link#{' active' if current == 'fiscal' && (@status || @record&.status) == status}" do %>
