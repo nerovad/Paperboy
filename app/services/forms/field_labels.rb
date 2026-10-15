@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/field_labels.rb
-
 module Forms
   # column name => the label the form that collects it puts on screen.
   #

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/table_copier.rb
-
 module Forms
   class Duplicator
     # Writes and runs the migration that gives a copied form its own tables:
