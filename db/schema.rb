@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_130000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -301,6 +301,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.string "customer_number", limit: 100
     t.string "document_type", limit: 50
     t.datetime "exported_at"
+    t.string "duplicate_checked_key", limit: 450
+    t.bigint "duplicate_of_id"
     t.text "extracted"
     t.string "extracted_vendor_name"
     t.datetime "first_approved_at"
@@ -318,6 +320,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.integer "page_count"
     t.bigint "parent_id"
     t.text "review_note"
+    t.bigint "replaces_invoice_id"
     t.string "review_reason", limit: 40
     t.decimal "sales_tax", precision: 15, scale: 2
     t.string "source_filename", limit: 260
@@ -334,6 +337,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
     t.index ["coded_at"], name: "index_aim_invoices_on_coded_at"
     t.index ["command", "lease_until"], name: "index_aim_invoices_on_command_and_lease_until"
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
+    t.index ["invoice_total"], name: "index_aim_invoices_on_invoice_total"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
   end

@@ -4,9 +4,19 @@ module Aim
   # The review page's routing moves added for #131, beside Aim::InvoiceActions
   # (whose ACTIONS name them): an AIM Admin's Send to a queue, and the
   # high-dollar second approval -- a first approval that hands on, and the
-  # second approver's Return to the first.
+  # second approver's Return to the first -- and AIM staff's answers to a
+  # possible duplicate.
   module InvoiceRoutingActions
     extend ActiveSupport::Concern
+
+    # Added to Aim::InvoiceActions::ACTIONS.
+    ACTIONS = {
+      'send_to_queue' => :send_to_queue,
+      'return_to_first' => :return_to_first,
+      'reject_duplicate' => :reject_duplicate,
+      'replacement' => :mark_replacement,
+      'not_duplicate' => :not_duplicate
+    }.freeze
 
     private
 
@@ -33,6 +43,30 @@ module Aim
 
       @invoice.return_to_first_approver!(actor: current_user_email, reason: reason, by: current_user_employee_id)
       finish('Returned to the first approver.')
+    end
+
+    # A possible duplicate (#131), AIM staff's call: reject it as one, keep it
+    # as the other's replacement, or clear it.
+    def reject_duplicate
+      return refuse('Only AIM staff decide a possible duplicate.') unless staff? && @invoice.possible_duplicate?
+
+      params[:reason] = "Duplicate of #{@invoice.duplicate_of.batch_id}"
+      reject
+    end
+
+    def mark_replacement
+      return refuse('Only AIM staff decide a possible duplicate.') unless staff? && @invoice.possible_duplicate?
+
+      other = @invoice.duplicate_of
+      @invoice.mark_replacement!(actor: current_user_email)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: "Marked as the replacement for #{other.batch_id}."
+    end
+
+    def not_duplicate
+      return refuse('Only AIM staff decide a possible duplicate.') unless staff? && @invoice.possible_duplicate?
+
+      @invoice.clear_duplicate!(actor: current_user_email)
+      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: 'Not a duplicate. It carries on as usual.'
     end
   end
 end

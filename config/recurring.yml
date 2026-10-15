@@ -39,6 +39,11 @@ production: &production
     queue: default
     schedule: every minute
     description: Approves AIM invoices uploaded straight to Fiscal once the AI has read them
+  aim_duplicate_check:
+    class: Aim::DuplicateCheckJob
+    queue: default
+    schedule: every minute
+    description: Flags possible duplicate AIM invoices for AIM staff
   aim_purge_fiscal_reports:
     class: Aim::PurgeFiscalReportsJob
     queue: default

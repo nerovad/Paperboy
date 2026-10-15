@@ -21,6 +21,7 @@ module Aim
     include Aim::InvoiceCoding
     include Aim::InvoiceManualEntry
     include Aim::InvoiceSecondApproval
+    include Aim::InvoiceDuplicates
     include Aim::Transitions
     include Aim::Audited
 
@@ -42,7 +43,7 @@ module Aim
     # Why a person is needed. The old review queues, as one column.
     REVIEW_REASONS = %w[
       unknown_type unknown_vendor missing_fields low_confidence handwritten
-      extraction_error split_error export_error
+      extraction_error split_error export_error duplicate
     ].freeze
 
     # What the worker does next. NULL means nothing.

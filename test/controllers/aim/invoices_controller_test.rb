@@ -510,6 +510,53 @@ module Aim
       assert_not small.needs_second_approval?(42)
     end
 
+    test 'a possible duplicate goes to Action Needed linked to the other; staff decide (#131)' do
+      first = invoice('4601.D1', state: 'exported', vendor_name: 'ACME Inc', invoice_number: 'INV 9', invoice_total: 10, pdf: false)
+      row = invoice('4601.D2', state: 'ready_for_approval', vendor_name: 'acme inc', invoice_number: 'inv9', invoice_total: 10, pdf: false)
+
+      Aim::DuplicateCheckJob.perform_now
+      row.reload
+      assert_equal ['needs_review', 'duplicate', first.id], [row.state, row.review_reason, row.duplicate_of_id]
+      assert_includes first.events.pluck(:note), '4601.D2 may be a duplicate of this one'
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select 'a[href=?]', aim_invoice_path(first.batch_id)
+      assert_select 'button[value=reject_duplicate]'
+
+      act(row, 'not_duplicate')
+      assert_equal [nil, nil], [row.review_reason, row.duplicate_of_id]
+      Aim::DuplicateCheckJob.perform_now
+      assert_nil row.reload.duplicate_of_id, '"not a duplicate" sticks while the details stay the same'
+    end
+
+    test 'only the later of two is flagged, and nothing that arrived before the check began' do
+      first = invoice('4601.F1', state: 'ready_for_approval', invoice_total: 30, pdf: false)
+      row = invoice('4601.F2', state: 'ready_for_approval', invoice_total: 30, pdf: false)
+      old = invoice('4601.F3', state: 'ready_for_approval', invoice_total: 30, pdf: false, created_at: Time.zone.parse('2026-10-01'))
+
+      Aim::DuplicateCheckJob.perform_now
+
+      assert_equal [nil, first.id, nil], [first.reload.duplicate_of_id, row.reload.duplicate_of_id, old.reload.duplicate_of_id]
+    end
+
+    test 'a replacement says so at both ends; a duplicate is rejected naming the other' do
+      first = invoice('4601.E1', state: 'exported', invoice_total: 20, pdf: false)
+      row = invoice('4601.E2', state: 'ready_for_approval', invoice_total: 20, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+
+      act(row.reload, 'replacement')
+      assert_equal first.id, row.replaces_invoice_id
+      assert_equal row, first.reload.replaced_by
+      Aim::DuplicateCheckJob.perform_now
+      assert_nil row.reload.duplicate_of_id, 'a replacement is not flagged again'
+
+      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 20)
+      Aim::DuplicateCheckJob.perform_now
+      act(third.reload, 'reject_duplicate')
+      assert_equal 'rejected', third.state
+      assert_includes third.notes, "Duplicate of #{first.batch_id}"
+    end
+
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 

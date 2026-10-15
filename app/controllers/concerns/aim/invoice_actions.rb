@@ -26,10 +26,8 @@ module Aim
       'delete' => :delete_invoice,
       'learn_and_retry' => :learn_and_retry,
       'learn_and_send' => :learn_and_send,
-      'retry_export' => :retry_export,
-      'send_to_queue' => :send_to_queue,
-      'return_to_first' => :return_to_first
-    }.freeze
+      'retry_export' => :retry_export
+    }.merge(Aim::InvoiceRoutingActions::ACTIONS).freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
     # The value is the button's label, for the refusal without one.
