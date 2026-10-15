@@ -16,6 +16,17 @@
     </div>
   </header>
 
+  <% if @invoice.manual_entry %>
+    <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
+    <div class="aim-readonly-banner aim-manual-banner" role="status">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+      <div>
+        <strong>Manual Data Entry Needed</strong>
+        <p>Uploaded straight to Fiscal: type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>. It is billed and filed once they are in.</p>
+      </div>
+    </div>
+  <% end %>
+
   <% if status == 'on_hold' && @record.hold_reason.present? %>
     <div class="aim-readonly-banner" role="alert">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>

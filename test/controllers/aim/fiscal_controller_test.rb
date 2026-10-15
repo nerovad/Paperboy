@@ -180,6 +180,19 @@ module Aim
       assert_equal [@invoice.id, other.id].sort, @controller.instance_variable_get(:@records).map(&:invoice_id).sort
     end
 
+    test 'straight to Fiscal: Report Queue waits for the details, and typing them in requests the export' do
+      @invoice.update!(manual_entry: true, invoice_date: nil, invoice_total: nil, document_type: 'Invoice')
+      Aim::FiscalRecord.create!(invoice: @invoice)
+
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'make_ready' }
+      assert_match(/Type in the invoice's details first/, flash[:alert])
+
+      patch :update, params: { id: @invoice.batch_id, fiscal_action: 'save',
+                               invoice: { invoice_date: '2026-10-01', invoice_total: '12.50' } }
+      @invoice.reload
+      assert_equal [false, 'export'], [@invoice.manual_entry, @invoice.command]
+    end
+
     test 'Archive waits for what the agency group needs' do
       @invoice.update!(agency: 'GSA')
       Aim::AgencyGroup.for_agency!('GSA').update!(required_field_list: %w[check_number])

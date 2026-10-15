@@ -27,9 +27,7 @@ module Aim
       return refuse(problem) if problem
 
       stored = files.map { |file| store(file, budget_unit) }
-      redirect_to new_aim_upload_path,
-                  notice: "#{pluralize(stored.size, 'invoice')} uploaded. " +
-                          (manual? ? 'They are in the queue, flagged Manual Data Entry Needed.' : 'The AI reads them next.')
+      redirect_to new_aim_upload_path, notice: "#{pluralize(stored.size, 'invoice')} uploaded. #{where_they_went}"
     rescue Aim::MissingConfiguration, SystemCallError, ActiveRecord::RecordInvalid => e
       Rails.logger.error "AIM upload failed: #{e.class}: #{e.message}"
       refuse('The upload could not be saved. Try again.')
@@ -38,12 +36,25 @@ module Aim
     private
 
     def store(file, budget_unit)
+      owner = fiscal? ? nil : { name: owner_name, employee_id: owner_employee_id }
       invoice = Aim::Intake.new.store(file,
                                       original_filename: file.original_filename, budget_unit: budget_unit,
-                                      submitter: submitter_name, owner: { name: owner_name, employee_id: owner_employee_id },
-                                      actor: current_user_email, source: 'upload', manual: manual?).invoice
-      invoice.hand_to_cover!(by: current_user_employee_id)
+                                      submitter: submitter_name, owner: owner,
+                                      actor: current_user_email, source: 'upload', manual: manual?, fiscal: fiscal?).invoice
+      if fiscal?
+        invoice.events.create!(action: 'fiscal', actor: current_user_email,
+                               note: 'Uploaded straight to Fiscal: no AI, no approval queue; approved by its uploader')
+      else
+        invoice.hand_to_cover!(by: current_user_employee_id)
+      end
       invoice
+    end
+
+    def where_they_went
+      if fiscal? then 'They are in the Fiscal Queue, flagged Manual Data Entry Needed.'
+      elsif manual? then 'They are in the queue, flagged Manual Data Entry Needed.'
+      else 'The AI reads them next.'
+      end
     end
 
     # Why this upload cannot go ahead, or nil.
@@ -51,6 +62,7 @@ module Aim
       if !Aim::Units.new.valid?(budget_unit) then 'Pick the budget unit from the list.'
       elsif files.empty? then 'Choose at least one PDF.'
       elsif !files.all? { |file| pdf?(file) } then 'Only PDF files can be uploaded.'
+      elsif fiscal? then fiscal_refusal(budget_unit)
       elsif params[:owner] == 'person' && owner_employee_id.nil? then 'Choose the person whose queue it goes to.'
       elsif outsider_chosen? then 'That person is not in AIM, so they have no queue.'
       elsif outside_their_units?(budget_unit) then "They do not work in #{budget_unit}. Pick one of their budget units."
@@ -60,8 +72,23 @@ module Aim
 
     def submitter_name = current_user_name || current_user_email
 
-    # Skip the AI (#131): typed in by hand, straight to the queue.
-    def manual? = params[:skip_ai] == '1'
+    # How it is entered (#131): read by the AI (ai, the default), typed in by
+    # hand in a queue (manual), or typed in by Fiscal, approval skipped
+    # (fiscal).
+    def entry = params[:entry].to_s
+
+    def manual? = entry == 'manual'
+
+    def fiscal? = entry == 'fiscal'
+
+    # Straight to Fiscal: AIM Admins, and Fiscal people for the budget units
+    # their agency groups work.
+    def fiscal_refusal(budget_unit)
+      return 'Only AIM Admins and Fiscal can upload straight to Fiscal.' unless helpers.aim_fiscal?
+      return if group_serves_unit?(Aim::Units.new.agency_of(budget_unit), budget_unit)
+
+      "#{budget_unit} is outside your agency groups."
+    end
 
     # Who may skip the AI: anyone with a queue, into their own; AIM Admins and
     # the BU's Admins into anyone else's, or the shared queue.

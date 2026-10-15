@@ -50,15 +50,23 @@
           </div>
         </fieldset>
 
-        <%# Skip the AI (#131): into your own queue, or -- AIM Admins and BU
-            Admins -- anyone's; the server checks which. %>
-        <% if @has_queue || aim_queue_access? || aim_bu_admin_units.present? %>
+        <%# How it is entered (#131): the AI, by hand in a queue, or straight
+            to Fiscal. The server checks who may do which. %>
+        <% manual_ok = @has_queue || aim_queue_access? || aim_bu_admin_units.present? %>
+        <% if manual_ok || aim_fiscal? %>
           <fieldset class="aim-field aim-owner-choice">
             <legend>Data entry</legend>
-            <label><%= check_box_tag :skip_ai, '1', false %> Skip the AI: I will type the details in myself</label>
+            <label><%= radio_button_tag :entry, 'ai', true %> The AI reads it</label>
+            <% if manual_ok %>
+              <label><%= radio_button_tag :entry, 'manual', false %> I will type it in: straight to the queue, no AI</label>
+            <% end %>
+            <% if aim_fiscal? %>
+              <label><%= radio_button_tag :entry, 'fiscal', false %> Straight to Fiscal: no AI, no approval; Fiscal types it in</label>
+            <% end %>
             <p class="aim-profile-switch__note">
-              It goes straight to the queue flagged <strong>Manual Data Entry Needed</strong> and can be approved once the
-              details are in. Into someone else's queue only for AIM Admins and that BU's Admins.
+              Typed-in invoices are flagged <strong>Manual Data Entry Needed</strong> until the details are in. Into someone
+              else's queue only for AIM Admins and that BU's Admins. Straight to Fiscal ignores Whose queue and names you as
+              the approver.
             </p>
           </fieldset>
         <% end %>

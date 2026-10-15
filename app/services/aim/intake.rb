@@ -33,12 +33,15 @@ module Aim
     # to, nil for the BU's shared queue: a name, or { name:, employee_id: }.
     # manual: true skips the AI (#131): the row goes straight to its queue in
     # Ready for Approval, flagged Manual Data Entry Needed, for a person to
-    # type in. It is billed like any other.
+    # type in. fiscal: true skips approval too: it is approved by its uploader
+    # and lands with Fiscal, to be typed in there. Both are billed like any
+    # other.
     # +origin+: source ('upload' unless said), source_path, manual.
     def store(io, original_filename:, budget_unit:, submitter:, owner:, actor:, **origin)
       source = origin.fetch(:source, 'upload')
       source_path = origin[:source_path]
-      manual = origin.fetch(:manual, false)
+      fiscal = origin.fetch(:fiscal, false)
+      manual = fiscal || origin.fetch(:manual, false)
       owner_employee_id = owner.is_a?(Hash) ? owner[:employee_id] : nil
       owner = owner[:name] if owner.is_a?(Hash)
       batch_id = mint_batch_id(budget_unit, original_filename)
@@ -50,7 +53,7 @@ module Aim
       File.binwrite(pdf_path, bytes)
 
       invoice = Aim::Invoice.create!(
-        batch_id: batch_id, state: manual ? 'ready_for_approval' : 'received', command: (manual ? nil : 'extract'),
+        batch_id: batch_id, state: intake_state(fiscal, manual), command: (manual ? nil : 'extract'),
         manual_entry: manual, actor: actor,
         budget_unit: budget_unit, submitter: submitter,
         assigned_to: owner.presence, assigned_employee_id: owner_employee_id,
@@ -79,6 +82,13 @@ module Aim
     end
 
     private
+
+    def intake_state(fiscal, manual)
+      if fiscal then 'approved'
+      elsif manual then 'ready_for_approval'
+      else 'received'
+      end
+    end
 
     def random_code
       Array.new(BATCH_ID_SPEC.dig('code', 'length')) { ID_HASH_ALPHABET[SecureRandom.random_number(ID_HASH_ALPHABET.size)] }.join

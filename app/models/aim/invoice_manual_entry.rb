@@ -22,7 +22,8 @@ module Aim
       transaction do
         unless state == 'ready_for_approval'
           transition_to!('ready_for_approval', actor: actor, note: "sent to a queue: #{reason}",
-                                               command: nil, review_reason: nil, lease_owner: nil, lease_until: nil)
+                                               command: nil, review_reason: nil, lease_owner: nil, lease_until: nil,
+                                               manual_entry: manual || manual_entry)
         end
         reassign!(owner, actor: actor, by: by)
         flag_manual_entry!(actor: actor, note: "Manual Data Entry Needed: #{reason}") if manual

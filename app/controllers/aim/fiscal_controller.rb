@@ -109,6 +109,8 @@ module Aim
     end
 
     def make_ready
+      raise ArgumentError, "Type in the invoice's details first: #{@invoice.missing_for_a_user.to_sentence}." if @invoice.manual_entry
+
       @record.move_to!('ready', actor: current_user_email, hold_reason: nil)
       finish('Added to the Report Queue.')
     end

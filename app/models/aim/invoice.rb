@@ -137,6 +137,7 @@ module Aim
     # on it: AIM staff settle Unknown in review first.
     def document_type_is_settled_for_a_user
       return unless state == 'ready_for_approval'
+      return if manual_entry # typed in by hand, the document type with the rest (#131)
       return if document_type.present? && document_type != UNSETTLED_DOCUMENT_TYPE
 
       errors.add(:document_type, 'must be settled before an invoice reaches a user')

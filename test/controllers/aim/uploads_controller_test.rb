@@ -154,7 +154,7 @@ module Aim
     tests Aim::UploadsController
 
     test 'skipping the AI puts it straight in the queue, flagged for typing in (#131)' do
-      post :create, params: { budget_unit: '4601', owner: 'self', skip_ai: '1', files: [pdf('hand.pdf')] }
+      post :create, params: { budget_unit: '4601', owner: 'self', entry: 'manual', files: [pdf('hand.pdf')] }
 
       row = Aim::Invoice.sole
       assert_equal ['ready_for_approval', nil, true, 42], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
@@ -163,13 +163,31 @@ module Aim
 
     test 'only AIM Admins and the BU\'s Admins skip the AI for someone else\'s queue' do
       @controller.define_singleton_method(:current_user_group_names) { Set[] }
-      post :create, params: { budget_unit: '4601', owner: 'shared', skip_ai: '1', files: [pdf('hand.pdf')] }
+      post :create, params: { budget_unit: '4601', owner: 'shared', entry: 'manual', files: [pdf('hand.pdf')] }
       assert_match(/Only AIM Admins and the BU's Admins/, flash[:alert])
       assert_equal 0, Aim::Invoice.count
 
       Aim::UserBudgetUnit.create!(employee_id: 42, budget_unit: '4601', bu_admin: true)
-      post :create, params: { budget_unit: '4601', owner: 'shared', skip_ai: '1', files: [pdf('hand.pdf')] }
+      post :create, params: { budget_unit: '4601', owner: 'shared', entry: 'manual', files: [pdf('hand.pdf')] }
       assert Aim::Invoice.sole.manual_entry
+    end
+
+    test 'straight to Fiscal: no AI, no approval queue, approved by the uploader, flagged for typing in' do
+      post :create, params: { budget_unit: '4601', owner: 'self', entry: 'fiscal', files: [pdf('fiscal.pdf')] }
+
+      row = Aim::Invoice.sole
+      assert_equal ['approved', nil, true, nil], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
+      assert_equal 'jane@example.com', row.events.find_by(to_state: 'approved').actor, 'the stamp names the uploader'
+      assert_match(/Fiscal Queue/, flash[:notice])
+      assert_equal 1, Aim::FiscalRecord.take_in_approved!
+    end
+
+    test 'only AIM Admins and Fiscal upload straight to Fiscal' do
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+      post :create, params: { budget_unit: '4601', owner: 'self', entry: 'fiscal', files: [pdf('fiscal.pdf')] }
+
+      assert_match(/Only AIM Admins and Fiscal/, flash[:alert])
+      assert_equal 0, Aim::Invoice.count
     end
   end
 end

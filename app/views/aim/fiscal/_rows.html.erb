@@ -52,7 +52,10 @@
         <% if %w[exported archived].include?(status) %>
           <td><%= record.exported_at&.in_time_zone&.strftime('%m/%d/%y %H:%M') || '—' %></td>
         <% end %>
-        <td><%= aim_fiscal_badge(record) %></td>
+        <td>
+          <%= aim_fiscal_badge(record) %>
+          <% if record.invoice.manual_entry %><span class="badge is-pending">Manual Data Entry Needed</span><% end %>
+        </td>
         <% if selectable %>
           <td class="aim-select-cell">
             <input type="checkbox" name="record_ids[]" value="<%= record.id %>"
