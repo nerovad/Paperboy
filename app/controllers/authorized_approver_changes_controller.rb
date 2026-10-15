@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/authorized_approver_changes_controller.rb
 require 'csv'
 
 # The parking, badges and keys console's change log. Anyone who can see a

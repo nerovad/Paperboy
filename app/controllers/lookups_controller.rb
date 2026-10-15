@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/lookups_controller.rb
 class LookupsController < ApplicationController
   def agencies
     @agency_options = Agency
@@ -134,7 +133,7 @@ class LookupsController < ApplicationController
     render json: FormLookup.options_for(form, params[:field].to_s, answers)
   end
 
-  # --- Generic ("custom") lookup builder endpoints ---------------------------
+  # Generic ("custom") lookup builder endpoints
   # Schema introspection for the form builder's custom data source. database is
   # a logical name (paperboy/gsabss); names are validated and quoted before SQL.
 
