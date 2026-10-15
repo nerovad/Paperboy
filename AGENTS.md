@@ -38,6 +38,44 @@
   * Do not indent proposed commit
 - Git
   * use git mv when moving files
+
+## Principles
+
+Paperboy adopts the following 24 principles.
+They steer judgment calls. They never replace a rule elsewhere in this file;
+where a principle and a rule conflict, the rule wins.
+
+- **Build less:** Laziness Protocol, Subtract Before You Add, Minimize Reader Load,
+  Redesign from First Principles, Outcome-Oriented Execution.
+- **Think first:** Foundational Thinking, Attack the Premise, Experience First,
+  Exhaust the Design Space, Build the Lever.
+- **Architecture:** Model the Domain, Boundary Discipline, Type System Discipline,
+  Make Operations Idempotent, Migrate Callers Then Delete Legacy APIs,
+  Separate Before Serializing Shared State.
+- **Verification:** Prove It Works, Fix Root Causes, Sequence Work into Verifiable
+  Units, Test Behavior, Not Implementation, Explain the Number.
+- **Delegation and meta:** Guard the Context Window, Never Block on the Human,
+  Encode Lessons in Structure.
+
+Rules:
+
+- **Cite the principle you applied.** Every PR's Implementation notes and every
+  non-obvious decision in an issue or PR comment names the principle and the
+  decision it changed, in the form `Principle: <name> - <decision>`. A name with
+  no decision behind it does not count.
+- **Prove It Works.** Before calling a task done, run the real thing and show the
+  real result: the page rendered, the rake task's output, the rows written, the
+  CI run's log. Green tests alone are a proxy. Paste the evidence under
+  `Checks run` in the pull request.
+- **Never Block on the Human applies only to reversible work** (code, notes,
+  drafts, branches). It does **not** override Roy's approval for production SQL,
+  Active Directory (AD) changes, merges, or sending email: those always wait for an
+  explicit OK, as do force-pushes, deploys, and posting outside the repository.
+- **Make Operations Idempotent.** A script, rake task, or CI step that changes
+  state says in its comment what a second run, and a run after a crash, does.
+- **Encode Lessons in Structure.** When a correction is made twice, add a
+  RuboCop cop, a test, or a CI check instead of another paragraph here.
+
 ## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
 implementation work. The commands below use the Gitea API and read `GITEA_TOKEN` from the
