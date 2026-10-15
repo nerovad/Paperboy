@@ -40,5 +40,12 @@
     <% end %>
   </nav>
 
-  <%= render @tab, admin: admin, own_units: own_units, agency_units: agency_units, elsewhere: elsewhere %>
+  <% locals = { admin: admin, own_units: own_units, agency_units: agency_units, elsewhere: elsewhere } %>
+  <%# Each tab by name, so nothing from the address reaches render. %>
+  <% if @tab == 'bu_people' %><%= render 'bu_people', **locals %>
+  <% elsif @tab == 'roles' %><%= render 'roles', **locals %>
+  <% elsif @tab == 'settings' %><%= render 'settings', **locals %>
+  <% elsif @tab == 'alerts' %><%= render 'alerts', **locals %>
+  <% else %><%= render 'units', **locals %>
+  <% end %>
 </div>
