@@ -67,7 +67,8 @@
           <%= hidden_field_tag :agency_group_id, @group.id, id: nil %>
           <%= hidden_field_tag :budget_unit, unit, id: nil %>
           <strong>Second approval</strong>
-          <label>over $<%= number_field_tag :second_approval_over, setting&.second_approval_over, min: 0, step: '0.01',
+          <label>over $<%= number_field_tag :second_approval_over,
+                                             setting&.second_approval_over || Aim::BudgetUnitSetting::DEFAULT_SECOND_APPROVAL_OVER, min: 0, step: '0.01',
                                              id: "second-over-#{unit}", class: 'aim-second-approval__amount',
                                              aria: { label: "Amount over which #{unit} needs a second approval" } %></label>
           <%= render 'aim/shared/grouped_person_select', name: :second_approver_employee_id, label: "Second approver for #{unit}",
@@ -75,7 +76,7 @@
           <button type="submit" class="btn compact">Save</button>
         <% end %>
         <p class="aim-agency-group-meta">
-          <%= setting&.second_approval? ? "Invoices over #{number_to_currency(setting.second_approval_over)} go to #{setting.second_approver_name} after their first approval." : 'No second approval. Leave both blank for none.' %>
+          <%= setting&.second_approval? ? "Invoices over #{number_to_currency(setting.second_approval_over)} go to #{setting.second_approver_name} after their first approval." : 'No second approval yet: pick a second approver and save to turn it on. Clear both to turn it off.' %>
         </p>
       <% elsif setting&.second_approval? %>
         <p class="aim-agency-group-meta">Second approval over <%= number_to_currency(setting.second_approval_over) %> by <%= setting.second_approver_name %>.</p>
