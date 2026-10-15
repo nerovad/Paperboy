@@ -25,7 +25,7 @@
           <p><%= config[:description] %></p>
           <% if queue == 'needs_review' && @review_reasons.present? %>
             <p class="aim-dashboard-note">
-              <%= @review_reasons.map { |reason, count| "#{count} #{aim_review_reason_label(reason).downcase}" }.join(', ') %>
+              <%= @review_reasons.map { |reason, count| "#{count} #{reason ? aim_review_reason_label(reason).downcase : 'to split or check'}" }.join(', ') %>
             </p>
           <% end %>
         <% end %>

@@ -10,7 +10,7 @@
         <% by_group.each do |group, counts| %>
           <tr>
             <td class="is-strong"><%= group.name %></td>
-            <% columns.each do |column| %><td><%= counts[column].nonzero? %></td><% end %>
+            <% columns.each do |column| %><td><%= counts[column].to_i.nonzero? %></td><% end %>
           </tr>
         <% end %>
       </tbody>

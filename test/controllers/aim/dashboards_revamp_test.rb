@@ -69,9 +69,14 @@ module Aim
                                      vendor_name: 'ACME', invoice_number: 'S1')
       Aim::FiscalRecord.create!(invoice: invoice, status: 'ready')
 
+      shf = Aim::Invoice.create!(batch_id: '2551.S2', state: 'approved', actor: 'test', budget_unit: '2551', agency: 'SHF')
+      Aim::FiscalRecord.create!(invoice: shf, status: 'review')
+      Aim::AgencyGroup.for_agency!('SHF')
+
       get :index
 
       assert_select '.aim-attention__tile', text: /1\s*Ready to report/
+      assert_select 'h2', text: 'By agency group'
     end
   end
 
