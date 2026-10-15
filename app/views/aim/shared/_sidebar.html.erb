@@ -24,7 +24,7 @@
     <details class="nav-group" <%= "open" %> data-aim-sidebar-target="group" data-key="aim"
              data-default-open="true" data-current="<%= current == "aim" %>">
       <summary><span class="nav-group-label">AIM</span></summary>
-      <% if aim_queue_access? %>
+      <% if aim_has_queue? %>
         <%= link_to "Dashboard", aim_dashboard_path,
                     class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
       <% end %>
@@ -124,6 +124,7 @@
         </details>
       <% end %>
     <% end %>
+    <%= link_to "How AIM works", aim_help_path, class: "nav-link#{' active' if controller_name == 'help'}" %>
   </nav>
   <%= render "shared/sidebar_footer" %>
 </div>

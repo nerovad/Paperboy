@@ -1,0 +1,182 @@
+<%# How AIM works (#131): by task, short answers, with screenshots where there
+    are some (aim_help_shot). %>
+<% sections = {
+     'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
+     'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'duplicates' => 'Possible duplicates',
+     'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
+   } %>
+<div class="aim-page aim-help">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">How AIM works</h1>
+      <p class="aim-page-subtitle">What each part of AIM is for, and how to do the common things.</p>
+    </div>
+  </header>
+
+  <nav class="aim-help__toc" aria-label="On this page">
+    <% sections.each do |anchor, title| %><%= link_to title, "##{anchor}" %><% end %>
+  </nav>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="start">
+    <h2>Getting around</h2>
+    <ul>
+      <li><strong>Dashboard</strong> (AIM Admins): what needs a look first -- possible duplicates, invoices to type in, second
+        approvals, anything waiting over a week, failures -- then a card per queue, today's movement, the invoices waiting
+        longest, and each agency group's share. Click any tile or card to open that list.</li>
+      <li><strong>My AIM</strong> (everyone else with a queue): your queue, what has waited over a week, your second approvals
+        and anything for you to type in.</li>
+      <li><strong>Fiscal Dashboard</strong> (Fiscal): the same for the Fiscal stage.</li>
+      <li><strong>Managing</strong>, top right on many pages, picks which agency group a page shows when you work more than
+        one. It is remembered until you change it.</li>
+    </ul>
+    <%= aim_help_shot('dashboard', 'The Dashboard: needs attention, the queue cards, today, the oldest waiting.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="roles">
+    <h2>Who can do what</h2>
+    <table class="submission-table aim-people-table">
+      <thead><tr><th>Role</th><th>Set where</th><th>Can</th></tr></thead>
+      <tbody>
+        <tr><td class="is-strong">AIM Admin</td><td>ACL (the aim_admin group)</td><td>Everything, in every group.</td></tr>
+        <tr><td class="is-strong">Group Admin</td><td>Agency Groups &rsaquo; Group roles, or a person's profile</td>
+            <td>Their group's people and BU Admins, its Fiscal people, settings, templates, reject reasons, second approvals
+              and alerts. Also works its Fiscal.</td></tr>
+        <tr><td class="is-strong">Fiscal</td><td>The same</td><td>Their group's Fiscal stage, coding rules and lookup imports,
+              report templates and reports; can upload straight to Fiscal.</td></tr>
+        <tr><td class="is-strong">BU Admin</td><td>A person's profile, or a group's BUs &amp; People</td>
+            <td>Their BUs' people and shared queues.</td></tr>
+        <tr><td class="is-strong">User</td><td>Users &amp; Queues</td><td>Approves what is in their queue and their BUs' shared queues.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="groups">
+    <h2>Agency groups</h2>
+    <p>An agency group decides who works Fiscal and the coding rules for a set of budget units, and how. Every agency AIM
+      uses has its own group. A <strong>custom group</strong> takes some of an agency's BUs for itself -- say Sheriff
+      Detention's units -- so they get their own Fiscal people and settings. Every BU is in exactly one group.</p>
+    <ul>
+      <li><strong>Make a custom group:</strong> Admin &rsaquo; Agency Groups &rsaquo; New custom group, then tick its BUs on
+        its Budget units tab. They leave the agency's group; untick to send one back.</li>
+      <li><strong>Which BUs AIM uses</strong> is the same setting on an agency's group and on AIM's Budget Units: untick a
+        BU on either and AIM stops using it.</li>
+      <li><strong>Fiscal also processes:</strong> on a group's Fiscal settings, tick other groups its Fiscal should work too.</li>
+      <li><strong>Deleting:</strong> only a custom group can go; its BUs return to the agency's group.</li>
+    </ul>
+    <%= aim_help_shot('agency_group', 'A group, tab by tab: Budget units, BUs & People, Group roles, Fiscal settings, Alerts.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="upload">
+    <h2>Uploading invoices</h2>
+    <p>Upload Invoices asks two things: <strong>whose queue</strong> it goes to, and whether the AI reads it.</p>
+    <table class="submission-table aim-people-table">
+      <thead><tr><th></th><th>The AI reads it (default)</th><th>Skip the AI</th></tr></thead>
+      <tbody>
+        <tr><td class="is-strong">A queue</td><td>The AI reads it, then it reaches the queue.</td>
+            <td>Straight to the queue, flagged <em>Manual Data Entry Needed</em> until the details are typed in.</td></tr>
+        <tr><td class="is-strong">Straight to Fiscal</td><td>The AI reads it, then it is approved in your name and goes to
+            Fiscal (Action Needed first if the AI has trouble).</td>
+            <td>Straight to the Fiscal Queue, flagged; Fiscal types it in, then it is billed and filed.</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>Anyone with a queue can skip the AI for their own queue; AIM Admins and that BU's Admins for anyone's.</li>
+      <li>Straight to Fiscal is for AIM Admins and Fiscal (Fiscal for their groups' BUs). It names you as the approver.</li>
+      <li>Every invoice is billed, however it came in.</li>
+    </ul>
+    <%= aim_help_shot('upload', 'Upload: whose queue, and Skip the AI.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="working">
+    <h2>Working an invoice</h2>
+    <ul>
+      <li><strong>Approve</strong> sends it to billing and Fiscal. Over its BU's second-approval amount, the button says
+        <em>Approve (first of two)</em> and it goes on to the BU's second approver, who approves it or uses
+        <em>Return to first approver</em>. The approval stamp names both.</li>
+      <li><strong>Send Back</strong> when the invoice is fine but AIM read it wrong or something is missing: it returns to
+        AIM review.</li>
+      <li><strong>Reject</strong> when it should not be paid through AIM at all -- not an invoice, not ours, a duplicate.
+        Pick a reason or Other and type one. A copy goes back to the submitter.</li>
+      <li><strong>Move</strong> when it belongs in someone else's queue. AIM Admins also have <strong>Send to a queue</strong>
+        from anywhere the AI is not working on it, optionally flagged for data entry.</li>
+      <li><strong>Manual Data Entry Needed</strong>: type the details in from the PDF and Save; the flag clears once what an
+        approval needs is in.</li>
+    </ul>
+    <%= aim_help_shot('review', 'The review page: the PDF, the fields, and the buttons.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="duplicates">
+    <h2>Possible duplicates</h2>
+    <p>An invoice with the same vendor, invoice number and total as an earlier one (ignoring case and spaces) goes to
+      Action Needed as <em>Possible duplicate</em>, linked to the other. AIM staff choose:</p>
+    <ul>
+      <li><strong>Reject as duplicate</strong> -- rejected, naming the other.</li>
+      <li><strong>Replacement</strong> -- it replaces the other; both say so, with links.</li>
+      <li><strong>Not a duplicate</strong> -- it carries on; it is not flagged again unless its vendor, number or total change.</li>
+    </ul>
+    <%= aim_help_shot('duplicate', 'A possible duplicate and the three answers.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="fiscal">
+    <h2>Fiscal</h2>
+    <p>Every approved invoice reaches its group's Fiscal: <strong>Fiscal Queue</strong> (fill in pay doc, check, coding)
+      &rarr; <strong>On Hold</strong> when waiting on something &rarr; <strong>Report Queue</strong> &rarr;
+      <strong>Exported</strong> once in a report &rarr; <strong>Archived</strong> once paid.</p>
+    <ul>
+      <li><strong>The report:</strong> tick invoices in the Report Queue, pick a template, <em>Preview report</em>. Then
+        <em>Download only</em> for a draft (nothing changes), or <em>Download and process</em> to save it as a numbered
+        report, move the invoices to Exported and note it in each one's history.</li>
+      <li><strong>Reports</strong> lists every saved report: download it again exactly as made, or <em>Regenerate</em> it
+        from the invoices' values now as a new number. Files are kept a year.</li>
+      <li><strong>Report Templates:</strong> save named layouts -- columns ticked, dragged into order, renamed; comma or tab.</li>
+      <li><strong>Group settings</strong> (Fiscal settings tab): the Default report, hold reasons, tags, fields needed
+        before Archive, reject reasons.</li>
+    </ul>
+    <%= aim_help_shot('fiscal_preview', 'The report preview, with Download only and Download and process.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="setup">
+    <h2>Setting up a group</h2>
+    <ol>
+      <li><strong>Budget units:</strong> tick the BUs it serves.</li>
+      <li><strong>Group roles:</strong> add its Group Admins and Fiscal people.</li>
+      <li><strong>BUs &amp; People:</strong> add people to each BU, switch shared queues, appoint BU Admins, and set a BU's
+        second approval (amount, starting at 25,000, and a second approver).</li>
+      <li><strong>Fiscal settings:</strong> the Default report's columns and format, hold and reject reasons, tags, what
+        Archive needs, and which other groups its Fiscal also processes.</li>
+      <li><strong>Alerts:</strong> who is emailed about what (see below).</li>
+    </ol>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="alerts">
+    <h2>Email alerts</h2>
+    <p><strong>Not sending yet</strong> -- they wait on Paperboy's email setup. A group's Alerts tab sets who would be
+      emailed about what and shows who would be emailed today. A BU's own settings replace its group's whole; <em>Use the
+      group's</em> puts it back.</p>
+    <ul>
+      <li>Owners: invoices in their queue longer than 7 days (on); new invoices in their queue (off).</li>
+      <li>BU Admins: possible duplicates; unowned shared-queue invoices older than 7 days.</li>
+      <li>Second approvers: when a high-dollar invoice reaches them.</li>
+    </ul>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="faq">
+    <h2>Quick answers</h2>
+    <dl class="aim-help__faq">
+      <dt>I can't see an invoice I expect.</dt>
+      <dd>Check Managing at the top right, and the agency group its BU is in. Fiscal and Coding Rules show only your groups.</dd>
+      <dt>Approve says it is waiting for someone's second approval.</dt>
+      <dd>It is over its BU's amount and has its first approval; only the BU's second approver (or AIM staff) can finish it.</dd>
+      <dt>Add to Report Queue refuses.</dt>
+      <dd>It was uploaded straight to Fiscal and still needs its details typed in; the banner lists what is missing.</dd>
+      <dt>Archive is greyed out.</dt>
+      <dd>The group needs some fields filled in first (Fiscal settings &rsaquo; Needed before archive); the label says which.</dd>
+      <dt>Two invoices are flagged as duplicates but are not.</dt>
+      <dd>AIM staff click <em>Not a duplicate</em>; it will not be flagged again unless its details change.</dd>
+      <dt>How do I get a report again?</dt>
+      <dd>Fiscal &rsaquo; Reports: Download gives the exact file as made (for a year); Regenerate makes a new one from today's values.</dd>
+      <dt>Why didn't anyone get an email?</dt>
+      <dd>Email alerts are not switched on yet.</dd>
+    </dl>
+  </section>
+</div>

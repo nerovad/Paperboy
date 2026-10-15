@@ -138,6 +138,7 @@ Rails.application.routes.draw do
   namespace :aim do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    get 'help', to: 'help#show', as: :help
 
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       collection do

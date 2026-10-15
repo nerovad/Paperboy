@@ -9,6 +9,16 @@ module Aim
       covered.any? ? "#{group.name} (also processes #{covered.to_sentence})" : group.name
     end
 
+    # A Help page screenshot (#131), when app/assets/images/aim/help/<name>.png
+    # is there; nothing otherwise.
+    def aim_help_shot(name, caption)
+      return unless Rails.root.join("app/assets/images/aim/help/#{name}.png").exist?
+
+      tag.figure(class: 'aim-help__shot') do
+        image_tag("aim/help/#{name}.png", alt: caption, loading: 'lazy') + tag.figcaption(caption)
+      end
+    end
+
     # A person's roles in their agency groups: [[group, ['Fiscal', ...]], ...].
     def aim_agency_group_roles_of(employee_id)
       Aim::AgencyGroupRole.includes(:agency_group).where(employee_id: employee_id).group_by(&:agency_group)

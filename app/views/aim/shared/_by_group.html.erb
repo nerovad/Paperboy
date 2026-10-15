@@ -1,0 +1,20 @@
+<%# Each agency group's share of the work in progress (#131). Shown when every
+    group is in view. Locals: by_group ({ group => { column => count } }),
+    columns (labels, in order), link (proc: group, column -> path or nil). %>
+<% if by_group.size > 1 %>
+  <h2 class="aim-profile-heading">By agency group</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <table class="submission-table aim-people-table">
+      <thead><tr><th>Agency group</th><% columns.each do |column| %><th><%= column %></th><% end %></tr></thead>
+      <tbody>
+        <% by_group.each do |group, counts| %>
+          <tr>
+            <td class="is-strong"><%= group.name %></td>
+            <% columns.each do |column| %><td><%= counts[column].nonzero? %></td><% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="aim-agency-group-meta">Pick a group under Managing to see only its work.</p>
+  </section>
+<% end %>

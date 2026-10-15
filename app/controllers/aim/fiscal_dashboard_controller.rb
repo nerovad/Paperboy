@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 module Aim
-  # The Fiscal Dashboard (#131): one card per Fiscal list, as the pipeline's
-  # dashboard has one per queue, for the agency groups picked in Managing,
-  # with the latest saved reports. Counts load after the page draws
-  # (aim_counts_controller), the notes with it.
+  # The Fiscal Dashboard (#131): what needs attention, one card per Fiscal
+  # list (as the pipeline's dashboard has one per queue), the oldest in the
+  # Fiscal Queue, each agency group's share and the latest saved reports, for
+  # the groups picked in Managing. Card counts load after the page draws
+  # (aim_counts_controller).
   class FiscalDashboardController < BaseController
     include Aim::FiscalGroupScope
 
@@ -18,10 +19,14 @@ module Aim
 
     def index
       reading_database('read the Fiscal dashboard', alert: 'The invoice database could not be read.',
-                                                    empty: { notes: {}, reports: [] }) do
+                                                    empty: { notes: {}, reports: [], tiles: [], oldest: [], by_group: {} }) do
         Aim::FiscalRecord.take_in_approved!
         records = Aim::FiscalRecord.served_by(served_invoices)
+        stats = Aim::DashboardStats.new(served_invoices, groups: helpers.aim_agency_groups)
         @notes = notes(records)
+        @tiles = stats.fiscal_tiles(helpers)
+        @oldest = records.in_status('review').order(:created_at).limit(5).to_a
+        @by_group = helpers.aim_managing_group ? {} : stats.fiscal_by_group(%w[review on_hold ready exported])
         @reports = latest_reports
       end
     end

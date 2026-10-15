@@ -1,8 +1,11 @@
-<div class="aim-page">
+<%# The pipeline at a glance (revamped for #131): what needs attention, a card
+    per queue, today's movement, the oldest waiting for approval, and each
+    agency group's share. Follows Managing. %>
+<div class="aim-page aim-dashboard-page">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">AIM Invoice Processing Portal</h1>
-      <p class="aim-page-subtitle">Where every invoice is, at a glance.</p>
+      <p class="aim-page-subtitle">Where every invoice is, and what needs a look. <%= link_to 'How AIM works', aim_help_path %></p>
     </div>
     <div class="aim-page-header__pills">
       <%= render 'aim/shared/managing' %>
@@ -11,6 +14,9 @@
   </header>
 
   <% if aim_queue_access? %>
+    <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
+    <%= render 'aim/shared/today', today: @today %>
+
     <section class="aim-dashboard-grid" data-controller="aim-counts" data-aim-counts-url-value="<%= aim_counts_path %>">
       <% @dashboard_queues.each do |queue, config| %>
         <%= link_to aim_invoices_path(queue: queue), class: "aim-dashboard-card #{config[:css_class]}" do %>
@@ -25,9 +31,15 @@
         <% end %>
       <% end %>
     </section>
-  <% else %>
-    <section class="aim-panel aim-empty-state">
-      <p>Invoices waiting for you are in My Queue.</p>
+
+    <h2 class="aim-profile-heading">Waiting longest for approval</h2>
+    <section class="aim-panel aim-agency-group-panel">
+      <%= render 'aim/shared/oldest', oldest: @oldest, owner: true,
+                                      path: ->(invoice) { aim_invoice_path(invoice.batch_id, queue: 'ready_for_approval') } %>
     </section>
+
+    <%= render 'aim/shared/by_group', by_group: @by_group, columns: Aim::DashboardController::PIPELINE_COLUMNS.keys %>
+  <% else %>
+    <%= render 'aim/dashboard/mine' %>
   <% end %>
 </div>

@@ -1889,3 +1889,122 @@ ul.aim-agency-group-columns {
 .aim-alert-days {
   width: 4.5rem;
 }
+
+// The dashboards' "needs attention" row and today's movement (#131).
+.aim-attention {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.aim-attention__tile {
+  background: $surface-panel;
+  border: 1px solid $neutral-border-subtle;
+  border-left: 5px solid $brand-navy;
+  border-radius: 8px;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  text-decoration: none;
+
+  &.is-danger {
+    border-left-color: $danger;
+  }
+
+  &.is-warning {
+    border-left-color: $warning-action;
+  }
+
+  &.is-clear {
+    opacity: 0.55;
+  }
+
+  &:hover {
+    border-color: $brand-navy;
+  }
+}
+
+.aim-attention__count {
+  color: $text-strong;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.aim-attention__label {
+  color: $text-strong;
+  font-weight: 650;
+}
+
+.aim-attention__hint {
+  color: $text-muted;
+  font-size: 0.8rem;
+}
+
+.aim-today {
+  color: $text-muted;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 8px 24px;
+
+  strong {
+    color: $text-strong;
+    font-size: 1.1rem;
+  }
+}
+
+// How AIM works (#131).
+.aim-help__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.aim-help__section {
+  scroll-margin-top: 16px;
+
+  h2 {
+    color: $text-strong;
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+  }
+
+  p,
+  li,
+  dd {
+    color: $text-color;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+}
+
+.aim-help__faq {
+  dt {
+    color: $text-strong;
+    font-weight: 650;
+    margin-top: 10px;
+  }
+
+  dd {
+    margin: 2px 0 0;
+  }
+}
+
+.aim-help__shot {
+  margin: 12px 0 0;
+
+  img {
+    border: 1px solid $neutral-border-subtle;
+    border-radius: 8px;
+    max-width: 100%;
+  }
+
+  figcaption {
+    color: $text-muted;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+}
