@@ -18,7 +18,6 @@ class OshaReport < ApplicationRecord
   # reportable reports only — see SafetyReport#create_osha_report!.
   REPORTABLE_FILING_WINDOW = 8.hours
 
-  # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
   # Reportable 301s whose 8-hour window has run out while the report is still a
@@ -46,10 +45,9 @@ class OshaReport < ApplicationRecord
     rel
   }
 
-  # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
 
-  # --- Records table: the OSHA 300 Log -------------------------------------
+  # Records table: the OSHA 300 Log
   #
   # A live view over the approved reports, in the same column order as the
   # printed OSHA Form 300. This is the 300 Log — it replaced the standalone
@@ -115,7 +113,6 @@ class OshaReport < ApplicationRecord
     reportable_due_at.present? && in_progress? && reportable_due_at <= Time.current
   end
 
-  # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end

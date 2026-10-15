@@ -189,7 +189,7 @@ module Forms
       field_type == 'information'
     end
 
-    # --- Repeating section (a group of fields the filler can add copies of) ---
+    # Repeating section (a group of fields the filler can add copies of)
     #
     # Any field can be flagged repeatable (options['repeatable']). That field is
     # the section "anchor": it keeps its own type and renders as the first column
@@ -289,7 +289,7 @@ module Forms
       options&.dig('values') || []
     end
 
-    # --- Manual values alongside a table-backed option list ---
+    # Manual values alongside a table-backed option list
     #
     # A dropdown can pull its options from a table AND carry a few hand-typed
     # entries (an "Other" choice, say). The manual entries live in the same

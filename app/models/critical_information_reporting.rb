@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-# app/models/critical_information_reporting.rb
-
 class CriticalInformationReporting < ApplicationRecord
-  # Include reassignment functionality
   include Reassignable
   include TrackableStatus
 
@@ -27,7 +24,6 @@ class CriticalInformationReporting < ApplicationRecord
 
   # ActiveStorage attachments for media files (multiple)
 
-  # Callbacks
   before_validation :assign_manager_based_on_location, on: :create
 
   # Validations for Employee Info (Page 1)
@@ -64,7 +60,6 @@ class CriticalInformationReporting < ApplicationRecord
   validates :impacted_customers, presence: true
   validates :next_steps, presence: true
 
-  # Scopes for common queries
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id.to_s) }
   scope :by_status, ->(status) { where(status: status) }
   scope :by_impact, ->(impact) { where(impact: impact) }
