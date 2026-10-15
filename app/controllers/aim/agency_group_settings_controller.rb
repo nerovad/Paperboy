@@ -3,7 +3,8 @@
 module Aim
   # An agency group's Fiscal settings (#131): the report's columns, their
   # order and header names, and its format,
-  # hold reasons, tag suggestions, and what must be filled in before archive.
+  # reject and hold reasons, tag suggestions, and what must be filled in
+  # before archive.
   # Group Admins and AIM Admins. Which groups its Fiscal also processes is
   # AIM Admins' alone.
   class AgencyGroupSettingsController < BaseController
@@ -12,7 +13,10 @@ module Aim
     def update
       @group.assign_attributes(settings.merge(updated_by: current_user_email))
       cover if params.key?(:covered_group_ids) && helpers.aim_user_admin?
-      @group.save!
+      Aim::AgencyGroup.transaction do
+        @group.save!
+        Aim::RejectReason.replace!(@group, params[:reject_reasons], by: current_user_email) if params.key?(:reject_reasons)
+      end
       redirect_to aim_agency_group_path(@group, tab: 'settings'), notice: 'Settings saved.'
     rescue ActiveRecord::RecordInvalid => e
       redirect_to aim_agency_group_path(@group, tab: 'settings'), alert: e.record.errors.full_messages.to_sentence

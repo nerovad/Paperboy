@@ -420,6 +420,25 @@ module Aim
       assert File.exist?(row.pdf_path), 'the store keeps its copy'
     end
 
+    test 'reject offers every group\'s reasons and the invoice\'s group\'s, with Other typed (#131)' do
+      group = Aim::AgencyGroup.for_agency!('GSA')
+      Aim::RejectReason.replace!(nil, "Duplicate invoice\nNot an invoice", by: 'test')
+      Aim::RejectReason.replace!(group, 'Not ours', by: 'test')
+      row = invoice('4601.R', agency: 'GSA')
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select 'select[name=reason] option', text: 'Not ours'
+      assert_select 'select[name=reason] option[value=?]', Aim::RejectReason::OTHER
+      assert_select '.aim-reject-guide', text: /Send Back/
+
+      act(row, 'reject', reason: Aim::RejectReason::OTHER)
+      assert_equal 'needs_review', row.state, 'Other needs a typed reason'
+
+      act(row, 'reject', reason: 'Duplicate invoice', reason_other: 'see 4601.Q')
+      assert_equal 'rejected', row.state
+      assert_includes row.notes, 'Duplicate invoice — see 4601.Q'
+    end
+
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 

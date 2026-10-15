@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_090000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -335,6 +335,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_220000) do
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false
     t.index ["employee_id"], name: "index_aim_members_on_employee_id", unique: true
+  end
+
+  create_table "aim.reject_reasons", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.datetime "created_at", null: false
+    t.string "label", limit: 200, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_group_id", "position"], name: "index_aim_reject_reasons_on_group_and_position"
   end
 
   create_table "aim.report_templates", force: :cascade do |t|

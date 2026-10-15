@@ -30,23 +30,39 @@
 
   <%= render 'roles', name: name %>
 
-  <%# Fiscal and Group Admin live on the agency groups (#131); set there. %>
+  <%# Group Admin and Fiscal, per agency group (#131): ticked here by AIM
+      Admins (staff), as BU Admin is; others see what this person holds. %>
   <% group_roles = aim_agency_group_roles_of(@employee_id) %>
-  <% if group_roles.any? || aim_user_admin? %>
+  <% if aim_user_admin? %>
+    <h2 class="aim-profile-heading" id="groups">Agency groups</h2>
+    <section class="aim-panel aim-agency-group-panel">
+      <%= form_with url: groups_aim_member_path(@employee_id), method: :patch, local: true do %>
+        <table class="submission-table aim-people-table">
+          <thead><tr><th>Agency group</th><th>Group Admin</th><th>Fiscal</th></tr></thead>
+          <tbody>
+            <% held = Aim::AgencyGroupRole.where(employee_id: @employee_id).pluck(:agency_group_id, :role) %>
+            <% aim_agency_groups.all.each do |group| %>
+              <tr>
+                <td class="is-strong"><%= link_to group.name, aim_agency_group_path(group) %></td>
+                <% %w[admin fiscal].each do |role| %>
+                  <td><%= check_box_tag "roles[#{group.id}][]", role, held.include?([group.id, role]), id: "role-#{group.id}-#{role}",
+                                        aria: { label: "#{Aim::AgencyGroup::ROLES[role]} in #{group.name}" } %></td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save agency group roles</button></div>
+      <% end %>
+    </section>
+  <% elsif group_roles.any? %>
     <section class="aim-panel aim-profile-fiscal">
       <div>
         <strong>Agency groups</strong>
-        <% if group_roles.empty? %>
-          <%= name %> is not Fiscal or Group Admin in any agency group.
-        <% else %>
-          <% group_roles.each do |group, labels| %>
-            <span class="badge is-scheduled"><%= group.name %>: <%= labels.to_sentence %></span>
-          <% end %>
+        <% group_roles.each do |group, labels| %>
+          <span class="badge is-scheduled"><%= group.name %>: <%= labels.to_sentence %></span>
         <% end %>
       </div>
-      <% if aim_group_admin? %>
-        <%= link_to 'Agency Groups', aim_agency_groups_path, class: 'btn compact' %>
-      <% end %>
     </section>
   <% end %>
 

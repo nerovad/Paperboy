@@ -195,6 +195,16 @@ module Aim
       assert_empty group.coverages
     end
 
+    test 'a Group Admin keeps the group\'s reject reasons' do
+      group = Aim::AgencyGroup.for_agency!('GSA')
+      group.roles.create!(employee_id: 5, role: 'admin')
+      sign_in 5
+
+      patch :update, params: { id: group.id, export_columns: Aim::FiscalExport::COLUMNS, reject_reasons: "Not ours\n\nWrong agency\n" }
+
+      assert_equal ['Not ours', 'Wrong agency'], Aim::RejectReason.offered_for(group)
+    end
+
     test 'an AIM Admin sets what the group also processes' do
       group = Aim::AgencyGroup.for_agency!('GSA')
       other = Aim::AgencyGroup.for_agency!('SHF')
@@ -225,6 +235,22 @@ module Aim
       patch :update, params: { agency_group_id: other.id, return_to: '//evil.example.com' }
       assert_equal mine.id, session[:aim_agency_group_id]
       assert_redirected_to aim_fiscal_path
+    end
+  end
+
+  class RejectReasonsControllerTest < ActionController::TestCase
+    include AgencyGroupsTestSession
+
+    tests Aim::RejectReasonsController
+
+    test 'AIM Admins keep every group\'s reject reasons; nobody else' do
+      sign_in 5
+      patch :update, params: { reject_reasons: 'Mine' }
+      assert_equal 0, Aim::RejectReason.count
+
+      sign_in 1, 'aim_admin'
+      patch :update, params: { reject_reasons: "Duplicate invoice\nNot an invoice" }
+      assert_equal ['Duplicate invoice', 'Not an invoice'], Aim::RejectReason.offered_for(nil)
     end
   end
 end

@@ -168,9 +168,11 @@ Rails.application.routes.draw do
       member do
         patch :deactivate, to: 'member_statuses#deactivate'
         patch :reactivate, to: 'member_statuses#reactivate'
+        patch :groups, to: 'member_group_roles#update'
       end
       resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
     end
+    patch 'admin/reject_reasons', to: 'reject_reasons#update', as: :reject_reasons
     resources :agency_groups, only: %i[index show create update destroy], path: 'admin/agency_groups' do
       member do
         patch :units, to: 'agency_group_units#update'

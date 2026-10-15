@@ -151,7 +151,15 @@ module Aim
                   alert: "This invoice still needs #{@invoice.missing_for_a_user.to_sentence}. Fill that in first."
     end
 
-    def reason = params[:reason].to_s.squish
+    # The reason given. Reject offers a list (#131): "Other" is the typed
+    # reason; any other pick is kept with the detail typed beside it.
+    def reason
+      picked = params[:reason].to_s.squish
+      typed = params[:reason_other].to_s.squish
+      return typed if picked == Aim::RejectReason::OTHER
+
+      [picked.presence, (typed.presence if picked.present?)].compact.join(' — ')
+    end
 
     def refuse(message) = redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: message)
 

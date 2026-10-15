@@ -31,6 +31,22 @@
     </section>
   <% end %>
 
+  <% if aim_user_admin? %>
+    <details class="aim-panel aim-agency-units">
+      <summary><strong>Reject reasons for every group</strong>
+        <span class="aim-count-pill"><%= pluralize(Aim::RejectReason.global.count, 'reason') %></span></summary>
+      <div class="aim-agency-group-panel aim-agency-group-settings">
+        <%= form_with url: aim_reject_reasons_path, method: :patch, local: true do %>
+          <p class="aim-agency-group-meta">
+            Offered first whenever an invoice is rejected, one per line. Each group can add its own on its Fiscal settings tab.
+          </p>
+          <%= text_area_tag :reject_reasons, Aim::RejectReason.text_for(nil), aria: { label: 'Reject reasons for every group' } %>
+          <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save reject reasons</button></div>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+
   <%= render 'aim/invoices/search_box', placeholder: 'Search group or agency…', empty: 'No group matches.' %>
 
   <section class="aim-panel aim-queue-panel">

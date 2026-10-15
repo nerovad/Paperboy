@@ -1846,3 +1846,16 @@ ul.aim-agency-group-columns {
     white-space: nowrap;
   }
 }
+
+// Reject's guidance (#131): when to reject, send back or move.
+.aim-reject-guide {
+  background: $surface-subtle;
+  border-radius: $radius-6;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+
+  p {
+    margin: 4px 0;
+  }
+}

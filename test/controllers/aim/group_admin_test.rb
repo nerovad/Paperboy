@@ -174,4 +174,25 @@ module Aim
       assert_equal [mine.id], @controller.instance_variable_get(:@invoices).map(&:id)
     end
   end
+
+  class MemberGroupRolesTest < ActionController::TestCase
+    include GroupAdminSession
+
+    tests Aim::MemberGroupRolesController
+
+    test 'staff tick Group Admin and Fiscal on a profile; nobody else can' do
+      gsa = Aim::AgencyGroup.for_agency!('GSA')
+      shf = Aim::AgencyGroup.for_agency!('SHF')
+      gsa.roles.create!(employee_id: 77, role: 'fiscal')
+
+      sign_in 5
+      patch :update, params: { id: 77, roles: { shf.id => ['admin'] } }
+      assert_equal [[gsa.id, 'fiscal']], Aim::AgencyGroupRole.where(employee_id: 77).pluck(:agency_group_id, :role)
+
+      sign_in 1, 'aim_admin'
+      patch :update, params: { id: 77, roles: { shf.id => %w[admin fiscal nonsense] } }
+      assert_equal [[shf.id, 'admin'], [shf.id, 'fiscal']].sort,
+                   Aim::AgencyGroupRole.where(employee_id: 77).pluck(:agency_group_id, :role).sort
+    end
+  end
 end

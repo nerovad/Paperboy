@@ -236,8 +236,12 @@
             <% end %>
 
             <% if @invoice.can_move_to?('rejected') %>
-              <button type="button" class="btn deny" data-action="aim-reason#open"
-                      data-value="reject" data-commit="Reject" data-title="Reject invoice">Reject</button>
+              <%# Reject has its own dialog (#131): a list of reasons and guidance. %>
+              <span data-controller="aim-reason">
+                <button type="button" class="btn deny" data-action="aim-reason#open"
+                        data-value="reject" data-commit="Reject" data-title="Reject invoice">Reject</button>
+                <%= render 'aim/invoices/reject_modal' %>
+              </span>
             <% end %>
             <% if @invoice.can_move_to?('deleted') && aim_queue_access? %>
               <button type="button" class="btn deny" data-action="aim-reason#open"
