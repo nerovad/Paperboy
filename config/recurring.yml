@@ -34,6 +34,11 @@ production: &production
     queue: default
     schedule: every 10 minutes
     description: Codes AIM invoices waiting for approval from the coding rules
+  aim_straight_to_fiscal:
+    class: Aim::StraightToFiscalJob
+    queue: default
+    schedule: every minute
+    description: Approves AIM invoices uploaded straight to Fiscal once the AI has read them
   aim_purge_fiscal_reports:
     class: Aim::PurgeFiscalReportsJob
     queue: default

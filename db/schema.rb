@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_110000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -311,6 +311,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_100000) do
     t.string "source_path", limit: 1000
     t.boolean "split_check", default: true, null: false
     t.string "state", limit: 50, null: false
+    t.string "straight_to_fiscal_by", limit: 255
     t.string "submitter"
     t.decimal "subtotal", precision: 15, scale: 2
     t.datetime "updated_at", null: false

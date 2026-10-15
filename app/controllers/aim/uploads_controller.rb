@@ -43,7 +43,8 @@ module Aim
                                       actor: current_user_email, source: 'upload', manual: manual?, fiscal: fiscal?).invoice
       if fiscal?
         invoice.events.create!(action: 'fiscal', actor: current_user_email,
-                               note: 'Uploaded straight to Fiscal: no AI, no approval queue; approved by its uploader')
+                               note: "Uploaded straight to Fiscal#{manual? ? ', typed in by Fiscal' : ' after the AI reads it'}; " \
+                                     'no approval queue, approved by its uploader')
       else
         invoice.hand_to_cover!(by: current_user_employee_id)
       end
@@ -51,7 +52,8 @@ module Aim
     end
 
     def where_they_went
-      if fiscal? then 'They are in the Fiscal Queue, flagged Manual Data Entry Needed.'
+      if fiscal? && manual? then 'They are in the Fiscal Queue, flagged Manual Data Entry Needed.'
+      elsif fiscal? then 'The AI reads them next, then they go straight to Fiscal.'
       elsif manual? then 'They are in the queue, flagged Manual Data Entry Needed.'
       else 'The AI reads them next.'
       end
@@ -66,20 +68,18 @@ module Aim
       elsif params[:owner] == 'person' && owner_employee_id.nil? then 'Choose the person whose queue it goes to.'
       elsif outsider_chosen? then 'That person is not in AIM, so they have no queue.'
       elsif outside_their_units?(budget_unit) then "They do not work in #{budget_unit}. Pick one of their budget units."
-      elsif manual? then manual_refusal(budget_unit)
+      elsif manual? && !fiscal? then manual_refusal(budget_unit)
       end
     end
 
     def submitter_name = current_user_name || current_user_email
 
-    # How it is entered (#131): read by the AI (ai, the default), typed in by
-    # hand in a queue (manual), or typed in by Fiscal, approval skipped
-    # (fiscal).
-    def entry = params[:entry].to_s
+    # Two choices (#131): where it goes -- a queue, or straight to Fiscal
+    # (owner=fiscal) -- and whether the AI reads it or someone types it in
+    # (skip_ai).
+    def manual? = params[:skip_ai] == '1'
 
-    def manual? = entry == 'manual'
-
-    def fiscal? = entry == 'fiscal'
+    def fiscal? = params[:owner] == 'fiscal'
 
     # Straight to Fiscal: AIM Admins, and Fiscal people for the budget units
     # their agency groups work.
@@ -101,7 +101,7 @@ module Aim
     end
 
     # Whose queue the invoice goes to: the uploader's, a named person's, or
-    # nobody's (the BU's shared queue).
+    # nobody's (the BU's shared queue, or straight to Fiscal).
     def owner_name
       return if owner_employee_id.nil?
 
@@ -112,7 +112,7 @@ module Aim
     # (an employee id), or nobody -- the BU's shared queue.
     def owner_employee_id
       @owner_employee_id ||= case params[:owner].to_s
-                             when 'shared' then nil
+                             when 'shared', 'fiscal' then nil
                              when 'person' then params[:owner_employee_id].presence&.to_i
                              else current_user_employee_id
                              end
