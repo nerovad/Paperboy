@@ -1051,6 +1051,14 @@
   white-space: normal;
 }
 
+// In a table's last column the note is the only thing setting its width when
+// no row on the page has an Actions button; the queue table's wrap-anywhere
+// would squeeze it to one letter a line.
+td > .aim-actions-menu__note {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
 // A person's profile: Roles & budget units, Queue, Delete.
 .aim-profile-heading {
   align-items: center;
