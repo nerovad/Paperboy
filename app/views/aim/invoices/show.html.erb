@@ -28,6 +28,17 @@
     </div>
   </header>
 
+  <% if @invoice.manual_entry %>
+    <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
+    <div class="aim-readonly-banner aim-manual-banner" role="status">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+      <div>
+        <strong>Manual Data Entry Needed</strong>
+        <p>The AI has not read this invoice. Type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>.</p>
+      </div>
+    </div>
+  <% end %>
+
   <% if @read_only %>
     <div class="aim-readonly-banner" role="alert">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
@@ -235,6 +246,14 @@
                               class: 'btn approve' %>
             <% end %>
 
+            <% if aim_queue_access? && @invoice.sendable? %>
+              <%# Send to a queue (#131): AIM Admins, from anywhere in the pipeline. %>
+              <span data-controller="aim-reason">
+                <button type="button" class="btn reassign" data-action="aim-reason#open" data-variant="approve"
+                        data-value="send_to_queue" data-commit="Send" data-title="Send to a queue">Send to a queue</button>
+                <%= render 'aim/invoices/send_to_queue_modal' %>
+              </span>
+            <% end %>
             <% if @invoice.can_move_to?('rejected') %>
               <%# Reject has its own dialog (#131): a list of reasons and guidance. %>
               <span data-controller="aim-reason">

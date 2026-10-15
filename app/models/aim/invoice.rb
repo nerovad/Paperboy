@@ -19,6 +19,7 @@ module Aim
     include Aim::InvoiceAssignment
     include Aim::InvoiceNaming
     include Aim::InvoiceCoding
+    include Aim::InvoiceManualEntry
     include Aim::Transitions
     include Aim::Audited
 
@@ -51,14 +52,14 @@ module Aim
     RESTORE_STATES = %w[needs_review ready_for_approval].freeze
 
     TRANSITIONS = {
-      'received' => %w[extracting rejected deleted],
+      'received' => %w[extracting ready_for_approval rejected deleted],
       'extracting' => %w[needs_review needs_split ready_for_approval failed received],
       'needs_review' => %w[ready_for_approval received needs_split rejected deleted],
-      'needs_split' => %w[split received rejected deleted],
+      'needs_split' => %w[split received ready_for_approval rejected deleted],
       'ready_for_approval' => %w[approved needs_review rejected deleted],
       'approved' => %w[exporting needs_review],
       'exporting' => %w[exported failed],
-      'failed' => %w[received approved needs_review rejected deleted],
+      'failed' => %w[received approved needs_review ready_for_approval rejected deleted],
       'exported' => [],
       'rejected' => RESTORE_STATES,
       'deleted' => RESTORE_STATES,

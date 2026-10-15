@@ -1859,3 +1859,15 @@ ul.aim-agency-group-columns {
     margin: 4px 0;
   }
 }
+
+// Manual Data Entry Needed (#131): a notice, not a warning.
+.aim-manual-banner {
+  background: $surface-subtle;
+  border: 1px solid $neutral-border-subtle;
+  border-left: 5px solid $brand-navy;
+  color: $text-color;
+
+  .aim-readonly-banner__mark {
+    background: $brand-navy;
+  }
+}

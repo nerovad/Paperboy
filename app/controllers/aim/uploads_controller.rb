@@ -23,16 +23,13 @@ module Aim
     def create
       budget_unit = params[:budget_unit].to_s.strip
       files = Array(params[:files]).reject(&:blank?)
-      return refuse('Pick the budget unit from the list.') unless Aim::Units.new.valid?(budget_unit)
-      return refuse('Choose at least one PDF.') if files.empty?
-      return refuse('Only PDF files can be uploaded.') unless files.all? { |file| pdf?(file) }
-      return refuse('Choose the person whose queue it goes to.') if params[:owner] == 'person' && owner_employee_id.nil?
-      return refuse('That person is not in AIM, so they have no queue.') if outsider_chosen?
-      return refuse("They do not work in #{budget_unit}. Pick one of their budget units.") if outside_their_units?(budget_unit)
+      problem = upload_problem(budget_unit, files)
+      return refuse(problem) if problem
 
       stored = files.map { |file| store(file, budget_unit) }
       redirect_to new_aim_upload_path,
-                  notice: "#{pluralize(stored.size, 'invoice')} uploaded. The AI reads them next."
+                  notice: "#{pluralize(stored.size, 'invoice')} uploaded. " +
+                          (manual? ? 'They are in the queue, flagged Manual Data Entry Needed.' : 'The AI reads them next.')
     rescue Aim::MissingConfiguration, SystemCallError, ActiveRecord::RecordInvalid => e
       Rails.logger.error "AIM upload failed: #{e.class}: #{e.message}"
       refuse('The upload could not be saved. Try again.')
@@ -44,12 +41,37 @@ module Aim
       invoice = Aim::Intake.new.store(file,
                                       original_filename: file.original_filename, budget_unit: budget_unit,
                                       submitter: submitter_name, owner: { name: owner_name, employee_id: owner_employee_id },
-                                      actor: current_user_email, source: 'upload').invoice
+                                      actor: current_user_email, source: 'upload', manual: manual?).invoice
       invoice.hand_to_cover!(by: current_user_employee_id)
       invoice
     end
 
+    # Why this upload cannot go ahead, or nil.
+    def upload_problem(budget_unit, files)
+      if !Aim::Units.new.valid?(budget_unit) then 'Pick the budget unit from the list.'
+      elsif files.empty? then 'Choose at least one PDF.'
+      elsif !files.all? { |file| pdf?(file) } then 'Only PDF files can be uploaded.'
+      elsif params[:owner] == 'person' && owner_employee_id.nil? then 'Choose the person whose queue it goes to.'
+      elsif outsider_chosen? then 'That person is not in AIM, so they have no queue.'
+      elsif outside_their_units?(budget_unit) then "They do not work in #{budget_unit}. Pick one of their budget units."
+      elsif manual? then manual_refusal(budget_unit)
+      end
+    end
+
     def submitter_name = current_user_name || current_user_email
+
+    # Skip the AI (#131): typed in by hand, straight to the queue.
+    def manual? = params[:skip_ai] == '1'
+
+    # Who may skip the AI: anyone with a queue, into their own; AIM Admins and
+    # the BU's Admins into anyone else's, or the shared queue.
+    def manual_refusal(budget_unit)
+      own = owner_employee_id.present? && owner_employee_id == current_user_employee_id
+      return if own && helpers.aim_has_queue?
+      return if helpers.aim_queue_access? || helpers.aim_bu_admin_units&.include?(budget_unit)
+
+      'Only AIM Admins and the BU\'s Admins can skip the AI for someone else\'s queue.'
+    end
 
     # Whose queue the invoice goes to: the uploader's, a named person's, or
     # nobody's (the BU's shared queue).

@@ -439,6 +439,37 @@ module Aim
       assert_includes row.notes, 'Duplicate invoice — see 4601.Q'
     end
 
+    test 'an AIM Admin sends an invoice to a queue from anywhere, flagged for typing in (#131)' do
+      person = Employee.where.not(first_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      row = invoice('4601.M', state: 'received', command: 'extract', pdf: false)
+
+      act(row, 'send_to_queue', send_owner: person.id, send_manual: '1', reason: 'AI cannot read it')
+
+      assert_equal ['ready_for_approval', nil, true, person.id], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
+      assert_includes row.events.pluck(:note).join("\n"), 'Manual Data Entry Needed: AI cannot read it'
+    end
+
+    test 'sending to a queue needs a reason, and not while the worker has it' do
+      row = invoice('4601.N', state: 'extracting', pdf: false)
+      act(row, 'send_to_queue', reason: 'stuck')
+      assert_equal 'extracting', row.state
+
+      row = invoice('4601.O', pdf: false)
+      act(row, 'send_to_queue')
+      assert_equal 'needs_review', row.state
+    end
+
+    test 'the flag clears once the details are typed in' do
+      row = invoice('4601.P', state: 'ready_for_approval', vendor_name: nil, manual_entry: true, pdf: false)
+      act(row, 'save', invoice: { invoice_number: 'X-1' })
+      assert row.manual_entry, 'still no vendor'
+
+      act(row, 'save', invoice: { vendor_name: 'ACME' })
+      assert_not row.manual_entry
+      assert_includes row.events.pluck(:note), 'Manual data entry done'
+    end
+
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 

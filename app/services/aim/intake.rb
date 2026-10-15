@@ -31,7 +31,14 @@ module Aim
     # +io+ is anything that responds to #read (an uploaded file). The
     # submitter is the person who brought it; the owner is whose queue it goes
     # to, nil for the BU's shared queue: a name, or { name:, employee_id: }.
-    def store(io, original_filename:, budget_unit:, submitter:, owner:, actor:, source: 'upload', source_path: nil)
+    # manual: true skips the AI (#131): the row goes straight to its queue in
+    # Ready for Approval, flagged Manual Data Entry Needed, for a person to
+    # type in. It is billed like any other.
+    # +origin+: source ('upload' unless said), source_path, manual.
+    def store(io, original_filename:, budget_unit:, submitter:, owner:, actor:, **origin)
+      source = origin.fetch(:source, 'upload')
+      source_path = origin[:source_path]
+      manual = origin.fetch(:manual, false)
       owner_employee_id = owner.is_a?(Hash) ? owner[:employee_id] : nil
       owner = owner[:name] if owner.is_a?(Hash)
       batch_id = mint_batch_id(budget_unit, original_filename)
@@ -43,7 +50,8 @@ module Aim
       File.binwrite(pdf_path, bytes)
 
       invoice = Aim::Invoice.create!(
-        batch_id: batch_id, state: 'received', command: 'extract', actor: actor,
+        batch_id: batch_id, state: manual ? 'ready_for_approval' : 'received', command: (manual ? nil : 'extract'),
+        manual_entry: manual, actor: actor,
         budget_unit: budget_unit, submitter: submitter,
         assigned_to: owner.presence, assigned_employee_id: owner_employee_id,
         assignment_source: (source if owner.present? || owner_employee_id),

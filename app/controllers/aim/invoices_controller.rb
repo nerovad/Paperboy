@@ -46,6 +46,7 @@ module Aim
       end
 
       save_fields
+      @invoice.finish_manual_entry!(actor: current_user_email)
       perform(invoice_action)
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid, ArgumentError => e
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: e.message
