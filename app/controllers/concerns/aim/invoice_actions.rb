@@ -27,13 +27,14 @@ module Aim
       'learn_and_retry' => :learn_and_retry,
       'learn_and_send' => :learn_and_send,
       'retry_export' => :retry_export,
-      'send_to_queue' => :send_to_queue
+      'send_to_queue' => :send_to_queue,
+      'return_to_first' => :return_to_first
     }.freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
     # The value is the button's label, for the refusal without one.
     REASON_ACTIONS = { 'reject' => 'Reject', 'delete' => 'Delete', 'send_back' => 'Send Back',
-                       'send_to_queue' => 'Send to a queue' }.freeze
+                       'send_to_queue' => 'Send to a queue', 'return_to_first' => 'Return to first approver' }.freeze
 
     private
 
@@ -68,6 +69,10 @@ module Aim
       return refuse('Approve it from its queue: send it to approval first.') unless @invoice.state == 'ready_for_approval'
       return refuse_unready unless @invoice.ready_for_a_user?
       return refuse('Pick or enter the coding first.') if coding_unpicked?
+      return second_approval_first if @invoice.needs_second_approval?(current_user_employee_id)
+      if @invoice.awaiting_second_approval? && !@invoice.second_approver?(current_user_employee_id, staff: staff?)
+        return refuse("This is waiting for #{@invoice.second_approval_setting&.second_approver_name}'s second approval.")
+      end
 
       @invoice.request_export!(actor: current_user_email)
       Aim::StampApprovedJob.perform_later(@invoice.id)
@@ -128,16 +133,6 @@ module Aim
       @invoice.transition_to!('deleted', actor: current_user_email, notes: notes_with('Deleted'),
                                          note: "reason: #{reason}; #{copied ? 'copy kept in the deleted folder' : 'no PDF to copy'}")
       finish('Invoice deleted. A copy is kept in the deleted folder.')
-    end
-
-    # From anywhere in the pipeline to a person's queue or a shared one, by an
-    # AIM Admin (#131), flagged Manual Data Entry Needed when asked.
-    def send_to_queue
-      return refuse('Only AIM Admins send an invoice to a queue.') unless staff?
-
-      @invoice.send_to_queue!(params[:send_owner].to_s, actor: current_user_email, reason: reason,
-                                                        manual: params[:send_manual] == '1', by: current_user_employee_id)
-      finish("Sent to #{@invoice.queue_owner}#{', flagged Manual Data Entry Needed' if @invoice.manual_entry}.")
     end
 
     def learn_and_retry

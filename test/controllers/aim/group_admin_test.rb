@@ -195,4 +195,29 @@ module Aim
                    Aim::AgencyGroupRole.where(employee_id: 77).pluck(:agency_group_id, :role).sort
     end
   end
+
+  class BudgetUnitSettingsTest < ActionController::TestCase
+    include GroupAdminSession
+
+    tests Aim::BudgetUnitSettingsController
+
+    test 'a Group Admin sets a BU\'s second approval: both an amount and a person who works AIM' do
+      group = docs_group('4641')
+      person = Employee.order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      sign_in 5
+
+      patch :update, params: { agency_group_id: group.id, budget_unit: '4641', second_approval_over: '5000' }
+      assert_match(/needs both an amount and a second approver/, flash[:alert])
+
+      patch :update, params: { agency_group_id: group.id, budget_unit: '4641', second_approval_over: '5000',
+                               second_approver_employee_id: person.id }
+      setting = Aim::BudgetUnitSetting.for_unit('GSA', '4641')
+      assert_equal [5000, person.id], [setting.second_approval_over, setting.second_approver_employee_id]
+
+      patch :update, params: { agency_group_id: group.id, budget_unit: '4601', second_approval_over: '1',
+                               second_approver_employee_id: person.id }
+      assert_match(/not in this group/, flash[:alert])
+    end
+  end
 end

@@ -28,6 +28,20 @@
     </div>
   </header>
 
+  <% if @invoice.awaiting_second_approval? %>
+    <%# The high-dollar second approval (#131). %>
+    <div class="aim-readonly-banner aim-manual-banner" role="status">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">2</span>
+      <div>
+        <strong>Second approval</strong>
+        <p>
+          First approved by <%= Aim::FiscalExport.approver_names([@invoice.first_approved_by]).fetch(@invoice.first_approved_by.downcase, @invoice.first_approved_by) %>
+          on <%= @invoice.first_approved_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %>. Over the BU's amount, so it waits for
+          <%= @invoice.second_approval_setting&.second_approver_name || 'its second approver' %>.
+        </p>
+      </div>
+    </div>
+  <% end %>
   <% if @invoice.manual_entry %>
     <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
     <div class="aim-readonly-banner aim-manual-banner" role="status">
@@ -217,9 +231,14 @@
                               data: { turbo_confirm: 'Have the AI read this invoice again?' },
                               class: 'btn warning' %>
             <% elsif state == 'ready_for_approval' %>
-              <%= form.button 'Approve', name: 'invoice_action', value: 'approve',
-                              data: { turbo_confirm: 'Approve this invoice and send it to billing and Fiscal?' },
+              <% second = @invoice.needs_second_approval?(current_user&.employee_id) %>
+              <%= form.button second ? 'Approve (first of two)' : 'Approve', name: 'invoice_action', value: 'approve',
+                              data: { turbo_confirm: second ? "It is over the BU's amount: approve it and send it to #{@invoice.second_approval_setting.second_approver_name} for a second approval?" : 'Approve this invoice and send it to billing and Fiscal?' },
                               class: 'btn approve' %>
+              <% if @invoice.awaiting_second_approval? && @invoice.second_approver?(current_user&.employee_id, staff: aim_queue_access?) %>
+                <button type="button" class="btn warning" data-action="aim-reason#open"
+                        data-value="return_to_first" data-commit="Return" data-title="Return to the first approver">Return to first approver</button>
+              <% end %>
               <button type="button" class="btn warning" data-action="aim-reason#open"
                       data-value="send_back" data-commit="Send Back" data-title="Send back to AIM review">Send Back</button>
             <% elsif state == 'needs_split' %>

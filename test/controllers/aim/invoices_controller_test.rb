@@ -470,6 +470,46 @@ module Aim
       assert_includes row.events.pluck(:note), 'Manual data entry done'
     end
 
+    def as_second_approver(employee)
+      session[:user] = { 'email' => employee.email.presence || 'second@example.com', 'employee_id' => employee.id }
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+    end
+
+    test 'over the BU\'s amount, the first approval sends it to the second approver; theirs finishes it (#131)' do
+      second = Employee.where.not(first_name: [nil, '']).where.not(id: 42).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: second.id)
+      Aim::BudgetUnitSetting.create!(agency_id: 'GSA', budget_unit: '4601', second_approval_over: 100,
+                                     second_approver_employee_id: second.id)
+      row = invoice('4601.H', state: 'ready_for_approval', agency: 'GSA', invoice_total: 500, assigned_employee_id: 42, pdf: false)
+
+      act(row, 'approve')
+      assert_equal ['ready_for_approval', REVIEWER, second.id], [row.state, row.first_approved_by, row.assigned_employee_id]
+      assert row.awaiting_second_approval?
+
+      as_second_approver(second)
+      act(row, 'approve')
+      assert_equal 'approved', row.state, 'the second approver finishes it'
+      assert_equal REVIEWER, row.first_approved_by, 'kept for the stamp'
+      assert_match(/\A1st: /, Aim::ApprovalStamp.lines(row).second)
+    end
+
+    test 'the second approver may return it to the first; under the amount one approval is enough' do
+      second = Employee.where.not(first_name: [nil, '']).where.not(id: 42).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: second.id)
+      Aim::BudgetUnitSetting.create!(agency_id: 'GSA', budget_unit: '4601', second_approval_over: 100,
+                                     second_approver_employee_id: second.id)
+      row = invoice('4601.I', state: 'ready_for_approval', agency: 'GSA', invoice_total: 500, pdf: false,
+                              first_approved_by: REVIEWER, first_approved_at: Time.current, assigned_employee_id: second.id)
+
+      as_second_approver(second)
+      act(row, 'return_to_first', reason: 'wrong object code')
+      assert_nil row.first_approved_by
+      assert_includes row.events.pluck(:note), 'Returned to the first approver: wrong object code'
+
+      small = invoice('4601.J', state: 'ready_for_approval', agency: 'GSA', invoice_total: 50, pdf: false)
+      assert_not small.needs_second_approval?(42)
+    end
+
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 

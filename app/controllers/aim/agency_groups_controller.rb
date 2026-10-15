@@ -70,6 +70,7 @@ module Aim
                         .slice(*@bu_units)
       @rows = Aim::UserBudgetUnit.where(budget_unit: @bu_units).index_by { |row| [row.employee_id, row.budget_unit] }
       @homes = Aim::Users.home_units(people.to_h { |id, agency, unit, _, _| [id, [agency, unit]] })
+      @settings = Aim::BudgetUnitSetting.where(agency_id: @group.agency_id, budget_unit: @bu_units).index_by(&:budget_unit)
     end
 
     def require_group_admin

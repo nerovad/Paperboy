@@ -20,6 +20,7 @@ module Aim
     include Aim::InvoiceNaming
     include Aim::InvoiceCoding
     include Aim::InvoiceManualEntry
+    include Aim::InvoiceSecondApproval
     include Aim::Transitions
     include Aim::Audited
 

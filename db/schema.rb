@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_120000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -104,6 +104,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_110000) do
     t.string "updated_by", limit: 255
     t.index ["agency_id", "custom"], name: "index_aim_agency_groups_on_agency_and_custom"
     t.index ["name"], name: "index_aim_agency_groups_on_name", unique: true
+  end
+
+  create_table "aim.budget_unit_settings", force: :cascade do |t|
+    t.string "agency_id", limit: 10, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.decimal "second_approval_over", precision: 15, scale: 2
+    t.integer "second_approver_employee_id"
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_id", "budget_unit"], name: "index_aim_budget_unit_settings_on_agency_and_unit", unique: true
   end
 
   create_table "aim.coding_imports", force: :cascade do |t|
@@ -292,6 +303,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_110000) do
     t.datetime "exported_at"
     t.text "extracted"
     t.string "extracted_vendor_name"
+    t.datetime "first_approved_at"
+    t.string "first_approved_by", limit: 255
     t.boolean "high_confidence"
     t.date "invoice_date"
     t.string "invoice_number", limit: 100
