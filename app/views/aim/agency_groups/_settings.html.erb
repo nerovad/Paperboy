@@ -1,0 +1,56 @@
+<%# The group's Fiscal settings (#131). %>
+  <h2 class="aim-profile-heading" id="settings">Fiscal settings</h2>
+  <section class="aim-panel aim-agency-group-panel aim-agency-group-settings">
+    <%= form_with url: settings_aim_agency_group_path(@group), method: :patch, local: true do %>
+      <% if admin %>
+        <fieldset>
+          <legend>Fiscal also processes</legend>
+          <p class="aim-agency-group-meta">This group's Fiscal people and Group Admins also work the groups ticked here.</p>
+          <%= hidden_field_tag 'covered_group_ids[]', '' %>
+          <div class="aim-agency-group-columns">
+            <% covered = @resolver.covers(@group).map(&:id) %>
+            <% (@resolver.all - [@group]).each do |other| %>
+              <label><%= check_box_tag 'covered_group_ids[]', other.id, covered.include?(other.id), id: "cover-#{other.id}" %> <%= other.name %></label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <%= render 'aim/shared/report_layout_fields', layout: @group, title: 'Default report' %>
+      <p class="aim-agency-group-meta">
+        Saved report templates: <%= link_to "#{pluralize(@group.report_templates.size, 'template')} — manage", aim_report_templates_path %>
+      </p>
+
+      <fieldset>
+        <legend>Needed before archive</legend>
+        <div class="aim-agency-group-columns">
+          <% required = @group.required_field_list %>
+          <% Aim::FiscalRecord::EDITABLE_FIELDS.each do |field| %>
+            <label><%= check_box_tag 'required_fields[]', field, required.include?(field), id: "required-#{field}" %> <%= aim_fiscal_field_label(field) %></label>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><%= label_tag :reject_reasons, 'Reject reasons' %></legend>
+        <p class="aim-agency-group-meta">
+          Offered when one of this group's invoices is rejected, one per line, after the reasons every group has
+          (<%= Aim::RejectReason.global.count %>, kept by AIM Admins on Agency Groups). "Other" with a typed reason is always there.
+        </p>
+        <%= text_area_tag :reject_reasons, Aim::RejectReason.text_for(@group) %>
+      </fieldset>
+
+      <fieldset>
+        <legend><%= label_tag :hold_reasons, 'Hold reasons' %></legend>
+        <p class="aim-agency-group-meta">Offered when Fiscal puts an invoice on hold, one per line. Anything may still be typed.</p>
+        <%= text_area_tag :hold_reasons, @group.hold_reason_list.join("\n") %>
+      </fieldset>
+      <fieldset>
+        <legend><%= label_tag :tag_suggestions, 'Tags' %></legend>
+        <p class="aim-agency-group-meta">Offered as Fiscal types a tag, one per line.</p>
+        <%= text_area_tag :tag_suggestions, @group.tag_suggestion_list.join("\n") %>
+      </fieldset>
+
+      <div class="aim-form-actions"><button type="submit" class="btn approve">Save settings</button></div>
+    <% end %>
+  </section>

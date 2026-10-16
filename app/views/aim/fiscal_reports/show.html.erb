@@ -1,0 +1,50 @@
+<%# One saved Fiscal report (#131): its file, its invoices, and Regenerate.
+    Reached with download=1 straight after processing, it downloads itself
+    (a hidden frame fetches the file). %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Fiscal Report <%= @report.number %></h1>
+      <p class="aim-page-subtitle">
+        <%= @report.layout_name %> · <%= Aim::ReportLayout::EXPORT_FORMATS[@report.export_format] %> ·
+        made <%= @report.created_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %> by <%= @report.created_by %>
+        <% if @report.replaces %> · replaces <%= link_to @report.replaces.number, aim_fiscal_report_path(@report.replaces) %><% end %>
+        <% if @replaced_by.any? %> · replaced by <%= safe_join(@replaced_by.map { |r| link_to(r.number, aim_fiscal_report_path(r)) }, ', ') %><% end %>
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <% if @report.purged? %>
+        <span class="aim-count-pill">File purged <%= @report.purged_at.in_time_zone.strftime('%m/%d/%Y') %></span>
+      <% else %>
+        <span class="aim-count-pill">File kept until <%= @report.expires_at.in_time_zone.strftime('%m/%d/%Y') %></span>
+        <%= link_to 'Download', download_aim_fiscal_report_path(@report), class: 'btn secondary compact', data: { turbo: false } %>
+      <% end %>
+      <%= button_to 'Regenerate', regenerate_aim_fiscal_report_path(@report), method: :post, class: 'btn compact',
+                    form: { data: { turbo: false } },
+                    title: 'A new numbered report of these invoices, from their values now' %>
+      <%= link_to 'All reports', aim_fiscal_reports_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <% if params[:download] == '1' && !@report.purged? %>
+    <iframe src="<%= download_aim_fiscal_report_path(@report) %>" title="Downloading <%= @report.file_name %>" hidden></iframe>
+  <% end %>
+
+  <h2 class="aim-profile-heading"><%= pluralize(@invoices.size, 'invoice') %></h2>
+  <section class="aim-panel aim-queue-panel">
+    <table class="submission-table aim-queue-table">
+      <thead><tr><th>AIM #</th><th>Vendor</th><th>Invoice #</th><th>Budget Unit</th><th>Total</th></tr></thead>
+      <tbody>
+        <% @invoices.each do |invoice| %>
+          <tr>
+            <td class="is-strong"><%= link_to invoice.batch_id, aim_fiscal_invoice_path(invoice.batch_id) %></td>
+            <td><%= invoice.vendor_name %></td>
+            <td><%= invoice.invoice_number %></td>
+            <td><%= invoice.budget_unit %></td>
+            <td><%= number_to_currency(invoice.invoice_total) if invoice.invoice_total %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</div>

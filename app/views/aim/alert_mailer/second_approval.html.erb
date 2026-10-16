@@ -1,0 +1,7 @@
+<p>Hello <%= @employee.first_name %>,</p>
+<p>
+  <%= [@invoice.vendor_name, @invoice.invoice_number].compact_blank.join(' · ') %>
+  (<%= number_to_currency(@invoice.invoice_total) %>, BU <%= @invoice.budget_unit %>) has its first approval and is over the
+  BU's amount, so it needs your second approval.
+</p>
+<p><%= link_to 'Open it in AIM', aim_invoice_url(@invoice.batch_id) %></p>

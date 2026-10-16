@@ -23,6 +23,7 @@ module Aim
       'unknown_vendor' => 'Unknown vendor',
       'missing_fields' => 'Missing fields',
       'low_confidence' => 'Low confidence read',
+      'duplicate' => 'Possible duplicate',
       'handwritten' => 'Handwritten amounts',
       'extraction_error' => 'Extraction error',
       'split_error' => 'Split error',

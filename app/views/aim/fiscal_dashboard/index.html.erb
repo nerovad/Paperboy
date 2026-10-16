@@ -1,0 +1,58 @@
+<%# The Fiscal Dashboard (#131): a card per Fiscal list, as the pipeline's
+    dashboard, for the groups picked in Managing; the latest reports below. %>
+<div class="aim-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Fiscal Dashboard</h1>
+      <p class="aim-page-subtitle">Where every approved invoice is with Fiscal, and what needs a look. <%= link_to 'How Fiscal works in AIM', aim_help_path(anchor: 'fiscal') %></p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <%= link_to 'Reports', aim_fiscal_reports_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
+
+  <section class="aim-dashboard-grid" data-controller="aim-counts" data-aim-counts-url-value="<%= aim_counts_path %>">
+    <% Aim::FiscalDashboardController::CARDS.each do |status, css_class| %>
+      <%= link_to aim_fiscal_path(status: status), class: "aim-dashboard-card #{css_class}" do %>
+        <h2><%= Aim::FiscalRecord::STATUS_LABELS[status] %></h2>
+        <div class="aim-dashboard-count" data-aim-count="fiscal_<%= status %>">…</div>
+        <p><%= aim_fiscal_description(status) %></p>
+        <% if @notes[status] %><p class="aim-dashboard-note"><%= @notes[status] %></p><% end %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <h2 class="aim-profile-heading">Longest in the Fiscal Queue</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <%= render 'aim/shared/oldest', oldest: @oldest.map { |record| [record.invoice, ((Time.current - record.created_at) / 1.day).floor] },
+                                    path: ->(invoice) { aim_fiscal_invoice_path(invoice.batch_id) } %>
+  </section>
+
+  <%= render 'aim/shared/by_group', by_group: @by_group.transform_values { |counts| counts.transform_keys { |status| Aim::FiscalRecord::STATUS_LABELS[status] } },
+                                    columns: %w[review on_hold ready exported].map { |status| Aim::FiscalRecord::STATUS_LABELS[status] } %>
+
+  <h2 class="aim-profile-heading">Latest reports</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <% if @reports.empty? %>
+      <p class="aim-agency-group-meta">No reports yet. Process one from the Report Queue.</p>
+    <% else %>
+      <table class="submission-table aim-people-table">
+        <thead><tr><th>Report</th><th>Made</th><th>By</th><th>Layout</th><th>Invoices</th></tr></thead>
+        <tbody>
+          <% @reports.each do |report| %>
+            <tr>
+              <td class="is-strong"><%= link_to report.number, aim_fiscal_report_path(report) %></td>
+              <td><%= report.created_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %></td>
+              <td><%= report.created_by %></td>
+              <td><%= report.layout_name %></td>
+              <td><%= report.invoice_count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+</div>

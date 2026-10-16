@@ -1,0 +1,15 @@
+<p>Hello <%= @employee.first_name %>,</p>
+<p>These AIM invoices are waiting on you or your budget units.</p>
+<% @sections.each do |heading, invoices| %>
+  <h3><%= heading %> (<%= invoices.size %>)</h3>
+  <ul>
+    <% invoices.each do |invoice| %>
+      <li>
+        <%= link_to [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id,
+                    aim_invoice_url(invoice.batch_id) %>
+        — <%= invoice.budget_unit %><%= ", #{number_to_currency(invoice.invoice_total)}" if invoice.invoice_total %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+<p>Open AIM: <%= link_to aim_root_url, aim_root_url %></p>

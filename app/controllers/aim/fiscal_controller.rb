@@ -9,6 +9,7 @@ module Aim
   class FiscalController < BaseController
     include Aim::StoredPdf
     include Aim::FiscalEdits
+    include Aim::FiscalGroupScope
 
     # Each button posts fiscal_action=<value>, never its label, so a button
     # can be renamed without breaking what it does.
@@ -35,7 +36,8 @@ module Aim
       reading_database("list the Fiscal #{@status} invoices", alert: 'The invoice database could not be read.',
                                                               empty: { records: [], groups: [], stamps: {} }) do
         Aim::FiscalRecord.take_in_approved!
-        @records = Aim::FiscalRecord.in_status(@status).to_a.sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
+        @records = Aim::FiscalRecord.in_status(@status).served_by(served_invoices).to_a
+                                    .sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
         @stamps = Aim::FiscalExport.approval_stamps(@records.map(&:invoice_id))
         @groups = fiscal_groups if @view == 'bu'
       end
@@ -45,6 +47,8 @@ module Aim
       @stamp = Aim::FiscalExport.approval_stamps([@invoice.id])[@invoice.id]
       @pdf_present = stored_pdf_path.present?
       @events = @invoice.events.to_a
+      @reports = Aim::FiscalReport.where(id: Aim::FiscalReportInvoice.where(invoice_id: @invoice.id).select(:fiscal_report_id))
+                                  .order(:id).to_a
       @line = @invoice.coding || @invoice.coding_lines.build(source: 'fiscal')
       @coa = Aim::CoaCodes.new(@invoice.agency!.to_s)
     end
@@ -72,12 +76,6 @@ module Aim
 
     def default_view = @status == 'review' ? 'bu' : 'all'
 
-    def fiscal_groups
-      coa = Aim::Units.new
-      @records.group_by { |record| record.invoice.budget_unit }.sort_by { |unit, _| unit.to_s }
-              .map { |unit, rows| [unit, coa.label(unit), rows] }
-    end
-
     def set_status
       @status = params[:status].presence || 'review'
       return if Aim::FiscalRecord::STATUSES.include?(@status)
@@ -90,9 +88,10 @@ module Aim
       @record = invoice && Aim::FiscalRecord.find_by(invoice_id: invoice.id)
       @record ||= Aim::FiscalRecord.create!(invoice: invoice) if invoice && Aim::FiscalRecord::APPROVED_STATES.include?(invoice.state)
       @invoice = @record&.invoice
-      return if @record
+      @group = helpers.aim_agency_groups.for_invoice(@invoice) if @invoice
+      return if @record && helpers.aim_agency_groups.serves?(helpers.aim_fiscal_reach, @invoice)
 
-      redirect_to aim_fiscal_path, alert: 'That invoice is not with Fiscal.'
+      redirect_to aim_fiscal_path, alert: 'That invoice is not with Fiscal in your agency groups.'
     end
 
     def fiscal_return_path = remembered_return(:aim_fiscal_page, '/aim/fiscal') { aim_fiscal_path }
@@ -110,6 +109,8 @@ module Aim
     end
 
     def make_ready
+      raise ArgumentError, "Type in the invoice's details first: #{@invoice.missing_for_a_user.to_sentence}." if @invoice.manual_entry
+
       @record.move_to!('ready', actor: current_user_email, hold_reason: nil)
       finish('Added to the Report Queue.')
     end
@@ -125,6 +126,9 @@ module Aim
     end
 
     def archive
+      missing = @record.missing_for_archive(@group).map { |field| helpers.aim_fiscal_field_label(field) }
+      raise ArgumentError, "#{@group.name} needs #{missing.to_sentence} before archive." if missing.any?
+
       @record.move_to!('archived', actor: current_user_email, archived_at: Time.current)
       finish('Archived.')
     end

@@ -6,7 +6,9 @@
     </div>
     <span class="aim-count-pill"><%= pluralize(@rules.length, 'vendor') %></span>
   </header>
-  <%= turbo_frame_tag 'aim-vendor-rules' do %>
+  <%# The list pages inside the frame (#101), so a Save or Remove redraws it paged. %>
+  <%= turbo_frame_tag 'aim-vendor-rules', class: 'aim-list-frame-host' do %>
+  <%= tag.div class: 'aim-list-frame', data: aim_paged_list_data do %>
     <%= render 'aim/shared/frame_flash' %>
 
   <section class="aim-panel aim-vendor-panel">
@@ -17,10 +19,12 @@
     <% end %>
   </section>
 
+  <%= render 'aim/invoices/search_box', placeholder: 'Search vendor, rule or who set it…', empty: 'No rule matches.' %>
+
   <% if @rules.empty? %>
     <section class="aim-panel aim-empty-state"><p>No vendor rules yet.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
+    <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
       <table class="submission-table aim-queue-table">
         <thead>
           <tr>
@@ -32,7 +36,7 @@
         </thead>
         <tbody>
           <% @rules.each do |rule| %>
-            <tr>
+            <tr data-aim-queue-filter-target="row" data-search="<%= [rule.vendor_name, rule.rules, rule.updated_by].compact.join(' ') %>">
               <td class="is-strong"><%= rule.vendor_name %></td>
               <td>
                 <%= form_with url: aim_vendor_rule_path(rule), method: :patch, local: true, class: 'aim-inline-form aim-rules-form' do |form| %>
@@ -51,6 +55,8 @@
         </tbody>
       </table>
     </section>
+    <%= render 'aim/shared/list_pager' %>
+  <% end %>
   <% end %>
   <% end %>
 </div>

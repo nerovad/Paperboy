@@ -26,6 +26,7 @@
 !app/assets/images/Billing*.png
 !app/assets/images/Admin*.png
 !app/assets/images/DAM*.png
+!app/assets/images/aim/help/*.png
 00_Inbox/
 output/data_runner/01_Download/
 output/data_runner/02_Normalized/

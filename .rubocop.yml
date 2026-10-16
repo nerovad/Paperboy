@@ -20,6 +20,9 @@ AllCops:
     # consistent with the source form rather than the style guide.
     - 'app/services/sheriff_safety_reporting_form_pdf_generator.rb'
     - 'db/migrate/20260912015519_create_sheriff_safety_reporting_forms_20260912015519.rb'
+    # Linked worktrees live here; the main checkout must not lint them. The
+    # `.rubocop` options file passes --ignore-parent-exclusion so this entry,
+    # inherited from the main checkout, does not exclude a worktree from itself.
     - 'worktrees/**/*'
 
 Layout/LineLength:

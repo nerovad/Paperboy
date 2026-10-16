@@ -138,6 +138,7 @@ Rails.application.routes.draw do
   namespace :aim do
     root 'dashboard#home'
     get 'dashboard', to: 'dashboard#index', as: :dashboard
+    get 'help', to: 'help#show', as: :help
 
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       collection do
@@ -159,6 +160,7 @@ Rails.application.routes.draw do
     get 'people', to: 'people#index', as: :people
     get 'counts', to: 'counts#show', as: :counts
     patch 'mode', to: 'modes#update', as: :mode
+    patch 'managing', to: 'managing#update', as: :managing
     get 'admin', to: 'admin#index', as: :admin
     get 'admin/employees', to: 'members#employees', as: :admin_employees
     get 'admin/budget_units', to: 'enabled_units#index', as: :enabled_units
@@ -167,12 +169,32 @@ Rails.application.routes.draw do
       member do
         patch :deactivate, to: 'member_statuses#deactivate'
         patch :reactivate, to: 'member_statuses#reactivate'
-        patch :fiscal, to: 'member_fiscal#update'
+        patch :groups, to: 'member_group_roles#update'
       end
       resources :budget_units, only: %i[create update destroy], controller: 'member_budget_units'
     end
+    patch 'admin/reject_reasons', to: 'reject_reasons#update', as: :reject_reasons
+    patch 'admin/budget_unit_settings', to: 'budget_unit_settings#update', as: :budget_unit_settings
+    resources :agency_groups, only: %i[index show create update destroy], path: 'admin/agency_groups' do
+      member do
+        patch :units, to: 'agency_group_units#update'
+        patch :settings, to: 'agency_group_settings#update'
+        post :assign, to: 'agency_group_assignments#create'
+        patch :alerts, to: 'agency_group_alerts#update'
+      end
+      resources :roles, only: %i[create destroy], controller: 'agency_group_roles'
+    end
     resources :uploads, only: %i[new create]
     get 'fiscal', to: 'fiscal#index', as: :fiscal
+    get 'fiscal/dashboard', to: 'fiscal_dashboard#index', as: :fiscal_dashboard
+    resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
+    resources :fiscal_reports, only: %i[index show], path: 'fiscal/reports', constraints: { id: /\d+/ } do
+      member do
+        get :download
+        post :regenerate
+      end
+    end
+    post 'fiscal/export/preview', to: 'fiscal_exports#preview', as: :fiscal_export_preview
     post 'fiscal/export', to: 'fiscal_exports#create', as: :fiscal_export
     resources :fiscal_invoices, path: 'fiscal', controller: 'fiscal', only: %i[show update],
                                 constraints: { id: %r{[^/]+} } do

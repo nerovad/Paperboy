@@ -4,33 +4,42 @@ require 'test_helper'
 require 'tmpdir'
 
 module Aim
+  # The store and session every upload test runs with.
+  module UploadTestSetup
+    extend ActiveSupport::Concern
+
+    AIM_ENV = %w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH AIM_STORE_DIR].freeze
+
+    included do
+      setup do
+        @tmpdir = Dir.mktmpdir
+        @old_env = AIM_ENV.to_h { |key| [key, ENV.fetch(key, nil)] }
+        ENV['AIM_WINDOWS_QUEUE_BASE_PATH'] = 'E:\AIM'
+        ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
+        ENV['AIM_STORE_DIR'] = 'E:\AIM\_BACK_END\_STORE'
+        session[:user] = { 'email' => 'jane@example.com', 'employee_id' => 42, 'first_name' => 'Jane',
+                           'last_name' => 'Doe', 'unit' => '4601' }
+        @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+      end
+
+      teardown do
+        @old_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+        FileUtils.remove_entry(@tmpdir) if @tmpdir && Dir.exist?(@tmpdir)
+      end
+    end
+
+    def pdf(name)
+      Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 #{name}\n"), 'application/pdf', original_filename: name)
+    end
+  end
+
   # Upload does exactly what intake does: the PDF goes to the store under a
   # fresh batch id and one row is inserted as received with the extract
   # command. AIM v2.
   class UploadsControllerTest < ActionController::TestCase
     tests Aim::UploadsController
 
-    AIM_ENV = %w[AIM_WINDOWS_QUEUE_BASE_PATH AIM_LINUX_QUEUE_BASE_PATH AIM_STORE_DIR].freeze
-
-    setup do
-      @tmpdir = Dir.mktmpdir
-      @old_env = AIM_ENV.to_h { |key| [key, ENV.fetch(key, nil)] }
-      ENV['AIM_WINDOWS_QUEUE_BASE_PATH'] = 'E:\AIM'
-      ENV['AIM_LINUX_QUEUE_BASE_PATH'] = @tmpdir
-      ENV['AIM_STORE_DIR'] = 'E:\AIM\_BACK_END\_STORE'
-      session[:user] = { 'email' => 'jane@example.com', 'employee_id' => 42, 'first_name' => 'Jane',
-                         'last_name' => 'Doe', 'unit' => '4601' }
-      @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
-    end
-
-    teardown do
-      @old_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
-      FileUtils.remove_entry(@tmpdir) if @tmpdir && Dir.exist?(@tmpdir)
-    end
-
-    def pdf(name)
-      Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 #{name}\n"), 'application/pdf', original_filename: name)
-    end
+    include UploadTestSetup
 
     test 'the form defaults the budget unit to the signed-in user\'s unit' do
       get :new
@@ -134,6 +143,66 @@ module Aim
       end
 
       assert_match(/is not in AIM/, flash[:alert])
+      assert_equal 0, Aim::Invoice.count
+    end
+  end
+
+  # Skipping the AI on upload (#131).
+  class UploadsSkipAiTest < ActionController::TestCase
+    include UploadTestSetup
+
+    tests Aim::UploadsController
+
+    test 'skipping the AI puts it straight in the queue, flagged for typing in (#131)' do
+      post :create, params: { budget_unit: '4601', owner: 'self', skip_ai: '1', files: [pdf('hand.pdf')] }
+
+      row = Aim::Invoice.sole
+      assert_equal ['ready_for_approval', nil, true, 42], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
+      assert_match(/Manual Data Entry Needed/, flash[:notice])
+    end
+
+    test 'only AIM Admins and the BU\'s Admins skip the AI for someone else\'s queue' do
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+      post :create, params: { budget_unit: '4601', owner: 'shared', skip_ai: '1', files: [pdf('hand.pdf')] }
+      assert_match(/Only AIM Admins and the BU's Admins/, flash[:alert])
+      assert_equal 0, Aim::Invoice.count
+
+      Aim::UserBudgetUnit.create!(employee_id: 42, budget_unit: '4601', bu_admin: true)
+      post :create, params: { budget_unit: '4601', owner: 'shared', skip_ai: '1', files: [pdf('hand.pdf')] }
+      assert Aim::Invoice.sole.manual_entry
+    end
+
+    test 'straight to Fiscal: no AI, no approval queue, approved by the uploader, flagged for typing in' do
+      post :create, params: { budget_unit: '4601', owner: 'fiscal', skip_ai: '1', files: [pdf('fiscal.pdf')] }
+
+      row = Aim::Invoice.sole
+      assert_equal ['approved', nil, true, nil], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
+      assert_equal 'jane@example.com', row.events.find_by(to_state: 'approved').actor, 'the stamp names the uploader'
+      assert_match(/Fiscal Queue/, flash[:notice])
+      assert_equal 1, Aim::FiscalRecord.take_in_approved!
+    end
+
+    test 'straight to Fiscal, read by the AI: approved in the uploader\'s name once the AI has it ready' do
+      post :create, params: { budget_unit: '4601', owner: 'fiscal', files: [pdf('ai.pdf')] }
+
+      row = Aim::Invoice.sole
+      assert_equal ['received', 'extract', false, 'jane@example.com'], [row.state, row.command, row.manual_entry, row.straight_to_fiscal_by]
+      assert_match(/then they go straight to Fiscal/, flash[:notice])
+
+      row.update!(state: 'ready_for_approval', command: nil, actor: 'aim_worker', document_type: 'Invoice', vendor_name: 'ACME',
+                  invoice_number: 'A-9', invoice_date: Date.new(2026, 10, 1), invoice_total: 5)
+      Aim::StraightToFiscalJob.perform_now
+
+      row.reload
+      assert_equal %w[approved export], [row.state, row.command]
+      assert_equal 'jane@example.com', row.events.where(to_state: 'approved').last.actor
+    end
+
+    test 'only AIM Admins and Fiscal upload straight to Fiscal' do
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+      post :create, params: { budget_unit: '4601', owner: 'fiscal', files: [pdf('fiscal.pdf')] }
+
+      assert_match(/Only AIM Admins and Fiscal/, flash[:alert])
       assert_equal 0, Aim::Invoice.count
     end
   end

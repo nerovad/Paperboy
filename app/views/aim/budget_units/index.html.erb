@@ -1,5 +1,5 @@
 <% title = aim_queue_access? ? 'By BU' : 'My BUs' %>
-<div class="aim-page aim-bu-page" data-controller="aim-queue-filter aim-actions-menu">
+<%= tag.div class: 'aim-page aim-bu-page', data: aim_paged_list_data(controller: 'aim-queue-filter aim-actions-menu') do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= title %></h1>
@@ -8,6 +8,7 @@
       </p>
     </div>
     <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
       <%= render 'aim/shared/units_without_admin' %>
       <span class="aim-count-pill"><%= pluralize(@units.size, 'budget unit') %></span>
     </div>
@@ -26,11 +27,12 @@
   <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_budget_units_path(agency: @agency, **opts) }, keep: { agency: @agency },
                                       placeholder: 'Search person, vendor, invoice #, BU, total…' %>
 
-  <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
+  <div class="aim-list-frame" data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path %>">
     <%= render 'aim/invoices/bulk_bar' %>
-
-    <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: true %>
-
+    <div class="aim-list-scroll" data-aim-queue-filter-target="scroll">
+      <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: true %>
+    </div>
+    <%= render 'aim/shared/list_pager' %>
     <%= render 'aim/invoices/move_modal' %>
   </div>
-</div>
+<% end %>

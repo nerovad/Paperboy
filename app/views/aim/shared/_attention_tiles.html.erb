@@ -1,0 +1,12 @@
+<%# The dashboards' "needs attention" row (#131): a tile per thing worth a
+    look, its count and where it is. Tiles with nothing are dimmed. Locals:
+    tiles (Aim::DashboardStats::Tile). %>
+<section class="aim-attention" aria-label="Needs attention">
+  <% tiles.each do |tile| %>
+    <%= link_to tile.path, class: "aim-attention__tile is-#{tile.tone}#{' is-clear' if tile.count.zero?}" do %>
+      <span class="aim-attention__count"><%= tile.count %></span>
+      <span class="aim-attention__label"><%= tile.label %></span>
+      <span class="aim-attention__hint"><%= tile.hint %></span>
+    <% end %>
+  <% end %>
+</section>

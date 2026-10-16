@@ -6,7 +6,8 @@ module Aim
   # not. Their home unit comes from GSABSS; a row for it only carries flags,
   # and goes when none is set. AIM admins do all of it; a BU Admin adds, takes
   # away and switches the shared queue for the BUs they administer only, and
-  # appoints no BU Admins and hides nothing.
+  # appoints no BU Admins and hides nothing. A Group Admin (#131) manages the
+  # units of their agency groups the same way, and appoints their BU Admins.
   class MemberBudgetUnitsController < BaseController
     before_action :require_people_manager
     before_action :set_person
@@ -17,7 +18,7 @@ module Aim
       return back(alert: 'You can only add your own budget units.') unless manageable?(unit)
 
       row = Aim::UserBudgetUnit.find_or_initialize_by(employee_id: @employee_id, budget_unit: unit)
-      row.bu_admin = true if params[:bu_admin] == '1' && full_admin?
+      row.bu_admin = true if params[:bu_admin] == '1' && helpers.aim_appoints_bu_admin?(unit)
       row.hidden = true if params[:hidden] == '1' && unit == home_unit && full_admin?
       row.shared_queue = true if params[:shared_queue] == '1'
       row.granted_by = current_user_email
@@ -34,6 +35,10 @@ module Aim
         return back(alert: 'You can only change your own budget units.') unless manageable?(row.budget_unit)
 
         row.shared_queue = params[:shared_queue] == '1'
+      elsif params.key?(:bu_admin) && !full_admin?
+        return back(alert: 'You cannot appoint BU Admins there.') unless helpers.aim_appoints_bu_admin?(row.budget_unit)
+
+        row.bu_admin = params[:bu_admin] == '1'
       elsif !full_admin?
         return redirect_to(aim_root_path, alert: 'Only AIM admins change that.')
       elsif params.key?(:hidden)
@@ -66,8 +71,11 @@ module Aim
 
     def full_admin? = helpers.aim_managed_units.nil?
 
-    # A BU Admin takes away their own BUs, but not from another BU Admin of it.
-    def removable?(row) = full_admin? || (manageable?(row.budget_unit) && !row.bu_admin)
+    # A BU Admin takes away their own BUs, but not from another BU Admin of it;
+    # a Group Admin may, in their groups' units.
+    def removable?(row)
+      full_admin? || (manageable?(row.budget_unit) && (!row.bu_admin || helpers.aim_appoints_bu_admin?(row.budget_unit)))
+    end
 
     def manageable?(unit)
       units = helpers.aim_managed_units

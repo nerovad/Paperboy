@@ -16,6 +16,8 @@ module Aim
 
       @coa = Aim::Units.new
       choose_agency(mine)
+      picked = helpers.aim_managing_units
+      @units &= picked if picked
       invoices = invoices_for_tab(Aim::Invoice.where(budget_unit: @units))
       @sections = Aim::BuSections.build(invoices, coa: @coa, units: @units, people: people_by_unit, rows: @rows)
     end

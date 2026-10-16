@@ -44,11 +44,29 @@
           <% end %>
           <label><%= radio_button_tag :owner, 'shared', false, data: { action: 'aim-owner-choice#update' } %> The budget unit's shared queue</label>
           <label><%= radio_button_tag :owner, 'person', !@has_queue, data: { action: 'aim-owner-choice#update' } %> Someone else</label>
+          <% if aim_fiscal? %>
+            <%# Straight to Fiscal (#131): no person's approval; approved in the uploader's name. %>
+            <label><%= radio_button_tag :owner, 'fiscal', false, data: { action: 'aim-owner-choice#update' } %> Straight to Fiscal (no approval queue)</label>
+          <% end %>
           <div class="aim-owner-choice__picker" data-aim-owner-choice-target="picker">
             <%= render 'aim/shared/grouped_person_select', name: :owner_employee_id, label: 'Whose queue',
                                                             target: 'aim-owner-choice-target=person' %>
           </div>
         </fieldset>
+
+        <%# Skip the AI (#131): typed in by hand instead. Into your own queue or
+            straight to Fiscal as allowed; anyone else's for AIM Admins and BU
+            Admins. The server checks which. %>
+        <% if @has_queue || aim_queue_access? || aim_bu_admin_units.present? || aim_fiscal? %>
+          <fieldset class="aim-field aim-owner-choice">
+            <legend>Data entry</legend>
+            <label><%= check_box_tag :skip_ai, '1', false %> Skip the AI: it will be typed in by hand</label>
+            <p class="aim-profile-switch__note">
+              Flagged <strong>Manual Data Entry Needed</strong> until the details are in: by the queue's owner, or by Fiscal
+              when it goes straight to Fiscal. Without this, the AI reads it first either way.
+            </p>
+          </fieldset>
+        <% end %>
       </div>
 
       <div class="aim-form-actions">

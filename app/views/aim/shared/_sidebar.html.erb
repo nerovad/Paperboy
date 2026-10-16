@@ -7,8 +7,9 @@
     page draws (aim_counts_controller). %>
 <% current = if controller_name == "invoices" || (controller_name == "budget_units" && aim_queue_access?) then "queues"
               elsif %w[vendor_aliases vendor_rules].include?(controller_name) then "vendors"
-              elsif %w[admin members enabled_units].include?(controller_name) then "admin"
-              elsif controller_name == "fiscal" then "fiscal"
+              elsif %w[admin agency_groups].include?(controller_name) && !aim_user_admin? then "fiscal"
+              elsif %w[admin members enabled_units agency_groups].include?(controller_name) then "admin"
+              elsif %w[fiscal fiscal_dashboard report_templates fiscal_reports].include?(controller_name) then "fiscal"
               elsif %w[coding_rules coding_imports].include?(controller_name) then "lookups"
               else "aim"
               end %>
@@ -23,7 +24,7 @@
     <details class="nav-group" <%= "open" %> data-aim-sidebar-target="group" data-key="aim"
              data-default-open="true" data-current="<%= current == "aim" %>">
       <summary><span class="nav-group-label">AIM</span></summary>
-      <% if aim_queue_access? %>
+      <% if aim_has_queue? %>
         <%= link_to "Dashboard", aim_dashboard_path,
                     class: "nav-link#{' active' if current_page?(aim_dashboard_path)}" %>
       <% end %>
@@ -72,12 +73,19 @@
       <details class="nav-group" <%= "open" if current == "fiscal" %> data-aim-sidebar-target="group" data-key="fiscal"
                data-default-open="false" data-current="<%= current == "fiscal" %>">
         <summary><span class="nav-group-label">Fiscal</span></summary>
+        <%= link_to "Dashboard", aim_fiscal_dashboard_path, class: "nav-link#{' active' if controller_name == 'fiscal_dashboard'}" %>
         <% Aim::FiscalRecord::STATUS_LABELS.each do |status, label| %>
           <%= link_to aim_fiscal_path(status: status),
                       class: "nav-link#{' active' if current == 'fiscal' && (@status || @record&.status) == status}" do %>
             <span><%= label %></span>
             <span class="sidebar-count <%= status == 'on_hold' ? 'danger' : 'neutral' %>" data-aim-count="fiscal_<%= status %>">…</span>
           <% end %>
+        <% end %>
+        <%= link_to "Reports", aim_fiscal_reports_path, class: "nav-link#{' active' if controller_name == 'fiscal_reports'}" %>
+        <%= link_to "Report Templates", aim_report_templates_path, class: "nav-link#{' active' if controller_name == 'report_templates'}" %>
+        <% if aim_group_admin? && !aim_user_admin? %>
+          <%= link_to "Agency Groups", aim_agency_groups_path, class: "nav-link#{' active' if controller_name == 'agency_groups'}" %>
+          <%= link_to "Users & Queues", aim_admin_path, class: "nav-link#{' active' if controller_name == 'admin'}" %>
         <% end %>
       </details>
     <% end %>
@@ -108,12 +116,15 @@
                  data-default-open="false" data-current="<%= current == "admin" %>">
           <summary><span class="nav-group-label">Admin</span></summary>
           <%= link_to "Users & Queues", aim_admin_path,
-                      class: "nav-link#{' active' if current == 'admin' && controller_name != 'enabled_units'}" %>
+                      class: "nav-link#{' active' if current == 'admin' && %w[enabled_units agency_groups].exclude?(controller_name)}" %>
           <%= link_to "AIM's Budget Units", aim_enabled_units_path,
                       class: "nav-link#{' active' if controller_name == 'enabled_units'}" %>
+          <%= link_to "Agency Groups", aim_agency_groups_path,
+                      class: "nav-link#{' active' if controller_name == 'agency_groups'}" %>
         </details>
       <% end %>
     <% end %>
+    <%= link_to "How AIM works", aim_help_path, class: "nav-link#{' active' if controller_name == 'help'}" %>
   </nav>
   <%= render "shared/sidebar_footer" %>
 </div>

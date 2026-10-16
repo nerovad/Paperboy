@@ -19,6 +19,9 @@ module Aim
     include Aim::InvoiceAssignment
     include Aim::InvoiceNaming
     include Aim::InvoiceCoding
+    include Aim::InvoiceManualEntry
+    include Aim::InvoiceSecondApproval
+    include Aim::InvoiceDuplicates
     include Aim::Transitions
     include Aim::Audited
 
@@ -40,7 +43,7 @@ module Aim
     # Why a person is needed. The old review queues, as one column.
     REVIEW_REASONS = %w[
       unknown_type unknown_vendor missing_fields low_confidence handwritten
-      extraction_error split_error export_error
+      extraction_error split_error export_error duplicate
     ].freeze
 
     # What the worker does next. NULL means nothing.
@@ -51,14 +54,14 @@ module Aim
     RESTORE_STATES = %w[needs_review ready_for_approval].freeze
 
     TRANSITIONS = {
-      'received' => %w[extracting rejected deleted],
+      'received' => %w[extracting ready_for_approval rejected deleted],
       'extracting' => %w[needs_review needs_split ready_for_approval failed received],
       'needs_review' => %w[ready_for_approval received needs_split rejected deleted],
-      'needs_split' => %w[split received rejected deleted],
+      'needs_split' => %w[split received ready_for_approval rejected deleted],
       'ready_for_approval' => %w[approved needs_review rejected deleted],
       'approved' => %w[exporting needs_review],
       'exporting' => %w[exported failed],
-      'failed' => %w[received approved needs_review rejected deleted],
+      'failed' => %w[received approved needs_review ready_for_approval rejected deleted],
       'exported' => [],
       'rejected' => RESTORE_STATES,
       'deleted' => RESTORE_STATES,
@@ -136,6 +139,7 @@ module Aim
     # on it: AIM staff settle Unknown in review first.
     def document_type_is_settled_for_a_user
       return unless state == 'ready_for_approval'
+      return if manual_entry # typed in by hand, the document type with the rest (#131)
       return if document_type.present? && document_type != UNSETTLED_DOCUMENT_TYPE
 
       errors.add(:document_type, 'must be settled before an invoice reaches a user')

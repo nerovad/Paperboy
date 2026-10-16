@@ -7,7 +7,8 @@
     invoice's history.
     `id` keeps the ids apart when a page holds two; `name` is the parameter
     the action is posted as (invoice_action on the review page), and `value`
-    what a single-purpose dialog posts before anything opens it. %>
+    what a single-purpose dialog posts before anything opens it; `suggestions`
+    offers a list to pick from. %>
 <% id = local_assigns.fetch(:id, 'aim-reason') %>
 <div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
   <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="<%= id %>-title">
@@ -18,9 +19,19 @@
     <div class="pb-modal__body">
       <div class="form-group">
         <label for="<%= id %>-text">Reason</label>
-        <textarea id="<%= id %>-text" name="reason" class="form-control" rows="3"
-                  placeholder="<%= local_assigns.fetch(:placeholder, 'Briefly explain why') %>"
-                  data-aim-reason-target="reason" disabled></textarea>
+        <% if local_assigns[:suggestions].present? %>
+          <%# A list to pick from (an agency group's hold reasons, #131), or anything typed. %>
+          <input type="text" id="<%= id %>-text" name="reason" class="form-control" list="<%= id %>-suggestions"
+                 autocomplete="off" placeholder="<%= local_assigns.fetch(:placeholder, 'Briefly explain why') %>"
+                 data-aim-reason-target="reason" disabled>
+          <datalist id="<%= id %>-suggestions">
+            <% suggestions.each do |suggestion| %><option value="<%= suggestion %>"></option><% end %>
+          </datalist>
+        <% else %>
+          <textarea id="<%= id %>-text" name="reason" class="form-control" rows="3"
+                    placeholder="<%= local_assigns.fetch(:placeholder, 'Briefly explain why') %>"
+                    data-aim-reason-target="reason" disabled></textarea>
+        <% end %>
       </div>
       <div class="pb-modal__actions">
         <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
