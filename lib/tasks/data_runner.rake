@@ -109,7 +109,7 @@ namespace :DataRunner do
     end
   end
 
-  desc 'Reconcile OMS upload states from imported GSABSS data and archives'
+  desc 'Reconcile OMS upload states from imported GSAP2M data and archives'
   task reconcile_oms_uploads: :environment do
     count = P2m::OmsUploadLedger.new.reconcile_imported!
     puts "Reconciled #{count} processed OMS upload#{'s' unless count == 1}."

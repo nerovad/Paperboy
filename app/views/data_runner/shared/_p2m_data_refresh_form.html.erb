@@ -70,7 +70,9 @@
     </div>
 
     <div class="form-actions">
-      <%= submit_tag "Upload", class: "btn approve" %>
+      <% if @groups.any? %>
+        <%= submit_tag "Upload", class: "btn approve" %>
+      <% end %>
       <%= link_to "Cancel", data_refresh_cancel_path, class: "btn" %>
     </div>
   <% end %>
