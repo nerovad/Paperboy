@@ -4,15 +4,13 @@ import { Controller } from "@hotwired/stimulus"
 // or a long one, leave the invoice room. Its title (the first <strong> or
 // <h3>, as on the Invoice panel's reason note) becomes the
 // toggle, with a caret and, while folded, "Expand"; the rest of the text
-// hides, and any buttons beside it stay. Notices start folded; one opened is
-// remembered open, by its title, in this browser -- best effort, as private
-// windows may refuse storage.
+// hides, and any buttons beside it stay. Every notice starts folded on every
+// page load (Joshua, 2026-10-16); nothing is remembered.
 export default class extends Controller {
   connect() {
     this.title = this.element.querySelector("strong, h3")
     if (!this.title) return
 
-    this.key = `aim-banner:${this.title.textContent.trim()}`
     this.title.classList.add("aim-readonly-banner__toggle")
     this.title.setAttribute("role", "button")
     this.title.setAttribute("tabindex", "0")
@@ -22,9 +20,7 @@ export default class extends Controller {
     this.onKey = (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); this.toggle() } }
     this.title.addEventListener("click", this.onClick)
     this.title.addEventListener("keydown", this.onKey)
-    let open = false
-    try { open = window.localStorage.getItem(this.key) === "open" } catch (_) { /* nothing kept */ }
-    this.show(open)
+    this.show(false)
   }
 
   disconnect() {
@@ -36,7 +32,6 @@ export default class extends Controller {
   toggle() {
     const open = this.element.classList.contains("is-folded")
     this.show(open)
-    try { window.localStorage.setItem(this.key, open ? "open" : "folded") } catch (_) { /* not kept */ }
   }
 
   show(open) {
