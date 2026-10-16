@@ -144,7 +144,8 @@
     <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
                   local: true,
-                  class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
+                  class: 'aim-panel aim-metadata-form',
+                  data: { controller: 'aim-reason aim-money', action: 'submit->aim-money#check' } do |form| %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Invoice</h2>
       </div>
@@ -186,9 +187,11 @@
                     <%= text_field_tag 'aim_submitter', @invoice.submitter, readonly: true, class: 'aim-readonly-field',
                                        title: 'Who sent the invoice in; it stays as recorded' %>
                   <% else %>
+                    <%# An amount is checked before the form is sent (aim-money, #166). %>
                     <%= form.text_field "invoice[#{field}]",
-                                        value: @invoice.public_send(field),
-                                        disabled: @read_only %>
+                                        value: @invoice.typed_value(field),
+                                        disabled: @read_only,
+                                        data: (Aim::Invoice::MONEY_FIELDS.include?(field) ? { aim_money_target: 'field', label: aim_field_label(field) } : {}) %>
                   <% end %>
                 </div>
                 <% unless @read_only || %w[document_type notes submitter].include?(field) %>

@@ -43,7 +43,7 @@ module Aim
 
     class_methods do
       def money_attributes(*names)
-        names.each do |name|
+        names.map(&:to_sym).each do |name|
           define_method(:"#{name}=") do |value|
             parsed = Aim::MoneyAttributes.parse(value)
             unreadable_money.delete(name)
@@ -55,6 +55,12 @@ module Aim
           end
         end
       end
+    end
+
+    # What a form shows for +field+: an amount it refused, as it was typed, so
+    # a failed save hands the person back what they typed to fix (#166).
+    def typed_value(field)
+      unreadable_money.fetch(field.to_sym) { public_send(field) }
     end
 
     private

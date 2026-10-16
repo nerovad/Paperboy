@@ -26,7 +26,8 @@ module Aim
     include Aim::Audited
     include Aim::MoneyAttributes
 
-    money_attributes :invoice_total, :subtotal, :sales_tax
+    MONEY_FIELDS = %w[invoice_total subtotal sales_tax].freeze
+    money_attributes(*MONEY_FIELDS)
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end

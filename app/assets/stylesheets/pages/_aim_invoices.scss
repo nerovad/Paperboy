@@ -613,6 +613,12 @@
   white-space: nowrap;
 }
 
+// An amount the form will not send (aim_money_controller, #166).
+.aim-metadata-form input.is-invalid {
+  border-color: $danger;
+  box-shadow: 0 0 0 2px rgba($danger, 0.2);
+}
+
 .aim-ticket {
   background: $red-denied-bg;
   border-left: 4px solid $danger;
