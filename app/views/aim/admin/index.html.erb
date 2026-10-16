@@ -1,4 +1,4 @@
-<div class="aim-page aim-people-page" data-controller="aim-queue-filter aim-actions-menu">
+<%= tag.div class: 'aim-page aim-people-page', data: aim_paged_list_data(controller: 'aim-queue-filter aim-actions-menu') do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Users &amp; Queues</h1>
@@ -57,6 +57,8 @@
   <% if @people.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nobody matches.</p></section>
   <% elsif @view == 'bu' %>
+    <div class="aim-list-frame">
+    <div class="aim-list-scroll" data-aim-queue-filter-target="scroll">
     <% @groups.each_with_index do |(label, people), index| %>
       <% content_id = "aim-people-group-#{index}" %>
       <% open = people.sum(&:open) %>
@@ -78,9 +80,15 @@
         </div>
       </section>
     <% end %>
+    </div>
+    <%= render 'aim/shared/list_pager' %>
+    </div>
   <% else %>
-    <section class="aim-panel aim-queue-panel aim-people-panel">
-      <%= render 'people_table', people: @people %>
-    </section>
+    <div class="aim-list-frame">
+      <section class="aim-panel aim-queue-panel aim-people-panel" data-aim-queue-filter-target="scroll">
+        <%= render 'people_table', people: @people %>
+      </section>
+      <%= render 'aim/shared/list_pager' %>
+    </div>
   <% end %>
-</div>
+<% end %>

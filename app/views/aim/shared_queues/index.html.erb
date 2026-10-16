@@ -1,4 +1,4 @@
-<div class="aim-page" data-controller="aim-queue-filter">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Shared Queues</h1>
@@ -21,10 +21,13 @@
     <section class="aim-panel aim-empty-state"><p>The shared queues are empty.</p></section>
   <% else %>
     <%= render 'aim/invoices/search_box' %>
-    <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
-        <%= render 'aim/invoices/bulk_bar' %>
-      <%= render 'aim/invoices/owner_groups', groups: @groups, movable: true %>
+    <div class="aim-list-frame" data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
+      <%= render 'aim/invoices/bulk_bar' %>
+      <div class="aim-list-scroll" data-aim-queue-filter-target="scroll">
+        <%= render 'aim/invoices/owner_groups', groups: @groups, movable: true %>
+      </div>
+      <%= render 'aim/shared/list_pager' %>
       <%= render 'aim/invoices/move_modal' %>
     </div>
   <% end %>
-</div>
+<% end %>

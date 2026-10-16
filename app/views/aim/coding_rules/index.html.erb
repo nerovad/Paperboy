@@ -2,7 +2,7 @@
 <% columns = %w[customer_number encumbrance ma_number vendor_code fund department object_code dept_object activity
                  function_code major_program program phase task] %>
 <% sortable = { 'encumbrance' => 'encumbrance', 'object_code' => 'object', 'program' => 'program', 'fund' => 'fund' } %>
-<div class="aim-page" data-controller="aim-queue-filter aim-actions-menu">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data(controller: 'aim-queue-filter aim-actions-menu') do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Coding Rules</h1>
@@ -47,7 +47,7 @@
   <% if @rules.empty? %>
     <section class="aim-panel aim-empty-state"><p>No rules yet. Load a file to start.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel aim-rules-panel">
+    <section class="aim-panel aim-queue-panel aim-rules-panel" data-aim-queue-filter-target="scroll">
       <%# Sorting keeps the agency, BU and in-effect choices. %>
       <% sort_keep = request.query_parameters.slice('agency', 'unit', 'show') %>
       <table class="submission-table aim-queue-table aim-rules-table">
@@ -79,5 +79,6 @@
         </tbody>
       </table>
     </section>
+    <%= render 'aim/shared/list_pager' %>
   <% end %>
-</div>
+<% end %>

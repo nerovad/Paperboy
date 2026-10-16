@@ -67,7 +67,7 @@
   <% end %>
 
   <h2 class="aim-profile-heading" id="queue">Invoices</h2>
-  <div data-controller="aim-queue-filter">
+  <%= tag.div data: aim_paged_list_data do %>
     <%= render 'aim/shared/stage_tabs', path: ->(**opts) { aim_member_path(@employee_id, anchor: 'queue', **opts) } %>
 
     <% if @invoices.empty? %>
@@ -80,10 +80,11 @@
         <section class="aim-panel aim-queue-panel">
           <%= render 'aim/invoices/rows', invoices: @invoices, movable: true %>
         </section>
+        <%= render 'aim/shared/list_pager' %>
         <%= render 'aim/invoices/move_modal' %>
       </div>
     <% end %>
-  </div>
+  <% end %>
 
   <div class="aim-profile-actions">
   <% if @member&.active? && aim_manages_all_units_of?(@employee_id) %>

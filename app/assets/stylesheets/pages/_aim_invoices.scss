@@ -29,8 +29,47 @@
    default, a panel shrinks to fit the screen and .aim-panel's overflow:
    hidden cuts off whatever no longer fits. The queue panel is the one meant
    to fill the rest of the page and scroll inside (.aim-queue-panel). */
-.aim-page:not(.aim-review-page) > :not(.aim-queue-panel) {
+.aim-page:not(.aim-review-page) > :not(.aim-queue-panel, .aim-list-frame, .aim-list-frame-host) {
   flex-shrink: 0;
+}
+
+/* AIM's lists (#101), the way Coding Rules works: everything above the list
+   -- heading, buttons, search, filters, the Move or report bar -- stays put,
+   and the list scrolls inside the rest of the page, its column headings
+   pinned; the pager (aim_queue_filter_controller) sits under it. A frame is
+   whatever wraps the list (a Move wrapper, a report form); the scroller is the
+   list's panel, or .aim-list-scroll around grouped sections. */
+.aim-list-frame {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 12rem;
+
+  > :not(.aim-queue-panel, .aim-list-scroll, .aim-list-frame) {
+    flex-shrink: 0;
+  }
+}
+
+// A plain block, so the sections' own margins space them as before.
+.aim-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+// A Turbo Frame holding a paged list takes no room of its own: its list frame
+// sits straight in the page's column.
+.aim-list-frame-host {
+  display: contents;
+}
+
+.aim-list-pager:empty {
+  display: none;
+}
+
+.aim-list-pager .pagination-wrapper {
+  padding: 4px 0 0;
 }
 
 /* The bottom padding clears the fixed "Powered by GSA" badge, which sits
@@ -172,6 +211,20 @@
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+/* A pinned heading pins to the nearest box that clips: .submission-table
+   clips (overflow: hidden), so the heading would stick to the table, which
+   never scrolls, and go up with it. The list's panel is what scrolls (#101). */
+.aim-queue-table {
+  overflow: visible;
+}
+
+/* A pinned heading needs its own background (#101): the row's does not
+   stick with it, and the rows would show through as the list scrolls. */
+.aim-queue-table thead th {
+  background: $surface-panel;
+  box-shadow: inset 0 -1px 0 $neutral-border-subtle;
 }
 
 .aim-queue-table td {
