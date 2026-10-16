@@ -356,9 +356,10 @@ module Aim
       assert_nil row.notes, 'the reason is on the banner, not in the notes (#160)'
 
       get :show, params: { id: row.batch_id, queue: row.queue }
-      assert_select '.aim-readonly-banner.is-folded .aim-readonly-banner__toggle', text: /\ASent back/
+      assert_select '.aim-notice-chip[aria-controls=aim-notice-sent-back]', text: /Sent back/
+      assert_select '.aim-notice-tray #aim-notice-sent-back[hidden]'
       assert_select '.aim-readonly-banner p', text: /wrong PO/
-      assert_select '.aim-page-header .badge', text: 'Sent back'
+      assert_select '.aim-page-header .badge', text: 'Sent back', count: 0
       assert_select '.aim-ticket', 0
 
       act(row, 'send_to_approval')
@@ -599,7 +600,9 @@ module Aim
       act(third, 'send_to_approval')
       assert third.known_duplicate?
       get :show, params: { id: third.batch_id, queue: third.queue }
-      assert_select '.aim-duplicate-banner.is-folded .aim-readonly-banner__toggle', text: /\AKnown duplicate/
+      # A chip in the header drops the notice down, hidden until opened (#160).
+      assert_select '.aim-review-header .aim-notice-chip[aria-controls=aim-notice-known-duplicate]', text: /Known duplicate/
+      assert_select '.aim-notice-tray #aim-notice-known-duplicate.aim-duplicate-banner[hidden]'
       assert_select '.aim-readonly-banner__actions', 0
     end
 

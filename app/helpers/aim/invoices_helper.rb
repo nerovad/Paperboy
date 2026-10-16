@@ -81,6 +81,18 @@ module Aim
       [mailbox.tr('._-', ' ').squish.titleize.presence || 'Someone', event.created_at.in_time_zone]
     end
 
+    # A notice on the review page (#160) is a chip in the header that drops
+    # its panel down over the page: this heads the panel and records the chip
+    # (aim_notice_chips) the header shows. The panel's id is aim_notice_id.
+    def aim_notice_heading(title, mark:, tone: :alert)
+      (@aim_notice_chips ||= []) << { id: aim_notice_id(title), title: title, mark: mark, tone: tone }
+      content_tag(:strong, title)
+    end
+
+    def aim_notice_id(title) = "aim-notice-#{title.to_s.parameterize}"
+
+    def aim_notice_chips = @aim_notice_chips || []
+
     # A notice's title as its fold toggle (aim_banner_controller, #160): the
     # caret and "Expand" are rendered here, and the notice is rendered folded
     # (is-folded), so nothing moves once the page has loaded.

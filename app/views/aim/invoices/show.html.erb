@@ -11,44 +11,34 @@
        data-aim-presence-lock-url-value="<%= lock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
        data-aim-presence-unlock-url-value="<%= unlock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
      <% end %>>
-  <header class="aim-page-header">
-    <div class="aim-review-heading">
-      <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
-      <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
-      <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
-      <% if @invoice.review_reason.present? %>
-        <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
-      <% end %>
-      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
-      <% if @claimable && !@read_only %>
-        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
-                      class: 'btn take-back compact', form_class: 'aim-claim-form',
-                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
-      <% end %>
-    </div>
-  </header>
-
+  <%# The notices (#160): built first, so the header can show a chip for
+      each; their panels drop down from the header over the page, so the PDF
+      keeps its height (aim_notices_controller). %>
+  <% notices = capture do %>
   <%# Duplicates (#131, #160): the possible duplicate beside its original, and
       either end of a replacement. %>
   <%= render 'duplicate_banner' if @invoice.duplicate_of %>
   <% if @invoice.replaces %>
-    <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↻</span>
-      <div><%= aim_notice_title('Replacement') %><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Replacement') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
+      <div><%= aim_notice_heading('Replacement', mark: '↻', tone: :info) %><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if (newer = @invoice.replaced_by) %>
-    <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↻</span>
-      <div><%= aim_notice_title('Replaced') %><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Replaced') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
+      <div><%= aim_notice_heading('Replaced', mark: '↻', tone: :info) %><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if @invoice.awaiting_second_approval? %>
     <%# The high-dollar second approval (#131). %>
-    <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">2</span>
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Second approval') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">2</span>
       <div>
-        <%= aim_notice_title('Second approval') %>
+        <%= aim_notice_heading('Second approval', mark: '2', tone: :info) %>
         <p>
           First approved by <%= Aim::FiscalExport.approver_names([@invoice.first_approved_by]).fetch(@invoice.first_approved_by.downcase, @invoice.first_approved_by) %>
           on <%= @invoice.first_approved_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %>. Over the BU's amount, so it waits for
@@ -59,10 +49,11 @@
   <% end %>
   <% if @invoice.manual_entry %>
     <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
-    <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">✎</span>
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Manual Data Entry Needed') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
       <div>
-        <%= aim_notice_title('Manual Data Entry Needed') %>
+        <%= aim_notice_heading('Manual Data Entry Needed', mark: '✎', tone: :info) %>
         <p>The AI has not read this invoice. Type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>.</p>
       </div>
     </div>
@@ -71,10 +62,11 @@
   <%# Sent back (#160): a person sent it back for review, saying why. %>
   <% if state == 'needs_review' && @invoice.review_reason == 'sent_back' %>
     <% who, sent_at = aim_sent_back_by(@invoice) %>
-    <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↩</span>
+    <div class="aim-readonly-banner aim-notice-panel" role="alert" id="<%= aim_notice_id('Sent back') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">↩</span>
       <div>
-        <%= aim_notice_title('Sent back') %>
+        <%= aim_notice_heading('Sent back', mark: '↩', tone: :alert) %>
         <p>
           <% if who %>By <%= who %>, <%= sent_at.strftime('%m/%d/%Y %-I:%M %p') %>: <% end %>
           <%= @invoice.review_note.presence || 'no reason given' %>
@@ -84,10 +76,11 @@
   <% end %>
 
   <% if @read_only %>
-    <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">!</span>
+    <div class="aim-readonly-banner aim-notice-panel" role="alert" id="<%= aim_notice_id('Read only') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
-        <%= aim_notice_title('Read only') %>
+        <%= aim_notice_heading('Read only', mark: '!', tone: :alert) %>
         <% if @claimed_by_other %>
           <p><%= @claim_holder %> is working on this invoice. You can view it, but not change it until they are done.</p>
         <% elsif @invoice.terminal? %>
@@ -121,6 +114,31 @@
       <% end %>
     </div>
   <% end %>
+  <% end %>
+  <header class="aim-page-header aim-review-header" data-controller="aim-notices">
+    <div class="aim-review-heading">
+      <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
+      <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
+      <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
+      <%# A reason with a notice of its own shows as that notice's chip. %>
+      <% if @invoice.review_reason.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
+        <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
+      <% end %>
+      <% aim_notice_chips.each do |chip| %>
+        <button type="button" class="aim-notice-chip is-<%= chip[:tone] %>" aria-expanded="false" aria-controls="<%= chip[:id] %>"
+                data-action="aim-notices#toggle" data-aim-notices-target="chip">
+          <span class="aim-notice-chip__mark" aria-hidden="true"><%= chip[:mark] %></span><%= chip[:title] %><span class="aim-notice-chip__caret" aria-hidden="true"></span>
+        </button>
+      <% end %>
+      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
+      <% if @claimable && !@read_only %>
+        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                      class: 'btn take-back compact', form_class: 'aim-claim-form',
+                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+      <% end %>
+    </div>
+    <div class="aim-notice-tray"><%= notices %></div>
+  </header>
 
   <div class="aim-document-layout">
     <section class="aim-panel aim-document-panel">
@@ -158,7 +176,8 @@
 
       <div class="aim-form-scroll">
         <%= render 'aim/shared/frame_flash' %>
-        <% if @invoice.review_note.present? && @invoice.review_reason != 'sent_back' %>
+        <%# Duplicate and Sent back have chips of their own in the header (#160). %>
+        <% if @invoice.review_note.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
           <section class="aim-ticket is-folded" data-controller="aim-banner">
             <%= aim_notice_title(aim_review_reason_label(@invoice.review_reason.presence || 'note'), element: :h3) %>
             <pre><%= @invoice.review_note %></pre>
