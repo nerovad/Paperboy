@@ -14,10 +14,10 @@
         steps: Workflow::REPLICATE_STEPS
       }
     },
+    dependency: 'Gsabss_tc60_types',
     group: {
       name: 'gsabss'
     },
-    dependency: 'Gsabss_tc60_types',
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSABSS',
