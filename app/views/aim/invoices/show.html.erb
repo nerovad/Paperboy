@@ -32,6 +32,7 @@
       end of a replacement. %>
   <% if @invoice.possible_duplicate? %>
     <% other = @invoice.duplicate_of %>
+    <% decide = aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
     <div class="aim-readonly-banner" role="alert">
       <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
       <div>
@@ -41,9 +42,25 @@
           <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
           (<%= aim_state_label(other.state) %>, <%= other.created_at.in_time_zone.strftime('%m/%d/%Y') %>,
           <%= other.queue_owner %>).
-          <% if aim_queue_access? %>Decide below: reject it as a duplicate, keep it as the replacement, or clear it.<% else %>AIM staff will decide.<% end %>
+          <% if decide %>Reject it as a duplicate, keep it as the replacement, or clear it.<% else %>AIM staff will decide.<% end %>
         </p>
       </div>
+      <% if decide %>
+        <%# AIM staff's three answers (#131), here beside the question (#160).
+            They submit the invoice form below (form:), as they did from its
+            action row, so any edits made first are saved with the answer. %>
+        <div class="aim-readonly-banner__actions">
+          <%= button_tag 'Reject as duplicate', name: 'invoice_action', value: 'reject_duplicate', form: 'aim-invoice-form',
+                         data: { turbo_confirm: "Reject this as a duplicate of #{other.batch_id}?", confirm_label: 'Reject' },
+                         class: 'btn deny compact' %>
+          <%= button_tag 'Replacement', name: 'invoice_action', value: 'replacement', form: 'aim-invoice-form',
+                         data: { turbo_confirm: "Keep this as the replacement for #{other.batch_id}? Both will say so.",
+                                 confirm_label: 'Replacement' },
+                         class: 'btn reassign compact', title: "This invoice replaces #{other.batch_id}" %>
+          <%= button_tag 'Not a duplicate', name: 'invoice_action', value: 'not_duplicate', form: 'aim-invoice-form',
+                         class: 'btn compact' %>
+        </div>
+      <% end %>
     </div>
   <% end %>
   <% if @invoice.replaces %>
@@ -143,7 +160,7 @@
     <%= turbo_frame_tag 'aim-review-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
-                  local: true,
+                  local: true, id: 'aim-invoice-form',
                   class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Invoice</h2>
@@ -246,18 +263,6 @@
             <% end %>
 
             <% if state == 'needs_review' %>
-              <% if @invoice.possible_duplicate? && aim_queue_access? %>
-                <%# A possible duplicate (#131): AIM staff's three answers. %>
-                <%= form.button 'Reject as duplicate', name: 'invoice_action', value: 'reject_duplicate',
-                                data: { turbo_confirm: "Reject this as a duplicate of #{@invoice.duplicate_of.batch_id}?",
-                                        confirm_label: 'Reject' },
-                                class: 'btn deny' %>
-                <%= form.button 'Replacement', name: 'invoice_action', value: 'replacement',
-                                data: { turbo_confirm: "Keep this as the replacement for #{@invoice.duplicate_of.batch_id}? Both will say so.",
-                                        confirm_label: 'Replacement' },
-                                class: 'btn reassign', title: "This invoice replaces #{@invoice.duplicate_of.batch_id}" %>
-                <%= form.button 'Not a duplicate', name: 'invoice_action', value: 'not_duplicate', class: 'btn' %>
-              <% end %>
               <% if @invoice.review_reason == 'unknown_vendor' %>
                 <%= form.button 'Learn & Retry AI', name: 'invoice_action', value: 'learn_and_retry',
                                 data: { turbo_confirm: 'Save this vendor match and have the AI read the invoice again?' },

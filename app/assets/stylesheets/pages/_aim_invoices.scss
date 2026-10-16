@@ -219,6 +219,16 @@
   font-size: 0.85rem;
 }
 
+// A banner's own answers (the duplicate decision, #160), at its right.
+.aim-readonly-banner__actions {
+  align-self: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .aim-empty-state {
   color: $text-muted;
   padding: 42px;

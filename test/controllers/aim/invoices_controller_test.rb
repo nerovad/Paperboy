@@ -521,7 +521,13 @@ module Aim
 
       get :show, params: { id: row.batch_id, queue: row.queue }
       assert_select 'a[href=?]', aim_invoice_path(first.batch_id)
-      assert_select 'button[value=reject_duplicate]'
+      # The three answers sit on the banner (#160) and submit the invoice form.
+      assert_select 'form#aim-invoice-form'
+      assert_select '.aim-readonly-banner__actions button[form=aim-invoice-form]', 3
+      %w[reject_duplicate replacement not_duplicate].each do |answer|
+        assert_select ".aim-readonly-banner__actions button[value=#{answer}]"
+        assert_select ".aim-review-action-strip button[value=#{answer}]", 0
+      end
 
       act(row, 'not_duplicate')
       assert_equal [nil, nil], [row.review_reason, row.duplicate_of_id]
