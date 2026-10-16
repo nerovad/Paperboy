@@ -561,7 +561,7 @@ module Aim
       Aim::DuplicateCheckJob.perform_now
 
       get :show, params: { id: row.reload.batch_id, queue: row.queue }
-      assert_select '[data-controller=aim-replace] button[data-action="aim-replace#open"]', text: 'Replacement'
+      assert_select '[data-controller~=aim-replace] button[data-action="aim-replace#open"]', text: 'Replacement'
       assert_select 'input[name=replace_to][value=same][form=aim-invoice-form][checked]'
       assert_select 'select[name=replace_owner][form=aim-invoice-form]'
 

@@ -18,7 +18,7 @@
 
   <% if @invoice.manual_entry %>
     <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-manual-banner" role="status" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
       <div>
         <strong>Manual Data Entry Needed</strong>
@@ -28,7 +28,7 @@
   <% end %>
 
   <% if status == 'on_hold' && @record.hold_reason.present? %>
-    <div class="aim-readonly-banner" role="alert">
+    <div class="aim-readonly-banner" role="alert" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div><strong>On hold</strong><p><%= @record.hold_reason %></p></div>
     </div>

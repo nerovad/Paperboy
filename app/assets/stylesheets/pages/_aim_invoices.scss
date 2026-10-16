@@ -219,6 +219,32 @@
   font-size: 0.85rem;
 }
 
+// A notice folds to its title (aim_banner_controller, #160): the title is the
+// toggle, with a caret; folded, only the title and any buttons remain.
+.aim-readonly-banner__toggle {
+  cursor: pointer;
+
+  &::after {
+    content: " \25BE";
+    font-size: 0.8em;
+  }
+}
+
+.aim-readonly-banner.is-folded {
+  align-items: center;
+  padding-bottom: 8px;
+  padding-top: 8px;
+
+  p,
+  table {
+    display: none;
+  }
+
+  .aim-readonly-banner__toggle::after {
+    content: " \25B8";
+  }
+}
+
 // A possible duplicate beside its original (#160): the text and the two
 // invoices' fields, differences marked, then the answers at the right.
 .aim-duplicate-banner__body {

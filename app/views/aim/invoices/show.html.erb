@@ -32,20 +32,20 @@
       either end of a replacement. %>
   <%= render 'duplicate_banner' if @invoice.duplicate_of %>
   <% if @invoice.replaces %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-manual-banner" role="status" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
       <div><strong>Replacement</strong><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if (newer = @invoice.replaced_by) %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-manual-banner" role="status" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
       <div><strong>Replaced</strong><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if @invoice.awaiting_second_approval? %>
     <%# The high-dollar second approval (#131). %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-manual-banner" role="status" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">2</span>
       <div>
         <strong>Second approval</strong>
@@ -59,7 +59,7 @@
   <% end %>
   <% if @invoice.manual_entry %>
     <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-manual-banner" role="status" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
       <div>
         <strong>Manual Data Entry Needed</strong>
@@ -69,7 +69,7 @@
   <% end %>
 
   <% if @read_only %>
-    <div class="aim-readonly-banner" role="alert">
+    <div class="aim-readonly-banner" role="alert" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
         <strong>Read only</strong>

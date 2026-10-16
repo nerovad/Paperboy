@@ -9,7 +9,7 @@
 <% decide = flagged && aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
 <% processed = @invoice.original_processed? %>
 <div class="aim-readonly-banner aim-duplicate-banner<%= ' aim-manual-banner' unless flagged %>"
-     role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace">
+     role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace aim-banner">
   <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
   <div class="aim-duplicate-banner__body">
     <strong><%= flagged ? 'Possible duplicate' : 'Known duplicate' %></strong>
