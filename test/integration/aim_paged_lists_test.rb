@@ -39,14 +39,10 @@ class AimPagedListsTest < ActionDispatch::IntegrationTest
                               status: 'previewed')
     Aim::FiscalRecord.create!(invoice: Aim::Invoice.find_by!(batch_id: '4641.PL-1'))
     Aim::FiscalReport.process!(Aim::FiscalExport.new(Aim::FiscalRecord.all), layout: nil, by: 'test')
-    ApplicationController.define_method(:current_user_group_names) { Set['aim_admin'] }
-    ApplicationController.define_method(:can_access_app?) { |*| true }
+    # An AIM Admin the way ACL makes one: in the aim_admin group.
+    group = Group.find_or_create_by!(Group_Name: 'aim_admin')
+    EmployeeGroup.create!(GroupID: group.GroupID, EmployeeID: employee.id)
     post '/login', params: { id: employee.employee_id }
-  end
-
-  teardown do
-    ApplicationController.remove_method(:current_user_group_names) if ApplicationController.method_defined?(:current_user_group_names, false)
-    ApplicationController.remove_method(:can_access_app?) if ApplicationController.method_defined?(:can_access_app?, false)
   end
 
   PAGES.each do |name, path|
