@@ -24,6 +24,9 @@ module Aim
     include Aim::InvoiceDuplicates
     include Aim::Transitions
     include Aim::Audited
+    include Aim::MoneyAttributes
+
+    money_attributes :invoice_total, :subtotal, :sales_tax
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end

@@ -227,6 +227,17 @@ module Aim
       assert_equal 'needs_review', row.state
     end
 
+    test 'a total typed with commas or a dollar sign is saved whole; one that is not an amount is refused (#166)' do
+      row = invoice('4601.K2', pdf: false, invoice_total: 10)
+
+      act(row, 'save', invoice: { invoice_total: '999,999,999.99', subtotal: '$1,234.50', sales_tax: '(1.25)' })
+      assert_equal [BigDecimal('999999999.99'), BigDecimal('1234.50'), BigDecimal('-1.25')], [row.invoice_total, row.subtotal, row.sales_tax]
+
+      act(row, 'save', invoice: { invoice_total: 'about 12' })
+      assert_equal BigDecimal('999999999.99'), row.invoice_total, 'nothing saved'
+      assert_match(/is not an amount AIM can save/, flash[:alert].to_s + response.body)
+    end
+
     test 'send to approval moves the row and releases the claim' do
       row = invoice('4601.L', review_reason: 'missing_fields', claimed_by: REVIEWER, claimed_at: Time.current)
 
