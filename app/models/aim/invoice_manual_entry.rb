@@ -15,8 +15,9 @@ module Aim
     def sendable? = SENDABLE_STATES.include?(state)
 
     # To +owner+'s queue (an employee id, or the shared queue), in Ready for
-    # Approval, the worker's pending command dropped; +manual+ flags it.
-    def send_to_queue!(owner, actor:, reason:, manual: false, by: nil)
+    # Approval, the worker's pending command dropped; +manual+ flags it; +unit+
+    # moves it to that budget unit as well.
+    def send_to_queue!(owner, actor:, reason:, manual: false, by: nil, unit: nil)
       raise Aim::Invoice::IllegalTransition, "#{batch_id} is #{state}; it cannot be sent to a queue from there." unless sendable?
 
       transaction do
@@ -25,7 +26,7 @@ module Aim
                                                command: nil, review_reason: nil, lease_owner: nil, lease_until: nil,
                                                manual_entry: manual || manual_entry)
         end
-        reassign!(owner, actor: actor, by: by)
+        reassign!(owner, actor: actor, by: by, unit: unit)
         flag_manual_entry!(actor: actor, note: "Manual Data Entry Needed: #{reason}") if manual
       end
     end

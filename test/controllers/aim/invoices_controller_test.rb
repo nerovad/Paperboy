@@ -521,13 +521,20 @@ module Aim
 
       get :show, params: { id: row.batch_id, queue: row.queue }
       assert_select 'a[href=?]', aim_invoice_path(first.batch_id)
-      # The three answers sit on the banner (#160) and submit the invoice form.
+      # The answers sit on the banner (#160) and submit the invoice form; the
+      # two are compared, the different fields marked. The original is
+      # exported, so Replacement is greyed out and says why.
       assert_select 'form#aim-invoice-form'
-      assert_select '.aim-readonly-banner__actions button[form=aim-invoice-form]', 3
-      %w[reject_duplicate replacement not_duplicate].each do |answer|
-        assert_select ".aim-readonly-banner__actions button[value=#{answer}]"
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Vendor'
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Total', count: 0
+      %w[reject_duplicate not_duplicate].each do |answer|
+        assert_select ".aim-readonly-banner__actions button[value=#{answer}][form=aim-invoice-form]"
         assert_select ".aim-review-action-strip button[value=#{answer}]", 0
       end
+      assert_select '.aim-readonly-banner__actions span[title*="already been processed"] button[disabled]', text: 'Replacement'
+      assert_select 'button[value=replacement]', 0
+      act(row, 'replacement')
+      assert_equal ['needs_review', first.id], [row.state, row.duplicate_of_id], 'refused once the original is processed'
 
       act(row, 'not_duplicate')
       assert_equal [nil, nil], [row.review_reason, row.duplicate_of_id]
@@ -545,18 +552,51 @@ module Aim
       assert_equal [nil, first.id, nil], [first.reload.duplicate_of_id, row.reload.duplicate_of_id, old.reload.duplicate_of_id]
     end
 
-    test 'a replacement says so at both ends; a duplicate is rejected naming the other' do
-      first = invoice('4601.E1', state: 'exported', invoice_total: 20, pdf: false)
+    test 'a replacement goes to the original queue and the original is rejected as replaced (#160)' do
+      person = Employee.where.not(first_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      first = invoice('4601.E1', state: 'ready_for_approval', invoice_total: 20, assigned_employee_id: person.id,
+                                 assigned_to: person.first_name, assignment_source: 'reassigned')
       row = invoice('4601.E2', state: 'ready_for_approval', invoice_total: 20, pdf: false)
       Aim::DuplicateCheckJob.perform_now
 
-      act(row.reload, 'replacement')
-      assert_equal first.id, row.replaces_invoice_id
-      assert_equal row, first.reload.replaced_by
+      get :show, params: { id: row.reload.batch_id, queue: row.queue }
+      assert_select '[data-controller=aim-replace] button[data-action="aim-replace#open"]', text: 'Replacement'
+      assert_select 'input[name=replace_to][value=same][form=aim-invoice-form][checked]'
+      assert_select 'select[name=replace_owner][form=aim-invoice-form]'
+
+      act(row, 'replacement', replace_to: 'same')
+      assert_equal ['ready_for_approval', person.id, first.id, nil], [row.state, row.assigned_employee_id, row.replaces_invoice_id, row.duplicate_of_id]
+      first.reload
+      assert_equal 'rejected', first.state
+      assert_includes first.notes, "Replaced by #{row.batch_id}"
+      assert_equal row, first.replaced_by
+      assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.E1.pdf')), 'its PDF copied as a Reject would'
       Aim::DuplicateCheckJob.perform_now
       assert_nil row.reload.duplicate_of_id, 'a replacement is not flagged again'
+    end
 
-      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 20)
+    test 'a replacement can go to another queue; a duplicate sent on stays a known duplicate (#160)' do
+      first = invoice('4601.G1', state: 'needs_review', invoice_total: 25, pdf: false)
+      row = invoice('4601.G2', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+
+      act(row.reload, 'replacement', replace_to: 'other', replace_owner: '')
+      assert_equal [nil, 'rejected'], [row.assigned_employee_id, first.reload.state]
+
+      third = invoice('4601.G3', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal first.id, third.reload.duplicate_of_id, 'matched with the earliest copy, rejected or not'
+      act(third, 'send_to_approval')
+      assert third.known_duplicate?
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      assert_select '.aim-duplicate-banner strong', text: 'Known duplicate'
+      assert_select '.aim-readonly-banner__actions', 0
+    end
+
+    test 'a duplicate is rejected naming the other' do
+      first = invoice('4601.E4', state: 'exported', invoice_total: 21, pdf: false)
+      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 21)
       Aim::DuplicateCheckJob.perform_now
       act(third.reload, 'reject_duplicate')
       assert_equal 'rejected', third.state

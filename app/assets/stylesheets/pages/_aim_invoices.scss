@@ -219,6 +219,46 @@
   font-size: 0.85rem;
 }
 
+// A possible duplicate beside its original (#160): the text and the two
+// invoices' fields, differences marked, then the answers at the right.
+.aim-duplicate-banner__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aim-duplicate-compare {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 8px;
+
+  th,
+  td {
+    padding: 2px 14px 2px 0;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  tbody th {
+    color: $text-muted;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  td {
+    color: $text-color;
+  }
+
+  tr.is-different td {
+    background: $warning-bg;
+    font-weight: 600;
+  }
+}
+
 // A banner's own answers (the duplicate decision, #160), at its right.
 .aim-readonly-banner__actions {
   align-self: center;

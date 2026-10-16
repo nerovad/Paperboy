@@ -28,41 +28,9 @@
     </div>
   </header>
 
-  <%# Duplicates (#131): the possible duplicate and its match, and either
-      end of a replacement. %>
-  <% if @invoice.possible_duplicate? %>
-    <% other = @invoice.duplicate_of %>
-    <% decide = aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
-    <div class="aim-readonly-banner" role="alert">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
-      <div>
-        <strong>Possible duplicate</strong>
-        <p>
-          Same vendor, invoice number and total as
-          <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
-          (<%= aim_state_label(other.state) %>, <%= other.created_at.in_time_zone.strftime('%m/%d/%Y') %>,
-          <%= other.queue_owner %>).
-          <% if decide %>Reject it as a duplicate, keep it as the replacement, or clear it.<% else %>AIM staff will decide.<% end %>
-        </p>
-      </div>
-      <% if decide %>
-        <%# AIM staff's three answers (#131), here beside the question (#160).
-            They submit the invoice form below (form:), as they did from its
-            action row, so any edits made first are saved with the answer. %>
-        <div class="aim-readonly-banner__actions">
-          <%= button_tag 'Reject as duplicate', name: 'invoice_action', value: 'reject_duplicate', form: 'aim-invoice-form',
-                         data: { turbo_confirm: "Reject this as a duplicate of #{other.batch_id}?", confirm_label: 'Reject' },
-                         class: 'btn deny compact' %>
-          <%= button_tag 'Replacement', name: 'invoice_action', value: 'replacement', form: 'aim-invoice-form',
-                         data: { turbo_confirm: "Keep this as the replacement for #{other.batch_id}? Both will say so.",
-                                 confirm_label: 'Replacement' },
-                         class: 'btn reassign compact', title: "This invoice replaces #{other.batch_id}" %>
-          <%= button_tag 'Not a duplicate', name: 'invoice_action', value: 'not_duplicate', form: 'aim-invoice-form',
-                         class: 'btn compact' %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
+  <%# Duplicates (#131, #160): the possible duplicate beside its original, and
+      either end of a replacement. %>
+  <%= render 'duplicate_banner' if @invoice.duplicate_of %>
   <% if @invoice.replaces %>
     <div class="aim-readonly-banner aim-manual-banner" role="status">
       <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>

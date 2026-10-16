@@ -1,0 +1,96 @@
+<%# A possible duplicate (#131), shown beside its original (#160). AIM staff
+    answer on the banner: the buttons submit the invoice form below (form:),
+    so edits made first are saved with the answer. Replacement asks where the
+    replacement goes and rejects the original; once the original has been
+    processed it is greyed out, and the two can still be compared. A known
+    duplicate -- flagged, then sent on by AIM staff -- keeps a quieter note. %>
+<% other = @invoice.duplicate_of %>
+<% flagged = @invoice.possible_duplicate? %>
+<% decide = flagged && aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
+<% processed = @invoice.original_processed? %>
+<div class="aim-readonly-banner aim-duplicate-banner<%= ' aim-manual-banner' unless flagged %>"
+     role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace">
+  <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
+  <div class="aim-duplicate-banner__body">
+    <strong><%= flagged ? 'Possible duplicate' : 'Known duplicate' %></strong>
+    <p>
+      Same vendor, invoice number and total as
+      <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
+      (<%= aim_state_label(other.state) %>, <%= other.created_at.in_time_zone.strftime('%m/%d/%Y') %>, <%= other.queue_owner %>).
+      <% if !flagged %>AIM staff sent it on knowing that.
+      <% elsif decide %>Reject it as a duplicate, keep it as the replacement, or clear it.
+      <% else %>AIM staff will decide.<% end %>
+    </p>
+    <table class="aim-duplicate-compare">
+      <thead><tr><th scope="col"></th><th scope="col">This invoice</th><th scope="col">Original</th></tr></thead>
+      <tbody>
+        <% aim_duplicate_comparison(@invoice, other).each do |label, mine, theirs, differs| %>
+          <tr class="<%= 'is-different' if differs %>">
+            <th scope="row"><%= label %></th><td><%= mine %></td><td><%= theirs %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if decide %>
+    <div class="aim-readonly-banner__actions">
+      <%= button_tag 'Reject as duplicate', name: 'invoice_action', value: 'reject_duplicate', form: 'aim-invoice-form',
+                     data: { turbo_confirm: "Reject this as a duplicate of #{other.batch_id}?", confirm_label: 'Reject' },
+                     class: 'btn deny compact' %>
+      <% if processed %>
+        <%# A disabled button shows no tooltip in every browser; its wrapper does. %>
+        <span title="The original has already been processed (<%= aim_state_label(other.state) %>), so it cannot be replaced.">
+          <button type="button" class="btn reassign compact" disabled>Replacement</button>
+        </span>
+      <% else %>
+        <button type="button" class="btn reassign compact" data-action="aim-replace#open">Replacement</button>
+      <% end %>
+      <%= button_tag 'Not a duplicate', name: 'invoice_action', value: 'not_duplicate', form: 'aim-invoice-form',
+                     class: 'btn compact' %>
+    </div>
+
+    <% unless processed %>
+      <div class="pb-modal-backdrop" data-aim-replace-target="backdrop" hidden>
+        <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="aim-replace-title">
+          <div class="pb-modal__header">
+            <h3 id="aim-replace-title">Replace the original</h3>
+            <button type="button" class="pb-modal__close" data-action="aim-replace#close" aria-label="Close">✕</button>
+          </div>
+          <div class="pb-modal__body">
+            <p class="pb-modal__message">
+              This invoice replaces <strong><%= other.batch_id %></strong>.
+              <% if %w[rejected deleted].include?(other.state) %>
+                The original is already <%= aim_state_label(other.state).downcase %>; both will say so.
+              <% else %>
+                The original is rejected, its reason "Replaced by" this one, and both say so.
+              <% end %>
+              Where should this one go? It goes to Ready for Approval.
+            </p>
+            <div class="form-group">
+              <label>
+                <input type="radio" name="replace_to" value="same" form="aim-invoice-form" checked data-action="aim-replace#pick">
+                The original's queue: <%= other.queue_owner %><%= " (#{other.budget_unit})" if other.shared_queue? %>
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="radio" name="replace_to" value="other" form="aim-invoice-form" data-action="aim-replace#pick"
+                       data-aim-replace-target="other">
+                Another queue
+              </label>
+              <div data-aim-replace-target="picker" hidden>
+                <%= render 'aim/shared/grouped_person_select', name: :replace_owner, label: 'Whose queue', form: 'aim-invoice-form' %>
+                <small>Leave the person blank for the <%= @invoice.budget_unit %> shared queue.</small>
+              </div>
+            </div>
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="aim-replace#close">Cancel</button>
+              <button type="submit" name="invoice_action" value="replacement" form="aim-invoice-form" class="btn approve">Replace</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

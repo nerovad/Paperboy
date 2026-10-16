@@ -16,6 +16,9 @@ module Aim
     extend ActiveSupport::Concern
 
     CHECK_STATES = %w[needs_review ready_for_approval].freeze
+    # The original is past the point of being replaced (#160): approved, or
+    # with Fiscal. The two can still be compared, and this one re-processed.
+    PROCESSED_STATES = %w[approved exporting exported].freeze
     ACTOR = 'AIM duplicate check'
     CHECK_FROM_DEFAULT = '2026-10-15'
 
@@ -46,6 +49,12 @@ module Aim
     end
 
     def possible_duplicate? = review_reason == 'duplicate' && duplicate_of_id.present?
+
+    # Flagged, then sent on by AIM staff (Send to a queue, Send to Approval):
+    # still linked, so whoever has it now is told (#160).
+    def known_duplicate? = duplicate_of_id.present? && review_reason != 'duplicate'
+
+    def original_processed? = duplicate_of.present? && PROCESSED_STATES.include?(duplicate_of.state)
 
     def replaced_by = self.class.find_by(replaces_invoice_id: id)
 
@@ -87,6 +96,27 @@ module Aim
       update!(review_reason: nil, duplicate_of_id: nil, duplicate_checked_key: duplicate_key)
       events.create!(action: 'duplicate', actor: actor, from_state: state, to_state: state,
                      note: "Not a duplicate of #{other&.batch_id}")
+    end
+
+    # Staff: this replaces the other, from the prompt (#160). This one goes to
+    # +owner+'s queue -- or, with none, the original's -- and the original is
+    # rejected as replaced, with +notes+ (its notes plus the line saying so).
+    # All or nothing. The original's PDF copy for the rejected folder is the
+    # caller's. A second call finds no duplicate left to replace and raises.
+    def replace_original!(actor:, owner: nil, by: nil, notes: nil)
+      other = duplicate_of
+      raise Aim::Invoice::IllegalTransition, "#{batch_id} is not a possible duplicate." unless possible_duplicate?
+      raise Aim::Invoice::IllegalTransition, "#{other.batch_id} has already been processed." if original_processed?
+
+      transaction do
+        unit = owner.nil? && other.shared_queue? ? other.budget_unit : nil
+        mark_replacement!(actor: actor)
+        send_to_queue!(owner.nil? ? other.assigned_employee_id.to_s : owner, actor: actor, by: by, unit: unit,
+                                                                            reason: "replaces #{other.batch_id}")
+        unless %w[rejected deleted].include?(other.state)
+          other.transition_to!('rejected', actor: actor, notes: notes || other.notes, note: "reason: Replaced by #{batch_id}")
+        end
+      end
     end
 
     # Staff: this replaces the other. Both say so, with links.

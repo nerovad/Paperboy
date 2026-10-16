@@ -115,8 +115,7 @@ module Aim
     end
 
     def reject
-      folder = File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
-                         "#{@invoice.submitter.presence || 'Unknown'}_#{@invoice.budget_unit.presence || 'Unknown'}")
+      folder = rejected_folder(@invoice)
       copied = keep_copy(folder)
       @invoice.transition_to!('rejected', actor: current_user_email, notes: notes_with('Rejected'),
                                           note: "reason: #{reason}; #{copied ? "copy in #{File.basename(folder)}" : 'no PDF to copy'}")
@@ -186,13 +185,19 @@ module Aim
 
     # A copy of the PDF for the people who look in that folder today, or nil
     # when the PDF is not in the store -- which the event then says.
-    def keep_copy(folder)
-      return unless File.file?(@invoice.pdf_path)
+    def keep_copy(folder, invoice = @invoice)
+      return unless File.file?(invoice.pdf_path)
 
       FileUtils.mkdir_p(folder)
-      copy = File.join(folder, "#{@invoice.batch_id}.pdf")
-      FileUtils.cp(@invoice.pdf_path, copy)
+      copy = File.join(folder, "#{invoice.batch_id}.pdf")
+      FileUtils.cp(invoice.pdf_path, copy)
       copy
+    end
+
+    # Where a rejected invoice's PDF is copied for its submitter.
+    def rejected_folder(invoice)
+      File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
+                "#{invoice.submitter.presence || 'Unknown'}_#{invoice.budget_unit.presence || 'Unknown'}")
     end
 
     # Rows arrive as split[0][pages_text] and so on, one per invoice.

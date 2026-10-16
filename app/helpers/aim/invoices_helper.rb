@@ -70,6 +70,23 @@ module Aim
       STATE_LABELS.fetch(state.to_s, state.to_s.humanize)
     end
 
+    # A possible duplicate beside its original (#160): [label, this, original,
+    # differs?] per row, differs? comparing the values shown.
+    def aim_duplicate_comparison(invoice, other)
+      rows = [
+        ['Vendor', invoice.vendor_name, other.vendor_name],
+        ['Invoice #', invoice.invoice_number, other.invoice_number],
+        ['Invoice date', aim_invoice_date(invoice.invoice_date), aim_invoice_date(other.invoice_date)],
+        ['Total', aim_currency(invoice.invoice_total), aim_currency(other.invoice_total)],
+        ['Budget unit', invoice.budget_unit, other.budget_unit],
+        ['Order #', invoice.order_number, other.order_number],
+        ['Customer #', invoice.customer_number, other.customer_number],
+        ['Submitter', invoice.submitter, other.submitter],
+        ['Pages', invoice.page_count, other.page_count]
+      ]
+      rows.map { |label, mine, theirs| [label, mine.presence || '—', theirs.presence || '—', mine.to_s.squish != theirs.to_s.squish] }
+    end
+
     # Totals arrive typed now, but a reviewer may have typed "$1,234.50" into
     # the box, so this still accepts a string and passes anything else through.
     def aim_currency(value)
