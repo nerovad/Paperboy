@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/mailers/task_reassignment_mailer.rb
-
 class TaskReassignmentMailer < ApplicationMailer
   default from: 'gsa-forms@ventura.org'
 
@@ -12,7 +10,6 @@ class TaskReassignmentMailer < ApplicationMailer
     @from_employee = @reassignment.from_employee
     @reassigned_by = @reassignment.reassigned_by_employee
 
-    # Determine task type for subject
     task_type = @task.class.name.demodulize.titleize
 
     mail(
@@ -27,7 +24,6 @@ class TaskReassignmentMailer < ApplicationMailer
     @to_employee = @reassignment.to_employee
     @from_employee = @reassignment.from_employee
 
-    # Determine task type for subject
     task_type = @task.class.name.demodulize.titleize
 
     mail(

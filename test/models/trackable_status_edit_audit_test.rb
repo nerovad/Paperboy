@@ -71,7 +71,6 @@ class TrackableStatusEditAuditTest < ActiveSupport::TestCase
     end
   end
 
-  # --- reassignment ---
   #
   # Reassignable#reassign_to! writes the assignee with update_column, so none of
   # the callbacks above run for it. These cover the explicit audit that

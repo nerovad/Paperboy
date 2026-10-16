@@ -78,9 +78,9 @@
     database_connections: [
       {
         host: 'GSASQL16.ent.co.ventura.ca.us',
-        database: 'GSABSS',
+        database: 'GSAP2M',
         schema: 'dbo',
-        table: 'daily_presorts',
+        table: 'DailyPresort',
         inject: {
           mode: :append,
           reject_existing: %w[omsnumber]

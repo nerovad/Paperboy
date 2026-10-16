@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# The DataRunner DSL files, loaded for the screens and for TaskRunner.
+# SOP text is filled in only for SOP_GROUPS. :source_location and
+# :downloaded_file name a place to resolve; they are not filesystem paths.
 class DslCatalog
   SOP_GROUPS = %w[
     billing chart_of_accounts mail_center_and_warehousing

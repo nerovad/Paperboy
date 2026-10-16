@@ -14,10 +14,10 @@
         steps: Workflow::REPLICATE_STEPS
       }
     },
+    dependency: 'Gsabss_p2m_oms_uploads',
     group: {
       name: 'gsabss'
     },
-    dependency: 'Gsabss_p2m_oms_uploads',
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'GSABSS',

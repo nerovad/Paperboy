@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# lib/tasks/dam.rake
 namespace :dam do
   # Storage locations and metadata fields are reference data, not user content:
   # Advanced Search builds its Storage facet and its custom-criteria field

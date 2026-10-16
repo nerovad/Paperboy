@@ -30,7 +30,6 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem 'web-console'
 end
-# gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'
 gem 'tiny_tds', force_ruby_platform: true

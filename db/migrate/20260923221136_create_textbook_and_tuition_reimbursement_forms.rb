@@ -18,7 +18,6 @@ class CreateTextbookAndTuitionReimbursementForms < ActiveRecord::Migration[7.1]
 
       t.string :status, default: 'in_progress', null: false
 
-      # Approval workflow fields
       t.string :approver_id       # Current approver's employee ID
       t.text :deny_reason         # Reason for denial (if denied)
 

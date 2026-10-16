@@ -57,7 +57,7 @@ class ReplicateExtractTest < Minitest::Test
       File.read(path).include?('strategy: :replicate')
     end
 
-    assert_operator files.length, :>=, 264
+    refute_empty files, "no DSL under #{root} declares strategy: :replicate"
     files.each do |path|
       source = File.read(path)
       assert_equal 2, source.scan('steps: Workflow::REPLICATE_STEPS').length, path

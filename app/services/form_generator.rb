@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/form_generator.rb
 class FormGenerator
   attr_reader :form_template, :errors
 
@@ -43,7 +42,6 @@ class FormGenerator
   def generate_model
     model_path = Rails.root.join("app/models/#{form_template.file_name}.rb")
 
-    # Build field definitions for migration
     field_definitions = form_template.form_fields.map do |field|
       case field.field_type
       when 'text', 'dropdown', 'choices_dropdown'
@@ -103,7 +101,6 @@ class FormGenerator
     timestamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
     migration_path = Rails.root.join("db/migrate/#{timestamp}_create_#{form_template.table_name}.rb")
 
-    # Build column definitions
     columns = form_template.form_fields.map do |field|
       case field.field_type
       when 'text', 'dropdown', 'choices_dropdown'
@@ -221,7 +218,6 @@ class FormGenerator
     view_dir = Rails.root.join("app/views/forms/#{form_template.plural_file_name}")
     FileUtils.mkdir_p(view_dir)
 
-    # Generate new.html.erb with multi-page support
     view_path = view_dir.join('new.html.erb')
 
     content = generate_view_content
@@ -357,7 +353,6 @@ class FormGenerator
     route_line = "  resources :#{form_template.plural_file_name}, " \
                  "controller: 'forms/#{form_template.plural_file_name}'\n"
 
-    # Check if route already exists
     return if routes_content.include?(route_line.strip)
 
     # Insert before the last 'end'
@@ -375,7 +370,6 @@ class FormGenerator
     helper = "new_#{form_template.file_name}_path"
     line = %(      ["#{label}", #{helper}],\n)
 
-    # Check if link already exists
     return if sidebar_content.include?(line.strip)
 
     # Insert before the closing bracket of the forms array

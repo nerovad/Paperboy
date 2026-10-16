@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/edit_trail.rb
-
 module Forms
   # A record's edit history, shaped for display: one entry per save rather than
   # one per column.

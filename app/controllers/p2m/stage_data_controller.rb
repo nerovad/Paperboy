@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module P2m
+  # Post-production jobs for a mail-date range. A validated OMS dataset can
+  # be copied to staging, its Mail.dat sent to the shipping station, and its
+  # tray labels and previews opened.
   class StageDataController < ApplicationController
     include InlineFileResponse
 

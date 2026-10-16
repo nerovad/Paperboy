@@ -100,7 +100,7 @@ class FormLibrary
 
   def finder = catalog.finder
 
-  # --- What the request asked for --------------------------------------------
+  # What the request asked for
 
   def query = params[:q].to_s.strip
 

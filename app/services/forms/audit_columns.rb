@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/audit_columns.rb
-
 module Forms
   # How the columns every audit row shares are rendered, across one set of form
   # models: the reference somebody would search for, the form's own name, the

@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-# app/controllers/sessions_controller.rb
 class SessionsController < ApplicationController
   # Signing in and out can't require being signed in.
   skip_before_action :require_sign_in
   # Nor can signing out wait on a grant for this server.
   skip_before_action :require_environment_access
 
-  # NEW: OAuth/Entra ID login
   def create_oauth
     auth = request.env['omniauth.auth']
 
@@ -30,7 +28,6 @@ class SessionsController < ApplicationController
       return
     end
 
-    # Store employee data in session
     session[:user_id] = employee.employee_id
     session[:user] = {
       'email' => employee.email,

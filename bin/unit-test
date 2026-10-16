@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Safe to run again: every run overwrites error.log in the repository root.
 
 set -o pipefail
 

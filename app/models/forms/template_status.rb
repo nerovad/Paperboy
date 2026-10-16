@@ -21,13 +21,11 @@ module Forms
       { name: 'Scheduled', key: 'scheduled', category: 'scheduled', is_initial: false, is_end: false }
     ].freeze
 
-    # Validations
     validates :name, presence: true
     validates :key, presence: true, uniqueness: { scope: :form_template_id }
     validates :category, presence: true, inclusion: { in: VALID_CATEGORIES }
     validates :position, numericality: { greater_than_or_equal_to: 0 }
 
-    # Scopes
     scope :ordered, -> { order(:position) }
     scope :initial, -> { where(is_initial: true) }
     scope :end_status, -> { where(is_end: true) }

@@ -2,7 +2,6 @@
 
 class CreateFormSubmissions < ActiveRecord::Migration[8.0]
   def change
-    # Parking Lot Submissions
     create_table :parking_lot_submissions do |t|
       t.string :name, limit: 200
       t.string :phone, limit: 25
@@ -27,7 +26,6 @@ class CreateFormSubmissions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Parking Lot Vehicles
     create_table :parking_lot_vehicles do |t|
       t.references :parking_lot_submission, null: false, foreign_key: true
       t.string :make, limit: 50
@@ -40,7 +38,6 @@ class CreateFormSubmissions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Probation Transfer Requests
     create_table :probation_transfer_requests do |t|
       t.string :employee_id, limit: 20
       t.string :name, limit: 200
@@ -75,7 +72,6 @@ class CreateFormSubmissions < ActiveRecord::Migration[8.0]
     add_index :probation_transfer_requests, :approved_destination
     add_index :probation_transfer_requests, :superseded_by_id
 
-    # Critical Information Reportings
     create_table :critical_information_reportings do |t|
       t.string :employee_id
       t.string :name
@@ -101,7 +97,6 @@ class CreateFormSubmissions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    # Creative Job Requests
     create_table :creative_job_requests do |t|
       t.string :job_id
       t.string :job_title

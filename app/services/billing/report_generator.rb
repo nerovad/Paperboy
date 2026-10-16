@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module Billing
+  # One monthly billing run. Export_TC60_Billing_Report_Names lists the
+  # files and Export_TC60_To_Billing_File fills each. Every file is rendered
+  # as a spreadsheet and a PDF, plus an overlay PDF unless
+  # BILLING_OVERLAY_ENABLED is false.
   class ReportGenerator
     NAMES_PROCEDURE = 'GSABSS.dbo.Export_TC60_Billing_Report_Names'
     DATA_PROCEDURE = 'GSABSS.dbo.Export_TC60_To_Billing_File'

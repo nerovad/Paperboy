@@ -71,10 +71,6 @@ module Aim
       assert_equal 'INV-2024/001', invoice.invoice_number
     end
 
-    # ---------------------------------------------------------------
-    # People's queues
-    # ---------------------------------------------------------------
-
     def person
       Employee.order(:id).first || skip('no employee to test with')
     end

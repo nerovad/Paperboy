@@ -8,8 +8,6 @@ class AwayPeriodTest < ActiveSupport::TestCase
                          starts_on: Date.current, ends_on: 1.week.from_now.to_date }.merge(overrides))
   end
 
-  # --- validations ---
-
   test 'cannot delegate to yourself' do
     row = AwayPeriod.new(employee_id: '900', delegate_id: '900',
                          starts_on: Date.current, ends_on: Date.current)
@@ -43,8 +41,6 @@ class AwayPeriodTest < ActiveSupport::TestCase
 
     assert_predicate other, :valid?
   end
-
-  # --- assignee_for ---
 
   test 'assignee_for returns the id unchanged when nobody is away' do
     assert_equal '900', AwayPeriod.assignee_for('900')
@@ -82,8 +78,6 @@ class AwayPeriodTest < ActiveSupport::TestCase
     assert_nil AwayPeriod.assignee_for(nil)
     assert_equal '', AwayPeriod.assignee_for('')
   end
-
-  # --- helpers ---
 
   test 'active_for finds only a period covering the date' do
     row = period

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module DataRunner
+  # Catalog shared by the data-refresh screens. The subclass defines GROUPS
+  # and GROUP_RUN_NAME. A file DSL is current when its source is newer than
+  # the date on the screen. A missing source is still listed, with no date.
+  # Script and orchestration DSLs have no source file and stay current.
   class DataRefresh
     Dsl = Data.define(:name, :slug, :location, :file_date, :current, :script, :sop) do
       def sop_reference_path
@@ -51,6 +55,7 @@ module DataRunner
         name: entry.key, slug: entry.slug, location: source[:location], file_date: file_date,
         current: end_date.present? && file_date.to_date > end_date, script: false, sop: entry.sop
       )
+    # A missing or unreadable source still belongs on the form.
     rescue SystemCallError, TypeError
       Dsl.new(
         name: entry.key, slug: entry.slug, location: entry.config.dig(:source, :location),

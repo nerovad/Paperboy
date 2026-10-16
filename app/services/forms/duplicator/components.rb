@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/components.rb
-
 module Forms
   class Duplicator
     # The pieces of a form that Duplicate can copy, in the order they are
