@@ -68,6 +68,22 @@
     </div>
   <% end %>
 
+  <%# Sent back (#160): a person sent it back for review, saying why. Short, so
+      it starts open. %>
+  <% if state == 'needs_review' && @invoice.review_reason == 'sent_back' %>
+    <% who, sent_at = aim_sent_back_by(@invoice) %>
+    <div class="aim-readonly-banner" role="alert" data-controller="aim-banner">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">↩</span>
+      <div>
+        <%= aim_notice_title('Sent back') %>
+        <p>
+          <% if who %>By <%= who %>, <%= sent_at.strftime('%m/%d/%Y %-I:%M %p') %>: <% end %>
+          <%= @invoice.review_note.presence || 'no reason given' %>
+        </p>
+      </div>
+    </div>
+  <% end %>
+
   <% if @read_only %>
     <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
@@ -136,7 +152,7 @@
 
       <div class="aim-form-scroll">
         <%= render 'aim/shared/frame_flash' %>
-        <% if @invoice.review_note.present? %>
+        <% if @invoice.review_note.present? && @invoice.review_reason != 'sent_back' %>
           <section class="aim-ticket is-folded" data-controller="aim-banner">
             <%= aim_notice_title(aim_review_reason_label(@invoice.review_reason.presence || 'note'), element: :h3) %>
             <pre><%= @invoice.review_note %></pre>

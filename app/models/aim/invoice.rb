@@ -43,7 +43,7 @@ module Aim
     # Why a person is needed. The old review queues, as one column.
     REVIEW_REASONS = %w[
       unknown_type unknown_vendor missing_fields low_confidence handwritten
-      extraction_error split_error export_error duplicate
+      extraction_error split_error export_error duplicate sent_back
     ].freeze
 
     # What the worker does next. NULL means nothing.

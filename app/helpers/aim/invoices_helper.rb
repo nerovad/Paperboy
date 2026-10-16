@@ -24,6 +24,7 @@ module Aim
       'missing_fields' => 'Missing fields',
       'low_confidence' => 'Low confidence read',
       'duplicate' => 'Possible duplicate',
+      'sent_back' => 'Sent back',
       'handwritten' => 'Handwritten amounts',
       'extraction_error' => 'Extraction error',
       'split_error' => 'Split error',
@@ -68,6 +69,16 @@ module Aim
 
     def aim_state_label(state)
       STATE_LABELS.fetch(state.to_s, state.to_s.humanize)
+    end
+
+    # Who sent an invoice back, and when (#160): the move that did it, from
+    # its history. Nil if the history has no such move.
+    def aim_sent_back_by(invoice)
+      event = invoice.events.where(to_state: 'needs_review').order(:id).last
+      return if event.nil?
+
+      mailbox = event.actor.to_s.split('@').first.to_s
+      [mailbox.tr('._-', ' ').squish.titleize.presence || 'Someone', event.created_at.in_time_zone]
     end
 
     # A notice's title as its fold toggle (aim_banner_controller, #160): the

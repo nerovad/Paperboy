@@ -351,9 +351,18 @@ module Aim
 
       act(row, 'send_back', reason: 'wrong PO')
 
-      assert_equal 'needs_review', row.state
+      assert_equal ['needs_review', 'sent_back', 'wrong PO'], [row.state, row.review_reason, row.review_note]
       assert_equal 'reason: wrong PO', row.events.last.note
-      assert_match(/Sent back by Aim Staff: wrong PO\z/, row.notes)
+      assert_nil row.notes, 'the reason is on the banner, not in the notes (#160)'
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select '.aim-readonly-banner:not(.is-folded) .aim-readonly-banner__toggle', text: /\ASent back/
+      assert_select '.aim-readonly-banner p', text: /wrong PO/
+      assert_select '.aim-page-header .badge', text: 'Sent back'
+      assert_select '.aim-ticket', 0
+
+      act(row, 'send_to_approval')
+      assert_nil row.review_reason, 'cleared once it moves on'
     end
 
     test 'reject, delete and send back need a reason, and nothing moves without one' do

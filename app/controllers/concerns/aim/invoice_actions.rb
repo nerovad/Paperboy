@@ -77,9 +77,11 @@ module Aim
       finish('Invoice approved. It is on its way to billing and Fiscal.')
     end
 
+    # Back to Action Needed as "Sent back" (#160): the reason shows on a red
+    # banner at the top of the invoice and in its history, not in its notes.
     def send_back
       @invoice.transition_to!('needs_review', actor: current_user_email, note: "reason: #{reason}",
-                                              notes: notes_with('Sent back'))
+                                              review_reason: 'sent_back', review_note: reason)
       finish('Invoice sent back to AIM review.')
     end
 
