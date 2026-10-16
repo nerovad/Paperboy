@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Posts a Critical Information Report card to the configured Teams webhook.
+# A missing webhook or a delivery error is logged and swallowed, so saving
+# the report does not depend on Teams.
 class TeamsNotifier
   def self.send_cir_alert(cir)
     webhook_url = Rails.application.config.teams_webhook_url
