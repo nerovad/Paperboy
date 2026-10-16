@@ -1,0 +1,48 @@
+# shellcheck shell=bash
+#
+# Where the checkout is, written once. Source this from a bin script that needs
+# to know; do not work it out again in the script.
+#
+# A linked worktree (<shared>/worktrees/<n>) has its own copy of the tracked
+# files and shares one .git with the shared checkout. The ignored files (.env,
+# .env.local) and the LockBox clone belong to the shared checkout, so a script
+# running in a worktree has to look there for them.
+#
+# Every function takes an optional directory and defaults to the current one.
+# Outside a git work tree paperboy_tree_root and paperboy_shared_root print
+# nothing and fail. They only read; running them again changes nothing.
+
+# Top of the working tree that holds DIR.
+paperboy_tree_root() {
+  git -C "${1:-.}" rev-parse --show-toplevel
+}
+
+# Top of the shared checkout: the tree that owns the .git directory. A linked
+# worktree answers with the checkout it was made from.
+paperboy_shared_root() {
+  local common_dir
+
+  common_dir="$(git -C "${1:-.}" rev-parse --path-format=absolute --git-common-dir)" || return
+  if [[ "${common_dir}" == */.git ]]; then
+    printf '%s\n' "${common_dir%/.git}"
+  else
+    paperboy_tree_root "${1:-.}"
+  fi
+}
+
+# Path of the NAME file (.env or .env.local) that applies to DIR: the tree's
+# own copy, otherwise the shared checkout's. Fails when neither exists.
+paperboy_env_file() {
+  local name="$1" dir="${2:-.}" tree shared
+
+  tree="$(paperboy_tree_root "${dir}" 2>/dev/null)" || tree="$(cd -- "${dir}" && pwd -P)"
+  shared="$(paperboy_shared_root "${dir}" 2>/dev/null)" || shared="${tree}"
+
+  if [[ -f "${tree}/${name}" ]]; then
+    printf '%s\n' "${tree}/${name}"
+  elif [[ -f "${shared}/${name}" ]]; then
+    printf '%s\n' "${shared}/${name}"
+  else
+    return 1
+  fi
+}
