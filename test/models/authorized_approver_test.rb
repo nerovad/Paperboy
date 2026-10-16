@@ -23,8 +23,6 @@ class AuthorizedApproverTest < ActiveSupport::TestCase
     assert_empty AuthorizedApprover.approver_ids_covering_unit(service_type: 'E', unit_id: '5501')
   end
 
-  # --- coverage ---------------------------------------------------------------
-
   test 'coverage agrees with routing about which units have an approver' do
     AuthorizedApprover.create!(employee_id: '100', department_id: '4600', service_type: 'P', all_budget_units: true)
     AuthorizedApprover.create!(employee_id: '200', department_id: '4600', service_type: 'E', budget_units: '5501')

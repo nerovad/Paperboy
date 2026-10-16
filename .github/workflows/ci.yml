@@ -90,7 +90,16 @@ jobs:
   tag-master-commit:
     name: Tag master commit
     needs: [lint, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Runs only for a push to master, after lint passed, and when the test job
+    # either passed or was skipped (it is skipped while CI_SQL_HOST is unset).
+    # A failed or cancelled test job, or a failed lint, leaves the commit untagged.
+    # !cancelled() is what lets this job run behind a skipped test job.
+    if: >-
+      ${{ !cancelled()
+      && github.event_name == 'push'
+      && github.ref == 'refs/heads/master'
+      && needs.lint.result == 'success'
+      && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
     runs-on: ${{ vars.CI_RUNNER_LABEL || 'windows' }}
     steps:
       - name: Checkout full history

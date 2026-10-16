@@ -33,7 +33,7 @@ module Forms
     # Virtual attribute to track routing steps being submitted (before they're saved)
     attr_accessor :pending_routing_steps
 
-    # --- Metadata -------------------------------------------------------------
+    # Metadata
     # What the sidebar's Advanced Search facets on: who owns the form, what kind
     # of form it is, its official number, and a line saying what it is for.
     # Every one of these is descriptive. None of them gate access — who may see
@@ -83,7 +83,6 @@ module Forms
         .sort
     end
 
-    # Available inbox button types
     INBOX_BUTTON_TYPES = {
       'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },
       'edit' => { label: 'Edit', description: 'Edit the submitted form' },

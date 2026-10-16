@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/jobs/audit_export_job.rb
-
 require 'zip'
 
 # Builds the audit-trail spreadsheets the Reports page asks for and mails them.

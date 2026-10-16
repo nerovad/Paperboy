@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/admin/impersonations_controller.rb
 module Admin
   class ImpersonationsController < ApplicationController
     before_action -> { require_admin_tab('emulate') }, only: %i[new create]
@@ -25,7 +24,6 @@ module Admin
       end
       session[:impersonating] = true
 
-      # Set session as the impersonated user
       sign_in_as(person)
 
       redirect_to root_path, notice: "Now emulating #{person.full_name}"

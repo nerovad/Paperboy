@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-# app/models/task_reassignment.rb
-
 class TaskReassignment < ApplicationRecord
   # Polymorphic association - can belong to any task type
   belongs_to :task, polymorphic: true
 
-  # Validations
   validates :task_type, presence: true
   validates :task_id, presence: true
   validates :from_employee_id, presence: true

@@ -16,8 +16,6 @@ module Forms
       }.merge(overrides))
     end
 
-    # --- validations ---
-
     test 'requires at least one event' do
       row = Forms::Subscription.new(form_type: CIR, grantee_type: 'employee', employee_id: '900')
 
@@ -44,8 +42,6 @@ module Forms
 
       assert_not duplicate.valid?
     end
-
-    # --- scopes ---
 
     test 'covering matches the form itself and any all-forms row' do
       exact = subscription
@@ -74,8 +70,6 @@ module Forms
       assert_empty Forms::Subscription.for_event('exploded')
       assert_empty Forms::Subscription.for_event(nil)
     end
-
-    # --- recipients ---
 
     test 'recipient_ids_for returns employee grantees for the matching mode' do
       subscription(employee_id: '900')
@@ -117,8 +111,6 @@ module Forms
 
       assert_equal ['7003'], Forms::Subscription.expand_recipients([personal, group])
     end
-
-    # --- display ---
 
     test 'events and labels read back in a stable order' do
       row = subscription(notify_created: true, notify_edited: true, notify_status_changed: false)

@@ -23,7 +23,7 @@ class ParkingLotSubmission < ApplicationRecord
 
   # Stored columns on this model for org hierarchy are *codes/IDs*:
   #   agency, division, department, unit
-  # === Associations to lookup tables (resolve codes -> LongName) ===
+  # Associations to lookup tables (resolve codes -> LongName)
   belongs_to :agency_record,
              class_name: 'Coa::Agency',
              primary_key: :agency_id,
@@ -44,7 +44,7 @@ class ParkingLotSubmission < ApplicationRecord
              primary_key: :unit_id,
              foreign_key: :unit,
              optional: true
-  # === Display helpers (use these in PDF/status views) ===
+  # Display helpers (use these in PDF/status views)
   def agency_long_name     = agency_record&.long_name     || agency
   def division_long_name   = division_record&.long_name   || division
   def department_long_name = department_record&.long_name || department
@@ -60,7 +60,6 @@ class ParkingLotSubmission < ApplicationRecord
       unit.to_s
     end
   end
-  # Vehicles
   has_many :parking_lot_vehicles, dependent: :destroy
   accepts_nested_attributes_for :parking_lot_vehicles, allow_destroy: true
 

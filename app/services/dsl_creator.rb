@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# Writes a new DSL file from a name and a set of DataRunner commands.
+# A bare name is GSASQL16.GSABSS.dbo. A qualified name is
+# server.database.schema.dsl_name. The file is opened exclusively, so two
+# requests cannot create the same DSL.
 class DslCreator
   class InvalidDsl < StandardError; end
 

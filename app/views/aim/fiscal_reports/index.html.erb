@@ -1,6 +1,6 @@
 <%# Fiscal > Reports (#131): every processed report, newest first, for the
     agency groups picked in Managing. %>
-<div class="aim-page" data-controller="aim-queue-filter">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Fiscal Reports</h1>
@@ -20,7 +20,8 @@
   <% if @reports.empty? %>
     <section class="aim-panel aim-empty-state"><p>No reports yet. Process one from the Report Queue.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
+    <div class="aim-list-frame">
+    <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
       <table class="submission-table aim-queue-table">
         <thead><tr><th>Report</th><th>Made</th><th>By</th><th>Layout</th><th>Invoices</th><th>File</th><th></th></tr></thead>
         <tbody>
@@ -42,5 +43,7 @@
         </tbody>
       </table>
     </section>
+    <%= render 'aim/shared/list_pager' %>
+    </div>
   <% end %>
-</div>
+<% end %>

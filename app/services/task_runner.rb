@@ -3,6 +3,9 @@
 require 'open3'
 require 'securerandom'
 
+# Runs an allowlisted DataRunner rake task in a child process and stores
+# its output under tmp/web_runs. The selector is a DSL key, a slug, or a
+# group name from the catalog.
 class TaskRunner
   TASK_COMMANDS = {
     'download' => 'DataRunner:download',
@@ -52,6 +55,8 @@ class TaskRunner
     output.flush
 
     status = nil
+    # A process group so cancel and stopservers can signal the rake process
+    # and the children it starts.
     Open3.popen2e(environment, *command, chdir: Rails.root.to_s, pgroup: true) do |stdin, stream, wait_thread|
       stdin.close
       on_start&.call(wait_thread.pid)

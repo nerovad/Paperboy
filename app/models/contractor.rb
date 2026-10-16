@@ -69,7 +69,7 @@ class Contractor < ApplicationRecord
     "#{first_name} #{last_name}".strip
   end
 
-  # --- Submitter interface parity with Employee ---------------------------
+  # Submitter interface parity with Employee
   # work_phone, agency, department, unit, supervisor_id, first_name, last_name,
   # email are already columns; nothing extra needed. `contractor?` lets the few
   # spots that care (e.g. session) distinguish the source.

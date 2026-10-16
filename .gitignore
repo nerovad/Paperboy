@@ -2,6 +2,8 @@
 /vendor/
 /log/*
 !/log/.keep
+# bin/unit-test writes its combined output here
+/error.log
 /public/assets/*
 
 # Active Storage roots, one per environment (config/storage.yml)
@@ -24,6 +26,7 @@
 !app/assets/images/Billing*.png
 !app/assets/images/Admin*.png
 !app/assets/images/DAM*.png
+!app/assets/images/aim/help/*.png
 00_Inbox/
 output/data_runner/01_Download/
 output/data_runner/02_Normalized/

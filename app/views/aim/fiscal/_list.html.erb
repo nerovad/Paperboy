@@ -1,5 +1,7 @@
-<%# A Fiscal list: one table, or one per budget unit. %>
+<%# A Fiscal list: one table, or one per budget unit, scrolling under the
+    page's heading and paged (#101). %>
 <% if @view == 'bu' %>
+  <div class="aim-list-scroll" data-aim-queue-filter-target="scroll">
   <% @groups.each_with_index do |(unit, label, records), index| %>
     <section class="billing-audit-group aim-owner-group aim-bu-group" data-controller="billing-audit-sections"
              data-aim-queue-filter-target="group" data-search="<%= label %>">
@@ -18,8 +20,9 @@
       </div>
     </section>
   <% end %>
+  </div>
 <% else %>
-  <section class="aim-panel aim-queue-panel">
+  <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
     <%= render 'rows', records: @records, status: @status, selectable: selectable, stamps: @stamps %>
   </section>
 <% end %>

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/inbox_controller.rb
 class InboxController < ApplicationController
   include Filterable
   include Pagy::Method
@@ -100,7 +99,6 @@ class InboxController < ApplicationController
 
     @submissions = sort_collection(@submissions, sort_by, sort_direction, inbox_sort_configs, default_sort: @default_sort)
 
-    # Paginate the final sorted array
     @pagy, @submissions = pagy(:offset, @submissions, count: @submissions.size)
 
     # Comment counts for the Comments button on each row of this page.

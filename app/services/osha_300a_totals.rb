@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Year totals for the OSHA 300A submission, from approved reports only.
+# no_injuries_illnesses uses the ITA codes: 1 when the establishment had
+# cases, 2 when it did not. Days away from work are capped at 180.
 class Osha300aTotals
   CASE_TYPE_TO_FIELD = {
     'Injury' => :total_injuries,

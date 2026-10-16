@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module DataRunner
+  # Refresh form, progress, log and restart for Billing and Print 2 Mail.
+  # The controller supplies the service and the paths. Starting again while
+  # a run is active opens that run instead of queueing a second one.
   module DataRefreshable
     extend ActiveSupport::Concern
 
