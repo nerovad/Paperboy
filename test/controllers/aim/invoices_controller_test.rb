@@ -356,7 +356,7 @@ module Aim
       assert_nil row.notes, 'the reason is on the banner, not in the notes (#160)'
 
       get :show, params: { id: row.batch_id, queue: row.queue }
-      assert_select '.aim-readonly-banner:not(.is-folded) .aim-readonly-banner__toggle', text: /\ASent back/
+      assert_select '.aim-readonly-banner.is-folded .aim-readonly-banner__toggle', text: /\ASent back/
       assert_select '.aim-readonly-banner p', text: /wrong PO/
       assert_select '.aim-page-header .badge', text: 'Sent back'
       assert_select '.aim-ticket', 0

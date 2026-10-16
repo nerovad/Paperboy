@@ -33,20 +33,20 @@
   <%= render 'duplicate_banner' if @invoice.duplicate_of %>
   <% if @invoice.replaces %>
     <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↻</span>
       <div><%= aim_notice_title('Replacement') %><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if (newer = @invoice.replaced_by) %>
     <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↻</span>
       <div><%= aim_notice_title('Replaced') %><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if @invoice.awaiting_second_approval? %>
     <%# The high-dollar second approval (#131). %>
     <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">2</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">2</span>
       <div>
         <%= aim_notice_title('Second approval') %>
         <p>
@@ -60,7 +60,7 @@
   <% if @invoice.manual_entry %>
     <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
     <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">✎</span>
       <div>
         <%= aim_notice_title('Manual Data Entry Needed') %>
         <p>The AI has not read this invoice. Type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>.</p>
@@ -68,12 +68,11 @@
     </div>
   <% end %>
 
-  <%# Sent back (#160): a person sent it back for review, saying why. Short, so
-      it starts open. %>
+  <%# Sent back (#160): a person sent it back for review, saying why. %>
   <% if state == 'needs_review' && @invoice.review_reason == 'sent_back' %>
     <% who, sent_at = aim_sent_back_by(@invoice) %>
-    <div class="aim-readonly-banner" role="alert" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">↩</span>
+    <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">↩</span>
       <div>
         <%= aim_notice_title('Sent back') %>
         <p>
@@ -86,7 +85,7 @@
 
   <% if @read_only %>
     <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">!</span>
       <div>
         <%= aim_notice_title('Read only') %>
         <% if @claimed_by_other %>
@@ -97,22 +96,29 @@
           <p>This invoice is in <%= aim_owner_label(@invoice.assigned_to.presence || "#{@invoice.budget_unit} shared") %>.
              <%= 'Claim it to move it to your queue and work it.' if @claimable %></p>
         <% end %>
-        <% if @invoice.restorable? && aim_queue_access? %>
-          <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
-                        class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
-                    data-value="restore_to_needs_review" data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
-                    data-value="restore_to_ready_for_approval" data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
-            <%= render 'aim/shared/reason_modal', id: 'aim-restore' %>
-          <% end %>
-        <% end %>
-        <% if @claimable && !@claimed_by_other %>
-          <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
-                        class: 'btn take-back compact',
-                        data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
-        <% end %>
       </div>
+      <%# A notice's buttons sit at its right, as on every notice (#160). %>
+      <% restore = @invoice.restorable? && aim_queue_access? %>
+      <% claim = @claimable && !@claimed_by_other %>
+      <% if restore || claim %>
+        <div class="aim-readonly-banner__actions">
+          <% if restore %>
+            <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
+                          class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
+              <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                      data-value="restore_to_needs_review" data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
+              <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                      data-value="restore_to_ready_for_approval" data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
+              <%= render 'aim/shared/reason_modal', id: 'aim-restore' %>
+            <% end %>
+          <% end %>
+          <% if claim %>
+            <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                          class: 'btn take-back compact',
+                          data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 

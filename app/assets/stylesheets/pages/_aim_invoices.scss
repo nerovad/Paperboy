@@ -230,6 +230,16 @@
   gap: 6px;
 }
 
+// Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
 .aim-readonly-banner__caret::before {
   content: "\25BC";
   font-size: 1rem;
@@ -253,7 +263,17 @@
     display: none;
   }
 
-  .aim-readonly-banner__caret::before {
+  // Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
+.aim-readonly-banner__caret::before {
     content: "\25B6";
   }
 
@@ -740,7 +760,17 @@
     display: none;
   }
 
-  .aim-readonly-banner__caret::before {
+  // Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
+.aim-readonly-banner__caret::before {
     content: "\25B6";
   }
 
@@ -1087,6 +1117,12 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+// In a notice's buttons at its right (#160), level with them.
+.aim-readonly-banner__actions .aim-restore-form {
+  flex-wrap: nowrap;
+  margin-top: 0;
 }
 
 // Users & Queues: the Add a person picker's dropdown floats over the list

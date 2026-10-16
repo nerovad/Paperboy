@@ -10,7 +10,7 @@
 <% processed = @invoice.original_processed? %>
 <div class="aim-readonly-banner aim-duplicate-banner is-folded<%= ' aim-manual-banner' unless flagged %>"
      role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace aim-banner">
-  <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
+  <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">=</span>
   <div class="aim-duplicate-banner__body">
     <%= aim_notice_title(flagged ? 'Possible duplicate' : 'Known duplicate') %>
     <p>

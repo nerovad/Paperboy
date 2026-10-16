@@ -19,7 +19,7 @@
   <% if @invoice.manual_entry %>
     <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
     <div class="aim-readonly-banner aim-manual-banner is-folded" role="status" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">✎</span>
       <div>
         <%= aim_notice_title('Manual Data Entry Needed') %>
         <p>Uploaded straight to Fiscal: type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>. It is billed and filed once they are in.</p>
@@ -29,7 +29,7 @@
 
   <% if status == 'on_hold' && @record.hold_reason.present? %>
     <div class="aim-readonly-banner is-folded" role="alert" data-controller="aim-banner">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+      <span class="aim-readonly-banner__mark" aria-hidden="true" data-action="click->aim-banner#toggle">!</span>
       <div><%= aim_notice_title('On hold') %><p><%= @record.hold_reason %></p></div>
     </div>
   <% end %>
