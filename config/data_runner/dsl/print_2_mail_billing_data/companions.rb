@@ -97,9 +97,9 @@
     ],
     database_connections: [
       {
-        host: 'gsa-sql22-tst.ent.co.ventura.ca.us',
-        database: 'Paperboy',
-        schema: 'p2m',
+        host: 'GSASQL16.ent.co.ventura.ca.us',
+        database: 'GSAP2M',
+        schema: 'dbo',
         table: 'Companion',
         inject: {
           mode: :append,
