@@ -16,6 +16,9 @@ module Aim
   class FiscalRecord < Record
     include Aim::Transitions
     include Aim::Audited
+    include Aim::MoneyAttributes
+
+    money_attributes :credit_amount
 
     STATUSES = %w[review on_hold ready exported archived].freeze
     STATUS_LABELS = { 'review' => 'Fiscal Queue', 'on_hold' => 'On Hold', 'ready' => 'Report Queue',

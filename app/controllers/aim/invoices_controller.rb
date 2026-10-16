@@ -46,7 +46,8 @@ module Aim
         return redirect_to aim_invoices_path(queue: @queue), notice: 'Invoice unclaimed.'
       end
 
-      save_fields
+      return keep_typed unless save_fields_or_keep
+
       @invoice.finish_manual_entry!(actor: current_user_email)
       perform(invoice_action)
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid, ArgumentError => e
@@ -100,6 +101,26 @@ module Aim
     end
 
     def pdf_present? = stored_pdf_path.present?
+
+    # False when a field could not be saved (an amount AIM cannot read, #166):
+    # nothing is saved, and keep_typed shows the form again as it was typed.
+    def save_fields_or_keep
+      save_fields
+      true
+    rescue ActiveRecord::RecordInvalid => e
+      raise unless e.record == @invoice
+
+      @save_error = e.record.errors.full_messages.to_sentence
+      false
+    end
+
+    # The review page again, with everything the person typed still in it and
+    # why it was not saved -- not a reload that loses their work.
+    def keep_typed
+      prepare_review
+      flash.now[:alert] = "Not saved: #{@save_error}. Everything you typed is still here."
+      render :show, status: :unprocessable_content
+    end
 
     def save_fields
       permitted = params.fetch(:invoice, {}).permit(*Aim::Invoice::EDITABLE_FIELDS).to_h

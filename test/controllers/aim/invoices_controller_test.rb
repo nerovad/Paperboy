@@ -215,6 +215,24 @@ module Aim
       assert_equal 'needs_review', row.state
     end
 
+    test 'a total typed with commas or a dollar sign is saved whole; one that is not an amount is refused (#166)' do
+      row = invoice('4601.K2', pdf: false, invoice_total: 10)
+
+      act(row, 'save', invoice: { invoice_total: '999,999,999.99', subtotal: '$1,234.50', sales_tax: '(1.25)' })
+      assert_equal [BigDecimal('999999999.99'), BigDecimal('1234.50'), BigDecimal('-1.25')], [row.invoice_total, row.subtotal, row.sales_tax]
+
+      act(row, 'save', invoice: { invoice_total: 'about 12', vendor_name: 'Typed Vendor', notes: 'typed note' })
+      assert_equal BigDecimal('999999999.99'), row.invoice_total, 'nothing saved'
+      assert_not_equal 'Typed Vendor', row.vendor_name, 'nothing saved'
+      # The form comes back as typed, saying why, rather than a reload (#166).
+      assert_response :unprocessable_content
+      assert_select 'input[name=?][value=?]', 'invoice[invoice_total]', 'about 12'
+      assert_select 'input[name=?][value=?]', 'invoice[vendor_name]', 'Typed Vendor'
+      assert_select 'textarea[name=?]', 'invoice[notes]', text: 'typed note'
+      assert_select 'input[name=?][data-aim-money-target=field]', 'invoice[subtotal]'
+      assert_match(/Not saved: Invoice total "about 12" is not an amount AIM can save/, flash[:alert])
+    end
+
     test 'send to approval moves the row and releases the claim' do
       row = invoice('4601.L', review_reason: 'missing_fields', claimed_by: REVIEWER, claimed_at: Time.current)
 
