@@ -25,6 +25,19 @@
   padding-bottom: 120px;
 }
 
+/* A paged list fills the page down to the footer (#101): the mascot moved
+   into the sidebar, so the bottom only has to clear the small "Powered by GSA"
+   badge -- the review page's 38px. */
+.aim-page:has(.aim-list-frame) {
+  padding-bottom: 38px;
+}
+
+/* Fiscal's report preview frame sits under the list and is empty until
+   Preview is pressed; empty, it would still take a gap above the footer. */
+#aim-report-preview:empty {
+  display: none;
+}
+
 /* A scrolling page keeps everything at its full height: left to the column's
    default, a panel shrinks to fit the screen and .aim-panel's overflow:
    hidden cuts off whatever no longer fits. The queue panel is the one meant
@@ -66,6 +79,28 @@
 
 .aim-list-pager:empty {
   display: none;
+}
+
+/* Under a list: the pager centered, the Rows choice at the right. */
+.aim-list-footer {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto 1fr;
+
+  .aim-list-pager {
+    grid-column: 2;
+  }
+}
+
+.aim-list-size {
+  align-items: center;
+  color: $text-muted;
+  display: flex;
+  font-size: 0.85rem;
+  gap: 6px;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .aim-list-pager .pagination-wrapper {

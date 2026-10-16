@@ -1,4 +1,14 @@
 <%# Under a paged AIM list (#101): aim_queue_filter_controller writes the
-    centered series and "Showing x-y of N rows" here when there is more than
-    one page. %>
-<div class="aim-list-pager" data-aim-queue-filter-target="pager"></div>
+    centered series and "Showing x-y of N rows" when there is more than one
+    page; Rows picks how many a page shows, or All, remembered in this
+    browser for every AIM list. %>
+<div class="aim-list-footer">
+  <div class="aim-list-pager" data-aim-queue-filter-target="pager"></div>
+  <label class="aim-list-size">
+    Rows
+    <%= select_tag :aim_page_size,
+                   options_for_select(Aim::ListHelper::PAGE_SIZES.map { |n| [n.zero? ? 'All' : n, n] }, Pfa::Grid::Table::PAGE_ROWS),
+                   id: nil, aria: { label: 'Rows a page' },
+                   data: { aim_queue_filter_target: 'size', action: 'aim-queue-filter#resize' } %>
+  </label>
+</div>

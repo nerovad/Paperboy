@@ -9,12 +9,13 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Paging (#101): with page-size set, the rows that match are shown a page at a
 // time, and the pager target gets the centered series (< 1 2 3 >) and
-// "Showing x-y of N rows", as Records and DataRunner have them. Search,
+// "Showing x-y of N rows", as Records and DataRunner have them -- always, even
+// on one page, so the Rows choice visibly does something. Search,
 // reasons and facets apply to every row first, then the page is cut; a row
 // that matches carries data-match="1" whichever page it is on, so Select all
 // (selectMatching, aim-move-modal) takes every match, not only this page.
 export default class extends Controller {
-  static targets = ["input", "row", "group", "empty", "reason", "facet", "count", "pager", "scroll"]
+  static targets = ["input", "row", "group", "empty", "reason", "facet", "count", "pager", "scroll", "size"]
   static values = { reason: String, pageSize: { type: Number, default: 0 }, page: { type: Number, default: 1 } }
 
   connect() {
@@ -24,9 +25,29 @@ export default class extends Controller {
       group.dataset.startedOpen = open ?? "true"
     })
     // A link may name a reason to start on (?reason=duplicate, from the dashboard).
+    this.restoreSize()
     const start = this.reasonTargets.find((button) => this.reasonValue && button.dataset.reason === this.reasonValue)
     if (start) start.click()
-    else if (this.pageSizeValue > 0) this.apply()
+    else if (this.hasPagerTarget) this.apply()
+  }
+
+  // Rows under a list: how many a page shows, 0 for All. Kept in this
+  // browser for every AIM list (best effort; private windows may refuse).
+  resize(event) {
+    const size = Number(event.currentTarget.value)
+    try { window.localStorage.setItem("aim-list-page-size", String(size)) } catch (_) { /* not kept */ }
+    this.pageSizeValue = size
+  }
+
+  restoreSize() {
+    if (!this.hasSizeTarget) return
+    let saved = null
+    try { saved = window.localStorage.getItem("aim-list-page-size") } catch (_) { /* nothing kept */ }
+    const offered = [...this.sizeTarget.options].map((option) => option.value)
+    if (saved !== null && offered.includes(saved)) {
+      this.sizeTarget.value = saved
+      this.pageSizeValue = Number(saved)
+    }
   }
 
   // The reason buttons on Action Needed narrow the rows in place, no reload.
@@ -111,10 +132,6 @@ export default class extends Controller {
   // (shared/_series_pagination), so it looks the same.
   renderPager(total, pages, first, count) {
     if (!this.hasPagerTarget) return
-    if (pages <= 1) {
-      this.pagerTarget.innerHTML = ""
-      return
-    }
     const current = this.pageValue
     const link = (label, page, attributes = "") =>
       `<a href="#" data-action="aim-queue-filter#goTo" data-page="${page || ""}" ${attributes}>${label}</a>`
@@ -129,7 +146,7 @@ export default class extends Controller {
     items.push(current < pages ? link("&gt;", current + 1, 'aria-label="Next"') : '<a aria-disabled="true" aria-label="Next">&gt;</a>')
     this.pagerTarget.innerHTML =
       `<div class="pagination-wrapper"><nav class="pagy series-nav" aria-label="Pages">${items.join("")}</nav>` +
-      `<p class="pagination-info">Page ${current} of ${pages} &middot; Showing ${first + 1}&ndash;${first + count} of ${total} rows</p></div>`
+      `<p class="pagination-info">Page ${current} of ${pages} &middot; ${total ? `Showing ${first + 1}&ndash;${first + count} of ${total} rows` : "No rows match"}</p></div>`
   }
 
   clear() {
