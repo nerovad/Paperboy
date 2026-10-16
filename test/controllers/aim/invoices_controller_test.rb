@@ -58,10 +58,6 @@ module Aim
       row.reload
     end
 
-    # ---------------------------------------------------------------
-    # Queues
-    # ---------------------------------------------------------------
-
     test 'a queue lists the rows in its states, newest first' do
       older = invoice('4601.A', state: 'approved', pdf: false)
       newer = invoice('4601.B', state: 'exporting', pdf: false)
@@ -90,10 +86,6 @@ module Aim
 
       assert_redirected_to aim_root_path
     end
-
-    # ---------------------------------------------------------------
-    # The review page
-    # ---------------------------------------------------------------
 
     test 'opening an invoice claims it on the row, by name' do
       row = invoice('4601.F')
@@ -209,10 +201,6 @@ module Aim
 
       assert_redirected_to aim_invoices_path(queue: 'needs_review')
     end
-
-    # ---------------------------------------------------------------
-    # Actions
-    # ---------------------------------------------------------------
 
     test 'save writes the reviewed fields and notes to the row' do
       row = invoice('4601.K', pdf: false)
@@ -584,10 +572,6 @@ module Aim
       assert_nil row.claimed_by
     end
 
-    # ---------------------------------------------------------------
-    # Splits
-    # ---------------------------------------------------------------
-
     def split_params(*rows)
       rows.each_with_index.to_h do |(vendor, number, pages), index|
         [index.to_s, { vendor_name: vendor, invoice_number: number, pages_text: pages }]
@@ -634,10 +618,6 @@ module Aim
       assert_equal %w[received extract], [row.state, row.command]
       assert_not row.split_check
     end
-
-    # ---------------------------------------------------------------
-    # People's queues
-    # ---------------------------------------------------------------
 
     test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do
       invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -697,10 +677,6 @@ module Aim
       assert_match(/finished/, flash[:alert])
       assert_nil row.reload.assigned_to
     end
-
-    # ---------------------------------------------------------------
-    # Owners who are not AIM staff
-    # ---------------------------------------------------------------
 
     def as_owner_not_staff
       session[:user] = session[:user].merge('employee_id' => 7)
@@ -765,10 +741,6 @@ module Aim
       assert_select 'tr[data-aim-queue-filter-target=row][data-search*=?]', 'House Sanitary Supply OP-41664_FM-28844'
     end
 
-    # ---------------------------------------------------------------
-    # Shared queues
-    # ---------------------------------------------------------------
-
     test 'a shared-queue invoice in a BU whose shared queue someone has switched on is theirs to work and claim' do
       employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit to test with')
       row = invoice('4601.SQ1', state: 'ready_for_approval', budget_unit: employee.unit)
@@ -791,10 +763,6 @@ module Aim
       post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_equal employee.id, row.reload.assigned_employee_id
     end
-
-    # ---------------------------------------------------------------
-    # Moving several at once
-    # ---------------------------------------------------------------
 
     test 'ticked invoices move together, and the queue pages offer the checkboxes' do
       a = invoice('4601.B1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -826,10 +794,6 @@ module Aim
       assert_nil mine.reload.assigned_employee_id
       assert_equal 8, theirs.reload.assigned_employee_id
     end
-
-    # ---------------------------------------------------------------
-    # Restoring
-    # ---------------------------------------------------------------
 
     test 'staff restore a rejected invoice to action needed, with the reason kept' do
       row = invoice('4601.RS1', state: 'rejected', pdf: false)

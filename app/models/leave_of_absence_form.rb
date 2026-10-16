@@ -14,14 +14,11 @@ class LeaveOfAbsenceForm < ApplicationRecord
 
   has_many_attached :doctors_note_attachment
 
-  # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
-  # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
   validate :acceptable_doctors_note_attachment_files
 
-  # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end

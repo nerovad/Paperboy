@@ -4,6 +4,10 @@ require 'pathname'
 require_relative 'paths'
 
 module P2m
+  # Copies an OMS job's files into the destroyed archive, then removes the
+  # copies from staging, the shipping station, the printers, processed and
+  # temporary output. An archive folder that already exists is refused, so a
+  # second run does not mix two jobs.
   class OmsDestroyer
     CLEANUP_PATHS = [
       Paths.shipping_station_store,
@@ -61,6 +65,8 @@ module P2m
       removed
     end
 
+    # A directory named with the number, or the number as a whole token in
+    # the filename. Digits inside a longer number do not match.
     def belongs_to_oms?(relative_path, oms_number)
       path = Pathname.new(relative_path)
       path.each_filename.include?(oms_number) ||

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/preview.rb
-
 module Forms
   class Duplicator
     # What the duplicate dialog shows before anything is written: the renames

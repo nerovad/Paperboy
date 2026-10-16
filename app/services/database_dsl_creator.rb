@@ -2,6 +2,9 @@
 
 require 'open3'
 
+# Builds a DSL from a live SQL Server table. A replicate DSL is written
+# directly. Any other table is stubbed, then dump_sql, use_sql and from_sql
+# fill its columns from the server. An existing stub is left in place.
 class DatabaseDslCreator
   class ImportFailed < StandardError; end
 

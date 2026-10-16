@@ -4,18 +4,27 @@
 - Generated Ruby conforms to `.rubocop.yml`.
 
 ## CI Pipeline
-- run unit test and examine errors; f
+- Run the checks and examine the errors:
   ```bash
-     bin/unit-tests
-  * Use 10.135.204.161 when GSASQL16 cannot be resolved
+  bin/unit-test
+  ```
+  It runs RuboCop, Brakeman, bundle-audit and `rails test`, and writes the
+  output to `error.log`. Pass a test path to run less than the whole suite.
 - Tests use SQL Server, not SQLite. `config/database.yml` accepts
   `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
   unavailable; for example:
   `PAPERBOY_TEST_DATABASE=Paperboy_Test bundle exec rake test`
-- The configured test database is a scratch base. Rails test setup creates
-  schema-loaded, per-worker databases with a run identifier and worker suffix
-  for parallel tests, then drops them after the run. The test login therefore
-  needs permission to create and drop databases and load the schema.
+- Locally, the configured test database is a scratch base. Rails test setup
+  creates schema-loaded, per-worker databases with a run identifier and worker
+  suffix for parallel tests, then drops them after the run. The test login
+  therefore needs permission to create and drop databases and load the schema.
+- In CI (`.github/workflows/ci.yml`) the login cannot create databases. The
+  test job sets `PARALLEL_WORKERS=1` and runs against one pre-made database
+  whose name ends in `_CI` (`Paperboy_CI` by default). The `Reset CI database`
+  step runs `bundle exec rails ci:reset_database`, which empties that database
+  and loads `db/schema.rb`. It never creates or drops a database and refuses
+  any name that does not end in `_CI`. The test job is skipped while the
+  `CI_SQL_HOST` variable is unset.
 - Never point tests at `Paperboy_Dev`, staging, or production data. If
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
 ## Software Changes

@@ -7,9 +7,14 @@ module Billing
   # rubocop:disable-next Metrics/ClassLength
   class XlsxReportRenderer
     DATE_FORMAT = '%m/%d/%y'
+    # Summary labels start here, one column past the 26-column export, so
+    # the billing total and the line count stay outside the autofilter.
     BILLING_LABEL_INDEX = 27
+    # Written as text. Excel would treat these as numbers, drop leading
+    # zeros, and round a long document number.
     TEXT_COLUMNS = %w[DOC_NMBR DOC_NUBR DOC_NUMBR CUNIT COBJECT CACTIVITY
                       CFUNCTION CPROGRAM CPHASE SPHASE STASK].freeze
+    # COST is column 26 of the export procedure's row.
     COST_COLUMN_INDEX = 25
     HEADER_COLORS = {
       (0..6) => '95DCF7',

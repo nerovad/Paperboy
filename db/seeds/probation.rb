@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# db/seeds/probation.rb
 require_relative 'shared'
 
 module Seeds

@@ -94,7 +94,7 @@ class FormSearch
     OrgLabels.label(level, agency)
   end
 
-  # --- Option lists for the org cascade --------------------------------------
+  # Option lists for the org cascade
   # Class methods because the cascade partial renders wherever a screen needs
   # to narrow to part of the county, under whichever controller drew it.
 

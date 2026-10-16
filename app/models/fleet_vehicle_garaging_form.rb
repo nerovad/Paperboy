@@ -36,10 +36,8 @@ class FleetVehicleGaragingForm < ApplicationRecord
   before_validation :copy_vehicle_details, if: -> { new_record? || will_save_change_to_vehicle_number? }
   after_save :apply_to_fleet_vehicle, if: :applies_to_fleet_vehicle?
 
-  # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
-  # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
   validate :vehicle_must_be_on_the_fleet_list, if: -> { new_record? || will_save_change_to_vehicle_number? }
   validate :column_names_must_be_valid_identifiers
@@ -81,7 +79,6 @@ class FleetVehicleGaragingForm < ApplicationRecord
     self.class.name.demodulize.titleize
   end
 
-  # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end

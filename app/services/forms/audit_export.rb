@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/audit_export.rb
-
 module Forms
   # The trails a submission leaves behind, flattened into spreadsheets.
   #

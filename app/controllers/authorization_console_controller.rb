@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/authorization_console_controller.rb
 require 'csv'
 
 class AuthorizationConsoleController < ApplicationController

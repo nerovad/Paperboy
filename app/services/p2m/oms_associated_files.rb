@@ -4,6 +4,9 @@ require 'pathname'
 require_relative 'paths'
 
 module P2m
+  # Files in one job directory whose names carry this OMS number. The
+  # directory must stay inside the production root. DataRunner and
+  # FinalOutput are pipeline folders, not job folders, so they are refused.
   class OmsAssociatedFiles
     ROOT = Paths::DATA_RUNNER_ROOT.parent
     OMS_NUMBER = '\d{8,9}'

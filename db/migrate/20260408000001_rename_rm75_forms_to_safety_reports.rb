@@ -20,7 +20,6 @@ class RenameRm75FormsToSafetyReports < ActiveRecord::Migration[8.0]
       SQL
     end
 
-    # Update FormTemplate class_name reference if one exists
     return unless ActiveRecord::Base.connection.table_exists?(:form_templates)
 
     execute <<~SQL

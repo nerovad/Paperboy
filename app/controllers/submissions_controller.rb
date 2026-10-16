@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/submissions_controller.rb
 class SubmissionsController < ApplicationController
   include Filterable
   include Pagy::Method
@@ -115,10 +114,8 @@ class SubmissionsController < ApplicationController
 
     @status_items = sort_collection(@status_items, sort_by, sort_direction, status_sort_configs, default_sort: @default_sort)
 
-    # Build status options mapping for JavaScript dynamic filtering
     @status_options_by_type = build_status_options_by_type
 
-    # Paginate the final sorted array
     @pagy, @status_items = pagy(:offset, @status_items, count: @status_items.size)
   end
 
@@ -252,7 +249,6 @@ class SubmissionsController < ApplicationController
       next
     end
 
-    # Dynamic forms from FormTemplates
     Forms::Template.joins(:statuses).distinct.each do |template|
       model_class = application_record_class_named(template.class_name)
       next unless model_class
@@ -273,7 +269,6 @@ class SubmissionsController < ApplicationController
       return statuses_from_model(model_class)
     end
 
-    # Check dynamic forms
     template = Forms::Template.find_by(name: form_type)
     if template
       model_class = application_record_class_named(template.class_name)
@@ -328,7 +323,6 @@ class SubmissionsController < ApplicationController
       next unless model_class.table_exists?
       next unless model_class.respond_to?(:status_category) || model_class.new.respond_to?(:status_category)
 
-      # Build includes based on model associations
       includes_list = []
       includes_list << :parking_lot_vehicles if model_class.reflect_on_association(:parking_lot_vehicles)
 
@@ -336,11 +330,9 @@ class SubmissionsController < ApplicationController
       # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
-      # Apply SQL-level date and Advanced Search org filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
       scope = @form_search.apply_org(model_class, scope)
 
-      # Apply eager loading
       scope = scope.includes(includes_list) if includes_list.any?
 
       scope.each do |submission|
@@ -357,7 +349,6 @@ class SubmissionsController < ApplicationController
   LEGACY_MODEL_NAMES = LEGACY_FORMS.to_set { |f| f[:model] }.freeze
 
   def load_form_template_submissions(_employee_id)
-    # Find all form templates that have statuses configured
     Forms::Template.joins(:statuses).distinct.each do |template|
       # Skip templates that don't match the type filter
       next unless @form_search.include_form_type?(template.name)
@@ -375,12 +366,10 @@ class SubmissionsController < ApplicationController
       # a visibility grant on this form type widens it.
       scope = submission_scope_for(model_class)
 
-      # Apply SQL-level date and Advanced Search org filters
       scope = apply_scope_date_filters(scope, submission_scope_date_filters)
       scope = @form_search.apply_org(model_class, scope)
 
       scope.each do |submission|
-        # Generate path dynamically based on the model's route
         path = generate_submission_path(template, submission)
         @status_items << build_status_item(submission, template.name, path)
       end
@@ -432,7 +421,6 @@ class SubmissionsController < ApplicationController
     if respond_to?(path_helper, true)
       send(path_helper, submission)
     else
-      # Fallback to edit path
       edit_path_helper = "edit_#{route_name}_path"
       if respond_to?(edit_path_helper, true)
         send(edit_path_helper, submission)

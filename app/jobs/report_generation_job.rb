@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/jobs/report_generation_job.rb
 require 'zip'
 require 'prawn'
 require 'csv'
@@ -21,27 +20,19 @@ class ReportGenerationJob < ApplicationJob
       return
     end
 
-    # Branch based on format
     if format == 'csv'
-      # Generate CSV
       csv_filename = generate_csv(submissions, form_type, start_date, end_date)
 
-      # Send email with CSV attachment
       ReportMailer.report_ready(employee, csv_filename, submissions.count, form_type, start_date, end_date).deliver_now
 
-      # Clean up CSV file
       FileUtils.rm_f(csv_filename)
     else
-      # Generate PDFs (original logic)
       pdf_files = generate_pdfs(submissions, form_type)
 
-      # Create zip file
       zip_filename = create_zip_file(pdf_files, form_type, start_date, end_date)
 
-      # Send email with ZIP attachment
       ReportMailer.report_ready(employee, zip_filename, submissions.count, form_type, start_date, end_date).deliver_now
 
-      # Clean up temporary files
       cleanup_temp_files(pdf_files)
       FileUtils.rm_f(zip_filename)
     end
@@ -61,7 +52,6 @@ class ReportGenerationJob < ApplicationJob
   def get_submissions(form_type, start_date, end_date, status = nil)
     model_class = form_type_to_model(form_type)
 
-    # Check which date column exists in the model
     date_column = if model_class.column_names.include?('SubmittedAt')
                     'SubmittedAt'
                   elsif model_class.column_names.include?('CreatedAt')
@@ -72,12 +62,10 @@ class ReportGenerationJob < ApplicationJob
                     'CreatedAt' # Default fallback
                   end
 
-    # Build base query with date range
     query = model_class.where("#{date_column} >= ? AND #{date_column} <= ?",
                               start_date.beginning_of_day,
                               end_date.end_of_day)
 
-    # Add status filter if provided
     query = query.where(status: status.to_i) if status.present? && model_class.column_names.include?('status')
 
     query.order("#{date_column} DESC")
@@ -103,7 +91,6 @@ class ReportGenerationJob < ApplicationJob
   end
 
   def generate_csv(submissions, form_type, start_date, end_date)
-    # Create filename
     csv_filename = Rails.root.join(
       'tmp',
       'reports',
@@ -113,16 +100,13 @@ class ReportGenerationJob < ApplicationJob
     # Ensure directory exists
     FileUtils.mkdir_p(File.dirname(csv_filename))
 
-    # Get all attribute names from the first submission
     headers = submissions.first.attributes.keys
 
     # Every report covers a single form type, so the reference prefix is uniform —
     # resolve it once and prepend a "Reference" column (e.g. LOA-1042).
     reference_prefix = Forms::Reference.prefix_for(submissions.first.class)
 
-    # Generate CSV
     CSV.open(csv_filename, 'wb') do |csv|
-      # Write headers
       csv << (['Reference'] + headers)
 
       # Write each submission as a row
@@ -130,7 +114,6 @@ class ReportGenerationJob < ApplicationJob
         row = headers.map do |attr|
           value = submission.send(attr)
 
-          # Format the value appropriately
           case value
           when Time, DateTime
             value.strftime('%Y-%m-%d %H:%M:%S')
@@ -162,7 +145,6 @@ class ReportGenerationJob < ApplicationJob
     submissions.each_with_index do |submission, _index|
       pdf_content = generate_pdf_for_submission(submission, form_type)
 
-      # Create filename with submission ID and date
       filename = "#{form_type}_#{submission.id}_#{Time.current.strftime('%Y%m%d')}.pdf"
       filepath = temp_dir.join(filename)
 
@@ -171,7 +153,6 @@ class ReportGenerationJob < ApplicationJob
       pdf_files << filepath
     rescue StandardError => e
       Rails.logger.error "Failed to generate PDF for #{form_type} ##{submission.id}: #{e.message}"
-      # Continue with other submissions
     end
 
     pdf_files
@@ -179,7 +160,6 @@ class ReportGenerationJob < ApplicationJob
 
   def generate_pdf_for_submission(submission, form_type)
     Prawn::Document.new(page_size: 'LETTER', margin: 50) do |pdf|
-      # Header
       pdf.font 'Helvetica', size: 20, style: :bold
       pdf.text 'Ventura County GSA', align: :center
       pdf.move_down 5
@@ -188,27 +168,22 @@ class ReportGenerationJob < ApplicationJob
       pdf.text "Generated: #{Time.current.strftime('%B %d, %Y at %I:%M %p')}", align: :center
       pdf.move_down 20
 
-      # Form Title
       pdf.font 'Helvetica', size: 16, style: :bold
       pdf.text form_type.humanize, color: '0D6EFD'
       pdf.stroke_horizontal_rule
       pdf.move_down 20
 
-      # Submission Details
       pdf.font 'Helvetica', size: 12
 
-      # Basic Info
       pdf.text "Reference: #{Forms::Reference.reference_for(submission)}", style: :bold
       pdf.move_down 5
 
-      # Created/Submitted Date
       date_field = submission.try(:SubmittedAt) || submission.try(:CreatedAt) || submission.try(:created_at)
       if date_field
         pdf.text "Date: #{date_field.strftime('%B %d, %Y at %I:%M %p')}"
         pdf.move_down 15
       end
 
-      # All Attributes
       submission.attributes.each do |key, value|
         next if key == 'id' || key =~ /password|token/i
         next if value.nil?
@@ -233,7 +208,6 @@ class ReportGenerationJob < ApplicationJob
         pdf.move_down 10
       end
 
-      # Footer
       pdf.move_down 30
       pdf.stroke_horizontal_rule
       pdf.move_down 10
@@ -264,7 +238,6 @@ class ReportGenerationJob < ApplicationJob
       FileUtils.rm_f(file)
     end
 
-    # Clean up the temp directory if empty
     temp_dir = File.dirname(pdf_files.first) if pdf_files.any?
     Dir.rmdir(temp_dir) if temp_dir && Dir.exist?(temp_dir) && Dir.empty?(temp_dir)
   rescue StandardError => e
