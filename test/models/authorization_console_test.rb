@@ -35,7 +35,7 @@ class AuthorizationConsoleTest < ActiveSupport::TestCase
     assert_equal AuthorizationConsole::HCA_SAFETY, AuthorizationConsole.console_for_routing_key('hca_safety')
   end
 
-  # --- ACL rights -------------------------------------------------------------
+  # ACL rights
 
   test 'every console issues one key per right, namespaced to itself' do
     cir_keys = AuthorizationConsole::RIGHT_KEYS.map { |r| AuthorizationConsole.permission_key('cir', r) }

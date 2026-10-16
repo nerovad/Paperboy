@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/acl_copier.rb
-
 module Forms
   class Duplicator
     # Gives a copied form the same ACL a source form has. Three kinds of key

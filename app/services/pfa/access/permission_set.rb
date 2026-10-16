@@ -2,6 +2,9 @@
 
 module Pfa
   module Access
+    # Permission keys for one type: grants with no org, grants at each level
+    # of this org chain, and grants on these groups. A lookup error returns
+    # an empty set, so the failure denies access.
     class PermissionSet
       def initialize(org_chain:, group_ids:)
         @org_chain = org_chain
@@ -49,6 +52,8 @@ module Pfa
                        .pluck(:permission_key)
       end
 
+      # Levels below the one being matched are NULL. An agency grant matches
+      # everyone in the agency. A unit grant matches only that unit.
       def org_conditions
         agency_id = org_chain[:agency_id]
         return [] if agency_id.blank?

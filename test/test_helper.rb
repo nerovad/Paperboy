@@ -44,7 +44,6 @@ module ActiveSupport
 
     class_attribute :parallel_database_run_started, default: false
 
-    # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors, parallelize_databases: false)
 
     parallelize_before_fork do

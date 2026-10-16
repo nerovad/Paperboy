@@ -90,7 +90,6 @@ DATABASE AND QUEUE STORAGE:
   - Microsoft SQL Server (GSABSS) via tiny_tds + activerecord-sqlserver-adapter
   - Primary connection: All application tables
   - Billing connection: Separate pool to same DB for stored procedures
-  - PostgreSQL: Commented out, reserved for future migration
   - Valkey/Redis: Redis-compatible backend for Sidekiq
     (redis://localhost:6379/0)
 
@@ -169,9 +168,6 @@ BILLING CONNECTION (billing):
   Separate connection pool for billing stored procedures
   Accessed via BillingBase abstract model
   Used for: TC60 exports, Invoice queries, Monthly billing, Backups
-
-NOTE: PostgreSQL configuration is commented out in database.yml and Gemfile.
-The pg gem is also commented out. This is reserved for a future migration.
 
 3.2 TABLE CATEGORIES
 --------------------
@@ -2515,12 +2511,6 @@ ReportGenerationJob
   rake dev:seed:parking              -> Seed parking lot data
   rake dev:seed:probation            -> Seed probation transfer data
   rake dev:seed:all                  -> Seed all test data
-
-29.4 DATA MIGRATION (lib/tasks/migrate_data.rake, 180 lines)
-  rake db:migrate_from_mssql         -> Migrate MSSQL to PostgreSQL
-  Migrates: Employees, Groups, Employee_Groups, Group_Permissions,
-            Org hierarchy, Application tables
-  Remaps: Group IDs, ACL group references
 
 ================================================================================
 30. CONFIGURATION FILES

@@ -3,6 +3,10 @@
 require Rails.root.join('script/ruby/data_runner/constants/workflow_paths')
 require_relative '../../lib/paperboy/file_store'
 
+# The csv, sql and xlsx files one DSL wrote under the DataRunner output
+# tree, plus dated copies in the download backup. A root whose name ends in
+# .lnk is a shortcut to a remote store: those files are listed through
+# FileStore and downloaded only when something reads them.
 class WorkflowOutputs
   class RemoteFile
     attr_reader :store, :name, :relative_path, :metadata

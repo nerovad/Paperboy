@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/models/pfa/workflow/reassignable.rb
-
 module Pfa
   module Workflow
     module Reassignable
@@ -36,7 +34,6 @@ module Pfa
         old_assignee_id = current_assignee_id
         field_name = assignment_field_name
 
-        # Validate new assignee exists
         new_assignee = Employee.find_by(employee_id: new_assignee_id)
         raise ActiveRecord::RecordNotFound, "Employee #{new_assignee_id} not found" unless new_assignee
 
@@ -44,7 +41,6 @@ module Pfa
         raise ArgumentError, 'Task is already assigned to this employee' if old_assignee_id.to_s == new_assignee_id.to_s
 
         transaction do
-          # Create history record
           reassignment = task_reassignments.create!(
             from_employee_id: old_assignee_id,
             to_employee_id: new_assignee_id,
@@ -53,7 +49,6 @@ module Pfa
             assignment_field: field_name
           )
 
-          # Update the assignment field
           update_column(field_name, new_assignee_id)
 
           # update_column skips callbacks, so the edit trail and any form

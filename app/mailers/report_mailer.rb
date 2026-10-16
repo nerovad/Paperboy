@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/mailers/report_mailer.rb
 class ReportMailer < ApplicationMailer
   default from: ENV['SMTP_FROM_ADDRESS'] || 'noreply@ventura.org'
 
@@ -12,7 +11,6 @@ class ReportMailer < ApplicationMailer
     @end_date = end_date
     @zip_filename = File.basename(zip_filename)
 
-    # Attach the zip file
     attachments[@zip_filename] = File.read(zip_filename)
 
     mail(

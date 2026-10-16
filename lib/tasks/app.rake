@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# lib/tasks/app.rake
 require_relative '../paperboy/app_builder'
 require_relative '../paperboy/app_destroyer'
 

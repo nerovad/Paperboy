@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/audit_value.rb
-
 module Forms
   # Turns a raw audited column value back into something a person can read.
   #

@@ -2,7 +2,6 @@
 
 class CreateFormSystem < ActiveRecord::Migration[8.0]
   def change
-    # Form Templates
     create_table :form_templates do |t|
       t.string :name, null: false
       t.string :class_name, null: false
@@ -26,7 +25,6 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
     end
     add_index :form_templates, :class_name, unique: true
 
-    # Form Fields
     create_table :form_fields do |t|
       t.references :form_template, null: false, foreign_key: true
       t.string :field_name, null: false
@@ -48,7 +46,6 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
     add_index :form_fields, :restricted_to_type
     add_index :form_fields, :conditional_field_id
 
-    # Form Template Statuses
     create_table :form_template_statuses do |t|
       t.references :form_template, null: false, foreign_key: true
       t.string :name, null: false
@@ -62,7 +59,6 @@ class CreateFormSystem < ActiveRecord::Migration[8.0]
     add_index :form_template_statuses, %i[form_template_id key], unique: true
     add_index :form_template_statuses, %i[form_template_id position]
 
-    # Form Template Routing Steps
     create_table :form_template_routing_steps do |t|
       t.references :form_template, null: false, foreign_key: true
       t.integer :step_number, null: false

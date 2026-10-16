@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/renamer.rb
-
 module Forms
   class Duplicator
     # Rewrites a form's identity inside copied source text and file paths:

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# config/initializers/omniauth.rb
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :entra_id,
            client_id: ENV.fetch('ENTRA_CLIENT_ID', nil),

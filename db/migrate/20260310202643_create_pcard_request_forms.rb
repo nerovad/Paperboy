@@ -16,7 +16,6 @@ class CreatePcardRequestForms < ActiveRecord::Migration[7.1]
 
       t.integer :status, default: 0
 
-      # Approval workflow fields
       t.string :approver_id       # Current approver's employee ID
       t.text :deny_reason         # Reason for denial (if denied)
 

@@ -4,6 +4,9 @@ require 'prawn'
 require 'prawn/templates'
 
 module Reports
+  # Draws values onto the pages of a blank PDF. When the caller names a page
+  # size, every template page must match it. Each drawn page must leave the
+  # document with exactly one new page.
   class TemplateOverlayRenderer
     DEFAULT_FONT = 'Helvetica'
 

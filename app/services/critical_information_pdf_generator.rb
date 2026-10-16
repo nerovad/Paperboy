@@ -8,7 +8,6 @@ class CriticalInformationPdfGenerator
     logo_path = Rails.root.join('app', 'assets', 'images', 'Ventura_Logo.png')
 
     Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
-      # Header with logo
       pdf.image logo_path.to_s, width: 80 if File.exist?(logo_path)
 
       pdf.move_down 10
@@ -16,7 +15,6 @@ class CriticalInformationPdfGenerator
       PdfReference.render(pdf, cir)
       pdf.move_down 20
 
-      # Employee Info
       pdf.text 'Employee Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Name: #{cir.name}"
@@ -79,7 +77,6 @@ class CriticalInformationPdfGenerator
         pdf.text "Actual Completion Date: #{cir.actual_completion_date.strftime('%B %d, %Y at %I:%M %p')}"
       end
 
-      # Include media attachments if present
       if cir.media_photo_pdf_etc.attached?
         pdf.move_down 15
         pdf.text "Attached Media (#{cir.media_photo_pdf_etc.count})", size: 14, style: :bold

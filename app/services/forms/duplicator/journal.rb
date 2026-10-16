@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/journal.rb
-
 module Forms
   class Duplicator
     # Every file a duplication writes goes through here, so a failure halfway

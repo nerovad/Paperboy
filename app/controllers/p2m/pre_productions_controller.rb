@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module P2m
+  # The same print-and-insert scan, before the job is printed. The files can
+  # be sent to a printer queue or archived as destroyed.
   class PreProductionsController < ApplicationController
     include DateRange
 

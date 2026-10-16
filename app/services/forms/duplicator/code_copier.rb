@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/code_copier.rb
-
 module Forms
   class Duplicator
     # Copies the files half of a form -- model, controller, views, PDF

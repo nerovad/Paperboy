@@ -17,10 +17,8 @@ class TeleworkLogForm < ApplicationRecord
 
   include Reassignable
 
-  # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
-  # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
   validate :column_names_must_be_valid_identifiers
 
@@ -37,7 +35,6 @@ class TeleworkLogForm < ApplicationRecord
     self.class.name.demodulize.titleize
   end
 
-  # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end
