@@ -300,11 +300,14 @@ framework:
       - active_storage/blobs/proxy
       - active_storage/blobs/redirect
       - active_storage/disk
-      - active_storage/direct_uploads
       - active_storage/representations/proxy
       - active_storage/representations/redirect
-    reason: "Active Storage's own endpoints for serving and uploading files."
+    reason: "Active Storage's own endpoints for serving files."
     protected_by: "Blobs are addressed by signed, expiring ids; the application links its files through its own token routes instead."
+
+  - controllers: [active_storage/direct_uploads]
+    reason: "Active Storage's endpoint the file fields post to before a form is saved."
+    protected_by: "Only the CSRF token; the endpoint does not ask for a sign-in, so a signed-out visitor can create a blob. This row records a gap to decide on, not a settled rule."
 
   - controllers: [rails/pwa]
     reason: "The web app manifest and service worker, which the browser fetches before and outside any sign-in."
