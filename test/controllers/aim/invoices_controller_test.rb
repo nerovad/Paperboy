@@ -606,6 +606,40 @@ module Aim
       assert_select '.aim-readonly-banner__actions', 0
     end
 
+    test 'straight to Fiscal is noted as a known duplicate, not stopped (#160)' do
+      first = invoice('4601.H1', state: 'exported', invoice_total: 33, pdf: false)
+      row = invoice('4601.H2', state: 'ready_for_approval', invoice_total: 33, pdf: false, straight_to_fiscal_by: 'jane@example.com')
+
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal ['ready_for_approval', nil], [row.reload.state, row.duplicate_of_id], 'the every-minute check leaves it alone'
+
+      Aim::StraightToFiscalJob.perform_now
+      row.reload
+      assert_equal ['approved', first.id, nil], [row.state, row.duplicate_of_id, row.review_reason]
+      assert_equal :known, row.duplicate_status
+      assert_includes row.events.pluck(:note).join("\n"), "Known duplicate of #{first.batch_id}"
+      assert_includes first.events.pluck(:note).join("\n"), 'it was sent straight to Fiscal'
+    end
+
+    test 'a row pill says where an invoice stands as a duplicate; a reason shows only in Action Needed (#160)' do
+      helper = ApplicationController.helpers
+      first = invoice('4601.P1', state: 'ready_for_approval', invoice_total: 44, pdf: false)
+      row = invoice('4601.P2', state: 'needs_review', invoice_total: 44, pdf: false, review_reason: 'duplicate', duplicate_of_id: first.id)
+      assert_nil helper.aim_duplicate_pill(row), 'Action Needed already says Possible duplicate'
+
+      row.update_columns(state: 'rejected')
+      assert_match 'Rejected duplicate', helper.aim_duplicate_pill(row)
+      assert_equal 'Rejected', helper.aim_status_badge(row, nil).last, 'its reason is not its status once rejected'
+
+      row.update_columns(review_reason: nil, state: 'ready_for_approval')
+      assert_match 'Known duplicate', helper.aim_duplicate_pill(row)
+
+      newer = invoice('4601.P3', state: 'ready_for_approval', invoice_total: 44, pdf: false, replaces_invoice_id: first.id)
+      helper.instance_variable_set(:@aim_replaced_ids, nil) # looked up once per page; this is a new page
+      assert_match 'Replacement', helper.aim_duplicate_pill(newer)
+      assert_match 'Replaced', helper.aim_duplicate_pill(first)
+    end
+
     test 'a duplicate is rejected naming the other' do
       first = invoice('4601.E4', state: 'exported', invoice_total: 21, pdf: false)
       third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 21)
@@ -613,6 +647,10 @@ module Aim
       act(third.reload, 'reject_duplicate')
       assert_equal 'rejected', third.state
       assert_includes third.notes, "Duplicate of #{first.batch_id}"
+
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      assert_select '.aim-notice-chip', text: /Rejected duplicate/
+      assert_select '.aim-notice-chip', text: /Possible duplicate/, count: 0
     end
 
     test 'delete keeps a copy and ends the invoice' do

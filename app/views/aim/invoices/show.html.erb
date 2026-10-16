@@ -121,15 +121,10 @@
       <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
       <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
       <%# A reason with a notice of its own shows as that notice's chip. %>
-      <% if @invoice.review_reason.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
+      <% if state == 'needs_review' && @invoice.review_reason.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
         <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
       <% end %>
-      <% aim_notice_chips.each do |chip| %>
-        <button type="button" class="aim-notice-chip is-<%= chip[:tone] %>" aria-expanded="false" aria-controls="<%= chip[:id] %>"
-                data-action="aim-notices#toggle" data-aim-notices-target="chip">
-          <span class="aim-notice-chip__mark" aria-hidden="true"><%= chip[:mark] %></span><%= chip[:title] %><span class="aim-notice-chip__caret" aria-hidden="true"></span>
-        </button>
-      <% end %>
+      <%= render 'aim/shared/notice_chips' %>
       <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
       <% if @claimable && !@read_only %>
         <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,

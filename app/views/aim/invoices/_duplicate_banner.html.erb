@@ -5,10 +5,11 @@
     processed it is greyed out, and the two can still be compared. A known
     duplicate -- flagged, then sent on by AIM staff -- keeps a quieter note. %>
 <% other = @invoice.duplicate_of %>
-<% flagged = @invoice.possible_duplicate? %>
-<% decide = flagged && aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
+<% status = @invoice.duplicate_status(replaced: false) %>
+<% flagged = %i[possible rejected].include?(status) %>
+<% decide = status == :possible && aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
 <% processed = @invoice.original_processed? %>
-<% title = flagged ? 'Possible duplicate' : 'Known duplicate' %>
+<% title = { possible: 'Possible duplicate', rejected: 'Rejected duplicate' }.fetch(status, 'Known duplicate') %>
 <div class="aim-readonly-banner aim-notice-panel aim-duplicate-banner<%= ' aim-manual-banner' unless flagged %>" id="<%= aim_notice_id(title) %>" hidden
      data-aim-notices-target="panel"
      role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace">
@@ -16,12 +17,12 @@
   <div class="aim-duplicate-banner__body">
     <%= aim_notice_heading(title, mark: '=', tone: flagged ? :alert : :info) %>
     <p>
-      Same vendor, invoice number and total as
+      <%= status == :rejected ? 'Rejected as a duplicate of' : 'Same vendor, invoice number and total as' %>
       <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
       (<%= aim_state_label(other.state) %>, <%= other.created_at.in_time_zone.strftime('%m/%d/%Y') %>, <%= other.queue_owner %>).
-      <% if !flagged %>AIM staff sent it on knowing that.
+      <% if status == :known %><%= @invoice.straight_to_fiscal_by.present? ? 'It went straight to Fiscal knowing that.' : 'AIM staff sent it on knowing that.' %>
       <% elsif decide %>Reject it as a duplicate, keep it as the replacement, or clear it.
-      <% else %>AIM staff will decide.<% end %>
+      <% elsif status == :possible %>AIM staff will decide.<% end %>
     </p>
     <table class="aim-duplicate-compare">
       <thead><tr><th scope="col"></th><th scope="col">This invoice</th><th scope="col">Original</th></tr></thead>

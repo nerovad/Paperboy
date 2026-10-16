@@ -29,8 +29,11 @@ module Aim
 
     class_methods do
       # Every invoice waiting on a person that has not been checked as it is.
+      # Straight to Fiscal is not stopped: its job notes the duplicate itself
+      # (note_known_duplicate!) and sends it on.
       def check_duplicates!
-        where(state: CHECK_STATES, duplicate_of_id: nil).where(created_at: check_from..).find_each(&:check_duplicate!)
+        where(state: CHECK_STATES, duplicate_of_id: nil, straight_to_fiscal_by: nil).where(created_at: check_from..)
+                                                                                    .find_each(&:check_duplicate!)
       end
 
       def check_from
@@ -78,6 +81,37 @@ module Aim
       flag_duplicate!(other) if other
     end
 
+    # Straight to Fiscal (#160): a duplicate is linked and noted at both ends,
+    # but not stopped -- it goes on to Fiscal as a known duplicate, which
+    # Fiscal sees on its row and its page. Checked once per set of details.
+    def note_known_duplicate!(actor: ACTOR)
+      key = duplicate_key
+      return if key.nil? || key == duplicate_checked_key || created_at < self.class.check_from
+
+      other = find_duplicate
+      update_columns(duplicate_checked_key: key, duplicate_of_id: other&.id)
+      return if other.nil?
+
+      events.create!(action: 'duplicate', actor: actor, from_state: state, to_state: state,
+                     note: "Known duplicate of #{other.batch_id} (same vendor, invoice number and total); sent straight to Fiscal")
+      other.events.create!(action: 'duplicate', actor: actor, from_state: other.state, to_state: other.state,
+                           note: "#{batch_id} may be a duplicate of this one; it was sent straight to Fiscal")
+    end
+
+    # Where this invoice stands as a duplicate, for its pill (#160): :possible
+    # (waiting on AIM staff), :rejected (rejected as one), :replaced,
+    # :replacement, :known (sent on knowing it), or nil. +replaced+ says
+    # whether another invoice replaces this one, when the caller knows.
+    def duplicate_status(replaced: nil)
+      replaced = replaced_by.present? if replaced.nil?
+      if review_reason == 'duplicate' && duplicate_of_id.present?
+        state == 'rejected' ? :rejected : :possible
+      elsif replaced then :replaced
+      elsif replaces_invoice_id.present? then :replacement
+      elsif duplicate_of_id.present? then :known
+      end
+    end
+
     def flag_duplicate!(other, actor: ACTOR)
       note = "Possible duplicate of #{other.batch_id} (same vendor, invoice number and total)"
       if state == 'needs_review'
@@ -112,10 +146,8 @@ module Aim
         unit = owner.nil? && other.shared_queue? ? other.budget_unit : nil
         mark_replacement!(actor: actor)
         send_to_queue!(owner.nil? ? other.assigned_employee_id.to_s : owner, actor: actor, by: by, unit: unit,
-                                                                            reason: "replaces #{other.batch_id}")
-        unless %w[rejected deleted].include?(other.state)
-          other.transition_to!('rejected', actor: actor, notes: notes || other.notes, note: "reason: Replaced by #{batch_id}")
-        end
+                                                                             reason: "replaces #{other.batch_id}")
+        other.transition_to!('rejected', actor: actor, notes: notes || other.notes, note: "reason: Replaced by #{batch_id}") unless %w[rejected deleted].include?(other.state)
       end
     end
 

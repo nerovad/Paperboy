@@ -2194,6 +2194,11 @@ ul.aim-agency-group-columns {
   border-left: 5px solid $brand-navy;
   color: $text-color;
 
+  // An information notice's title is navy, not the warnings' red (#160).
+  strong {
+    color: $brand-navy;
+  }
+
   .aim-readonly-banner__mark {
     background: $brand-navy;
   }
