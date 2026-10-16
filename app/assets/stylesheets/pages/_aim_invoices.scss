@@ -1021,12 +1021,6 @@
   }
 }
 
-// The list scrolls with the page, not in a box of its own, so a laptop
-// screen shows as many rows as it can; the headings stay pinned.
-.aim-people-panel {
-  overflow: visible;
-}
-
 .aim-people-table {
   overflow: visible;
 
@@ -1107,6 +1101,12 @@
   text-align: left;
   top: calc(100% + 4px);
   z-index: 5;
+
+  // Opened near the bottom of the list, it opens upward (aim-actions-menu).
+  &.is-up {
+    bottom: calc(100% + 4px);
+    top: auto;
+  }
 
   > a,
   form button {
