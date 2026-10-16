@@ -219,15 +219,27 @@
   font-size: 0.85rem;
 }
 
-// A notice folds to its title (aim_banner_controller, #160): the title is the
-// toggle, with a caret; folded, only the title and any buttons remain.
-.aim-readonly-banner__toggle {
+// A notice folds to its title (aim_banner_controller, #160) and starts
+// folded: the title is the toggle, with a caret and, folded, a small
+// "Expand"; folded, only the title and any buttons remain.
+.aim-readonly-banner .aim-readonly-banner__toggle {
+  align-items: center;
   cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+}
 
-  &::after {
-    content: " \25BE";
-    font-size: 0.8em;
-  }
+.aim-readonly-banner__caret::before {
+  content: "\25BC";
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.aim-readonly-banner__hint {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .aim-readonly-banner.is-folded {
@@ -240,8 +252,12 @@
     display: none;
   }
 
-  .aim-readonly-banner__toggle::after {
-    content: " \25B8";
+  .aim-readonly-banner__caret::before {
+    content: "\25B6";
+  }
+
+  .aim-readonly-banner__hint {
+    display: inline;
   }
 }
 
