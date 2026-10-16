@@ -1,14 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 
 // A notice on an invoice folds down to its title (#160), so several of them,
-// or a long one, leave the invoice room. Its <strong> title becomes the
+// or a long one, leave the invoice room. Its title (the first <strong> or
+// <h3>, as on the Invoice panel's reason note) becomes the
 // toggle, with a caret and, while folded, "Expand"; the rest of the text
 // hides, and any buttons beside it stay. Notices start folded; one opened is
 // remembered open, by its title, in this browser -- best effort, as private
 // windows may refuse storage.
 export default class extends Controller {
   connect() {
-    this.title = this.element.querySelector("strong")
+    this.title = this.element.querySelector("strong, h3")
     if (!this.title) return
 
     this.key = `aim-banner:${this.title.textContent.trim()}`

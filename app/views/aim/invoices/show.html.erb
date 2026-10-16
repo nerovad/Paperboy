@@ -137,7 +137,7 @@
       <div class="aim-form-scroll">
         <%= render 'aim/shared/frame_flash' %>
         <% if @invoice.review_note.present? %>
-          <section class="aim-ticket">
+          <section class="aim-ticket" data-controller="aim-banner">
             <h3><%= aim_review_reason_label(@invoice.review_reason.presence || 'note') %></h3>
             <pre><%= @invoice.review_note %></pre>
           </section>

@@ -222,7 +222,8 @@
 // A notice folds to its title (aim_banner_controller, #160) and starts
 // folded: the title is the toggle, with a caret and, folded, a small
 // "Expand"; folded, only the title and any buttons remain.
-.aim-readonly-banner .aim-readonly-banner__toggle {
+.aim-readonly-banner .aim-readonly-banner__toggle,
+.aim-ticket .aim-readonly-banner__toggle {
   align-items: center;
   cursor: pointer;
   display: inline-flex;
@@ -724,6 +725,28 @@
   font-size: 0.82rem;
   margin: 0;
   white-space: pre-wrap;
+}
+
+// Folded like the page's notices (aim_banner_controller, #160).
+.aim-ticket.is-folded {
+  padding-bottom: 8px;
+  padding-top: 8px;
+
+  h3 {
+    margin: 0;
+  }
+
+  pre {
+    display: none;
+  }
+
+  .aim-readonly-banner__caret::before {
+    content: "\25B6";
+  }
+
+  .aim-readonly-banner__hint {
+    display: inline;
+  }
 }
 
 .aim-split-summary {
