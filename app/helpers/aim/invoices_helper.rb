@@ -70,6 +70,17 @@ module Aim
       STATE_LABELS.fetch(state.to_s, state.to_s.humanize)
     end
 
+    # A notice's title as its fold toggle (aim_banner_controller, #160): the
+    # caret and "Expand" are rendered here, and the notice is rendered folded
+    # (is-folded), so nothing moves once the page has loaded.
+    def aim_notice_title(text, element: :strong)
+      content_tag(element, class: 'aim-readonly-banner__toggle', role: 'button', tabindex: 0, aria: { expanded: false },
+                       data: { action: 'click->aim-banner#toggle keydown->aim-banner#key' }) do
+        safe_join([text, tag.span(class: 'aim-readonly-banner__caret', aria: { hidden: true }),
+                   tag.span('Expand', class: 'aim-readonly-banner__hint')])
+      end
+    end
+
     # A possible duplicate beside its original (#160): [label, this, original,
     # differs?] per row, differs? comparing the values shown.
     def aim_duplicate_comparison(invoice, other)

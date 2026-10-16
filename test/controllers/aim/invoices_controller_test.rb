@@ -590,7 +590,7 @@ module Aim
       act(third, 'send_to_approval')
       assert third.known_duplicate?
       get :show, params: { id: third.batch_id, queue: third.queue }
-      assert_select '.aim-duplicate-banner strong', text: 'Known duplicate'
+      assert_select '.aim-duplicate-banner.is-folded .aim-readonly-banner__toggle', text: /\AKnown duplicate/
       assert_select '.aim-readonly-banner__actions', 0
     end
 

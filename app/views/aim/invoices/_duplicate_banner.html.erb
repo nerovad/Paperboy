@@ -8,11 +8,11 @@
 <% flagged = @invoice.possible_duplicate? %>
 <% decide = flagged && aim_queue_access? && !@read_only && @invoice.state == 'needs_review' %>
 <% processed = @invoice.original_processed? %>
-<div class="aim-readonly-banner aim-duplicate-banner<%= ' aim-manual-banner' unless flagged %>"
+<div class="aim-readonly-banner aim-duplicate-banner is-folded<%= ' aim-manual-banner' unless flagged %>"
      role="<%= flagged ? 'alert' : 'status' %>" data-controller="aim-replace aim-banner">
   <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
   <div class="aim-duplicate-banner__body">
-    <strong><%= flagged ? 'Possible duplicate' : 'Known duplicate' %></strong>
+    <%= aim_notice_title(flagged ? 'Possible duplicate' : 'Known duplicate') %>
     <p>
       Same vendor, invoice number and total as
       <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
