@@ -77,10 +77,10 @@
     ],
     database_connections: [
       {
-        host: 'GSASQL16.ent.co.ventura.ca.us',
-        database: 'GSABSS',
-        schema: 'dbo',
-        table: 'daily_presorts',
+        host: 'gsa-sql22-txt.ent.co.ventura.ca.us',
+        database: 'Paperboy',
+        schema: 'p2m',
+        table: 'DailyPresort',
         inject: {
           mode: :append,
           reject_existing: %w[omsnumber]

@@ -23,6 +23,11 @@ module P2m
                          PREFIX_REPORT_PATTERN, SUFFIX_REPORT_PATTERN, PRESORT_PATTERN,
                          MOVE_PATTERN].freeze
     TSV_OPTIONS = { headers: true, col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true }.freeze
+    IMPORT_SOURCES = [
+      { table: 'Companion', number: 'OMSNumber', imported_at: 'ImportDateTime' },
+      { table: 'DailyPresort', number: 'omsnumber', imported_at: 'importdatetime' },
+      { table: 'MoveResults', number: 'OMSNumber', imported_at: 'ImportDateTime' }
+    ].freeze
 
     class ImportStarted < StandardError; end
     class ChangedFiles < StandardError; end
@@ -114,20 +119,24 @@ module P2m
     def imported_dataset_at(oms_number)
       connection = OmsUpload.connection
       oms = connection.quote(oms_number.to_s)
-      tables = %w[companions daily_presorts move_results]
-      return unless tables.all? { |table| connection.data_source_exists?(table) }
-      return unless tables.all? { |table| imported_table_has_oms?(connection, table, oms) }
+      return unless IMPORT_SOURCES.all? { |source| imported_table_has_oms?(connection, source, oms) }
 
-      selects = tables.map do |table|
-        "SELECT MAX(importdatetime) AS imported_at FROM #{connection.quote_table_name(table)} " \
-          "WHERE omsnumber = #{oms}"
+      selects = IMPORT_SOURCES.map do |source|
+        "SELECT MAX(#{connection.quote_column_name(source[:imported_at])}) AS imported_at " \
+          "FROM #{qualified_import_table(connection, source)} " \
+          "WHERE #{connection.quote_column_name(source[:number])} = #{oms}"
       end
       connection.select_value("SELECT MAX(imported_at) FROM (#{selects.join(' UNION ALL ')}) imports") || Time.current
     end
 
-    def imported_table_has_oms?(connection, table, oms)
-      sql = "SELECT COUNT(*) FROM #{connection.quote_table_name(table)} WHERE omsnumber = #{oms}"
+    def imported_table_has_oms?(connection, source, oms)
+      sql = "SELECT COUNT(*) FROM #{qualified_import_table(connection, source)} " \
+            "WHERE #{connection.quote_column_name(source[:number])} = #{oms}"
       connection.select_value(sql).to_i.positive?
+    end
+
+    def qualified_import_table(connection, source)
+      connection.quote_table_name(['GSAP2M', 'dbo', source[:table]].join('.'))
     end
 
     def staged_paths(oms_number)
