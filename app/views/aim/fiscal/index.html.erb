@@ -1,7 +1,7 @@
 <%# The Fiscal stage (item f): one list per status, as one list or grouped by
     budget unit. The Report Queue and Exported tick invoices for the report. %>
 <% selectable = aim_fiscal_exportable?(@status) %>
-<div class="aim-page" data-controller="aim-queue-filter">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= Aim::FiscalRecord::STATUS_LABELS[@status] %></h1>
@@ -26,7 +26,7 @@
 
     <% if selectable %>
       <%# Preview first (#131): the dialog offers a draft download, or processing. %>
-      <%= form_with url: aim_fiscal_export_preview_path, method: :post, class: 'aim-fiscal-export',
+      <%= form_with url: aim_fiscal_export_preview_path, method: :post, class: 'aim-fiscal-export aim-list-frame',
                     data: { turbo_frame: 'aim-report-preview' } do %>
         <div class="aim-fiscal-export__bar">
           <%= select_tag :report_template, grouped_options_for_select(aim_report_template_options),
@@ -37,10 +37,14 @@
           </span>
         </div>
         <%= render 'list', selectable: selectable %>
+        <%= render 'aim/shared/list_pager' %>
       <% end %>
       <%= turbo_frame_tag 'aim-report-preview' %>
     <% else %>
-      <%= render 'list', selectable: selectable %>
+      <div class="aim-list-frame">
+        <%= render 'list', selectable: selectable %>
+        <%= render 'aim/shared/list_pager' %>
+      </div>
     <% end %>
   <% end %>
-</div>
+<% end %>

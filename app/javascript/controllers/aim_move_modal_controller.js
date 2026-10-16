@@ -94,7 +94,8 @@ export default class extends Controller {
   selectAll(event) {
     const table = event.currentTarget.closest("table")
     table.querySelectorAll("[data-aim-move-modal-target=check]").forEach((box) => {
-      if (!box.closest("tr").hidden) box.checked = event.currentTarget.checked
+      // Every row the search leaves, on every page (#101): aim-queue-filter marks them data-match.
+      if (box.closest("tr").dataset.match !== "0") box.checked = event.currentTarget.checked
     })
     this.count()
   }
@@ -110,8 +111,11 @@ export default class extends Controller {
     return [...new Set(this.checked().map((box) => box.dataset.budgetUnit || ""))]
   }
 
+  // Ticked rows the search leaves, on every page (#101): a row on another
+  // page is hidden but still moves; one the search left out (data-match="0",
+  // aim-queue-filter) does not.
   checked() {
-    return this.checkTargets.filter((box) => box.checked && !box.closest("tr").hidden)
+    return this.checkTargets.filter((box) => box.checked && box.closest("tr").dataset.match !== "0")
   }
 
   close() {

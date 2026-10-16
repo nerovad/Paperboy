@@ -11,17 +11,18 @@
       <%= link_to 'Coding Rules', aim_coding_rules_path, class: 'btn compact' %>
     </div>
   </header>
-  <%= turbo_frame_tag 'aim-coding-imports' do %>
+  <%= turbo_frame_tag 'aim-coding-imports', class: 'aim-list-frame-host' do %>
+  <%= tag.div class: 'aim-list-frame', data: aim_paged_list_data do %>
     <%= render 'aim/shared/frame_flash' %>
   <% if @imports.empty? %>
     <section class="aim-panel aim-empty-state"><p>Nothing loaded yet.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
+    <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
       <table class="submission-table aim-queue-table">
         <thead><tr><th>When</th><th>File</th><th>Agency</th><th>By</th><th>Rows</th><th>Loaded</th><th>Refused</th><th>Replaced</th><th>Status</th><th></th></tr></thead>
         <tbody>
           <% @imports.each do |import| %>
-            <tr>
+            <tr data-aim-queue-filter-target="row" data-search="<%= [import.file_name, import.agency, import.imported_by, import.status].compact.join(' ') %>">
               <td><%= import.created_at.in_time_zone.strftime('%m/%d/%y %H:%M') %></td>
               <td class="is-strong"><%= link_to import.file_name, aim_coding_import_path(import) %></td>
               <td><%= import.agency %></td>
@@ -44,6 +45,8 @@
         </tbody>
       </table>
     </section>
+    <%= render 'aim/shared/list_pager' %>
+  <% end %>
   <% end %>
   <% end %>
 </div>
