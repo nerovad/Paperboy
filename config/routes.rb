@@ -501,7 +501,8 @@ Rails.application.routes.draw do
   get '/auth/failure', to: 'sessions#failure'
   post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
 
-  # Legacy login (keep for admin impersonation)
+  # Development and test only. create_legacy returns 403 elsewhere.
+  # Admin impersonation is Admin::ImpersonationsController.
   post '/login', to: 'sessions#create_legacy'
   delete '/logout', to: 'sessions#destroy'
 
