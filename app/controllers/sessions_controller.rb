@@ -45,8 +45,12 @@ class SessionsController < ApplicationController
     redirect_to after_sign_in_path
   end
 
-  # OLD: Keep this for admin impersonation/testing
+  # Employee-id sign-in for development and the test suite. Any other
+  # environment returns 403 and leaves the session unset. Admin
+  # impersonation is Admin::ImpersonationsController.
   def create_legacy
+    return head(:forbidden) unless Rails.env.development? || Rails.env.test?
+
     employee = Employee.find_by(employee_id: params[:id])
 
     if employee

@@ -2,7 +2,7 @@
                     PAPERBOY - TECHNICAL DOCUMENTATION
                   County of Ventura GSA Application Platform
 ================================================================================
-                    Last Updated: August 16, 2026
+                    Last Updated: October 16, 2026
                     Rails Version: 8.0.2
                     Ruby Module: FormsApp
 ================================================================================
@@ -276,12 +276,15 @@ PRIMARY: OAuth via Microsoft Entra ID (Azure AD)
     5. Populates session hash with employee data
     6. Redirects to root_path
 
-FALLBACK: Legacy login for admin impersonation
+DEVELOPMENT AND TEST: Legacy login by employee id
   Route: POST /login -> SessionsController#create_legacy
+  Open in development and test only. Every other environment returns
+  403 and does not set a session.
   Flow:
-    1. Admin enters employee ID or email
-    2. SessionUser.authenticate() finds employee
+    1. Caller posts an employee id
+    2. Finds the Employee by employee_id
     3. Session populated same as OAuth flow
+  Admin impersonation is Admin::ImpersonationsController, not this route.
 
 LOGOUT:
   Route: DELETE /logout -> SessionsController#destroy
@@ -1328,9 +1331,11 @@ Actions:
     - Populates session hash
     - Redirects to root
 
-  create_legacy() -> Fallback for admin impersonation
-    - Accepts employee_id or email
-    - Authenticates via SessionUser.authenticate()
+  create_legacy() -> Employee-id sign-in for development and test
+    - Returns 403 and sets no session in every other environment
+    - Finds Employee by employee_id
+    - Populates the same session hash as create_oauth
+    - Admin impersonation is Admin::ImpersonationsController
 
   failure() -> Handles OAuth failures
   destroy() -> Clears session, redirects to root
@@ -1810,6 +1815,7 @@ AUTHENTICATION:
   GET  /auth/failure           -> sessions#failure
   POST /auth/entra_id          -> sessions#setup
   POST /login                  -> sessions#create_legacy
+                                  (development and test only; 403 elsewhere)
   DELETE /logout               -> sessions#destroy
 
 ADMIN:
