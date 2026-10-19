@@ -1,0 +1,231 @@
+@use "base/tokens" as *;
+
+/* SQL Dashboards: saved SQL drawn as charts. Buttons, tables and form
+   controls are the shared ones; this file lays the pages out and styles the
+   editor, the cards and a run's result. */
+
+.sql-dashboards {
+  max-width: 1400px;
+  margin: 0 auto 40px;
+  padding: 0 24px;
+}
+
+.sql-dashboards__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    color: $text-strong;
+  }
+}
+
+.sql-dashboards__crumbs {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+
+  a { color: $brand-navy; }
+}
+
+.sql-dashboards__lede {
+  margin: 4px 0 0;
+  color: $text-muted;
+}
+
+.sql-dashboards__actions,
+.sql-dashboards__row-actions,
+.sql-card__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.sql-dashboards__row-actions { justify-content: flex-end; }
+
+.sql-dashboards__subhead {
+  margin: 32px 0 12px;
+  color: $text-strong;
+  font-size: 1.1rem;
+}
+
+.sql-dashboards__empty,
+.sql-card__waiting {
+  margin: 0;
+  padding: 24px;
+  color: $text-muted;
+  text-align: center;
+}
+
+.sql-dashboards__errors,
+.sql-result__error {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid $form-error-border;
+  border-radius: $radius-6;
+  background: $form-error-bg;
+  color: $form-error-text;
+
+  ul { margin: 0; padding-left: 18px; }
+
+  pre {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* --- The list of dashboards --------------------------------------------- */
+
+.sql-dashboards__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sql-dashboards__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 18px 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-12;
+  background: $surface-base;
+  color: $text-color;
+  text-decoration: none;
+
+  strong { color: $brand-navy; font-size: 1.05rem; }
+  span { color: $text-muted; font-size: 0.9rem; }
+
+  &:hover,
+  &:focus-visible { border-color: $brand-navy; }
+}
+
+/* --- One dashboard ------------------------------------------------------ */
+
+.sql-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sql-card {
+  min-width: 0;
+  border: 1px solid $border-color;
+  border-radius: $radius-12;
+  background: $surface-base;
+}
+
+.sql-card--full { grid-column: 1 / -1; }
+
+.sql-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid $border-faint;
+
+  h2 {
+    margin: 0;
+    color: $text-strong;
+    font-size: 1rem;
+  }
+}
+
+.sql-card__body {
+  display: block;
+  padding: 16px;
+}
+
+.sql-dashboard__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px dashed $border-color;
+  border-radius: $radius-12;
+
+  .form-group {
+    flex: 1 1 220px;
+    margin: 0;
+  }
+}
+
+/* --- The SQL editor ----------------------------------------------------- */
+
+.sql-editor,
+.sql-editor__preview {
+  display: block;
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid $border-color;
+  border-radius: $radius-12;
+  background: $surface-base;
+}
+
+.sql-editor__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sql-editor__sql {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  tab-size: 2;
+  resize: vertical;
+}
+
+/* --- A run's result ----------------------------------------------------- */
+
+.sql-chart { height: 320px; }
+
+.sql-result__status,
+.sql-result__notice {
+  margin: 0 0 12px;
+  color: $text-muted;
+  font-size: 0.9rem;
+}
+
+.sql-result__notice { color: $form-error-text; }
+
+.sql-result__rows {
+  max-height: 420px;
+  margin-top: 12px;
+  overflow: auto;
+}
+
+.sql-result__table {
+  th,
+  td {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+}
+
+.sql-result__null {
+  color: $neutral-400;
+  font-style: italic;
+}

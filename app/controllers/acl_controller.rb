@@ -22,7 +22,7 @@ class AclController < ApplicationController
     { key: 'settings',      label: 'Settings',       default_public: true },
     { key: 'help',          label: 'Help',           default_public: true },
     { key: 'reports',       label: 'Reports' },
-    { key: 'dashboards',    label: 'Dashboards' },
+    { key: 'dashboards',    label: 'Metabase Dashboards' },
     # The four keys below are superseded. The Admin Tools buttons are now
     # granted under "Application Features" like every other app's sidebar, but
     # these older keys still grant the same access, so they stay listed —

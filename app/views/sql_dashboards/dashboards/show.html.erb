@@ -1,0 +1,74 @@
+<div class="sql-dashboards">
+  <div class="sql-dashboards__header">
+    <div>
+      <p class="sql-dashboards__crumbs"><%= link_to "Dashboards", sql_dashboards_dashboards_path %></p>
+      <h1><%= @dashboard.name %></h1>
+      <% if @dashboard.description.present? %>
+        <p class="sql-dashboards__lede"><%= @dashboard.description %></p>
+      <% end %>
+    </div>
+    <% if sql_dashboards_author? %>
+      <div class="sql-dashboards__actions">
+        <%= link_to "Queries", sql_dashboards_queries_path, class: "btn pdf" %>
+        <%= link_to "Rename", edit_sql_dashboards_dashboard_path(@dashboard), class: "btn edit" %>
+        <%= button_to "Delete", sql_dashboards_dashboard_path(@dashboard), method: :delete, class: "btn deny",
+                      form: { data: { turbo_confirm: "Delete this dashboard? Its saved queries are kept.",
+                                      confirm_title: "Delete dashboard" } } %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @cards.any? %>
+    <div class="sql-dashboard__grid">
+      <% @cards.each_with_index do |card, index| %>
+        <section class="sql-card sql-card--<%= card.width %>" aria-labelledby="<%= dom_id(card, :title) %>">
+          <header class="sql-card__header">
+            <h2 id="<%= dom_id(card, :title) %>"><%= card.query.name %></h2>
+            <% if sql_dashboards_author? %>
+              <div class="sql-card__tools">
+                <% unless index.zero? %>
+                  <%= button_to "Move up", sql_dashboards_dashboard_card_path(@dashboard, card), method: :patch,
+                                params: { move: "up" }, class: "btn ghost compact" %>
+                <% end %>
+                <% unless index == @cards.size - 1 %>
+                  <%= button_to "Move down", sql_dashboards_dashboard_card_path(@dashboard, card), method: :patch,
+                                params: { move: "down" }, class: "btn ghost compact" %>
+                <% end %>
+                <%= button_to card.width == "full" ? "Half width" : "Full width",
+                              sql_dashboards_dashboard_card_path(@dashboard, card), method: :patch,
+                              params: { card: { width: card.width == "full" ? "half" : "full" } },
+                              class: "btn ghost compact" %>
+                <%= link_to "Edit SQL", edit_sql_dashboards_query_path(card.query), class: "btn edit compact" %>
+                <%= button_to "Remove", sql_dashboards_dashboard_card_path(@dashboard, card), method: :delete,
+                              class: "btn deny compact",
+                              form: { data: { turbo_confirm: "Remove this card? The saved query is kept.",
+                                              confirm_title: "Remove card", confirm_label: "Remove" } } %>
+              </div>
+            <% end %>
+          </header>
+          <%= turbo_frame_tag dom_id(card, :result), src: sql_dashboards_dashboard_card_path(@dashboard, card),
+                              loading: :lazy, class: "sql-card__body" do %>
+            <p class="sql-card__waiting">Running the query…</p>
+          <% end %>
+        </section>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="sql-dashboards__empty">This dashboard has no cards yet.</p>
+  <% end %>
+
+  <% if sql_dashboards_author? %>
+    <%= form_with url: sql_dashboards_dashboard_cards_path(@dashboard), scope: :card, class: "sql-dashboard__add" do |f| %>
+      <div class="form-group">
+        <%= f.label :sql_dashboard_query_id, "Add a saved query" %>
+        <%= f.collection_select :sql_dashboard_query_id, @queries, :id, :name,
+                                { prompt: "Choose a query…" }, class: "form-control", required: true %>
+      </div>
+      <div class="form-group">
+        <%= f.label :width, "Width" %>
+        <%= f.select :width, SqlDashboards::Card::WIDTHS.invert.to_a, {}, class: "form-control" %>
+      </div>
+      <%= f.submit "Add card", class: "btn approve" %>
+    <% end %>
+  <% end %>
+</div>

@@ -139,3 +139,6 @@ gem 'sass-embedded', '~> 1.94'
 
 # Pagination
 gem 'pagy'
+
+# Chart.js and chartkick.js for SQL Dashboards (importmap pins, no CDN)
+gem 'chartkick', '~> 5.2'

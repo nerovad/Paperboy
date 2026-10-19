@@ -2500,7 +2500,7 @@ forms:
     - 'Yes'
     conditional_field: was_treatment_given_away_from_the_worksite
   - field_name: facility_zip
-    field_type: yes_no
+    field_type: text
     label: Facility ZIP
     page_number: 4
     position: 13
@@ -3311,7 +3311,7 @@ forms:
     visible_to_filler: false
     restricted_to_type: none
   - field_name: impacted_employee
-    field_type: choices_dropdown
+    field_type: dropdown
     label: Impacted Employee
     page_number: 3
     position: 1

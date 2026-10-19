@@ -1,14 +1,15 @@
 <div id="dashboards" class="docs-section">
   <h2>Dashboards</h2>
-  <p>Dashboards provide visual summaries of form activity and organizational data through embedded Power BI reports.</p>
+  <p>Dashboards show charts built from saved SQL queries. Each card on a dashboard is one query drawn as a pie, bar, line or scatter chart, or as a table.</p>
 
   <h3>Accessing Dashboards</h3>
-  <p>Click <strong>Dashboards</strong> in the profile dropdown. Available dashboards are displayed as cards. Click a dashboard to open it.</p>
+  <p>Click <strong>Dashboards</strong> in the profile dropdown. Pick a dashboard from the list to open it.</p>
 
-  <h3>Interacting with Dashboards</h3>
+  <h3>Building Dashboards</h3>
   <ul>
-    <li>Use the built-in Power BI filters to drill into specific data.</li>
-    <li>Dashboards refresh automatically with the latest data.</li>
-    <li>Dashboard access may be limited based on your role and permissions.</li>
+    <li>Viewing dashboards and writing the SQL behind them are separate grants.</li>
+    <li>An author writes a query, runs it to preview the rows and the chart, and saves it.</li>
+    <li>The first column is the label or x value, the second the value, and an optional third the series.</li>
+    <li>Queries run under a read-only login, with a timeout and a row limit.</li>
   </ul>
 </div>

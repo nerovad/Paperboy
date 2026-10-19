@@ -1,0 +1,38 @@
+<div class="sql-dashboards">
+  <div class="sql-dashboards__header">
+    <div>
+      <p class="sql-dashboards__crumbs"><%= link_to "Queries", sql_dashboards_queries_path %></p>
+      <h1><%= @query.name_was.presence || "Query" %></h1>
+    </div>
+  </div>
+
+  <%= render "form" %>
+
+  <% if @events.any? %>
+    <h2 class="sql-dashboards__subhead">Recent activity</h2>
+    <table class="submission-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Who</th>
+          <th>What</th>
+          <th>Rows</th>
+          <th>Time</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr>
+            <td><%= event.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td><%= event.employee_name.presence || event.employee_id %></td>
+            <td><%= event.action.humanize %></td>
+            <td><%= event.row_count %></td>
+            <td><% if event.duration_ms %><%= number_with_delimiter(event.duration_ms) %> ms<% end %></td>
+            <td><%= event.error_message.present? ? truncate(event.error_message, length: 120) : "OK" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
