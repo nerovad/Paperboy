@@ -214,6 +214,7 @@ class FakeDb:
         for column in stamp:
             row[column] = self._now()
         if from_state != to_state:
+            row["finished_at"] = self._now() if to_state in ("exported", "rejected", "deleted", "split") else None
             self.events.append({"invoice_id": invoice_id, "action": "transition", "from_state": from_state,
                                 "to_state": to_state, "actor": actor, "note": note})
 

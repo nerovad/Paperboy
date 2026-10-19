@@ -35,6 +35,11 @@ module Aim
     included do
       scope :in_queue, ->(queue) { where(state: QUEUES.fetch(queue.to_s).fetch(:states)) }
       scope :newest_first, -> { order(created_at: :desc, id: :desc) }
+
+      # The finished lists window and search on when an invoice finished
+      # (#169); a restore takes it back out. The worker's Db#transition does
+      # the same.
+      before_save :date_the_finish, if: :will_save_change_to_state?
     end
 
     class_methods do
@@ -50,5 +55,11 @@ module Aim
     end
 
     def queue = self.class.queue_for(state)
+
+    private
+
+    def date_the_finish
+      self.finished_at = terminal? ? Time.current : nil
+    end
   end
 end

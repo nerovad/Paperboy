@@ -3,7 +3,7 @@
 <% sections = {
      'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
      'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'duplicates' => 'Possible duplicates',
-     'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
+     'archive' => 'Finding an old invoice', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
    } %>
 <div class="aim-page aim-help">
   <header class="aim-page-header">
@@ -116,6 +116,21 @@
     </ul>
   </section>
 
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="archive">
+    <h2>Finding an old invoice</h2>
+    <p>The finished lists -- <strong>Finished</strong>, <strong>Rejected</strong>, <strong>Deleted</strong>, and Fiscal's
+      <strong>Exported</strong> and <strong>Archived</strong> -- show what finished in the last 30 days. Pick another window
+      (7, 30, 90 or 365 days) above the list. Nothing is moved or removed; older invoices are only out of view.</p>
+    <ul>
+      <li><strong>Search the archive</strong> looks through every finished invoice, of all time: vendor (any part of the
+        name), invoice # (any part), amount (exact, <em>1,234.50</em> or <em>$1234.5</em>), budget unit, agency, and the
+        dates it finished between. Pick the list to search in Status.</li>
+      <li>Dates alone browse a period, e.g. everything rejected in March.</li>
+      <li>A search shows at most <%= Aim::ArchiveSearch::CAP %> invoices, newest first; past that it says to narrow the search.</li>
+      <li>Managing applies, as on every list. <em>Back to recent</em> returns to the window.</li>
+    </ul>
+  </section>
+
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="fiscal">
     <h2>Fiscal</h2>
     <p>Every approved invoice reaches its group's Fiscal: <strong>Fiscal Queue</strong> (fill in pay doc, check, coding)
@@ -175,6 +190,8 @@
       <dd>AIM staff click <em>Not a duplicate</em>; it will not be flagged again unless its details change.</dd>
       <dt>How do I get a report again?</dt>
       <dd>Fiscal &rsaquo; Reports: Download gives the exact file as made (for a year); Regenerate makes a new one from today's values.</dd>
+      <dt>An invoice I finished months ago is not in the list.</dt>
+      <dd>The finished lists show the last 30 days; use <em>Search the archive</em> above the list.</dd>
       <dt>Why didn't anyone get an email?</dt>
       <dd>Email alerts are not switched on yet.</dd>
     </dl>

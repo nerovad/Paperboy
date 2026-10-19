@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_100000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -253,6 +253,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
     t.string "updated_by", limit: 255
     t.index ["invoice_id"], name: "index_aim_fiscal_records_on_invoice_id", unique: true
     t.index ["status"], name: "index_aim_fiscal_records_on_status"
+    t.index ["status", "archived_at"], name: "index_aim_fiscal_records_on_status_and_archived_at"
+    t.index ["status", "exported_at"], name: "index_aim_fiscal_records_on_status_and_exported_at"
   end
 
   create_table "aim.fiscal_report_invoices", force: :cascade do |t|
@@ -317,6 +319,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
     t.bigint "duplicate_of_id"
     t.text "extracted"
     t.string "extracted_vendor_name"
+    t.datetime "finished_at"
     t.datetime "first_approved_at"
     t.string "first_approved_by", limit: 255
     t.boolean "high_confidence"
@@ -352,6 +355,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
     t.index ["invoice_total"], name: "index_aim_invoices_on_invoice_total"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
+    t.index ["state", "finished_at"], name: "index_aim_invoices_on_state_and_finished_at"
   end
 
   create_table "aim.members", force: :cascade do |t|

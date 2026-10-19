@@ -99,6 +99,7 @@ def test_the_row_ends_exported_with_the_time(exporting, fake_db):
     row = fake_db.get(invoice_id)
     assert row["state"] == "exported"
     assert row["exported_at"] is not None
+    assert row["finished_at"] is not None
     assert row["command"] is None
     assert row["lease_owner"] is None
     assert [(e["from_state"], e["to_state"]) for e in fake_db.events] == [

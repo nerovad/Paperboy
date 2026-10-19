@@ -11,6 +11,10 @@
     </div>
   </header>
 
+  <% if @archive %>
+    <%= render 'aim/shared/archive_search', url: aim_invoices_path, field: :queue, current: @queue, shown: @invoices.length,
+                                            statuses: Aim::ArchiveSearch::QUEUES.map { |queue| [aim_queue_label(queue), queue] } %>
+  <% end %>
   <%= render 'aim/invoices/search_box' %>
 
   <% if @queue == 'needs_review' && @reason_counts.present? %>
@@ -27,7 +31,7 @@
 
   <% if @invoices.empty? %>
     <section class="aim-panel aim-empty-state">
-      <p>Nothing is in this queue.</p>
+      <p><%= @archive ? @archive.nothing : 'Nothing is in this queue.' %></p>
     </section>
   <% else %>
     <% if @sections %>
