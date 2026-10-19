@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { pbAlert, pbConfirm } from "pb_modal"
-import { TextBoxes, paintBox } from "controllers/aim_pdf_text_boxes"
+import { TextBoxes, paintBox, DEFAULT_BOX } from "controllers/aim_pdf_text_boxes"
 
 // Edit PDF (#181), in the review page's Document Preview: Edit swaps the
 // viewer for a page strip (click to look, drag to reorder) and the chosen
@@ -20,7 +20,7 @@ const SCROLL_EDGE = 36 // px from the panel edge that scrolls it while dragging
 export default class extends Controller {
   static targets = ["viewer", "editor", "strip", "stage", "status", "hint", "pageLabel", "removeButton",
                     "textBar", "boxLayer", "boxSize", "boxBold", "boxColor", "boxBg", "boxBorder", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel"]
-  static values = { pdfUrl: String }
+  static values = { pdfUrl: String, insertUrls: Array, plan: String }
 
   // --- opening and closing ---------------------------------------------------
 
@@ -42,10 +42,11 @@ export default class extends Controller {
     this.statusTarget.textContent = "Loading pages…"
     try {
       await this.loadPdfJs()
-      const doc = await window.pdfjsLib.getDocument({ url: this.pdfUrlValue, withCredentials: true }).promise
+      const docs = await Promise.all([this.pdfUrlValue, ...this.insertUrlsValue]
+        .map((url) => window.pdfjsLib.getDocument({ url, withCredentials: true }).promise))
       if (load !== this.load) return
-      this.sources.push({ doc, name: "this invoice" })
-      for (let number = 1; number <= doc.numPages; number++) this.addCard(0, number, `Page ${number}`)
+      docs.forEach((doc, index) => this.sources.push({ doc, name: index ? `added PDF ${index}` : "this invoice" }))
+      this.buildCards(JSON.parse(this.planValue || "null"))
       this.loaded = true
       this.statusTarget.textContent = ""
       this.select(this.cards[0])
@@ -68,9 +69,36 @@ export default class extends Controller {
 
   disconnect() { this.load = null }
 
+  // The pages as the current version left them (#182): its plan's pages in
+  // order, then every page it left out, removed but there to be kept again.
+  // With no plan, the PDF as it is.
+  buildCards(plan) {
+    const label = (source, page) => (source ? `${this.sources[source].name} p${page}` : `Page ${page}`)
+    const used = new Set()
+    ;(plan || []).forEach((entry) => {
+      if (!this.sources[entry.source] || entry.page > this.sources[entry.source].doc.numPages) return
+      used.add(`${entry.source}:${entry.page}`)
+      const card = this.addCard(entry.source, entry.page, label(entry.source, entry.page), false)
+      Object.assign(card, { rotate: entry.rotate || 0, crop: entry.crop || null,
+                            texts: (entry.texts || []).map((box) => ({ ...DEFAULT_BOX, ...box })) })
+      this.drawThumb(card)
+    })
+    this.sources.forEach(({ doc }, source) => {
+      for (let page = 1; page <= doc.numPages; page++) {
+        if (used.has(`${source}:${page}`)) continue
+        const card = this.addCard(source, page, label(source, page), false)
+        if (plan) {
+          card.removed = true
+          this.thumb(card).classList.add("is-removed")
+        }
+        this.drawThumb(card)
+      }
+    })
+  }
+
   // --- the strip ---------------------------------------------------------------
 
-  addCard(source, page, label) {
+  addCard(source, page, label, draw = true) {
     const card = { id: crypto.randomUUID(), source, page, label, rotate: 0, crop: null, texts: [], removed: false }
     this.cards.push(card)
     const element = document.createElement("button")
@@ -85,7 +113,7 @@ export default class extends Controller {
     element.addEventListener("dragover", (event) => this.dragOver(event, element))
     element.addEventListener("dragend", () => { this.dragged = null; if (this.current) this.showLabel() })
     this.stripTarget.appendChild(element)
-    this.drawThumb(card)
+    if (draw) this.drawThumb(card)
     return card
   }
 
@@ -224,7 +252,7 @@ export default class extends Controller {
     try {
       const doc = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise
       this.insertFiles.push(file)
-      const source = this.insertFiles.length
+      const source = this.sources.length
       this.sources[source] = { doc, name: file.name }
       let first = null
       for (let number = 1; number <= doc.numPages; number++) {
@@ -245,7 +273,7 @@ export default class extends Controller {
     const canvas = this.thumb(card)?.querySelector("canvas")
     if (!canvas) return
     const viewport = await this.render(card, canvas, THUMB_WIDTH)
-    this.drawMarks(canvas.getContext("2d"), card, card.crop, viewport, true)
+    if (viewport) this.drawMarks(canvas.getContext("2d"), card, card.crop, viewport, true)
   }
 
   // --- zoom ------------------------------------------------------------------
@@ -281,6 +309,7 @@ export default class extends Controller {
     this.showLabel()
     const card = this.current
     const viewport = await this.render(card, this.stageTarget, (plain) => this.stageWidthFor(plain))
+    if (!viewport) return
     this.stageWidth = viewport.width
     if (card !== this.current) return
     this.stageViewport = viewport
@@ -327,9 +356,21 @@ export default class extends Controller {
     const plain = page.getViewport({ scale: 1, rotation })
     const wanted = typeof width === "function" ? width(plain) : width
     const viewport = page.getViewport({ scale: wanted / plain.width, rotation })
+    // One draw per canvas at a time: a newer one (typing in a box redraws its
+    // thumbnail) cancels the older, which then returns null.
+    canvas.aimRender?.cancel()
     canvas.width = Math.round(viewport.width)
     canvas.height = Math.round(viewport.height)
-    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise
+    const task = page.render({ canvasContext: canvas.getContext("2d"), viewport })
+    canvas.aimRender = task
+    try {
+      await task.promise
+    } catch (error) {
+      if (error?.name === "RenderingCancelledException") return null
+      throw error
+    } finally {
+      if (canvas.aimRender === task) canvas.aimRender = null
+    }
     return viewport
   }
 

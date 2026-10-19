@@ -1121,6 +1121,30 @@
   margin: 0;
 }
 
+.aim-pdf-versions .aim-actions-menu__list {
+  left: 0;
+  right: auto;
+  min-width: 34rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.aim-pdf-versions__row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.aim-pdf-versions__line {
+  flex: 1;
+}
+
+.aim-pdf-versions__row form {
+  margin: 0;
+}
+
 .aim-pdf-toolbar__finish {
   margin-left: auto;
 }

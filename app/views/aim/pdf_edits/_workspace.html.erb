@@ -28,6 +28,27 @@
         <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
       <% end %>
     </span>
+    <% versions = Aim::PdfVersions.all(invoice).reverse %>
+    <% if versions.any? %>
+      <%# Every swap, edit and restore (#182): look at any, or make one current again. %>
+      <details class="aim-actions-menu aim-pdf-versions" data-controller="aim-actions-menu">
+        <summary class="btn compact ghost">Versions (<%= versions.size %>) ▾</summary>
+        <div class="aim-actions-menu__list">
+          <% versions.each_with_index do |version, index| %>
+            <div class="aim-pdf-versions__row">
+              <span class="aim-pdf-versions__line"><%= aim_pdf_version_line(version) %><%= ' (current)' if index.zero? %></span>
+              <%= link_to 'View', aim_pdf_version_invoice_path(invoice.batch_id, version.number), target: '_blank', rel: 'noopener', class: 'btn compact ghost' %>
+              <% unless index.zero? %>
+                <%= button_to 'Restore', aim_restore_pdf_version_invoice_path(invoice.batch_id, version.number, from: from), method: :post,
+                              class: 'btn compact', form: { data: { turbo: false } },
+                              data: { turbo_confirm: "Make version #{version.number} the current PDF? The current one stays as a version.",
+                                      confirm_title: 'Restore a version', confirm_label: 'Restore' } %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
     <span class="aim-pdf-toolbar__group aim-pdf-toolbar__finish">
       <% if reread %>
         <label class="aim-pdf-toolbar__reread"><input type="checkbox" data-aim-pdf-editor-target="reread"> Read it again with the AI</label>

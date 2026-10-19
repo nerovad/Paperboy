@@ -22,6 +22,7 @@ module Aim
       'aim.fiscal_records' => 'an invoice\'s Fiscal record: the invoice\'s agency',
       'aim.invoice_events' => 'an invoice\'s history: the invoice\'s agency',
       'aim.members' => 'people, who work in units through aim.user_budget_units',
+      'aim.pdf_versions' => 'an invoice\'s PDF versions: the invoice\'s agency',
       'aim.user_preferences' => 'one person\'s own choices',
       'aim.vendor_aliases' => 'shared by every agency (Joshua, 2026-10-13)',
       'aim.vendor_rules' => 'shared by every agency (Joshua, 2026-10-13)'
