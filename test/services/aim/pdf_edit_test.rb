@@ -77,6 +77,19 @@ module Aim
       assert_match(/main page 1/, reader.pages.first.text)
     end
 
+    test 'a text box wraps to its width, in bold, with a highlight and a border' do
+      reader = edit(pdf('main', 1), [{ source: 0, page: 1, texts: [{ x: 0.1, y: 0.1, w: 0.2, h: 0.1, size: 12, bold: true, color: 'red',
+                                                                     bg: 'yellow', border: true, text: 'Paid in full by check 1001' }] }])
+      page = reader.pages.first
+      content = page.raw_content
+
+      assert_match(/\(Paid in full by check\) Tj.*\(1001\) Tj/m, content, 'wrapped to the box width')
+      assert_includes page.fonts.values.map { |font| font[:BaseFont] }, :'Helvetica-Bold'
+      assert_match(/1 0.95 0.4 rg [\d. ]+ re f/, content, 'yellow highlight')
+      assert_match(/0.75 w [\d. ]+ re S/, content, 'border')
+      assert_match(/0.8 0.1 0.1 rg/, content, 'red text')
+    end
+
     test 'nonsense is refused, not written' do
       source = pdf('main', 2)
       [[], [{ source: 0, page: 9 }], [{ source: 2, page: 1 }], [{ source: 0, page: 1 }, { source: 0, page: 1 }],

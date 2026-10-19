@@ -19,13 +19,13 @@ module Aim
   #   rotate: degrees to turn it clockwise (a multiple of 90)
   #   crop:   { left:, top:, right:, bottom: }, fractions of the page as
   #           seen (after rotation), from its top left
-  #   texts:  [{ x:, y:, size:, text: }], x and y fractions of the page as
-  #           seen (after rotation and crop) from its top left to the text's
-  #           top left; size in points; lines split on newlines
+  #   texts:  text boxes (Aim::PdfTextBox): { x:, y:, w:, h:, size:, text:,
+  #           bold:, color:, bg:, border: }, x, y, w and h fractions of the
+  #           page as seen (after rotation and crop) from its top left
   class PdfEdit
     class Unreadable < StandardError; end
 
-    FONT_NAME = :AIMEditFont
+    FONTS = { regular: :AIMEditFont, bold: :AIMEditFontBold }.freeze
 
     def initialize(source, inserts: [])
       @docs = [source, *inserts].map { |path| open_doc(path) }
@@ -45,7 +45,8 @@ module Aim
       @docs.drop(1).each { |doc| copy_in(doc, out) }
       catalog = main.objects.deref(main.objects.trailer[:Root])
       pages_ref = catalog[:Pages]
-      @font = add(out, { Type: :Font, Subtype: :Type1, BaseFont: :Helvetica, Encoding: :WinAnsiEncoding })
+      @fonts = { FONTS[:regular] => add(out, { Type: :Font, Subtype: :Type1, BaseFont: :Helvetica, Encoding: :WinAnsiEncoding }),
+                 FONTS[:bold] => add(out, { Type: :Font, Subtype: :Type1, BaseFont: :'Helvetica-Bold', Encoding: :WinAnsiEncoding }) }
       @open_q = add(out, stream("q\n"))
       kids = place(pages, out, pages_ref)
       root_pages = main.objects.deref(pages_ref).except(:Resources, :MediaBox, :CropBox, :Rotate)
@@ -123,14 +124,14 @@ module Aim
     # does, with the text's font added to its resources: read from the
     # source's own objects, then renumbered.
     def with_texts(doc, ref, page, (box, rotate), texts, out)
-      body = PdfGeometry.text_stream(box, rotate, texts, FONT_NAME)
+      body = PdfGeometry.text_stream(box, rotate, texts, FONTS)
       original = doc.objects[ref]
       contents = doc.objects.deref(original[:Contents])
       contents = [original[:Contents]].compact unless contents.is_a?(Array)
       resources = (doc.objects.deref(doc.inherited_value(ref, :Resources)) || {}).dup
       fonts = (doc.objects.deref(resources[:Font]) || {}).dup
       resources = doc.remap(resources.merge(Font: fonts))
-      resources[:Font] = resources[:Font].merge(FONT_NAME => @font)
+      resources[:Font] = resources[:Font].merge(@fonts)
       page.merge(Contents: [@open_q, *doc.remap(contents), add(out, stream(body))], Resources: resources)
     end
   end

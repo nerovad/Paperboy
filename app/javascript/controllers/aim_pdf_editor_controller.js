@@ -1,10 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 import { pbAlert, pbConfirm } from "pb_modal"
+import { TextBoxes, paintBox } from "controllers/aim_pdf_text_boxes"
 
 // Edit PDF (#181), in the review page's Document Preview: Edit swaps the
 // viewer for a page strip (click to look, drag to reorder) and the chosen
-// page big, with one toolbar. Crop by dragging on the big page, add text by
-// clicking on it. Nothing changes until Apply, which posts the pages as JSON
+// page big, with one toolbar. Crop by dragging on the big page; text boxes
+// are placed, moved, resized and typed in on it (aim_pdf_text_boxes, #182). Nothing changes until Apply, which posts the pages as JSON
 // (Aim::PdfEdit reads them) with any added PDFs; Cancel puts the viewer back.
 //
 // Crop and text are fractions of the page as seen (after turning), from its
@@ -18,7 +19,7 @@ const SCROLL_EDGE = 36 // px from the panel edge that scrolls it while dragging
 
 export default class extends Controller {
   static targets = ["viewer", "editor", "strip", "stage", "status", "hint", "pageLabel", "removeButton",
-                    "textBar", "textInput", "textSize", "textList", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel"]
+                    "textBar", "boxLayer", "boxSize", "boxBold", "boxColor", "boxBg", "boxBorder", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel"]
   static values = { pdfUrl: String }
 
   // --- opening and closing ---------------------------------------------------
@@ -27,6 +28,10 @@ export default class extends Controller {
     this.viewerTarget.hidden = true
     this.editorTarget.hidden = false
     this.openButtonTarget.hidden = true
+    this.boxes ||= new TextBoxes(this.boxLayerTarget, {
+      onChange: () => { this.changed = true; this.drawThumb(this.current) },
+      onSelect: (box) => this.showBoxTools(box)
+    })
     if (this.loaded) return this.drawStage()
     const load = (this.load = Symbol("load"))
     this.sources = []
@@ -136,20 +141,72 @@ export default class extends Controller {
 
   clearCrop() {
     if (!this.current) return
+    this.reframe(this.current, null)
     this.current.crop = null
     this.touched(this.current)
   }
 
+  // Keeps text boxes where they are on the page when its crop changes: their
+  // fractions are of the cropped page, so they are worked out again.
+  reframe(card, crop) {
+    const from = card.crop || { left: 0, top: 0, right: 1, bottom: 1 }
+    const to = crop || { left: 0, top: 0, right: 1, bottom: 1 }
+    const fw = from.right - from.left
+    const fh = from.bottom - from.top
+    const tw = to.right - to.left
+    const th = to.bottom - to.top
+    card.texts.forEach((box) => {
+      box.x = (from.left + box.x * fw - to.left) / tw
+      box.y = (from.top + box.y * fh - to.top) / th
+      box.w = (box.w * fw) / tw
+      box.h = (box.h * fh) / th
+    })
+    card.texts = card.texts.filter((box) => box.x < 1 && box.y < 1 && box.x + box.w > 0 && box.y + box.h > 0)
+    card.texts.forEach((box) => {
+      box.x = Math.max(0, box.x)
+      box.y = Math.max(0, box.y)
+      box.w = Math.min(box.w, 1 - box.x)
+    })
+  }
+
+  // --- text boxes ---------------------------------------------------------------
+
+  // In Text mode, a click on the page (not on a box) adds a box there.
+  layerDown(event) {
+    if (this.mode !== "text" || event.target !== this.boxLayerTarget) return
+    event.preventDefault() // the rest of the click must not take focus from the new box
+    const rect = this.boxLayerTarget.getBoundingClientRect()
+    this.boxes.add((event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height)
+    this.changed = true
+    this.drawThumb(this.current)
+  }
+
+  showBoxTools(box) {
+    this.textBarTarget.hidden = !box
+    if (!box) return
+    this.boxSizeTarget.value = String(box.size)
+    this.boxBoldTarget.checked = !!box.bold
+    this.boxColorTarget.value = box.color
+    this.boxBgTarget.value = box.bg
+    this.boxBorderTarget.checked = !!box.border
+  }
+
+  boxStyle() {
+    this.boxes.update({ size: Number(this.boxSizeTarget.value), bold: this.boxBoldTarget.checked, color: this.boxColorTarget.value,
+                        bg: this.boxBgTarget.value, border: this.boxBorderTarget.checked })
+  }
+
+  boxDelete() { this.boxes.remove() }
+
   setMode(mode) {
     this.mode = mode
     this.draft = mode === "crop" && this.current?.crop ? { ...this.current.crop } : null
-    this.point = null
-    this.textBarTarget.hidden = mode !== "text"
     this.hintTarget.textContent = { crop: "Drag a box over the part to keep, or drag the box's edges, corners or middle to adjust it. Zoom out to reach every edge.",
-                                    text: "Click where the text starts, type it, then Add text.",
+                                    text: "Click on the page to add a text box. Drag a box's top bar to move it and its corner to resize it; click in it to type.",
                                     view: "" }[mode]
-    this.stageTarget.classList.toggle("is-marking", mode !== "view")
-    this.listTexts()
+    this.stageTarget.classList.toggle("is-marking", mode === "crop")
+    this.boxLayerTarget.dataset.mode = mode
+    this.boxes?.select(null)
     this.drawStage()
   }
 
@@ -188,7 +245,7 @@ export default class extends Controller {
     const canvas = this.thumb(card)?.querySelector("canvas")
     if (!canvas) return
     const viewport = await this.render(card, canvas, THUMB_WIDTH)
-    this.drawMarks(canvas.getContext("2d"), card, card.crop, viewport)
+    this.drawMarks(canvas.getContext("2d"), card, card.crop, viewport, true)
   }
 
   // --- zoom ------------------------------------------------------------------
@@ -209,7 +266,7 @@ export default class extends Controller {
   // The big page's width for the zoom: "page" fits the whole page in the
   // panel (the default, so a crop can reach every edge), "width" its width.
   stageWidthFor(plain) {
-    const box = this.stageTarget.parentElement
+    const box = this.stageTarget.closest(".aim-pdf-stage")
     const room = { width: box.clientWidth - 24, height: box.clientHeight - 24 - (this.textBarTarget.hidden ? 0 : this.textBarTarget.offsetHeight) }
     const fitWidth = Math.max(200, room.width)
     const fitPage = Math.max(200, Math.min(fitWidth, room.height * (plain.width / plain.height)))
@@ -229,13 +286,25 @@ export default class extends Controller {
     this.stageViewport = viewport
     this.stageImage = this.stageTarget.getContext("2d").getImageData(0, 0, this.stageTarget.width, this.stageTarget.height)
     this.redrawStage()
+    this.placeBoxes()
+  }
+
+  // The text boxes' layer covers the cropped page on the big view.
+  placeBoxes() {
+    const crop = this.current.crop || { left: 0, top: 0, right: 1, bottom: 1 }
+    const { width, height } = this.stageTarget
+    Object.assign(this.boxLayerTarget.style, {
+      left: `${this.stageTarget.offsetLeft + crop.left * width}px`, top: `${this.stageTarget.offsetTop + crop.top * height}px`,
+      width: `${(crop.right - crop.left) * width}px`, height: `${(crop.bottom - crop.top) * height}px`
+    })
+    this.boxes.show(this.current, this.stageViewport.scale)
   }
 
   redrawStage() {
     if (!this.stageImage) return
     const context = this.stageTarget.getContext("2d")
     context.putImageData(this.stageImage, 0, 0)
-    this.drawMarks(context, this.current, this.mode === "crop" ? this.draft : this.current.crop, this.stageViewport)
+    this.drawMarks(context, this.current, this.mode === "crop" ? this.draft : this.current.crop, this.stageViewport, false)
     const { width, height } = this.stageTarget
     if (this.mode === "crop" && this.draft) {
       const box = [this.draft.left * width, this.draft.top * height, this.draft.right * width, this.draft.bottom * height]
@@ -247,12 +316,6 @@ export default class extends Controller {
       const middleY = (box[1] + box[3]) / 2
       ;[[box[0], box[1]], [middleX, box[1]], [box[2], box[1]], [box[2], middleY], [box[2], box[3]], [middleX, box[3]], [box[0], box[3]], [box[0], middleY]]
         .forEach(([x, y]) => context.fillRect(x - 5, y - 5, 10, 10))
-    }
-    if (this.mode === "text" && this.point) {
-      context.fillStyle = "#dc2626"
-      context.beginPath()
-      context.arc(this.point.fx * width, this.point.fy * height, 5, 0, Math.PI * 2)
-      context.fill()
     }
   }
 
@@ -270,8 +333,9 @@ export default class extends Controller {
     return viewport
   }
 
-  // The crop (outside dimmed) and the text boxes, over a rendered page.
-  drawMarks(context, card, shown, viewport) {
+  // The crop (outside dimmed) over a rendered page, and its text boxes
+  // painted (the strip; the big page shows them as live boxes instead).
+  drawMarks(context, card, shown, viewport, withTexts) {
     const { width, height } = viewport
     if (shown) {
       context.fillStyle = "rgba(15, 23, 42, 0.55)"
@@ -280,17 +344,10 @@ export default class extends Controller {
       context.fillRect(0, shown.top * height, shown.left * width, (shown.bottom - shown.top) * height)
       context.fillRect(shown.right * width, shown.top * height, (1 - shown.right) * width, (shown.bottom - shown.top) * height)
     }
+    if (!withTexts) return
     const crop = card.crop || { left: 0, top: 0, right: 1, bottom: 1 }
-    context.fillStyle = "#000"
-    card.texts.forEach((text) => {
-      const size = text.size * viewport.scale
-      context.font = `${size}px Helvetica, Arial, sans-serif`
-      text.text.split(/\r?\n/).forEach((line, index) => {
-        const x = (crop.left * width) + (text.x * (crop.right - crop.left) * width)
-        const y = (crop.top * height) + (text.y * (crop.bottom - crop.top) * height) + (size * ((index * 1.2) + 1))
-        context.fillText(line, x, y)
-      })
-    })
+    const frame = { left: crop.left * width, top: crop.top * height, width: (crop.right - crop.left) * width, height: (crop.bottom - crop.top) * height }
+    card.texts.filter((box) => box.text.trim()).forEach((box) => paintBox(context, box, frame, viewport.scale))
   }
 
   // --- crop and text on the big page -----------------------------------------
@@ -328,9 +385,6 @@ export default class extends Controller {
       this.start = this.draft ? { ...this.draft } : null
       if (this.dragging === "new") this.draft = { left: at.fx, top: at.fy, right: at.fx, bottom: at.fy }
       this.last = { x: event.clientX, y: event.clientY }
-    } else if (this.mode === "text") {
-      this.point = at
-      this.textInputTarget.focus()
     }
     this.redrawStage()
   }
@@ -376,7 +430,7 @@ export default class extends Controller {
     if (this.scrolling) return
     const step = () => {
       if (!this.dragging || !this.last) { this.scrolling = false; return }
-      const panel = this.stageTarget.parentElement
+      const panel = this.stageTarget.closest(".aim-pdf-stage")
       const box = panel.getBoundingClientRect()
       const dx = this.last.x < box.left + SCROLL_EDGE ? -12 : this.last.x > box.right - SCROLL_EDGE ? 12 : 0
       const dy = this.last.y < box.top + SCROLL_EDGE ? -12 : this.last.y > box.bottom - SCROLL_EDGE ? 12 : 0
@@ -401,49 +455,14 @@ export default class extends Controller {
       return this.redrawStage()
     }
     const before = JSON.stringify(this.current.crop)
-    this.current.crop = { ...crop }
-    if (before !== JSON.stringify(this.current.crop)) {
-      this.current.texts = []
+    if (before !== JSON.stringify(crop)) {
+      this.reframe(this.current, crop)
+      this.current.crop = { ...crop }
       this.changed = true
       this.drawThumb(this.current)
     }
     this.redrawStage()
-  }
-
-  addText() {
-    const text = this.textInputTarget.value.trim()
-    if (!this.point || !text) return pbAlert({ title: "Text not added", message: "Click on the page where the text starts, then type it." })
-    const crop = this.current.crop || { left: 0, top: 0, right: 1, bottom: 1 }
-    const x = (this.point.fx - crop.left) / (crop.right - crop.left)
-    const y = (this.point.fy - crop.top) / (crop.bottom - crop.top)
-    if (x < 0 || x > 1 || y < 0 || y > 1) return pbAlert({ title: "Text not added", message: "Put the text inside the cropped page." })
-    this.current.texts.push({ x, y, size: Number(this.textSizeTarget.value), text })
-    this.textInputTarget.value = ""
-    this.point = null
-    this.changed = true
-    this.drawThumb(this.current)
-    this.listTexts()
-    this.redrawStage()
-  }
-
-  listTexts() {
-    const texts = this.mode === "text" ? this.current?.texts || [] : []
-    this.textListTarget.replaceChildren(...texts.map((text, index) => {
-      const item = document.createElement("li")
-      item.textContent = text.text.replace(/\s+/g, " ").slice(0, 60)
-      const remove = document.createElement("button")
-      remove.type = "button"
-      remove.className = "btn compact ghost"
-      remove.textContent = "Remove"
-      remove.addEventListener("click", () => {
-        this.current.texts.splice(index, 1)
-        this.drawThumb(this.current)
-        this.listTexts()
-        this.redrawStage()
-      })
-      item.append(" ", remove)
-      return item
-    }))
+    this.placeBoxes()
   }
 
   // --- apply -----------------------------------------------------------------
@@ -452,7 +471,11 @@ export default class extends Controller {
     event.preventDefault()
     const order = [...this.stripTarget.querySelectorAll(".aim-pdf-thumb")].map((element) => element.dataset.id)
     const pages = order.map((id) => this.cards.find((card) => card.id === id)).filter((card) => !card.removed)
-      .map(({ source, page, rotate, crop, texts }) => ({ source, page, rotate, crop, texts }))
+      .map(({ source, page, rotate, crop, texts }) => ({
+        source, page, rotate, crop,
+        texts: texts.filter((box) => box.text.trim())
+          .map(({ x, y, w, h, size, text, bold, color, bg, border }) => ({ x, y, w, h, size, text, bold, color, bg, border }))
+      }))
     if (pages.length === 0) return pbAlert({ title: "Nothing to keep", message: "Keep at least one page." })
     const ok = await pbConfirm({ title: "Apply changes", message: `Save the PDF with ${pages.length} page${pages.length === 1 ? "" : "s"}? The current one is kept as a version.`,
                                  confirmLabel: "Apply", confirmVariant: "approve" })

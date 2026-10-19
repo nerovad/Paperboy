@@ -1222,19 +1222,94 @@
 .aim-pdf-textbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
   margin-bottom: 0.75rem;
+  font-size: 0.85rem;
 }
 
-.aim-pdf-textbar textarea {
-  flex: 1 1 16rem;
+.aim-pdf-textbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-.aim-pdf-textbar ul {
-  flex-basis: 100%;
+// The big page with its text boxes over it (#182).
+.aim-pdf-stage__page {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.aim-pdf-stage__page canvas {
   margin: 0;
-  padding-left: 1.2rem;
+}
+
+.aim-pdf-boxes {
+  position: absolute;
+  pointer-events: none;
+}
+
+.aim-pdf-boxes[data-mode="text"] {
+  cursor: text;
+  pointer-events: auto;
+}
+
+.aim-pdf-box {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: auto;
+  font-family: Helvetica, Arial, sans-serif;
+  line-height: 1.2;
+}
+
+.aim-pdf-boxes[data-mode="crop"] .aim-pdf-box {
+  pointer-events: none;
+}
+
+.aim-pdf-box:hover,
+.aim-pdf-box.is-selected {
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.aim-pdf-box__text {
+  min-height: 1.2em;
+  padding: 2px;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.aim-pdf-box__bar {
+  position: absolute;
+  top: -12px;
+  left: -1px;
+  right: -1px;
+  height: 10px;
+  border-radius: 3px 3px 0 0;
+  background: #2563eb;
+  cursor: move;
+  opacity: 0;
+}
+
+.aim-pdf-box__grip {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #2563eb;
+  cursor: nwse-resize;
+  opacity: 0;
+}
+
+.aim-pdf-box:hover .aim-pdf-box__bar,
+.aim-pdf-box:hover .aim-pdf-box__grip,
+.aim-pdf-box.is-selected .aim-pdf-box__bar,
+.aim-pdf-box.is-selected .aim-pdf-box__grip {
+  opacity: 1;
 }
 
 // Find an invoice (#180), on the dashboards and its results pages.
