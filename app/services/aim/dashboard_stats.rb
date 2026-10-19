@@ -86,6 +86,16 @@ module Aim
                                                      .map { |invoice, seconds| [invoice, (seconds / 1.day).floor] }
     end
 
+    # Invoices in any active queue waiting +days+ or more (#170), by queue
+    # then owner: [[queue, owner, count, oldest days], ...], longest first.
+    # Never finished ones: nothing here is purged or moved, only shown.
+    def stale(days: Aim::Waiting.stale_days)
+      waited(invoices.where(state: Aim::Invoice::STATES - Aim::Invoice::TERMINAL_STATES), days.days)
+        .group_by { |invoice, _| [invoice.queue, invoice.queue_owner] }
+        .map { |(queue, owner), rows| [queue, owner, rows.size, (rows.map(&:last).max / 1.day).floor] }
+        .sort_by { |row| -row.last }
+    end
+
     # { group => { label => count } }: invoices in +columns+' states
     # ({ label => [state, ...] }), by agency group. Work in progress only.
     def by_group(columns)
@@ -114,14 +124,12 @@ module Aim
     end
 
     # [[invoice, seconds waiting], ...] since it last reached its state or
-    # changed hands, at least +at_least+.
+    # changed hands (Aim::Waiting), at least +at_least+.
     def waited(scope, at_least)
       list = scope.to_a
-      since = Aim::InvoiceEvent.where(invoice_id: list.map(&:id))
-                               .where('to_state = ? OR action = ?', list.first&.state, 'assignment')
-                               .group(:invoice_id).maximum(:created_at)
+      since = Aim::Waiting.since(list)
       list.filter_map do |invoice|
-        seconds = @now - (since[invoice.id] || invoice.created_at)
+        seconds = @now - since.fetch(invoice.id, invoice.created_at)
         [invoice, seconds] if seconds >= at_least
       end
     end

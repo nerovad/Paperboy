@@ -14,6 +14,7 @@ module Aim
 
     def restore
       target = RESTORE_TO[params[:invoice_action].to_s]
+      return restore_refused('Its PDF has been purged, so it cannot be restored.') if @invoice.pdf_purged_at
       return restore_refused('Only AIM Admins can restore invoices.') unless staff? && @invoice.restorable?
       return restore_refused('Choose where to restore it.') if target.nil?
       return restore_refused('Restoring needs a reason.') if reason.blank?

@@ -1,6 +1,6 @@
 <%# The pipeline at a glance (revamped for #131): what needs attention, a card
-    per queue, today's movement, the oldest waiting for approval, and each
-    agency group's share. Follows Managing. %>
+    per queue, today's movement, the oldest waiting for approval, what is
+    stale (#170), and each agency group's share. Follows Managing. %>
 <div class="aim-page aim-dashboard-page">
   <header class="aim-page-header">
     <div>
@@ -37,6 +37,8 @@
       <%= render 'aim/shared/oldest', oldest: @oldest, owner: true,
                                       path: ->(invoice) { aim_invoice_path(invoice.batch_id, queue: 'ready_for_approval') } %>
     </section>
+
+    <%= render 'aim/dashboard/stale', stale: @stale %>
 
     <%= render 'aim/shared/by_group', by_group: @by_group, columns: Aim::DashboardController::PIPELINE_COLUMNS.keys %>
   <% else %>

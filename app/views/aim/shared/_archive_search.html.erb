@@ -47,7 +47,7 @@
         <%= hidden_field_tag field, current, id: nil %>
       <% end %>
       <label>Vendor <%= search_field_tag :vendor, params[:vendor], id: nil, autocomplete: 'off' %></label>
-      <label>Invoice # <%= search_field_tag :invoice_number, params[:invoice_number], id: nil, autocomplete: 'off' %></label>
+      <label>Invoice # or AIM # <%= search_field_tag :invoice_number, params[:invoice_number], id: nil, autocomplete: 'off' %></label>
       <label>Amount <%= text_field_tag :amount, params[:amount], id: nil, inputmode: 'decimal', autocomplete: 'off', placeholder: '1,234.50' %></label>
       <label>Budget unit
         <%= select_tag :budget_unit, grouped_options_for_select(units.grouped_options, params[:budget_unit]), include_blank: 'Any', id: nil %>

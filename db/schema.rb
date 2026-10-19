@@ -336,6 +336,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_150000) do
     t.string "order_number", limit: 100
     t.integer "page_count"
     t.bigint "parent_id"
+    t.datetime "pdf_purged_at"
     t.text "review_note"
     t.bigint "replaces_invoice_id"
     t.string "review_reason", limit: 40

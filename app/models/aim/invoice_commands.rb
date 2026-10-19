@@ -45,7 +45,8 @@ module Aim
     LOCK_SECONDS = 90
 
     # A rejected or deleted invoice AIM staff may bring back (Aim::Invoice::RESTORE_STATES).
-    def restorable? = %w[rejected deleted].include?(state)
+    # Not once its PDF has been purged (#170): there is nothing left to work.
+    def restorable? = %w[rejected deleted].include?(state) && pdf_purged_at.nil?
 
     def claim!(email, name: nil)
       update_columns(claimed_by: email, claimed_by_name: name, claimed_at: Time.current, updated_at: Time.current)

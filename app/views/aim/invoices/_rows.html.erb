@@ -4,10 +4,14 @@
     selected (aim_acknowledge_controller), and each row has its own button. %>
 <% acknowledging = local_assigns.fetch(:acknowledging, false) %>
 <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
+<%# How long each has waited where it is (#170); finished ones are not waiting. %>
+<% waiting = Aim::Waiting.since(invoices) %>
+<% stale_days = Aim::Waiting.stale_days %>
 <table class="submission-table aim-queue-table aim-queue-table--review">
   <thead>
     <tr>
       <th>Action</th>
+      <th>AIM #</th>
       <th>Vendor</th>
       <th>Invoice #</th>
       <th>Type</th>
@@ -38,7 +42,7 @@
       <% badge_class, badge_text = aim_status_badge(invoice, viewer) %>
       <% locked = invoice.claimed_by_other?(viewer) %>
       <%# The batch id names the row in billing. It is too long for a column, so it rides on the row as a tooltip. %>
-      <% search = [invoice.vendor_name, invoice.extracted_vendor_name, invoice.invoice_number, invoice.budget_unit,
+      <% search = [invoice.handle, invoice.vendor_name, invoice.extracted_vendor_name, invoice.invoice_number, invoice.budget_unit,
                    invoice.submitter, invoice.assigned_to, invoice.document_type, invoice.invoice_total,
                    aim_invoice_date(invoice.invoice_date), invoice.order_number, invoice.customer_number,
                    invoice.batch_id].compact.join(' ') %>
@@ -59,6 +63,7 @@
                           class: 'btn compact', title: 'Seen, and fine: take it off this list' %>
           <% end %>
         </td>
+        <td><%= invoice.handle %></td>
         <td class="is-strong"><%= invoice.vendor_name.presence || invoice.extracted_vendor_name.presence || 'N/A' %></td>
         <td><%= invoice.invoice_number.presence || 'N/A' %></td>
         <td><%= invoice.document_type.presence || 'N/A' %></td>
@@ -71,9 +76,16 @@
           <span class="badge <%= badge_class %>"><%= badge_text %></span>
           <% if invoice.awaiting_second_approval? %><span class="badge is-scheduled">Second approval</span><% end %>
           <% if invoice.manual_entry %><span class="badge is-pending" title="The AI has not read it">Manual Data Entry Needed</span><% end %>
+          <% if (started = waiting[invoice.id]) && (days = Aim::Waiting.days(started)).positive? %>
+            <span class="badge <%= days >= stale_days ? 'is-denied' : 'is-scheduled' %>"
+                  title="Waiting here since <%= started.strftime('%B %-d, %Y') %><%= '; stale' if days >= stale_days %>"><%= pluralize(days, 'day') %></span>
+          <% end %>
           <%= aim_duplicate_pill(invoice) %>
+          <% if invoice.pdf_purged_at %>
+            <span class="badge is-canceled" title="Purged on <%= invoice.pdf_purged_at.strftime('%B %-d, %Y') %>">PDF purged</span>
+          <% end %>
           <% if invoice.acknowledged_at %>
-            <span class="badge is-scheduled" title="by <%= invoice.acknowledged_by %> on <%= l(invoice.acknowledged_at.to_date, format: :long) %>">Acknowledged</span>
+            <span class="badge is-scheduled" title="by <%= invoice.acknowledged_by %> on <%= invoice.acknowledged_at.strftime('%B %-d, %Y') %>">Acknowledged</span>
           <% end %>
         </td>
         <% if movable %>
