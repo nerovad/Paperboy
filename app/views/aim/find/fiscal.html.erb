@@ -1,0 +1,30 @@
+<%# Find an invoice (#180), Fiscal's side: every Fiscal list in one. %>
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Find an invoice</h1>
+      <p class="aim-page-subtitle">Every invoice with Fiscal in the agency groups you manage, whichever list it is on.</p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <% if @finder.searching? %><span class="aim-count-pill"><%= pluralize(@records.size, 'invoice') %></span><% end %>
+    </div>
+  </header>
+
+  <%= render 'aim/shared/find_box', url: aim_fiscal_find_path, finder: @finder, fiscal: true,
+                                    wheres: Aim::FiscalRecord::STATUSES.map { |status| [Aim::FiscalRecord::STATUS_LABELS[status], status] } %>
+  <%= render 'aim/find/results_note', finder: @finder %>
+
+  <% if !@finder.searching? %>
+    <section class="aim-panel aim-empty-state"><p>Type an AIM #, invoice #, vendor or amount, or pick a filter.</p></section>
+  <% elsif @records.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nothing matches.</p></section>
+  <% else %>
+    <div class="aim-list-frame">
+      <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
+        <%= render 'aim/fiscal/rows', records: @records, status: nil, selectable: false, stamps: @stamps %>
+      </section>
+      <%= render 'aim/shared/list_pager' %>
+    </div>
+  <% end %>
+<% end %>

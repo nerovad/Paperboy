@@ -3,6 +3,10 @@
     `acknowledging` (Rejected and Deleted, #169), the same for Acknowledge
     selected (aim_acknowledge_controller), and each row has its own button. %>
 <% acknowledging = local_assigns.fetch(:acknowledging, false) %>
+<%# fiscal_statuses ({ invoice id => Fiscal status }): Find an invoice (#180)
+    says which Fiscal list an approved one is on. Rows open in their own
+    queue when the page is not one queue's. %>
+<% fiscal_statuses = local_assigns.fetch(:fiscal_statuses, nil) || {} %>
 <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
 <%# How long each has waited where it is (#170); finished ones are not waiting. %>
 <% waiting = Aim::Waiting.since(invoices) %>
@@ -50,11 +54,11 @@
           data-aim-queue-filter-target="row" data-search="<%= search %>" data-reason="<%= aim_filter_reason(invoice) %>">
         <td class="action-buttons">
           <% if locked || invoice.terminal? %>
-            <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue),
+            <%= link_to 'View', aim_invoice_path(invoice.batch_id, queue: @queue || invoice.queue),
                         data: { turbo: false }, class: 'btn secondary compact' %>
           <% else %>
             <%= link_to invoice.held_by?(viewer) ? 'Resume Review' : 'Open',
-                        aim_invoice_path(invoice.batch_id, queue: @queue),
+                        aim_invoice_path(invoice.batch_id, queue: @queue || invoice.queue),
                         data: { turbo: false }, class: 'btn approve compact' %>
           <% end %>
           <% if invoice.acknowledgeable? && aim_queue_access? %>
@@ -79,6 +83,9 @@
           <% if (started = waiting[invoice.id]) && (days = Aim::Waiting.days(started)).positive? %>
             <span class="badge <%= days >= stale_days ? 'is-denied' : 'is-scheduled' %>"
                   title="Waiting here since <%= started.strftime('%B %-d, %Y') %><%= '; stale' if days >= stale_days %>"><%= pluralize(days, 'day') %></span>
+          <% end %>
+          <% if (fiscal_status = fiscal_statuses[invoice.id]) %>
+            <span class="badge is-sent">Fiscal: <%= Aim::FiscalRecord::STATUS_LABELS[fiscal_status] %></span>
           <% end %>
           <%= aim_duplicate_pill(invoice) %>
           <% if invoice.pdf_purged_at %>

@@ -186,6 +186,8 @@ Rails.application.routes.draw do
       resources :roles, only: %i[create destroy], controller: 'agency_group_roles'
     end
     resources :uploads, only: %i[new create]
+    get 'find', to: 'find#index', as: :find
+    get 'fiscal/find', to: 'find#fiscal', as: :fiscal_find
     get 'fiscal', to: 'fiscal#index', as: :fiscal
     get 'fiscal/dashboard', to: 'fiscal_dashboard#index', as: :fiscal_dashboard
     resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'

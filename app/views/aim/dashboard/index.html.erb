@@ -13,6 +13,9 @@
     </div>
   </header>
 
+  <%= render 'aim/shared/find_box', url: aim_find_path,
+                                    wheres: Aim::Invoice::QUEUES.map { |queue, config| [config[:label], queue] } %>
+
   <% if aim_queue_access? %>
     <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
     <%= render 'aim/shared/today', today: @today %>

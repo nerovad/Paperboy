@@ -10,7 +10,14 @@ module Aim
     PIPELINE_COLUMNS = { 'Action Needed' => %w[needs_review needs_split], 'Ready for Approval' => %w[ready_for_approval],
                          'Exporting' => %w[approved exporting], 'Failed' => %w[failed] }.freeze
 
-    def home; end
+    # People who work AIM go straight to their dashboard (#180): AIM Admins to
+    # the pipeline (or My AIM, if they start as an approver), Fiscal to the
+    # Fiscal Dashboard, anyone with a queue to My AIM. Everyone else, and
+    # anyone when the database cannot be read, gets the front page.
+    def home
+      target = front_door_target
+      redirect_to target if target
+    end
 
     # The pipeline at a glance (revamped for #131): what needs attention, the
     # queue cards, today's movement, the oldest waiting for approval, and each
@@ -33,6 +40,16 @@ module Aim
     end
 
     private
+
+    def front_door_target
+      return aim_dashboard_path if helpers.aim_real_queue_access?
+      return aim_fiscal_dashboard_path if helpers.aim_fiscal?
+
+      aim_dashboard_path if helpers.aim_has_queue?
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.warn "AIM front door could not read access: #{e.class}: #{e.message}"
+      nil
+    end
 
     def require_queue
       redirect_to aim_root_path, alert: 'Your dashboard comes with a queue of your own.' unless helpers.aim_has_queue?

@@ -1,0 +1,48 @@
+<%# Find an invoice (#180): the quick box, and More filters. Locals: url,
+    wheres ([[label, value], ...]), fiscal (Fiscal's side: no owner,
+    duplicate or stale), finder (an Aim::InvoiceFinder, or nil on a
+    dashboard). %>
+<% finder = local_assigns[:finder] %>
+<% fiscal = local_assigns.fetch(:fiscal, false) %>
+<% units = Aim::Units.new %>
+<section class="aim-find" aria-label="Find an invoice">
+  <%= form_with url: url, method: :get, class: 'aim-find__form', data: { turbo: false } do %>
+    <div class="aim-find__quick">
+      <%= search_field_tag :q, params[:q], id: nil, autocomplete: 'off', aria: { label: 'Find an invoice' },
+                           placeholder: 'Find an invoice: AIM #, invoice #, vendor or amount' %>
+      <button type="submit" class="btn approve compact">Find</button>
+    </div>
+    <details class="aim-find__more" <%= 'open' if finder&.criteria&.except(:q)&.any? %>>
+      <summary>More filters</summary>
+      <div class="aim-archive__form">
+        <label>Where it is
+          <%= select_tag :where, options_for_select(wheres, params[:where]), include_blank: 'Anywhere', id: nil %>
+        </label>
+        <% unless fiscal || !aim_queue_access? %>
+          <label>Owner <%= search_field_tag :owner, params[:owner], id: nil, autocomplete: 'off' %></label>
+        <% end %>
+        <label>Budget unit
+          <%= select_tag :budget_unit, grouped_options_for_select(units.grouped_options, params[:budget_unit]), include_blank: 'Any', id: nil %>
+        </label>
+        <label>Agency
+          <%= select_tag :agency, options_for_select(units.agencies.map { |a| [units.agency_label(a), a] }, params[:agency]), include_blank: 'Any', id: nil %>
+        </label>
+        <fieldset class="aim-archive__dates">
+          <legend>Received between</legend>
+          <%= date_field_tag :from, params[:from], id: nil, aria: { label: 'Received from' } %>
+          <span aria-hidden="true">and</span>
+          <%= date_field_tag :to, params[:to], id: nil, aria: { label: 'Received to' } %>
+        </fieldset>
+        <label class="aim-find__flag"><%= check_box_tag :manual, '1', params[:manual] == '1', id: nil %> Manual data entry</label>
+        <% unless fiscal %>
+          <label class="aim-find__flag"><%= check_box_tag :duplicate, '1', params[:duplicate] == '1', id: nil %> Possible duplicate</label>
+          <label class="aim-find__flag"><%= check_box_tag :stale, '1', params[:stale] == '1', id: nil %> Stale (<%= pluralize(Aim::Waiting.stale_days, 'day') %>+)</label>
+        <% end %>
+        <div class="aim-archive__actions">
+          <button type="submit" class="btn approve compact">Find</button>
+          <%= link_to 'Clear', url, class: 'btn ghost compact' %>
+        </div>
+      </div>
+    </details>
+  <% end %>
+</section>
