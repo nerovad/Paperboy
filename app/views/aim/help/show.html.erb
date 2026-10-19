@@ -1,5 +1,6 @@
-<%# How AIM works (#131): by task, short answers, with screenshots where there
-    are some (aim_help_shot). %>
+<%# How AIM works (#131, brought up to date in #187): by task, short answers,
+    with screenshots where there are some (aim_help_shot; retaken with
+    bin/aim-help-shots). %>
 <% sections = {
      'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
      'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'pdf' => 'Fixing a PDF', 'duplicates' => 'Possible duplicates',
@@ -19,13 +20,21 @@
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="start">
     <h2>Getting around</h2>
+    <p>Opening AIM takes you straight to your own dashboard: AIM Admins to the Dashboard (or My AIM if you start in
+      Approver mode), Fiscal to the Fiscal Dashboard, anyone with a queue to My AIM.</p>
     <ul>
-      <li><strong>Dashboard</strong> (AIM Admins): what needs a look first -- possible duplicates, invoices to type in, second
-        approvals, anything waiting over a week, failures -- then a card per queue, today's movement, the invoices waiting
-        longest, and each agency group's share. Click any tile or card to open that list.</li>
-      <li><strong>My AIM</strong> (everyone else with a queue): your queue, what has waited over a week, your second approvals
-        and anything for you to type in.</li>
-      <li><strong>Fiscal Dashboard</strong> (Fiscal): the same for the Fiscal stage.</li>
+      <li><strong>Dashboard</strong> (AIM Admins): <em>Find an invoice</em> at the top, then what needs a look first --
+        possible duplicates, invoices to type in, second approvals, anything waiting over a week, failures -- a card per
+        queue, today's movement, the invoices waiting longest, the <strong>Stale</strong> panel, and each agency group's
+        share. Click any tile or card to open that list.</li>
+      <li><strong>My AIM</strong> (everyone else with a queue): <em>Find an invoice</em> for your own invoices, your queue,
+        what has waited over a week, your second approvals and anything for you to type in.</li>
+      <li><strong>Fiscal Dashboard</strong> (Fiscal): the same for the Fiscal stage, with its own <em>Find an invoice</em>.</li>
+      <li><strong>The AIM #</strong> (<em>AIM-118</em>) is an invoice's short number from the moment it arrives. It is on
+        every list, on the review page next to the status, and on Fiscal's pages and reports; Find and Search older
+        invoices take it too.</li>
+      <li><strong>Pipeline counts</strong> in the sidebar are what is in each queue. Rejected and Deleted count what nobody
+        has acknowledged yet; Finished, last, has no count.</li>
       <li><strong>Managing</strong>, top right on many pages, picks which agency group a page shows when you work more than
         one. It is remembered until you change it.</li>
     </ul>
@@ -89,6 +98,10 @@
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="working">
     <h2>Working an invoice</h2>
+    <p>The buttons sit in one row under the fields: on the right <strong>Save Changes</strong> and the one main action for
+      where the invoice is (<em>Send to Approval</em>, <em>Approve</em>, <em>Approve Split</em>, <em>Retry AI</em> or
+      <em>Retry Export</em>); on the left <strong>More</strong> for the rest -- Retry AI, Send to a queue, and Reject and
+      Delete in red. Each still asks first.</p>
     <ul>
       <li><strong>Approve</strong> sends it to billing and Fiscal. Over its BU's second-approval amount, the button says
         <em>Approve (first of two)</em> and it goes on to the BU's second approver, who approves it or uses
@@ -101,23 +114,34 @@
         from anywhere the AI is not working on it, optionally flagged for data entry.</li>
       <li><strong>Manual Data Entry Needed</strong>: type the details in from the PDF and Save; the flag clears once what an
         approval needs is in.</li>
+      <li><strong>Restore</strong> (on a rejected or deleted invoice's page): back to Action Needed, or straight to its
+        owner, with a reason.</li>
     </ul>
     <%= aim_help_shot('review', 'The review page: the PDF, the fields, and the buttons.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="pdf">
     <h2>Fixing an invoice's PDF</h2>
-    <p><strong>Edit PDF</strong>, above the PDF on the review page (and on Fiscal's page), changes the file at once. The
-      current PDF is always kept as a version, and the history says who changed what.</p>
+    <p><strong>Edit PDF</strong>, above the PDF on the review page and on Fiscal's page, turns the preview into an editor.
+      Nothing changes until <em>Apply changes</em>; <em>Cancel</em> puts the preview back.</p>
     <ul>
+      <li><strong>Pages:</strong> the strip on the left -- click a page to see it big, drag to reorder. <em>Turn left</em>,
+        <em>Turn right</em>, <em>Remove page</em> (greyed until you Apply; <em>Keep page</em> brings it back), and
+        <em>Add pages from a PDF</em>.</li>
+      <li><strong>Crop:</strong> drag a box over what to keep, then drag its edges, corners or middle to adjust it.
+        <em>Fit page</em>, <em>Fit width</em>, - and + zoom; dragging past the edge stops at the page.</li>
+      <li><strong>Text:</strong> click the page to add a box and type. Drag its top bar to move it and its corner to resize;
+        click in it any time to change the words. Size, bold, colour, a white or yellow background, a border, or delete it.</li>
       <li><strong>Swap the whole PDF</strong> for a corrected or cleaned copy from the vendor.</li>
-      <li><strong>Edit pages:</strong> drag to reorder, turn, remove, add pages from another PDF, crop (drag a box over
-        what to keep), and add text (click where it starts). Nothing changes until <em>Apply changes</em>.</li>
-      <li>The AI does not read it again unless you tick <em>Read it again with the AI afterwards</em>; the invoice keeps
-        its fields, queue and owner.</li>
-      <li>On an approved invoice the approval stamp is redone on the new PDF; saved Fiscal reports keep their copy.</li>
+      <li><strong>It stays editable.</strong> Every change is kept as a version, so Edit PDF opens where the last person
+        left it -- their text boxes still boxes, removed pages there to keep again -- until Fiscal archives the invoice.</li>
+      <li><strong>Versions</strong> lists every change: who, when and what. <em>View</em> any; <em>Restore</em> one to make it
+        current again (that is a new version too, so nothing is lost).</li>
+      <li>The AI does not read it again unless you tick <em>Read it again with the AI</em>; the invoice keeps its fields,
+        queue and owner. On an approved invoice the approval stamp is redone; saved Fiscal reports keep their copy.</li>
       <li>Not while the AI or the export has it, nor once it is rejected, deleted, split or archived by Fiscal.</li>
     </ul>
+    <%= aim_help_shot('pdf_editor', 'Edit PDF: the page strip, a text box with its toolbar, and the Versions menu.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="duplicates">
@@ -143,6 +167,7 @@
       <li>You only find what you could already open: AIM Admins, the groups picked in Managing; anyone else, their own
         invoices; Fiscal, their groups' invoices with Fiscal.</li>
     </ul>
+    <%= aim_help_shot('find', 'Find an invoice: one list across every queue, each with where it is.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="older">
@@ -163,6 +188,7 @@
       <li>A search shows at most <%= Aim::ArchiveSearch::CAP %> invoices, newest first; past that it says to narrow the search.</li>
       <li>Managing applies, as on every list. <em>Back to recent</em> returns to the window.</li>
     </ul>
+    <%= aim_help_shot('older', 'Search older invoices on Finished, with the window above the list.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="waiting">
@@ -178,6 +204,7 @@
         record and history stay, marked <em>PDF purged</em>, and it can no longer be restored. Rejected invoices are
         never purged.</li>
     </ul>
+    <%= aim_help_shot('waiting', 'Action Needed: each row shows how long it has waited.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="fiscal">
@@ -194,6 +221,10 @@
       <li><strong>Report Templates:</strong> save named layouts -- columns ticked, dragged into order, renamed; comma or tab.</li>
       <li><strong>Group settings</strong> (Fiscal settings tab): the Default report, hold reasons, tags, fields needed
         before Archive, reject reasons.</li>
+      <li><strong>On an invoice's Fiscal page:</strong> Hold, Release or Back to Fiscal Queue on the left of the button row,
+        then Save and the main step -- <em>Add to Report Queue</em> or <em>Archive</em>. <strong>Edit PDF</strong> is there
+        too, until it is archived.</li>
+      <li><strong>Find an invoice</strong> on the Fiscal Dashboard searches every Fiscal list at once.</li>
     </ul>
     <%= aim_help_shot('fiscal_dashboard', 'The Fiscal Dashboard: needs attention, a card per Fiscal list, the longest waiting.') %>
     <%= aim_help_shot('fiscal_preview', 'The report preview, with Download only and Download and process.') %>
@@ -245,6 +276,14 @@
       <dd>The finished lists show the last 30 days; use <em>Search older invoices</em> above the list.</dd>
       <dt>A deleted invoice's PDF is gone.</dt>
       <dd>It was purged after the retention period; its record and history are still there.</dd>
+      <dt>I changed an invoice's PDF and want the old one back.</dt>
+      <dd>Edit PDF &rsaquo; Versions: View the one you want, then Restore it.</dd>
+      <dt>Text someone added to a PDF is wrong.</dt>
+      <dd>Edit PDF, click in the text box and change it, or select it and Delete box; then Apply changes.</dd>
+      <dt>Where is the invoice's AIM #?</dt>
+      <dd>Next to its status at the top of its page, in the AIM # column of every list, and on Fiscal's pages.</dd>
+      <dt>AIM opened on a dashboard, not the front page.</dt>
+      <dd>It opens where you work: AIM Admins on the Dashboard, Fiscal on the Fiscal Dashboard, others on My AIM.</dd>
       <dt>Why didn't anyone get an email?</dt>
       <dd>Email alerts are not switched on yet.</dd>
     </dl>

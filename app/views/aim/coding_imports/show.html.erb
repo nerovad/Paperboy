@@ -105,7 +105,7 @@
                         else
                           "Load #{r[:loadable]} rules for #{@import.agency}?"
                         end %>
-          <%= submit_tag 'Apply', class: 'btn approve',
+          <%= submit_tag 'Apply', class: 'btn approve compact',
                                   data: { turbo_confirm: question, confirm_title: r[:refused].to_i.positive? ? 'Some rows are refused' : 'Load the file',
                                           confirm_label: 'Load' } %>
         <% end %>
@@ -128,10 +128,10 @@
   <% end %>
   <div class="aim-action-group">
     <% if @import.applied? %>
-      <%= button_to 'Undo this import', undo_aim_coding_import_path(@import), method: :post, class: 'btn deny',
+      <%= button_to 'Undo this import', undo_aim_coding_import_path(@import), method: :post, class: 'btn deny compact',
                     data: { turbo_confirm: 'Undo? Its rules are retired and the ones it replaced come back.', confirm_label: 'Undo' } %>
     <% else %>
-      <%= button_to 'Delete this import', aim_coding_import_path(@import), method: :delete, class: 'btn deny',
+      <%= button_to 'Delete this import', aim_coding_import_path(@import), method: :delete, class: 'btn deny compact',
                     data: { turbo_confirm: 'Delete this import? It loaded nothing that is still in effect.', confirm_label: 'Delete' } %>
     <% end %>
   </div>
