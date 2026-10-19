@@ -18,6 +18,11 @@ import pyodbc
 ACTOR = "aim_worker"
 TRANSITION = "transition"
 
+# The finished states (Aim::Invoice::TERMINAL_STATES in Rails; a Ruby test
+# keeps the two the same). A move into one dates the finish, a move out
+# clears it: the finished lists window and search on finished_at (#169).
+FINISHED_STATES = ("exported", "rejected", "deleted", "split")
+
 # The columns a worker may write, and the most each holds (the limits in
 # db/migrate). Column names are only ever taken from here, never from a
 # document, so nothing a document says can change the SQL.
@@ -210,6 +215,8 @@ class Db:
         for column in stamp:
             if column in FIELD_LIMITS:
                 columns += f", {column} = SYSUTCDATETIME()"
+        if from_state != to_state:
+            columns += ", finished_at = SYSUTCDATETIME()" if to_state in FINISHED_STATES else ", finished_at = NULL"
         with self.connect() as conn:
             cursor = conn.cursor()
             try:

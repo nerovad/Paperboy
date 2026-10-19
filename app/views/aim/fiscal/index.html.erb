@@ -13,8 +13,14 @@
     </div>
   </header>
 
+  <% if @archive %>
+    <%= render 'aim/shared/archive_search', url: aim_fiscal_path, field: :status, current: @status, shown: @records.size,
+                                            keep: { view: @view },
+                                            statuses: Aim::ArchiveSearch::FISCAL_STATUSES.keys.map { |s| [Aim::FiscalRecord::STATUS_LABELS[s], s] } %>
+  <% end %>
+
   <% if @records.empty? %>
-    <section class="aim-panel aim-empty-state"><p>Nothing here.</p></section>
+    <section class="aim-panel aim-empty-state"><p><%= @archive ? @archive.nothing : 'Nothing here.' %></p></section>
   <% else %>
     <div class="aim-people-toolbar">
       <nav class="aim-people-toolbar__views" aria-label="View">

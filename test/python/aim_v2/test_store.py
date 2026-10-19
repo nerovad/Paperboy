@@ -137,7 +137,7 @@ def test_a_transition_writes_the_row_and_its_event_together(db):
     db.transition(7, "received", "extracting", note="attempt 1", fields={"attempt": 1, "bogus": "x"}, command="keep")
 
     update, event = db.log
-    assert update[0].startswith("UPDATE aim.invoices SET attempt = ?, state = ?, updated_at = SYSUTCDATETIME() WHERE id = ?")
+    assert update[0].startswith("UPDATE aim.invoices SET attempt = ?, state = ?, finished_at = NULL, updated_at = SYSUTCDATETIME() WHERE id = ?")
     assert update[1] == (1, "extracting", 7)
     assert event[0].startswith("INSERT INTO aim.invoice_events")
     assert event[1] == (7, "transition", "received", "extracting", "aim_worker", "attempt 1")
@@ -150,6 +150,15 @@ def test_clearing_the_command_clears_the_lease_and_stamps(db):
     assert "command = ?, lease_owner = ?, lease_until = ?" in update[0]
     assert "exported_at = SYSUTCDATETIME()" in update[0]
     assert update[1] == ("exported", None, None, None, 7)
+
+
+def test_a_move_into_a_finished_state_dates_the_finish_and_a_stay_leaves_it(db):
+    db.transition(7, "exporting", "exported", stamp=("exported_at",), command=None)
+    db.transition(7, "exported", "exported", fields={"attempt": 2})
+
+    (finished, _), (stayed,) = db.log[:2], db.log[2:]
+    assert "finished_at = SYSUTCDATETIME()" in finished[0]
+    assert "finished_at" not in stayed[0]
 
 
 def test_a_new_row_gets_its_first_event(db):

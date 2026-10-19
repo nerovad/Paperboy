@@ -10,6 +10,7 @@ module Aim
     include Aim::StoredPdf
     include Aim::FiscalEdits
     include Aim::FiscalGroupScope
+    include Aim::FinishedLists
 
     # Each button posts fiscal_action=<value>, never its label, so a button
     # can be renamed without breaking what it does.
@@ -36,8 +37,7 @@ module Aim
       reading_database("list the Fiscal #{@status} invoices", alert: 'The invoice database could not be read.',
                                                               empty: { records: [], groups: [], stamps: {} }) do
         Aim::FiscalRecord.take_in_approved!
-        @records = Aim::FiscalRecord.in_status(@status).served_by(served_invoices).to_a
-                                    .sort_by { |record| [-record.invoice.created_at.to_f, -record.id] }
+        @records = finished_or_all_records
         @stamps = Aim::FiscalExport.approval_stamps(@records.map(&:invoice_id))
         @groups = fiscal_groups if @view == 'bu'
       end

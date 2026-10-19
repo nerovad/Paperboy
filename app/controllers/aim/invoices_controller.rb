@@ -14,6 +14,8 @@ module Aim
     include Aim::InvoiceRestore
     include Aim::StoredPdf
     include Aim::CodingLineEdits
+    include Aim::FinishedLists
+    include Aim::InvoiceAcknowledgements
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue
@@ -29,7 +31,7 @@ module Aim
                                                    empty: { invoices: [], reason_counts: {} }) do
         # The reason filter is on the page itself; every Action Needed row is sent.
         # Narrowed to the agency groups picked in Managing (#131).
-        @invoices = helpers.aim_agency_groups.invoices(helpers.aim_managing_groups).in_queue(@queue).newest_first.to_a
+        @invoices = finished_or_all(helpers.aim_agency_groups.invoices(helpers.aim_managing_groups).in_queue(@queue).newest_first)
         @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
         # Budget unit -> shared queue and each person -> invoices, as on By BU.
         @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
