@@ -53,11 +53,15 @@
       <details class="nav-group" <%= "open" if current == "queues" %> data-aim-sidebar-target="group" data-key="queues"
              data-default-open="false" data-current="<%= current == "queues" %>">
         <summary><span class="nav-group-label">Pipeline</span></summary>
-        <% Aim::Invoice::QUEUES.each do |queue, config| %>
+        <%# Finished is last and has no count: nothing in it is ever worked, and
+            its list shows a recent window, not all of it (#169). %>
+        <% Aim::Invoice::QUEUES.sort_by { |queue, _| queue == 'exported' ? 1 : 0 }.each do |queue, config| %>
           <% queue_path = aim_invoices_path(queue: queue) %>
           <%= link_to queue_path, class: "nav-link#{' active' if in_queues && params[:queue].to_s == queue}" do %>
             <span><%= config[:label] %></span>
-            <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>" data-aim-count="<%= queue %>">…</span>
+            <% unless queue == 'exported' %>
+              <span class="sidebar-count <%= config[:css_class].delete_prefix('aim-card-') %>" data-aim-count="<%= queue %>">…</span>
+            <% end %>
           <% end %>
         <% end %>
         <%= link_to "By BU", aim_budget_units_path,

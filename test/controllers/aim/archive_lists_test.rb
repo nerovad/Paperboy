@@ -119,6 +119,15 @@ module Aim
       assert_equal %w[MINE], listed
     end
 
+    test 'the sidebar puts Finished last, after Deleted, with no count' do
+      get :index, params: { queue: 'rejected' }
+
+      links = css_select('details[data-key=queues] a.nav-link').map { |link| link.text.squish.sub(/ …\z/, '') }
+      assert_equal ['Rejected', 'Deleted', 'Finished', 'By BU'], links.last(4)
+      assert_select 'details[data-key=queues] [data-aim-count=exported]', count: 0
+      assert_select 'details[data-key=queues] [data-aim-count=deleted]'
+    end
+
     test 'a work queue is unchanged: everything in it, no window and no search of older invoices' do
       row = Aim::Invoice.create!(batch_id: 'WORK-OLD', state: 'needs_review', actor: 'aim_worker')
       row.update_columns(updated_at: 400.days.ago, created_at: 400.days.ago)
