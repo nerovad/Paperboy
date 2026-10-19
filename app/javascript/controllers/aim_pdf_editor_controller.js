@@ -13,10 +13,12 @@ import { pbAlert, pbConfirm } from "pb_modal"
 const PDF_JS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
 const PDF_WORKER_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
 const THUMB_WIDTH = 110
+const EDGE = 10 // px from a crop edge that grabs it
+const SCROLL_EDGE = 36 // px from the panel edge that scrolls it while dragging
 
 export default class extends Controller {
   static targets = ["viewer", "editor", "strip", "stage", "status", "hint", "pageLabel", "removeButton",
-                    "textBar", "textInput", "textSize", "textList", "pages", "inserts", "insertPicker", "form", "openButton", "reread"]
+                    "textBar", "textInput", "textSize", "textList", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel"]
   static values = { pdfUrl: String }
 
   // --- opening and closing ---------------------------------------------------
@@ -140,10 +142,10 @@ export default class extends Controller {
 
   setMode(mode) {
     this.mode = mode
-    this.draft = null
+    this.draft = mode === "crop" && this.current?.crop ? { ...this.current.crop } : null
     this.point = null
     this.textBarTarget.hidden = mode !== "text"
-    this.hintTarget.textContent = { crop: "Drag a box over the part of the page to keep; let go to crop.",
+    this.hintTarget.textContent = { crop: "Drag a box over the part to keep, or drag the box's edges, corners or middle to adjust it. Zoom out to reach every edge.",
                                     text: "Click where the text starts, type it, then Add text.",
                                     view: "" }[mode]
     this.stageTarget.classList.toggle("is-marking", mode !== "view")
@@ -189,12 +191,40 @@ export default class extends Controller {
     this.drawMarks(canvas.getContext("2d"), card, card.crop, viewport)
   }
 
+  // --- zoom ------------------------------------------------------------------
+
+  zoomIn() { this.setZoom((this.stageWidth || 600) * 1.25) }
+
+  zoomOut() { this.setZoom((this.stageWidth || 600) / 1.25) }
+
+  fitPage() { this.setZoom("page") }
+
+  fitWidth() { this.setZoom("width") }
+
+  setZoom(zoom) {
+    this.zoom = zoom
+    this.drawStage()
+  }
+
+  // The big page's width for the zoom: "page" fits the whole page in the
+  // panel (the default, so a crop can reach every edge), "width" its width.
+  stageWidthFor(plain) {
+    const box = this.stageTarget.parentElement
+    const room = { width: box.clientWidth - 24, height: box.clientHeight - 24 - (this.textBarTarget.hidden ? 0 : this.textBarTarget.offsetHeight) }
+    const fitWidth = Math.max(200, room.width)
+    const fitPage = Math.max(200, Math.min(fitWidth, room.height * (plain.width / plain.height)))
+    const zoom = this.zoom || "page"
+    const width = zoom === "page" ? fitPage : zoom === "width" ? fitWidth : Math.min(4000, Math.max(150, zoom))
+    this.zoomLabelTarget.textContent = zoom === "page" ? "Fit page" : `${Math.round((width / plain.width) * 100)}%`
+    return width
+  }
+
   async drawStage() {
     if (!this.current) return
     this.showLabel()
     const card = this.current
-    const width = Math.max(320, Math.min(this.stageTarget.parentElement.clientWidth - 24, 900))
-    const viewport = await this.render(card, this.stageTarget, width)
+    const viewport = await this.render(card, this.stageTarget, (plain) => this.stageWidthFor(plain))
+    this.stageWidth = viewport.width
     if (card !== this.current) return
     this.stageViewport = viewport
     this.stageImage = this.stageTarget.getContext("2d").getImageData(0, 0, this.stageTarget.width, this.stageTarget.height)
@@ -208,10 +238,15 @@ export default class extends Controller {
     this.drawMarks(context, this.current, this.mode === "crop" ? this.draft : this.current.crop, this.stageViewport)
     const { width, height } = this.stageTarget
     if (this.mode === "crop" && this.draft) {
+      const box = [this.draft.left * width, this.draft.top * height, this.draft.right * width, this.draft.bottom * height]
       context.strokeStyle = "#16a34a"
       context.lineWidth = 2
-      context.strokeRect(this.draft.left * width, this.draft.top * height,
-                         (this.draft.right - this.draft.left) * width, (this.draft.bottom - this.draft.top) * height)
+      context.strokeRect(box[0], box[1], box[2] - box[0], box[3] - box[1])
+      context.fillStyle = "#16a34a"
+      const middleX = (box[0] + box[2]) / 2
+      const middleY = (box[1] + box[3]) / 2
+      ;[[box[0], box[1]], [middleX, box[1]], [box[2], box[1]], [box[2], middleY], [box[2], box[3]], [middleX, box[3]], [box[0], box[3]], [box[0], middleY]]
+        .forEach(([x, y]) => context.fillRect(x - 5, y - 5, 10, 10))
     }
     if (this.mode === "text" && this.point) {
       context.fillStyle = "#dc2626"
@@ -221,12 +256,14 @@ export default class extends Controller {
     }
   }
 
-  // Renders the page turned as the card says, +width+ wide; returns the viewport.
+  // Renders the page turned as the card says, +width+ wide (a number, or a
+  // function of the page's own size); returns the viewport.
   async render(card, canvas, width) {
     const page = await this.sources[card.source].doc.getPage(card.page)
     const rotation = (page.rotate + card.rotate) % 360
     const plain = page.getViewport({ scale: 1, rotation })
-    const viewport = page.getViewport({ scale: width / plain.width, rotation })
+    const wanted = typeof width === "function" ? width(plain) : width
+    const viewport = page.getViewport({ scale: wanted / plain.width, rotation })
     canvas.width = Math.round(viewport.width)
     canvas.height = Math.round(viewport.height)
     await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise
@@ -258,39 +295,119 @@ export default class extends Controller {
 
   // --- crop and text on the big page -----------------------------------------
 
-  fraction(event) {
+  // Where a pointer is on the big page, as fractions; clamped to the page
+  // unless +free+.
+  fraction(x, y, free = false) {
     const box = this.stageTarget.getBoundingClientRect()
-    return { fx: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)),
-             fy: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)) }
+    const fx = (x - box.left) / box.width
+    const fy = (y - box.top) / box.height
+    return free ? { fx, fy } : { fx: Math.min(1, Math.max(0, fx)), fy: Math.min(1, Math.max(0, fy)) }
+  }
+
+  // Which part of the crop box a point grabs: an edge or corner ("n", "se",
+  // ...), "move" inside it, or null outside.
+  grab(at) {
+    const crop = this.draft
+    if (!crop) return null
+    const box = this.stageTarget.getBoundingClientRect()
+    const near = (a, b, size) => Math.abs(a - b) * size <= EDGE
+    const inX = at.fx >= crop.left - EDGE / box.width && at.fx <= crop.right + EDGE / box.width
+    const inY = at.fy >= crop.top - EDGE / box.height && at.fy <= crop.bottom + EDGE / box.height
+    if (!inX || !inY) return null
+    const edge = (near(at.fy, crop.top, box.height) ? "n" : near(at.fy, crop.bottom, box.height) ? "s" : "") +
+                 (near(at.fx, crop.left, box.width) ? "w" : near(at.fx, crop.right, box.width) ? "e" : "")
+    return edge || "move"
   }
 
   pointerDown(event) {
+    const at = this.fraction(event.clientX, event.clientY)
     if (this.mode === "crop") {
-      this.anchor = this.fraction(event)
-      this.draft = { left: this.anchor.fx, top: this.anchor.fy, right: this.anchor.fx, bottom: this.anchor.fy }
+      this.stageTarget.setPointerCapture(event.pointerId)
+      this.dragging = this.grab(at) || "new"
+      this.anchor = at
+      this.start = this.draft ? { ...this.draft } : null
+      if (this.dragging === "new") this.draft = { left: at.fx, top: at.fy, right: at.fx, bottom: at.fy }
+      this.last = { x: event.clientX, y: event.clientY }
     } else if (this.mode === "text") {
-      this.point = this.fraction(event)
+      this.point = at
       this.textInputTarget.focus()
     }
     this.redrawStage()
   }
 
   pointerMove(event) {
-    if (this.mode !== "crop" || !this.anchor) return
-    const at = this.fraction(event)
-    this.draft = { left: Math.min(this.anchor.fx, at.fx), right: Math.max(this.anchor.fx, at.fx),
-                   top: Math.min(this.anchor.fy, at.fy), bottom: Math.max(this.anchor.fy, at.fy) }
+    if (this.mode !== "crop") return
+    if (!this.dragging) {
+      const part = this.grab(this.fraction(event.clientX, event.clientY))
+      this.stageTarget.style.cursor = { move: "move", n: "ns-resize", s: "ns-resize", e: "ew-resize", w: "ew-resize",
+                                        ne: "nesw-resize", sw: "nesw-resize", nw: "nwse-resize", se: "nwse-resize" }[part] || "crosshair"
+      return
+    }
+    this.last = { x: event.clientX, y: event.clientY }
+    this.dragTo(this.last)
+    this.autoScroll()
+  }
+
+  dragTo({ x, y }) {
+    const at = this.fraction(x, y)
+    const kind = this.dragging
+    if (kind === "new") {
+      this.draft = { left: Math.min(this.anchor.fx, at.fx), right: Math.max(this.anchor.fx, at.fx),
+                     top: Math.min(this.anchor.fy, at.fy), bottom: Math.max(this.anchor.fy, at.fy) }
+    } else if (kind === "move") {
+      const width = this.start.right - this.start.left
+      const height = this.start.bottom - this.start.top
+      const left = Math.min(1 - width, Math.max(0, this.start.left + at.fx - this.anchor.fx))
+      const top = Math.min(1 - height, Math.max(0, this.start.top + at.fy - this.anchor.fy))
+      this.draft = { left, top, right: left + width, bottom: top + height }
+    } else {
+      const crop = { ...this.start }
+      if (kind.includes("n")) crop.top = Math.min(at.fy, crop.bottom - 0.02)
+      if (kind.includes("s")) crop.bottom = Math.max(at.fy, crop.top + 0.02)
+      if (kind.includes("w")) crop.left = Math.min(at.fx, crop.right - 0.02)
+      if (kind.includes("e")) crop.right = Math.max(at.fx, crop.left + 0.02)
+      this.draft = crop
+    }
     this.redrawStage()
   }
 
-  pointerUp() {
-    if (this.mode !== "crop" || !this.anchor) return
-    this.anchor = null
+  // Dragging near the panel's edge scrolls it, and the box follows.
+  autoScroll() {
+    if (this.scrolling) return
+    const step = () => {
+      if (!this.dragging || !this.last) { this.scrolling = false; return }
+      const panel = this.stageTarget.parentElement
+      const box = panel.getBoundingClientRect()
+      const dx = this.last.x < box.left + SCROLL_EDGE ? -12 : this.last.x > box.right - SCROLL_EDGE ? 12 : 0
+      const dy = this.last.y < box.top + SCROLL_EDGE ? -12 : this.last.y > box.bottom - SCROLL_EDGE ? 12 : 0
+      if (!dx && !dy) { this.scrolling = false; return }
+      const before = [panel.scrollLeft, panel.scrollTop]
+      panel.scrollBy(dx, dy)
+      if (panel.scrollLeft === before[0] && panel.scrollTop === before[1]) { this.scrolling = false; return }
+      this.dragTo(this.last)
+      requestAnimationFrame(step)
+    }
+    this.scrolling = true
+    requestAnimationFrame(step)
+  }
+
+  pointerUp(event) {
+    if (this.mode !== "crop" || !this.dragging) return
+    if (event?.pointerId !== undefined && this.stageTarget.hasPointerCapture(event.pointerId)) this.stageTarget.releasePointerCapture(event.pointerId)
+    this.dragging = null
     const crop = this.draft
-    if (!crop || crop.right - crop.left < 0.02 || crop.bottom - crop.top < 0.02) return this.redrawStage()
-    this.current.crop = crop
-    this.current.texts = []
-    this.touched(this.current)
+    if (!crop || crop.right - crop.left < 0.02 || crop.bottom - crop.top < 0.02) {
+      this.draft = this.current.crop ? { ...this.current.crop } : null
+      return this.redrawStage()
+    }
+    const before = JSON.stringify(this.current.crop)
+    this.current.crop = { ...crop }
+    if (before !== JSON.stringify(this.current.crop)) {
+      this.current.texts = []
+      this.changed = true
+      this.drawThumb(this.current)
+    }
+    this.redrawStage()
   }
 
   addText() {

@@ -43,6 +43,13 @@
     </span>
   </div>
   <p class="aim-pdf-workspace__line">
+    <span class="aim-pdf-zoom" role="group" aria-label="Zoom">
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomOut" aria-label="Zoom out">−</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitPage">Fit page</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitWidth">Fit width</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomIn" aria-label="Zoom in">+</button>
+      <span data-aim-pdf-editor-target="zoomLabel"></span>
+    </span>
     <strong data-aim-pdf-editor-target="pageLabel"></strong>
     <span data-aim-pdf-editor-target="hint"></span>
     <span data-aim-pdf-editor-target="status"></span>
@@ -57,7 +64,7 @@
         <ul data-aim-pdf-editor-target="textList"></ul>
       </div>
       <canvas data-aim-pdf-editor-target="stage"
-              data-action="mousedown->aim-pdf-editor#pointerDown mousemove->aim-pdf-editor#pointerMove mouseup->aim-pdf-editor#pointerUp mouseleave->aim-pdf-editor#pointerUp"></canvas>
+              data-action="pointerdown->aim-pdf-editor#pointerDown pointermove->aim-pdf-editor#pointerMove pointerup->aim-pdf-editor#pointerUp pointercancel->aim-pdf-editor#pointerUp"></canvas>
     </div>
   </div>
 </div>

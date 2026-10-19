@@ -1121,6 +1121,16 @@
   color: $text-muted;
 }
 
+.aim-pdf-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.aim-pdf-workspace__line {
+  align-items: center;
+}
+
 .aim-pdf-workspace__body {
   display: grid;
   flex: 1;
@@ -1185,6 +1195,7 @@
 
 .aim-pdf-stage canvas.is-marking {
   cursor: crosshair;
+  touch-action: none;
 }
 
 .aim-pdf-textbar {
