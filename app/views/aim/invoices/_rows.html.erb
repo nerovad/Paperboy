@@ -11,6 +11,7 @@
   <thead>
     <tr>
       <th>Action</th>
+      <th>AIM #</th>
       <th>Vendor</th>
       <th>Invoice #</th>
       <th>Type</th>
@@ -41,7 +42,7 @@
       <% badge_class, badge_text = aim_status_badge(invoice, viewer) %>
       <% locked = invoice.claimed_by_other?(viewer) %>
       <%# The batch id names the row in billing. It is too long for a column, so it rides on the row as a tooltip. %>
-      <% search = [invoice.vendor_name, invoice.extracted_vendor_name, invoice.invoice_number, invoice.budget_unit,
+      <% search = [invoice.handle, invoice.vendor_name, invoice.extracted_vendor_name, invoice.invoice_number, invoice.budget_unit,
                    invoice.submitter, invoice.assigned_to, invoice.document_type, invoice.invoice_total,
                    aim_invoice_date(invoice.invoice_date), invoice.order_number, invoice.customer_number,
                    invoice.batch_id].compact.join(' ') %>
@@ -62,6 +63,7 @@
                           class: 'btn compact', title: 'Seen, and fine: take it off this list' %>
           <% end %>
         </td>
+        <td><%= invoice.handle %></td>
         <td class="is-strong"><%= invoice.vendor_name.presence || invoice.extracted_vendor_name.presence || 'N/A' %></td>
         <td><%= invoice.invoice_number.presence || 'N/A' %></td>
         <td><%= invoice.document_type.presence || 'N/A' %></td>

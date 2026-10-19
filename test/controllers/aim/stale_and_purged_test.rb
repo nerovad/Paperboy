@@ -32,6 +32,21 @@ module Aim
       assert_select 'tr[title=NEW] span.badge', text: /days?\z/, count: 0
     end
 
+    test 'the AIM # shows on queue rows and the review page, and Search older invoices finds it' do
+      row = waiting('NUMBERED', 1)
+      other = waiting('OTHER', 1, state: 'rejected')
+      other.update_columns(finished_at: 400.days.ago)
+
+      get :index, params: { queue: 'needs_review' }
+      assert_select 'tr[title=NUMBERED] td', text: "AIM-#{row.id}"
+
+      get :show, params: { id: 'NUMBERED', queue: 'needs_review' }
+      assert_select '.aim-review-heading .aim-handle', text: "AIM-#{row.id}"
+
+      get :index, params: { queue: 'rejected', invoice_number: "aim#{other.id}" }
+      assert_equal ['OTHER'], @controller.instance_variable_get(:@invoices).map(&:batch_id)
+    end
+
     test 'a purged invoice says so on its row and its page, and Restore refuses it' do
       row = waiting('PURGED', 0, state: 'deleted')
       row.update_columns(pdf_purged_at: Time.zone.local(2026, 9, 1))

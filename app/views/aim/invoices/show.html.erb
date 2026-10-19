@@ -129,6 +129,8 @@
       <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
       <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
+      <%# The short number people and Fiscal use, from intake on. %>
+      <span class="aim-count-pill aim-handle" title="AIM # -- the same on every AIM and Fiscal page"><%= @invoice.handle %></span>
       <%# A reason with a notice of its own shows as that notice's chip. %>
       <% if state == 'needs_review' && @invoice.review_reason.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
         <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>

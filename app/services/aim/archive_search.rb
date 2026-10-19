@@ -42,7 +42,7 @@ module Aim
     # The invoice's own fields.
     def invoices(scope)
       scope = like(scope, %w[vendor_name extracted_vendor_name], criteria[:vendor])
-      scope = like(scope, %w[invoice_number], criteria[:invoice_number])
+      scope = number(scope, criteria[:invoice_number])
       scope = scope.where(invoice_total: @amount) if @amount
       scope = scope.where(budget_unit: criteria[:budget_unit]) if criteria[:budget_unit]
       scope = in_agency(scope, criteria[:agency]) if criteria[:agency]
@@ -83,6 +83,12 @@ module Aim
 
     def dated(column, fallback)
       yield(column).or(column.eq(nil).and(yield(fallback)))
+    end
+
+    # The invoice # box also takes an AIM # ("AIM-118", any case, dash optional).
+    def number(scope, text)
+      handle = text.to_s[/\AAIM-?(\d+)\z/i, 1]
+      handle ? scope.where(id: handle.to_i) : like(scope, %w[invoice_number], text)
     end
 
     def like(scope, columns, text)
