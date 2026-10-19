@@ -152,28 +152,29 @@
       <div class="aim-form-actions">
         <div class="aim-action-group aim-review-action-strip">
           <% if read_only %>
-            <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
+            <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn compact' %>
           <% else %>
-            <%= button_tag 'Save', name: 'fiscal_action', value: 'save', class: 'btn secondary',
+            <%# As the review page (#182, #187): the second actions, Save, then the main one. %>
+            <% if status == 'on_hold' %>
+              <%= button_tag 'Release', name: 'fiscal_action', value: 'release', class: 'btn take-back compact' %>
+            <% end %>
+            <% if status == 'ready' %>
+              <%= button_tag 'Back to Fiscal Queue', name: 'fiscal_action', value: 'back_to_review', class: 'btn warning compact' %>
+            <% end %>
+            <% if @record.can_move_to?('on_hold') %>
+              <button type="button" class="btn warning compact" data-action="aim-reason#open"
+                      data-value="hold" data-commit="Hold" data-title="Put on hold">Hold</button>
+            <% end %>
+            <%= button_tag 'Save', name: 'fiscal_action', value: 'save', class: 'btn compact',
                                    data: { turbo_frame: 'aim-fiscal-panel' } %>
             <% if @record.can_move_to?('ready') %>
-              <%= button_tag 'Add to Report Queue', name: 'fiscal_action', value: 'make_ready', class: 'btn approve',
+              <%= button_tag 'Add to Report Queue', name: 'fiscal_action', value: 'make_ready', class: 'btn approve compact',
                                                     data: { turbo_confirm: 'Add this invoice to the Report Queue?',
                                                             confirm_label: 'Add' } %>
             <% end %>
-            <% if status == 'on_hold' %>
-              <%= button_tag 'Release', name: 'fiscal_action', value: 'release', class: 'btn take-back' %>
-            <% end %>
-            <% if status == 'ready' %>
-              <%= button_tag 'Back to Fiscal Queue', name: 'fiscal_action', value: 'back_to_review', class: 'btn warning' %>
-            <% end %>
-            <% if @record.can_move_to?('on_hold') %>
-              <button type="button" class="btn warning" data-action="aim-reason#open"
-                      data-value="hold" data-commit="Hold" data-title="Put on hold">Hold</button>
-            <% end %>
             <% if status == 'exported' %>
               <%# Check and pay doc numbers come back after payment, so Archive is where a gap matters. %>
-              <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve',
+              <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve compact',
                                         disabled: required_missing.any?,
                                         title: ("#{@group.name} needs #{required_missing.to_sentence} before archive" if required_missing.any?),
                                         data: { turbo_confirm: missing.any? ? "There is no #{missing.join(' or ')} yet. Archive it anyway?" : 'Archive this invoice? It is finished after this.',

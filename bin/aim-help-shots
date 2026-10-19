@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Retakes the How AIM works screenshots (#187) from a running local server:
+#
+#   AIM_HELP_SHOTS_EMPLOYEE=<an AIM Admin's employee id> bin/aim-help-shots [http://localhost:3002]
+#
+# It only looks (script/aim/help_shots.mjs refuses anything that would change
+# data) and writes app/assets/images/aim/help/*.png over the old pictures; a
+# second run takes them again. It refuses to run while public/assets holds
+# precompiled files, which would photograph old screens (AGENTS.md, Working
+# on CSS locally). Needs Playwright (npm install -g playwright, then
+# npx playwright install chromium).
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "$script_dir/.."
+
+if [ -d public/assets ] && [ -n "$(ls -A public/assets 2>/dev/null)" ]; then
+  echo "public/assets has precompiled files; the shots would show old screens." >&2
+  echo "Run: bin/rails assets:clobber && bin/rails dartsass:build, restart the server, then try again." >&2
+  exit 1
+fi
+
+# Playwright from AIM_PLAYWRIGHT (its package folder), the repo, or the global
+# npm folder. Module imports ignore NODE_PATH, so the script is told where.
+playwright="${AIM_PLAYWRIGHT:-}"
+for candidate in "$playwright" node_modules/playwright "$(npm root -g 2>/dev/null)/playwright"; do
+  if [ -n "$candidate" ] && [ -f "$candidate/package.json" ]; then playwright=$(cd "$candidate" && pwd); break; fi
+  playwright=""
+done
+if [ -z "$playwright" ]; then
+  echo "Playwright not found: npm install -g playwright && npx playwright install chromium (or set AIM_PLAYWRIGHT)." >&2
+  exit 1
+fi
+
+AIM_PLAYWRIGHT="$playwright/index.mjs" exec node script/aim/help_shots.mjs "${1:-http://localhost:3002}"
