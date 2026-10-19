@@ -147,11 +147,18 @@
   </header>
 
   <div class="aim-document-layout">
-    <section class="aim-panel aim-document-panel">
+    <%# Swap or edit the PDF here (#181), when it can change and nobody else is in it. %>
+    <% pdf_editable = aim_queue_access? && !@claimed_by_other && Aim::PdfVersions.editable?(@invoice) %>
+    <%= tag.section class: 'aim-panel aim-document-panel',
+                    data: (pdf_editable ? { controller: 'aim-pdf-editor', aim_pdf_editor_pdf_url_value: aim_pdf_source_invoice_path(@invoice.batch_id) } : {}) do %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Document Preview</h2>
+        <% if pdf_editable %>
+          <button type="button" class="btn edit compact" data-aim-pdf-editor-target="openButton" data-action="aim-pdf-editor#open">Edit PDF</button>
+        <% end %>
       </div>
 
+      <div class="aim-document-view" data-aim-pdf-editor-target="viewer">
       <% if @pdf_present %>
         <div class="aim-pdf-shell" data-pdf-url="<%= pdf_aim_invoice_path(@invoice.batch_id, queue: @queue) %>">
           <iframe class="aim-pdf-frame"
@@ -167,7 +174,9 @@
           <p><%= @invoice.pdf_purged_at ? "The PDF was purged on #{@invoice.pdf_purged_at.strftime('%B %-d, %Y')}, after the retention period for deleted invoices." : 'The PDF is not in the store.' %></p>
         </div>
       <% end %>
-    </section>
+      </div>
+      <%= render 'aim/pdf_edits/workspace', invoice: @invoice if pdf_editable %>
+    <% end %>
 
     <%# Save Changes redraws this panel alone, so the PDF keeps its place;
         every other button leaves the frame for the whole page. %>

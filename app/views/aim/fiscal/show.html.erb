@@ -42,10 +42,17 @@
   </header>
 
   <div class="aim-document-layout">
-    <section class="aim-panel aim-document-panel">
+    <%# Swap or edit the PDF here (#181), until Fiscal archives it. %>
+    <% pdf_editable = Aim::PdfVersions.editable?(@invoice) %>
+    <%= tag.section class: 'aim-panel aim-document-panel',
+                    data: (pdf_editable ? { controller: 'aim-pdf-editor', aim_pdf_editor_pdf_url_value: aim_pdf_source_invoice_path(@invoice.batch_id) } : {}) do %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Document</h2>
+        <% if pdf_editable %>
+          <button type="button" class="btn edit compact" data-aim-pdf-editor-target="openButton" data-action="aim-pdf-editor#open">Edit PDF</button>
+        <% end %>
       </div>
+      <div class="aim-document-view" data-aim-pdf-editor-target="viewer">
       <% if @pdf_present %>
         <div class="aim-pdf-shell">
           <iframe class="aim-pdf-frame" src="<%= "#{pdf_aim_fiscal_invoice_path(@invoice.batch_id)}#zoom=page-fit" %>"
@@ -54,7 +61,9 @@
       <% else %>
         <div class="aim-empty-state"><p>The PDF is not in the store.</p></div>
       <% end %>
-    </section>
+      </div>
+      <%= render 'aim/pdf_edits/workspace', invoice: @invoice, from: 'fiscal' if pdf_editable %>
+    <% end %>
 
     <%= turbo_frame_tag 'aim-fiscal-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_fiscal_invoice_path(@invoice.batch_id), method: :patch, local: true,

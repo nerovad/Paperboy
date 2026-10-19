@@ -2,7 +2,7 @@
     are some (aim_help_shot). %>
 <% sections = {
      'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
-     'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'duplicates' => 'Possible duplicates',
+     'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'pdf' => 'Fixing a PDF', 'duplicates' => 'Possible duplicates',
      'find' => 'Find an invoice', 'older' => 'Finding an old invoice', 'waiting' => 'Waiting too long', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
    } %>
 <div class="aim-page aim-help">
@@ -103,6 +103,21 @@
         approval needs is in.</li>
     </ul>
     <%= aim_help_shot('review', 'The review page: the PDF, the fields, and the buttons.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="pdf">
+    <h2>Fixing an invoice's PDF</h2>
+    <p><strong>Edit PDF</strong>, above the PDF on the review page (and on Fiscal's page), changes the file at once. The
+      current PDF is always kept as a version, and the history says who changed what.</p>
+    <ul>
+      <li><strong>Swap the whole PDF</strong> for a corrected or cleaned copy from the vendor.</li>
+      <li><strong>Edit pages:</strong> drag to reorder, turn, remove, add pages from another PDF, crop (drag a box over
+        what to keep), and add text (click where it starts). Nothing changes until <em>Apply changes</em>.</li>
+      <li>The AI does not read it again unless you tick <em>Read it again with the AI afterwards</em>; the invoice keeps
+        its fields, queue and owner.</li>
+      <li>On an approved invoice the approval stamp is redone on the new PDF; saved Fiscal reports keep their copy.</li>
+      <li>Not while the AI or the export has it, nor once it is rejected, deleted, split or archived by Fiscal.</li>
+    </ul>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="duplicates">
