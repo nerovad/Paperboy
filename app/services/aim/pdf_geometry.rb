@@ -6,8 +6,6 @@ module Aim
   # displayed. The editor works in fractions of that view; these turn them
   # into the page's own coordinates. The same sums as Aim::PdfStamp's.
   module PdfGeometry
-    LEADING = 1.2
-
     module_function
 
     # The seen page's width and height, and the matrix from seen coordinates
@@ -40,22 +38,11 @@ module Aim
       [xs.min, ys.min, xs.max, ys.max]
     end
 
-    # A content stream writing +texts+ ({ x:, y:, size:, text: }, x and y
-    # fractions of the seen page from its top left to the text's top left)
-    # in black Helvetica. Starts with Q, to follow a page wrapped in q.
-    def text_stream(box, rotate, texts, font)
+    # A content stream drawing +texts+ (Aim::PdfTextBox) on the seen page.
+    # Starts with Q, to follow a page wrapped in q.
+    def text_stream(box, rotate, texts, fonts)
       width, height, matrix = orientation(box, rotate)
-      body = "Q\nq\n#{matrix.map { |n| PdfWriter.number(n) }.join(' ')} cm\n0 g\nBT\n"
-      texts.each do |text|
-        size = text[:size].to_f.clamp(4.0, 72.0)
-        x = text[:x].to_f.clamp(0.0, 1.0) * width
-        top = (1 - text[:y].to_f.clamp(0.0, 1.0)) * height
-        text[:text].to_s.split(/\r?\n/).each_with_index do |line, index|
-          y = top - (size * ((index * LEADING) + 1))
-          body << "/#{font} #{PdfWriter.number(size)} Tf\n1 0 0 1 #{PdfWriter.number(x)} #{PdfWriter.number(y)} Tm\n#{literal(line)} Tj\n"
-        end
-      end
-      body << "ET\nQ\n"
+      "Q\nq\n#{matrix.map { |n| PdfWriter.number(n) }.join(' ')} cm\n#{PdfTextBox.stream(texts, width, height, fonts)}Q\n"
     end
 
     def literal(text)

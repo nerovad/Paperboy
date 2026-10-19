@@ -90,13 +90,13 @@
     {
       "warning_type": "File Access",
       "warning_code": 16,
-      "fingerprint": "98e3768053242bf68cf3c0f12ce1d3481a6f004d6976cef29651ab648119a8dd",
+      "fingerprint": "4125c56dc7704583eaf7db525dca5385bdf4b3d3d6d1488e65684cbbe9750665",
       "check_name": "SendFile",
       "message": "Parameter value used in file name",
       "file": "app/controllers/aim/pdf_edits_controller.rb",
-      "line": 26,
+      "line": 31,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
-      "code": "send_file(store_file(Aim::Invoice.find_by(:batch_id => params[:id].to_s), \"pdf\"), :type => \"application/pdf\", :disposition => \"inline\", :filename => (\"#{Aim::Invoice.find_by(:batch_id => params[:id].to_s).batch_id}.pdf\"))",
+      "code": "send_file((Aim::PdfVersions.current(Aim::Invoice.find_by(:batch_id => params[:id].to_s)).insert_paths.dig((params[:insert].to_i - 1)) or (Aim::PdfVersions.current(Aim::Invoice.find_by(:batch_id => params[:id].to_s)).base_path or store_file(Aim::Invoice.find_by(:batch_id => params[:id].to_s), \"pdf\"))), :type => \"application/pdf\", :disposition => \"inline\", :filename => File.basename((Aim::PdfVersions.current(Aim::Invoice.find_by(:batch_id => params[:id].to_s)).insert_paths.dig((params[:insert].to_i - 1)) or (Aim::PdfVersions.current(Aim::Invoice.find_by(:batch_id => params[:id].to_s)).base_path or store_file(Aim::Invoice.find_by(:batch_id => params[:id].to_s), \"pdf\")))))",
       "render_path": null,
       "location": {
         "type": "method",
@@ -108,7 +108,7 @@
       "cwe_id": [
         22
       ],
-      "note": "The PDF as received, for the Edit PDF editor (#181). The path is not taken from the request: Aim::StoredPdf#store_file refuses a batch id that is not one plain folder name (no slash, no leading dot), reads it through Paperboy::FileStore (which refuses absolute and '..' names), and sends it only if the resolved file is inside the AIM store -- the same lookup InvoicesController#pdf uses. require_pdf_editor has already checked the person may edit it."
+      "note": "The Edit PDF editor's sources (#181, #182): the current version's base PDF or one of its inserted PDFs. The path is not taken from the request: the file names come from Aim::PdfVersion rows Aim::PdfVersions wrote (<batch id>.base-N.pdf, <batch id>.insert-N-M.pdf), params[:insert] only picks one of them by position, and the file is sent only if it sits directly in the invoice's store folder (File.dirname == invoice.store_dir). With no versions it falls back to Aim::StoredPdf#store_file, the guarded lookup InvoicesController#pdf uses. require_pdf_editor has already checked the person may edit the invoice."
     }
   ],
   "updated": "2026-10-07 13:20:42 -0700",

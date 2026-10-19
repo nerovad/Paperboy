@@ -1,59 +1,59 @@
 # frozen_string_literal: true
 
 module Aim
-  # The history line for a PDF edit (#181), in words: "rotated page 2;
-  # removed page 4; added 2 pages from vendor.pdf". Pages of the invoice's own
-  # PDF go by their old numbers; pages added from another PDF by that file.
+  # The history line for a PDF edit (#181, #182), in words, for what changed
+  # since the version before: "rotated page 2; removed page 4; added 2 pages
+  # from vendor.pdf; text changed on page 1". Pages of the base PDF go by
+  # their own numbers; pages of an added PDF by that file.
   class PdfEditSummary
-    def initialize(pages, insert_names, original_count: nil)
-      @pages = pages.map { |entry| entry.to_h.symbolize_keys }
-      @names = insert_names
-      @original_count = original_count
+    # +before+ and +after+ are plans (lists of page hashes); +names+ the
+    # added PDFs' names, in source order (source 1 first).
+    def initialize(before, after, names)
+      @before = normalize(before)
+      @after = normalize(after)
+      @names = names
     end
 
     def to_s = parts.presence&.join('; ') || 'no change'
 
     private
 
+    def normalize(pages) = pages.map { |entry| entry.to_h.deep_symbolize_keys.merge(key: [entry.to_h.symbolize_keys[:source].to_i, entry.to_h.symbolize_keys[:page].to_i]) }
+
     def parts
-      own = @pages.select { |entry| entry[:source].to_i.zero? }.map { |entry| entry[:page].to_i }
-      [removed(own), added, ('reordered pages' if own != own.sort || moved_inserts?),
-       touched('rotated', &rotated), touched('cropped') { |entry| entry[:crop].present? },
-       touched('text added to') { |entry| Array(entry[:texts]).any? { |text| text.to_h.symbolize_keys[:text].to_s.strip.present? } }].compact
+      before = @before.index_by { |entry| entry[:key] }
+      after = @after.index_by { |entry| entry[:key] }
+      kept = @after.select { |entry| before.key?(entry[:key]) }
+      [named('removed', @before.reject { |entry| after.key?(entry[:key]) }),
+       added(@after.reject { |entry| before.key?(entry[:key]) }),
+       ('reordered pages' if kept.map { |entry| entry[:key] } != @before.select { |entry| after.key?(entry[:key]) }.map { |entry| entry[:key] }),
+       named('rotated', kept.reject { |entry| turn(entry) == turn(before[entry[:key]]) }),
+       named('cropped', kept.reject { |entry| entry[:crop] == before[entry[:key]][:crop] }),
+       named('text changed on', kept.reject { |entry| texts(entry) == texts(before[entry[:key]]) }),
+       named('text added to', @after.reject { |entry| before.key?(entry[:key]) || texts(entry).empty? })].compact
     end
 
-    def rotated = ->(entry) { (entry[:rotate].to_i % 360).nonzero? }
+    def turn(entry) = entry[:rotate].to_i % 360
 
-    def removed(own)
-      return if @original_count.nil?
+    def texts(entry) = Array(entry[:texts]).select { |text| text[:text].to_s.strip.present? }
 
-      gone = (1..@original_count).to_a - own
-      "removed #{pages_named(gone)}" if gone.any?
+    def added(entries)
+      return if entries.empty?
+
+      phrases = entries.group_by { |entry| entry[:key].first }.map do |source, list|
+        from = source.zero? ? 'this PDF' : (@names[source - 1] || 'another PDF')
+        "#{list.size} #{'page'.pluralize(list.size)} from #{from}"
+      end
+      "added #{phrases.to_sentence}"
     end
 
-    def added
-      counts = @pages.reject { |entry| entry[:source].to_i.zero? }.group_by { |entry| entry[:source].to_i }
-      phrases = counts.map { |source, entries| "#{entries.size} #{'page'.pluralize(entries.size)} from #{@names[source - 1] || 'another PDF'}" }
-      "added #{phrases.to_sentence}" if phrases.any?
+    def named(verb, entries)
+      return if entries.empty?
+
+      own = entries.select { |entry| entry[:key].first.zero? }.map { |entry| entry[:key].last }
+      others = entries.size - own.size
+      list = [("#{'page'.pluralize(own.size)} #{own.to_sentence}" if own.any?), ("#{others} added #{'page'.pluralize(others)}" if others.positive?)]
+      "#{verb} #{list.compact.to_sentence}"
     end
-
-    # Added pages that do not sit together at the end count as a reorder.
-    def moved_inserts?
-      sources = @pages.map { |entry| entry[:source].to_i }
-      first_added = sources.index(&:positive?)
-      first_added && sources[first_added..].any?(&:zero?)
-    end
-
-    def touched(verb, &test)
-      hits = @pages.select(&test)
-      return if hits.empty?
-
-      own = hits.select { |entry| entry[:source].to_i.zero? }.map { |entry| entry[:page].to_i }
-      others = hits.size - own.size
-      named = [(pages_named(own) if own.any?), ("#{others} added #{'page'.pluralize(others)}" if others.positive?)].compact
-      "#{verb} #{named.to_sentence}"
-    end
-
-    def pages_named(numbers) = "#{'page'.pluralize(numbers.size)} #{numbers.to_sentence}"
   end
 end

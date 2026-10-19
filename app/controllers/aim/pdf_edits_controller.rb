@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Aim
-  # Edit PDF (#181): swap an invoice's PDF for an uploaded one, or apply the
-  # page editor's changes, at once, in Rails (Aim::PdfEdit, Aim::PdfVersions).
+  # Edit PDF (#181, #182): swap an invoice's PDF for an uploaded one, apply
+  # the page editor's plan, or restore a version -- each a new version, at
+  # once, in Rails (Aim::PdfVersions). The editor reads the current version's
+  # base and inserted PDFs and its plan, so its text boxes stay editable.
   # AIM staff while it is being worked (not if someone else is in it), and
   # Fiscal on invoices of their groups that are with them; never while the AI
   # or the export has it, nor once it is finished elsewhere or archived.
@@ -17,21 +19,37 @@ module Aim
     # The editor lives in the review and Fiscal pages' Document panel now.
     def show = redirect_to(return_path)
 
-    # The PDF as received (never the approval-stamped copy): what the editor
-    # works on.
+    # The current version's base PDF, or its +n+th inserted PDF: what the
+    # editor lays its plan over. Never the approval-stamped copy.
     def source
-      path = store_file(@invoice, 'pdf')
-      return head :not_found if path.nil?
+      version = Aim::PdfVersions.current(@invoice)
+      path = if params[:insert].present? then version&.insert_paths&.dig(params[:insert].to_i - 1)
+             else version&.base_path || store_file(@invoice, 'pdf')
+             end
+      return head :not_found unless path && File.file?(path) && File.dirname(path) == @invoice.store_dir
 
-      send_file path, type: 'application/pdf', disposition: 'inline', filename: "#{@invoice.batch_id}.pdf"
+      send_file path, type: 'application/pdf', disposition: 'inline', filename: File.basename(path)
+    end
+
+    # Version +number+ as it looked, rendered for viewing.
+    def version
+      version = Aim::PdfVersions.all(@invoice).find_by(number: params[:number].to_i)
+      return head :not_found if version.nil?
+
+      Tempfile.create(['aim-version', '.pdf']) do |out|
+        Aim::PdfVersions.render_to(version, out.path)
+        send_data File.binread(out.path), type: 'application/pdf', disposition: 'inline',
+                                          filename: "#{@invoice.handle} version #{version.number}.pdf"
+      end
+    rescue Aim::PdfEdit::Unreadable
+      head :unprocessable_content
     end
 
     def replace
       file = params[:file]
       return back_to_editor(alert: 'Choose a PDF to swap in.') unless file.respond_to?(:path)
 
-      name = file.original_filename.to_s.truncate(120)
-      Aim::PdfVersions.replace!(@invoice, file.path, actor: current_user_email, name: name, note: "PDF swapped for #{name}")
+      Aim::PdfVersions.swap!(@invoice, file.path, name: file.original_filename.to_s.truncate(120), actor: current_user_email)
       finish('PDF swapped.')
     rescue Aim::PdfVersions::Refused => e
       back_to_editor(alert: e.message)
@@ -39,23 +57,21 @@ module Aim
 
     def update
       pages = JSON.parse(params[:pages].to_s)
-      inserts = Array(params[:inserts]).first(MAX_INSERTS).select { |file| file.respond_to?(:path) }
-      inserts.each { |file| Aim::PdfVersions.check!(file.path, name: file.original_filename) }
-      Tempfile.create(['aim-edit', '.pdf']) do |out|
-        Aim::PdfEdit.new(@invoice.pdf_path, inserts: inserts.map(&:path)).write(out.path, pages)
-        Aim::PdfVersions.replace!(@invoice, out.path, actor: current_user_email,
-                                                      note: "PDF edited: #{summary(pages, inserts)}")
-      end
+      uploads = Array(params[:inserts]).first(MAX_INSERTS).select { |file| file.respond_to?(:path) }
+      Aim::PdfVersions.edit!(@invoice, pages, uploads.map { |file| [file.path, file.original_filename.to_s] }, actor: current_user_email)
       finish('PDF changes applied.')
-    rescue JSON::ParserError, Aim::PdfEdit::Unreadable, Aim::PdfVersions::Refused => e
+    rescue JSON::ParserError, Aim::PdfVersions::Refused => e
       back_to_editor(alert: "Not applied: #{e.message}. Nothing has changed.")
     end
 
-    private
-
-    def summary(pages, inserts)
-      Aim::PdfEditSummary.new(pages, inserts.map(&:original_filename), original_count: @invoice.page_count).to_s
+    def restore
+      Aim::PdfVersions.restore!(@invoice, params[:number].to_i, actor: current_user_email)
+      finish("Version #{params[:number].to_i} restored, as a new version.")
+    rescue Aim::PdfVersions::Refused => e
+      back_to_editor(alert: e.message)
     end
+
+    private
 
     def set_invoice
       @invoice = Aim::Invoice.find_by(batch_id: params[:id].to_s)
