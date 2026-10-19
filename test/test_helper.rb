@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 ENV['RAILS_ENV'] ||= 'test'
+# The read-only SQL Dashboards login in .env has no user in the per-worker test
+# databases. With it set, SqlDashboards' connection classes open their own pool,
+# fixtures begin a transaction on every writing pool, and nearly every test
+# fails. Blank it before boot (dotenv leaves a set variable alone); the
+# feature's tests stand in for the login with SqlDashboards::TestAccess.
+ENV['SQL_DASHBOARDS_USERNAME'] = ''
 require_relative '../config/environment'
 
 # A _CI database is emptied and loaded only by `bin/rails ci:reset_database`.
