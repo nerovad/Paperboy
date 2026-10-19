@@ -193,6 +193,10 @@ from the shared checkout. A file already in the worktree stays as it is.
 dotenv reads `.env.local` first and the first value wins, so a name set in
 both takes its value from `.env.local`. If a value is the same for everyone
 it belongs in LockBox; otherwise it goes in `.env.local`.
+`DNS_HOST_PREFIX` and `SMB_DNS_SUFFIX` are shared and live in LockBox.
+`smb_shortcut` 1.1.6 appends `SMB_DNS_SUFFIX` to a short hostname from a
+Windows shortcut. An existing fully qualified name or IP address is left
+unchanged. `SMB_USERNAME` and `SMB_PASSWORD` stay in `.env.local`.
 `.env.local.example` lists the usual candidates — `PAPERBOY_DATABASE`,
 `PAPERBOY_TEST_DATABASE`, `GSABSS_HOST`, `DEV_EMAIL`, `KRB5CCNAME`.
 
@@ -257,7 +261,9 @@ ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=
 ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=
 
-# SMB Shortcut
+# SMB Shortcut. The suffix is shared LockBox configuration.
+DNS_HOST_PREFIX=ent.co.ventura.ca.us
+SMB_DNS_SUFFIX="${DNS_HOST_PREFIX}"
 SMB_USERNAME='ENT\000000'
 SMB_PASSWORD='password'
 
