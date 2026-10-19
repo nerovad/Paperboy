@@ -3,7 +3,7 @@
 <% sections = {
      'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
      'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'duplicates' => 'Possible duplicates',
-     'older' => 'Finding an old invoice', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
+     'older' => 'Finding an old invoice', 'waiting' => 'Waiting too long', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
    } %>
 <div class="aim-page aim-help">
   <header class="aim-page-header">
@@ -136,6 +136,21 @@
     </ul>
   </section>
 
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="waiting">
+    <h2>Waiting too long</h2>
+    <ul>
+      <li>Every invoice still being worked shows how long it has waited where it is -- since it reached its queue or
+        last changed hands -- as a pill on its row (<em>12 days</em>). It turns red once it is stale:
+        <%= pluralize(Aim::Waiting.stale_days, 'day') %>.</li>
+      <li>The dashboard's <strong>Stale</strong> panel lists stale invoices by queue and owner. Nothing is moved or removed
+        because it is old; someone has to act on it.</li>
+      <li><strong>Deleted invoices' PDFs</strong> can be purged after a retention period (<%= pluralize(Aim::DeletedPdfPurge.retention_days, 'day') %>),
+        <%= Aim::DeletedPdfPurge.enabled? ? 'every night' : 'once it is switched on (it is not yet)' %>. The invoice's
+        record and history stay, marked <em>PDF purged</em>, and it can no longer be restored. Rejected invoices are
+        never purged.</li>
+    </ul>
+  </section>
+
   <section class="aim-panel aim-agency-group-panel aim-help__section" id="fiscal">
     <h2>Fiscal</h2>
     <p>Every approved invoice reaches its group's Fiscal: <strong>Fiscal Queue</strong> (fill in pay doc, check, coding)
@@ -199,6 +214,8 @@
       <dd>Someone acknowledged it; its history says who. <em>Search older invoices</em> still finds it.</dd>
       <dt>An invoice I finished months ago is not in the list.</dt>
       <dd>The finished lists show the last 30 days; use <em>Search older invoices</em> above the list.</dd>
+      <dt>A deleted invoice's PDF is gone.</dt>
+      <dd>It was purged after the retention period; its record and history are still there.</dd>
       <dt>Why didn't anyone get an email?</dt>
       <dd>Email alerts are not switched on yet.</dd>
     </dl>

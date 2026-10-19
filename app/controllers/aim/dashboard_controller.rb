@@ -20,13 +20,14 @@ module Aim
 
       @dashboard_queues = Aim::Invoice::QUEUES
       reading_database('read the invoices for the dashboard', errors: StandardError,
-                                                              empty: { review_reasons: {}, tiles: [], today: {}, oldest: [], by_group: {} }) do
+                                                              empty: { review_reasons: {}, tiles: [], today: {}, oldest: [], stale: [], by_group: {} }) do
         invoices = helpers.aim_agency_groups.invoices(helpers.aim_managing_groups)
         stats = Aim::DashboardStats.new(invoices, groups: helpers.aim_agency_groups)
         @review_reasons = invoices.in_queue('needs_review').group(:review_reason).count
         @tiles = stats.pipeline_tiles(helpers)
         @today = stats.today
         @oldest = stats.oldest('ready_for_approval')
+        @stale = stats.stale
         @by_group = helpers.aim_managing_group ? {} : stats.by_group(PIPELINE_COLUMNS)
       end
     end
