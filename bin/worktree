@@ -38,13 +38,12 @@ if [[ "${command_name}" =~ ^[0-9]+$ && $# -eq 1 ]]; then
   branch_name="${1}"
 fi
 
-repo_root="$(git rev-parse --show-toplevel)"
-common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
-if [[ "${common_dir}" == */.git ]]; then
-  common_root="${common_dir%/.git}"
-else
-  common_root="${repo_root}"
-fi
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck disable=SC1091
+source "${script_dir}/checkout-common"
+
+repo_root="$(paperboy_tree_root)"
+common_root="$(paperboy_shared_root)"
 
 default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
 default_branch="${default_branch#origin/}"

@@ -12,7 +12,9 @@ class EnvPullTest < ActiveSupport::TestCase
     @app = File.join(@root, 'Paperboy')
     @lockbox = File.join(@root, 'LockBox')
     FileUtils.mkdir_p([File.join(@app, 'bin'), @lockbox])
-    FileUtils.cp(Rails.root.join('bin/env-pull'), File.join(@app, 'bin/env-pull'))
+    %w[env-pull checkout-common].each do |name|
+      FileUtils.cp(Rails.root.join('bin', name), File.join(@app, 'bin', name))
+    end
     system('git', 'init', '-q', @lockbox, exception: true)
     lockbox("SHARED=one\nSECRET=hunter2\n")
   end

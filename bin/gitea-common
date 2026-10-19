@@ -1,5 +1,8 @@
 # shellcheck shell=bash
 
+# shellcheck disable=SC1091
+source "$(dirname -- "${BASH_SOURCE[0]}")/checkout-common"
+
 # Gitea 28 caps a response at 50 rows (GET /api/v1/settings/api
 # max_response_items). Callers that ask for more silently lose the rest.
 gitea_page_limit() {
@@ -7,29 +10,20 @@ gitea_page_limit() {
 }
 
 gitea_load_config() {
-  local file common_dir shared_root=""
-  local -a env_files=(.env .env.local)
+  local file name
 
   # .env.local is loaded second so this machine's values win. A personal
   # GITEA_TOKEN belongs there: .env is a copy of LockBox that bin/env-pull
   # replaces, and LockBox keeps GITEA_TOKEN empty.
   if [[ -n "${GITEA_ENV_FILE:-}" ]]; then
-    env_files=("${GITEA_ENV_FILE}")
+    [[ ! -f "${GITEA_ENV_FILE}" ]] || gitea_load_env_file "${GITEA_ENV_FILE}"
   else
     # A linked worktree without its own copy reads the shared checkout's.
-    common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
-    [[ "${common_dir}" != */.git ]] || shared_root="${common_dir%/.git}"
+    for name in .env .env.local; do
+      file="$(paperboy_env_file "${name}" || true)"
+      [[ -z "${file}" ]] || gitea_load_env_file "${file}"
+    done
   fi
-
-  for file in "${env_files[@]}"; do
-    if [[ ! -f "${file}" && -n "${shared_root}" ]]; then
-      file="${shared_root}/${file}"
-    fi
-
-    if [[ -f "${file}" ]]; then
-      gitea_load_env_file "${file}"
-    fi
-  done
 
   GITEA_URL="${GITEA_URL:-http://10.135.204.125:3000}"
   GITEA_OWNER="${GITEA_OWNER:-BSS}"
