@@ -10,8 +10,9 @@
 # them into their state, else exported_at, else updated_at. A second run, or
 # a run after a crash, fills only rows still without a date.
 #
-# Fiscal's Exported and Archived lists window on fiscal_records' own
-# exported_at and archived_at, indexed here with their status.
+# Fiscal's Archived list windows on fiscal_records.archived_at; exported_at
+# is indexed for the Fiscal dashboard's "Exported over 30 days". Both with
+# their status.
 #
 # Explicit index names: see test/lib/aim/schema_conventions_test.rb.
 class AddFinishedAtToAimInvoices < ActiveRecord::Migration[8.1]

@@ -2,8 +2,7 @@
 
 module Aim
   # The finished lists (#169) -- Finished, Rejected and Deleted, and Fiscal's
-  # Exported and Archived -- show a recent window, or what the archive search
-  # found, at most Aim::ArchiveSearch::CAP rows. The working lists show
+  # Archived -- show a recent window, or what Search older invoices found, at most Aim::ArchiveSearch::CAP rows. The working lists show
   # everything in them. Sets @archive on a finished list, for the search bar.
   module FinishedLists
     extend ActiveSupport::Concern

@@ -2,11 +2,12 @@
 
 module Aim
   # The finished lists (#169): Finished, Rejected and Deleted, and Fiscal's
-  # Exported and Archived. They show what finished recently, the last 30 days
-  # unless the person picks another window; anything older is found by
-  # searching the archive -- every finished invoice, on the server, by vendor,
-  # invoice #, amount, budget unit, agency and when it finished. Nothing moves:
-  # "the archive" is only what lies outside the window.
+  # Archived. They show what finished recently, the last 30 days unless the
+  # person picks another window; anything older is found by Search older
+  # invoices -- every finished invoice, on the server, by vendor, invoice #,
+  # amount, budget unit, agency and when it finished. Nothing moves: older
+  # invoices are only out of view. (Fiscal's Archived list is a step of
+  # Fiscal's, "paid"; it is not what this searches.)
   #
   # Built from the request's params. #invoices narrows an Aim::Invoice
   # relation by the invoice's own fields; #window narrows any relation by the
@@ -16,9 +17,11 @@ module Aim
     DEFAULT_WINDOW = 30
     CAP = 500
     FIELDS = %i[vendor invoice_number amount budget_unit agency from to].freeze
-    # The finished queues of AIM staff, and Fiscal's finished lists.
+    # The finished queues of AIM staff, and Fiscal's finished list. Fiscal's
+    # Exported is not one: each invoice there still waits for Fiscal to
+    # archive it once paid, so an old one must stay in view.
     QUEUES = %w[exported rejected deleted].freeze
-    FISCAL_STATUSES = { 'exported' => :exported_at, 'archived' => :archived_at }.freeze
+    FISCAL_STATUSES = { 'archived' => :archived_at }.freeze
 
     attr_reader :days, :criteria, :problems
 
@@ -31,7 +34,7 @@ module Aim
       @to = read_date(:to)
     end
 
-    # Searching the archive, rather than showing the recent window.
+    # Searching older invoices, rather than showing the recent window.
     def searching? = criteria.any?
 
     def capped? = @capped

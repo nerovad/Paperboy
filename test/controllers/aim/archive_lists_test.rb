@@ -57,7 +57,7 @@ module Aim
       assert_equal %w[UNDATED], listed
     end
 
-    test 'the archive search finds old invoices by vendor, number, amount, unit and finish date' do
+    test 'Search older invoices finds old invoices by vendor, number, amount, unit and finish date' do
       finished('ACME-OLD', days_ago: 200, vendor_name: 'Acme Paper', invoice_number: 'A-77', invoice_total: 1234.5)
       finished('OTHER-OLD', days_ago: 200, vendor_name: 'Zenith', invoice_number: 'Z-1', budget_unit: '4602')
       finished('ACME-NEW', days_ago: 1, vendor_name: 'Acme Paper', invoice_number: 'A-78')
@@ -119,7 +119,7 @@ module Aim
       assert_equal %w[MINE], listed
     end
 
-    test 'a work queue is unchanged: everything in it, no window and no archive search' do
+    test 'a work queue is unchanged: everything in it, no window and no search of older invoices' do
       row = Aim::Invoice.create!(batch_id: 'WORK-OLD', state: 'needs_review', actor: 'aim_worker')
       row.update_columns(updated_at: 400.days.ago, created_at: 400.days.ago)
 
@@ -129,8 +129,8 @@ module Aim
     end
   end
 
-  # Fiscal's Exported and Archived lists window on when Fiscal exported or
-  # archived the invoice, and search the same way.
+  # Fiscal's Archived list windows on when Fiscal archived the invoice and
+  # searches the same way. Exported is a working list: everything stays.
   class FiscalArchiveListsTest < ActionController::TestCase
     tests Aim::FiscalController
 
@@ -149,16 +149,23 @@ module Aim
 
     def listed = @controller.instance_variable_get(:@records).map { |record| record.invoice.batch_id }
 
-    test 'Exported shows the recent window; the search reaches back' do
+    test 'Exported shows every invoice still waiting to be archived, however old' do
       record('X-NEW', 'exported', 3)
-      record('X-OLD', 'exported', 120, vendor_name: 'Old Vendor')
+      record('X-OLD', 'exported', 400)
 
-      get :index, params: { status: 'exported' }
+      get :index, params: { status: 'exported', vendor: 'nobody' }
       assert_response :success
-      assert_equal %w[X-NEW], listed
+      assert_equal %w[X-NEW X-OLD].sort, listed.sort
+      assert_select '.aim-archive', count: 0
+    end
 
-      get :index, params: { status: 'exported', vendor: 'old vendor' }
-      assert_equal %w[X-OLD], listed
+    test 'Search older invoices reaches past the Archived window' do
+      record('A-NEW', 'archived', 3)
+      record('A-OLD', 'archived', 200, vendor_name: 'Old Vendor')
+
+      get :index, params: { status: 'archived', vendor: 'old vendor' }
+      assert_equal %w[A-OLD], listed
+      assert_select 'details.aim-archive__search[open] summary', text: 'Search older invoices'
     end
 
     test 'Archived windows on the archive date, with an empty window still offering the search' do
@@ -167,7 +174,8 @@ module Aim
       get :index, params: { status: 'archived' }
       assert_empty listed
       assert_select '.aim-empty-state', text: /Nothing here in the last 30 days/
-      assert_select 'details.aim-archive__search select[name=status] option', count: 2
+      assert_select 'details.aim-archive__search select[name=status]', count: 0
+      assert_select 'details.aim-archive__search input[type=hidden][name=status][value=archived]'
 
       get :index, params: { status: 'archived', days: '90' }
       assert_equal %w[A-OLD], listed

@@ -1,5 +1,5 @@
-<%# Above a finished list (#169): which window it shows, and Search the
-    archive -- every finished invoice, searched on the server. Locals: url
+<%# Above a finished list (#169): which window it shows, and Search older
+    invoices -- every finished invoice, searched on the server. Locals: url
     (the list's path, no params), field (:queue or :status), current (its
     value), statuses ([[label, value], ...]), shown (rows listed) and keep
     (params to carry, e.g. the Fiscal view). %>
@@ -10,7 +10,7 @@
 <section class="aim-archive" aria-label="Finished invoices">
   <div class="aim-archive__window">
     <% if archive.searching? %>
-      <p>Archive search: <strong><%= pluralize(shown, 'invoice') %></strong> <%= archive.describe %>.</p>
+      <p>Search: <strong><%= pluralize(shown, 'invoice') %></strong> <%= archive.describe %>.</p>
       <%= link_to 'Back to recent', recent, class: 'btn ghost compact' %>
     <% else %>
       <%= form_with url: url, method: :get, data: { turbo: false, controller: 'auto-submit' } do %>
@@ -35,10 +35,14 @@
   <% end %>
 
   <details class="aim-archive__search" <%= 'open' if archive.searching? %>>
-    <summary>Search the archive</summary>
+    <summary>Search older invoices</summary>
     <%= form_with url: url, method: :get, class: 'aim-archive__form', data: { turbo: false } do %>
       <% keep.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
-      <label>Status <%= select_tag field, options_for_select(statuses, current), id: nil %></label>
+      <% if statuses.size > 1 %>
+        <label>Status <%= select_tag field, options_for_select(statuses, current), id: nil %></label>
+      <% else %>
+        <%= hidden_field_tag field, current, id: nil %>
+      <% end %>
       <label>Vendor <%= search_field_tag :vendor, params[:vendor], id: nil, autocomplete: 'off' %></label>
       <label>Invoice # <%= search_field_tag :invoice_number, params[:invoice_number], id: nil, autocomplete: 'off' %></label>
       <label>Amount <%= text_field_tag :amount, params[:amount], id: nil, inputmode: 'decimal', autocomplete: 'off', placeholder: '1,234.50' %></label>
