@@ -53,13 +53,13 @@ module Aim
     test 'a turn adds to the page own rotation' do
       reader = edit(pdf('main', 2, rotate: 90), [{ source: 0, page: 1, rotate: 90 }, { source: 0, page: 2, rotate: 270 }])
 
-      assert_equal [180, 0], reader.pages.map { |page| page.attributes[:Rotate].to_i }
+      assert_equal([180, 0], reader.pages.map { |page| page.attributes[:Rotate].to_i })
     end
 
     test 'a crop is taken from the page as seen, from its top left' do
       reader = edit(pdf('main', 1), [{ source: 0, page: 1, crop: { left: 0.1, top: 0.25, right: 0.6, bottom: 0.75 } }])
 
-      assert_equal [61.2, 198, 367.2, 594], reader.pages.first.attributes[:CropBox].map { |n| n.to_f.round(1) }
+      assert_equal([61.2, 198, 367.2, 594], reader.pages.first.attributes[:CropBox].map { |n| n.to_f.round(1) })
     end
 
     test 'a crop on a turned page is mapped back to the page own coordinates' do
@@ -67,7 +67,7 @@ module Aim
 
       # Turned 90 clockwise, the stored bottom edge is seen on the left, so
       # the left half as seen is the bottom half as stored.
-      assert_equal [0, 0, 612, 396], reader.pages.first.attributes[:CropBox].map { |n| n.to_f.round(1) }
+      assert_equal([0, 0, 612, 396], reader.pages.first.attributes[:CropBox].map { |n| n.to_f.round(1) })
     end
 
     test 'text boxes are written on the page' do

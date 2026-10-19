@@ -30,9 +30,16 @@ module Aim
     end
 
     # The versions kept so far, oldest first: [[n, path], ...].
+    # Read from the folder's names, not a glob: batch ids end in "[AB12]",
+    # which a glob takes for a character class.
     def kept(invoice)
-      Dir.glob(File.join(invoice.store_dir, "#{invoice.batch_id}.v*.pdf"))
-         .filter_map { |path| (n = path[/\.v(\d+)\.pdf\z/, 1]) && [n.to_i, path] }.sort
+      return [] unless Dir.exist?(invoice.store_dir)
+
+      prefix = "#{invoice.batch_id}.v"
+      Dir.children(invoice.store_dir).filter_map do |name|
+        number = name.delete_prefix(prefix)[/\A(\d+)\.pdf\z/, 1] if name.start_with?(prefix)
+        [number.to_i, File.join(invoice.store_dir, name)] if number
+      end.sort
     end
 
     # Checks +path+ is a PDF AIM can read and edit; raises Refused if not.

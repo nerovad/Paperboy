@@ -21,7 +21,7 @@ module Aim
     def in_store(&block) = Aim::InvoiceDirectoryService.instance.stub(:store_dir, @store, &block)
 
     def invoice(state: 'needs_review', pages: 3)
-      row = Aim::Invoice.create!(batch_id: '4641.E-1', state: state, actor: 'aim_worker', vendor_name: 'ACME', invoice_number: 'N-1',
+      row = Aim::Invoice.create!(batch_id: '4641.20260924_104420.Vendor invoice-[WY3C]', state: state, actor: 'aim_worker', vendor_name: 'ACME', invoice_number: 'N-1',
                                  budget_unit: '4641', page_count: pages)
       write_pdf(row.pdf_path, 'orig', pages)
       row
@@ -58,6 +58,10 @@ module Aim
         row.reload
         assert_equal [2, 'needs_review'], [row.page_count, row.state]
         assert_match(/PDF swapped for fixed.pdf; previous PDF kept as version 1/, row.events.last.note)
+
+        post :replace, params: { id: row.batch_id, file: upload('again', 1) }
+        assert_equal [1, 2], Aim::PdfVersions.kept(row).map(&:first), 'a batch id ending in [WY3C] still finds its versions'
+        assert_match(/kept as version 2/, row.reload.events.last.note)
       end
     end
 

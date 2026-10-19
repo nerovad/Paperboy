@@ -18,13 +18,18 @@ export default class extends Controller {
                     "modal", "modalTitle", "canvas", "cropTools", "textTools", "textInput", "textSize", "textList"]
   static values = { pdfUrl: String, pageCount: Number }
 
+  // Starts clean every time: Stimulus can connect twice (Turbo's cache, a
+  // dialog), and a load that is no longer the latest is dropped.
   async connect() {
+    const load = (this.load = Symbol("load"))
     this.sources = []
     this.cards = []
     this.insertFiles = []
+    this.gridTarget.replaceChildren()
     try {
       await this.loadPdfJs()
       const doc = await window.pdfjsLib.getDocument({ url: this.pdfUrlValue, withCredentials: true }).promise
+      if (load !== this.load) return
       this.sources.push({ doc, name: "this invoice" })
       for (let number = 1; number <= doc.numPages; number++) this.addCard(0, number, `Page ${number}`)
       this.statusTarget.textContent = ""
@@ -33,6 +38,8 @@ export default class extends Controller {
       this.statusTarget.textContent = "The PDF could not be shown here. Swapping it still works."
     }
   }
+
+  disconnect() { this.load = null }
 
   // --- pages -----------------------------------------------------------------
 
@@ -48,8 +55,8 @@ export default class extends Controller {
       <figcaption>
         <span class="aim-pdf-card__label"></span>
         <span class="aim-pdf-card__tools">
-          <button type="button" class="btn compact ghost" data-act="left" title="Turn left" aria-label="Turn left">⟲</button>
-          <button type="button" class="btn compact ghost" data-act="right" title="Turn right" aria-label="Turn right">⟳</button>
+          <button type="button" class="btn compact ghost" data-act="left">Turn left</button>
+          <button type="button" class="btn compact ghost" data-act="right">Turn right</button>
           <button type="button" class="btn compact ghost" data-act="crop">Crop</button>
           <button type="button" class="btn compact ghost" data-act="text">Text</button>
           <button type="button" class="btn compact deny" data-act="remove">Remove</button>
