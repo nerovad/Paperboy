@@ -11,3 +11,6 @@ pin 'form_navigation', to: 'form_navigation.js'
 pin 'pb_modal', to: 'pb_modal.js'
 pin 'choices_setup', to: 'choices_setup.js'
 pin 'sortablejs', to: 'https://esm.sh/sortablejs@1.15.2'
+# Served from the chartkick gem. Loaded on demand by sql_chart_controller.
+pin 'chartkick', to: 'chartkick.js', preload: false
+pin 'Chart.bundle', to: 'Chart.bundle.js', preload: false

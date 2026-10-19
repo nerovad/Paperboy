@@ -5,6 +5,8 @@
 //= link form_navigation.js
 //= link pb_modal.js
 //= link choices_setup.js
+//= link chartkick.js
+//= link Chart.bundle.js
 //= link jquery3.js
 //= link datatables/jquery.dataTables.js
 //= link datatables/extensions/Buttons/dataTables.buttons.js
