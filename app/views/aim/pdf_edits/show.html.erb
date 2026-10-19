@@ -1,0 +1,91 @@
+<%# Edit PDF (#181): swap the whole PDF, or edit its pages
+    (aim_pdf_editor_controller). Nothing changes until Swap or Apply. %>
+<div class="aim-page aim-pdf-editor" data-controller="aim-pdf-editor"
+     data-aim-pdf-editor-pdf-url-value="<%= aim_pdf_source_invoice_path(@invoice.batch_id) %>">
+  <header class="aim-page-header">
+    <div>
+      <%= link_to 'Back to the invoice', return_path, class: 'aim-kicker' %>
+      <h1 class="aim-page-title">Edit PDF <span class="aim-count-pill aim-handle"><%= @invoice.handle %></span></h1>
+      <p class="aim-page-subtitle">
+        <%= [@invoice.vendor_name, @invoice.invoice_number].compact_blank.join(' · ').presence || @invoice.batch_id %>.
+        Changes take effect when you Swap or Apply; the current PDF is always kept as a version.
+        <% if Aim::FiscalRecord::APPROVED_STATES.include?(@invoice.state) %>
+          It is approved, so the approval stamp is redone on the new PDF.
+        <% end %>
+      </p>
+    </div>
+  </header>
+
+  <% reread = capture do %>
+    <% if @can_reread %>
+      <label class="aim-pdf-editor__reread"><%= check_box_tag :reread, '1', false, id: nil %> Read it again with the AI afterwards</label>
+    <% end %>
+  <% end %>
+
+  <section class="aim-panel aim-agency-group-panel">
+    <h2 class="aim-panel-title">Swap the whole PDF</h2>
+    <%= form_with url: aim_replace_pdf_invoice_path(@invoice.batch_id, from: params[:from]), method: :post, multipart: true,
+                  class: 'aim-pdf-editor__swap', data: { turbo: false } do %>
+      <%= file_field_tag :file, accept: 'application/pdf', required: true, id: nil, aria: { label: 'PDF to swap in' } %>
+      <%= reread %>
+      <button type="submit" class="btn approve compact"
+              data-turbo-confirm="Swap this invoice's PDF for the chosen file? The current one is kept as a version.">Swap</button>
+    <% end %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel">
+    <div class="aim-pdf-editor__bar">
+      <h2 class="aim-panel-title">Edit pages</h2>
+      <label class="btn compact">Add pages from a PDF
+        <input type="file" accept="application/pdf" hidden data-aim-pdf-editor-target="insertPicker" data-action="change->aim-pdf-editor#addPdf">
+      </label>
+      <%= link_to 'Start over', aim_edit_pdf_invoice_path(@invoice.batch_id, from: params[:from]), class: 'btn compact ghost' %>
+      <%= form_with url: aim_edit_pdf_invoice_path(@invoice.batch_id, from: params[:from]), method: :patch, multipart: true,
+                    class: 'aim-pdf-editor__apply', data: { turbo: false, aim_pdf_editor_target: 'form' } do %>
+        <%= hidden_field_tag :pages, '', id: nil, data: { aim_pdf_editor_target: 'pages' } %>
+        <input type="file" name="inserts[]" multiple hidden data-aim-pdf-editor-target="inserts">
+        <%= reread %>
+        <button type="submit" class="btn approve compact" data-action="aim-pdf-editor#apply">Apply changes</button>
+      <% end %>
+    </div>
+    <p class="aim-agency-group-meta">Drag pages to reorder them. Turning a page clears its crop and text. Removed pages are greyed until you Apply.</p>
+    <p class="aim-agency-group-meta" data-aim-pdf-editor-target="status">Loading pages…</p>
+    <div class="aim-pdf-editor__grid" data-aim-pdf-editor-target="grid"></div>
+  </section>
+
+  <% if @versions.any? %>
+    <p class="aim-agency-group-meta">Earlier versions kept in the store: <%= @versions.map { |n, _| "v#{n}" }.join(', ') %>.</p>
+  <% end %>
+
+  <div class="pb-modal-backdrop" hidden data-aim-pdf-editor-target="modal">
+    <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true" aria-labelledby="aim-pdf-page-title">
+      <div class="pb-modal__header">
+        <h3 id="aim-pdf-page-title" data-aim-pdf-editor-target="modalTitle">Page</h3>
+        <button type="button" class="pb-modal__close" aria-label="Close" data-action="aim-pdf-editor#closePage">✕</button>
+      </div>
+      <div class="pb-modal__body">
+        <canvas class="aim-pdf-editor__big" data-aim-pdf-editor-target="canvas"
+                data-action="mousedown->aim-pdf-editor#pointerDown mousemove->aim-pdf-editor#pointerMove mouseup->aim-pdf-editor#pointerUp mouseleave->aim-pdf-editor#pointerUp"></canvas>
+        <div data-aim-pdf-editor-target="cropTools" hidden>
+          <p class="pb-modal__message">Drag a box over the part of the page to keep.</p>
+          <div class="pb-modal__actions">
+            <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#clearCrop">No crop</button>
+            <button type="button" class="btn approve compact" data-action="aim-pdf-editor#saveCrop">Use this crop</button>
+          </div>
+        </div>
+        <div data-aim-pdf-editor-target="textTools" hidden>
+          <p class="pb-modal__message">Click where the text should start, type it, then Add text.</p>
+          <div class="aim-pdf-editor__text">
+            <textarea rows="2" aria-label="Text" data-aim-pdf-editor-target="textInput"></textarea>
+            <label>Size <%= select_tag :text_size, options_for_select([8, 10, 12, 14, 18, 24, 36], 12), id: nil, data: { aim_pdf_editor_target: 'textSize' } %></label>
+            <button type="button" class="btn approve compact" data-action="aim-pdf-editor#addText">Add text</button>
+          </div>
+          <ul class="aim-pdf-editor__texts" data-aim-pdf-editor-target="textList"></ul>
+          <div class="pb-modal__actions">
+            <button type="button" class="btn compact" data-action="aim-pdf-editor#closePage">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

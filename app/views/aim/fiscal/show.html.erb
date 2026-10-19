@@ -45,6 +45,9 @@
     <section class="aim-panel aim-document-panel">
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Document</h2>
+        <% if Aim::PdfVersions.editable?(@invoice) %>
+          <%= link_to 'Edit PDF', aim_edit_pdf_invoice_path(@invoice.batch_id, from: 'fiscal'), class: 'btn edit compact', data: { turbo: false } %>
+        <% end %>
       </div>
       <% if @pdf_present %>
         <div class="aim-pdf-shell">

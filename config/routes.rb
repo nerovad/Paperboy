@@ -140,6 +140,13 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
     get 'help', to: 'help#show', as: :help
 
+    # Edit PDF (#181): the editor, Apply, Swap, and the PDF as received.
+    scope 'invoices/:id', constraints: { id: %r{[^/]+} } do
+      get 'edit_pdf', to: 'pdf_edits#show', as: :edit_pdf_invoice
+      patch 'edit_pdf', to: 'pdf_edits#update'
+      post 'replace_pdf', to: 'pdf_edits#replace', as: :replace_pdf_invoice
+      get 'pdf_source', to: 'pdf_edits#source', as: :pdf_source_invoice
+    end
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       collection do
         patch :reassign_many
