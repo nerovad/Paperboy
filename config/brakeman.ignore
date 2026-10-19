@@ -86,6 +86,29 @@
       "user_input": "find_viewable_asset(params[:id]).original_path.to_s",
       "confidence": "Weak",
       "note": "The path is a column, so Brakeman is right that it is not a literal. It is not sent unless Dam::StorageLocation#holds_source? says it resolves inside the folder that location scans and inside PAPERBOY_DAM_ROOTS, which is set per host in .env and not editable from the app. See AssetsController#unreadable_reason. The asset is looked up through the DAM access rules (find_viewable_asset) and the Download capability is checked before this line."
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "98e3768053242bf68cf3c0f12ce1d3481a6f004d6976cef29651ab648119a8dd",
+      "check_name": "SendFile",
+      "message": "Parameter value used in file name",
+      "file": "app/controllers/aim/pdf_edits_controller.rb",
+      "line": 26,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file(store_file(Aim::Invoice.find_by(:batch_id => params[:id].to_s), \"pdf\"), :type => \"application/pdf\", :disposition => \"inline\", :filename => (\"#{Aim::Invoice.find_by(:batch_id => params[:id].to_s).batch_id}.pdf\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Aim::PdfEditsController",
+        "method": "source"
+      },
+      "user_input": "params[:id].to_s",
+      "confidence": "Weak",
+      "cwe_id": [
+        22
+      ],
+      "note": "The PDF as received, for the Edit PDF editor (#181). The path is not taken from the request: Aim::StoredPdf#store_file refuses a batch id that is not one plain folder name (no slash, no leading dot), reads it through Paperboy::FileStore (which refuses absolute and '..' names), and sends it only if the resolved file is inside the AIM store -- the same lookup InvoicesController#pdf uses. require_pdf_editor has already checked the person may edit it."
     }
   ],
   "updated": "2026-10-07 13:20:42 -0700",
