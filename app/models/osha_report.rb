@@ -9,6 +9,7 @@ class OshaReport < ApplicationRecord
     approved: 'approved',
     denied: 'denied'
   }, default: :in_progress
+
   include Reassignable
   include Registry
 

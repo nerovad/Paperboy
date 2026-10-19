@@ -6,6 +6,23 @@
 <div class="form-wrapper" data-controller="form-navigation conditional-fields">
   <%= form_with model: @osha_report, local: true do |form| %>
 
+  <% if @osha_report.errors.any? %>
+    <div class="form-errors" role="alert" data-form-navigation-target="errorSummary">
+      <strong><%= pluralize(@osha_report.errors.count, "error") %> prevented this form from being submitted:</strong>
+      <ul>
+        <% @osha_report.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+        <% _page_1_visible = true %>
+        <% _page_2_visible = true %>
+        <% _page_3_visible = true %>
+        <% _page_4_visible = true %>
+        <% _page_5_visible = true %>
+
 <!-- Page 1: Employee Info -->
 <div class="form-page">
   <h2>Employee Info</h2>
@@ -124,7 +141,7 @@
 <!-- FIELD:city START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :city, "City" %>
             <%= form.select :city,
-                  options_for_select(['Ventura', 'Ojai', 'Santa Barbara', 'Camarillo', 'Los Angeles', 'Thousand Oaks', 'Somis', 'Oxnard']),
+                  options_for_select(["Ventura", "Ojai", "Santa Barbara", "Camarillo", "Los Angeles", "Thousand Oaks", "Somis", "Oxnard"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
@@ -132,7 +149,7 @@
 <!-- FIELD:state START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :state, "State" %>
             <%= form.select :state,
-                  options_for_select(['California']),
+                  options_for_select(["California"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
@@ -155,7 +172,7 @@
 <!-- FIELD:sex START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :sex, "Sex" %>
             <%= form.select :sex,
-                  options_for_select(['Male', 'Female']),
+                  options_for_select(["Male", "Female"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
@@ -175,9 +192,9 @@
 <!-- FIELD:was_treatment_given_away_from_the_worksite START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_treatment_given_away_from_the_worksite, "Was treatment given away from the worksite?" %>
             <%= form.select :was_treatment_given_away_from_the_worksite,
-                  options_for_select(['Yes', 'No']),
+                  options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'was_treatment_given_away_from_the_worksite' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'was_treatment_given_away_from_the_worksite' } } %>
           </div>
 <!-- FIELD:was_treatment_given_away_from_the_worksite END -->
 <!-- FIELD:facility_name START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="display: none;">
@@ -198,7 +215,7 @@
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_city, "Facility City" %>
             <%= form.select :facility_city,
-                  options_for_select(['Ventura', 'Oxnard', 'Camarillo', 'Thousand Oaks']),
+                  options_for_select(["Ventura", "Oxnard", "Camarillo", "Thousand Oaks"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
@@ -208,7 +225,7 @@
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_state, "Facility State" %>
             <%= form.select :facility_state,
-                  options_for_select(['California']),
+                  options_for_select(["California"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
@@ -217,27 +234,24 @@
 <!-- FIELD:facility_zip START -->          <div class="conditional-field" data-depends-on="was_treatment_given_away_from_the_worksite" data-show-values="[&quot;Yes&quot;]" style="display: none;">
 <div class="form-group flex-fill<%= '' %>">
   <%= form.label :facility_zip, "Facility ZIP" %>
-            <%= form.select :facility_zip,
-                  options_for_select(['Yes', 'No']),
-                  { include_blank: "Select..." },
-                  { class: "form-control" } %>
+            <%= form.text_field :facility_zip, class: "form-control" %>
           </div>
           </div>
 <!-- FIELD:facility_zip END -->
 <!-- FIELD:was_the_employee_treated_in_an_emergency_room START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_employee_treated_in_an_emergency_room, "Was the employee treated in an emergency room?" %>
             <%= form.select :was_the_employee_treated_in_an_emergency_room,
-                  options_for_select(['Yes', 'No']),
+                  options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:was_the_employee_treated_in_an_emergency_room END -->
 <!-- FIELD:was_the_employee_hospitalized_overnight_as_an_inpatient START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :was_the_employee_hospitalized_overnight_as_an_inpatient, "Was the employee hospitalized overnight as an in-patient?" %>
             <%= form.select :was_the_employee_hospitalized_overnight_as_an_inpatient,
-                  options_for_select(['Yes', 'No']),
+                  options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control" } %>
+                  { class: "form-control", data: { controller: "searchable-select" } } %>
           </div>
 <!-- FIELD:was_the_employee_hospitalized_overnight_as_an_inpatient END -->
         </div>
@@ -290,9 +304,9 @@
 <!-- FIELD:did_employee_die START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :did_employee_die, "Did employee die?" %>
             <%= form.select :did_employee_die,
-                  options_for_select(['Yes', 'No']),
+                  options_for_select(["Yes", "No"]),
                   { include_blank: "Select..." },
-                  { class: "form-control", data: { conditional_trigger: 'did_employee_die' } } %>
+                  { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'did_employee_die' } } %>
           </div>
 <!-- FIELD:did_employee_die END -->
 <!-- FIELD:date_of_death START -->          <div class="conditional-field" data-depends-on="did_employee_die" data-show-values="[&quot;Yes&quot;]" style="display: none;">
@@ -305,7 +319,7 @@
 <!-- FIELD:case_type START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :case_type, "Case Type" %>
             <%= form.select :case_type,
-                  options_for_select(['Injury', 'Skin Disorder', 'Respiratory Condition', 'Poisoning', 'Hearing Loss', 'Other Illness']),
+                  options_for_select(["Injury", "Skin Disorder", "Respiratory Condition", "Poisoning", "Hearing Loss", "Other Illness"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'case_type' } } %>
           </div>
@@ -313,7 +327,7 @@
 <!-- FIELD:case_classification START --><div class="form-group flex-fill<%= '' %>">
   <%= form.label :case_classification, "Case Classification" %>
             <%= form.select :case_classification,
-                  options_for_select(['Death', 'DAFW', 'DTJR', 'Other']),
+                  options_for_select(["Death", "DAFW", "DJTR", "Other"]),
                   { include_blank: "Select..." },
                   { class: "form-control", data: { controller: "searchable-select", conditional_trigger: 'case_classification' } } %>
           </div>
