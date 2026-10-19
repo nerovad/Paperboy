@@ -120,38 +120,64 @@ module Aim
       end
     end
 
-    test 'once Fiscal archives it, or while the AI has it, or once rejected, the editor is shut' do
+    def refused?(row)
+      get :source, params: { id: row.batch_id }
+      response.redirect? && flash[:alert] == 'This invoice\'s PDF cannot be changed here.'
+    end
+
+    test 'once Fiscal archives it, or while the AI has it, or once rejected, it cannot be changed' do
       in_store do
         row = invoice(state: 'approved')
         record = Aim::FiscalRecord.create!(invoice: row)
+        assert_not refused?(row)
         record.update_columns(status: 'archived', archived_at: Time.current)
-        get :show, params: { id: row.batch_id }
-        assert_redirected_to aim_invoice_path(row.batch_id, queue: row.queue)
+        assert refused?(row), 'archived by Fiscal'
 
-        %w[received rejected].each do |state|
+        record.destroy!
+        %w[received extracting exporting rejected deleted split].each do |state|
           row.update_columns(state: state)
-          get :show, params: { id: row.batch_id }
-          assert_response :redirect, state
+          assert refused?(row), state
         end
       end
     end
 
-    test 'someone else in the invoice, or no AIM role, keeps the editor shut' do
+    test 'someone else in the invoice, or no AIM role, cannot change it' do
       in_store do
         row = invoice
         row.claim!('other@example.com', name: 'Other')
-        get :show, params: { id: row.batch_id }
-        assert_response :redirect
+        assert refused?(row), 'someone else is in it'
 
         row.release_claim!
-        get :show, params: { id: row.batch_id }
-        assert_response :success
-        assert_select '[data-controller=aim-pdf-editor][data-aim-pdf-editor-pdf-url-value=?]', aim_pdf_source_invoice_path(row.batch_id)
+        assert_not refused?(row)
+        assert_equal 'application/pdf', response.media_type, 'the editor reads the PDF as received'
 
         @controller.define_singleton_method(:current_user_group_names) { Set[] }
-        get :show, params: { id: row.batch_id }
-        assert_response :redirect
+        assert refused?(row), 'no AIM role'
       end
+    end
+  end
+
+  # The editor sits in the review page's Document Preview.
+  class PdfEditorOnReviewPageTest < ActionController::TestCase
+    tests Aim::InvoicesController
+
+    test 'Edit PDF opens the editor in place; it is not offered when the PDF cannot change' do
+      session[:user] = { 'email' => 'aim.staff@example.com', 'employee_id' => 42 }
+      @controller.define_singleton_method(:current_user_group_names) { Set['system_admins'] }
+      row = Aim::Invoice.create!(batch_id: '4641.R-[AB12]', state: 'needs_review', actor: 'aim_worker', budget_unit: '4641')
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_select 'section.aim-document-panel[data-controller=aim-pdf-editor][data-aim-pdf-editor-pdf-url-value=?]',
+                    aim_pdf_source_invoice_path(row.batch_id) do
+        assert_select 'button[data-action=?]', 'aim-pdf-editor#open', text: 'Edit PDF'
+        assert_select '.aim-pdf-workspace[hidden] form[action=?]', aim_edit_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-workspace form[action=?] input[type=file][name=file]', aim_replace_pdf_invoice_path(row.batch_id)
+      end
+
+      row.update_columns(state: 'rejected')
+      get :show, params: { id: row.batch_id, queue: 'rejected' }
+      assert_select '[data-controller=aim-pdf-editor]', count: 0
+      assert_select 'button', text: 'Edit PDF', count: 0
     end
   end
 end

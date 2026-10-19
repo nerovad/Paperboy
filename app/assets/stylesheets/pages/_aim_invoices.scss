@@ -1056,7 +1056,8 @@
   text-transform: none;
 }
 
-// Edit PDF (#181).
+// Edit PDF (#181), inside the Document Preview: a page strip, the chosen
+// page big, one toolbar.
 .aim-document-panel .aim-panel-header {
   display: flex;
   align-items: center;
@@ -1064,99 +1065,143 @@
   gap: 0.5rem;
 }
 
-.aim-pdf-editor__swap,
-.aim-pdf-editor__bar,
-.aim-pdf-editor__apply {
+.aim-document-view,
+.aim-pdf-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aim-document-view[hidden],
+.aim-pdf-workspace[hidden],
+.aim-pdf-textbar[hidden],
+.aim-document-panel .aim-panel-header .btn[hidden] {
+  display: none;
+}
+
+.aim-pdf-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: 0.4rem 1rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid $neutral-border-subtle;
+  background: $surface-base;
 }
 
-.aim-pdf-editor__bar .aim-panel-title {
-  margin: 0 auto 0 0;
+.aim-pdf-toolbar__group,
+.aim-pdf-toolbar__swap,
+.aim-pdf-toolbar__apply {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
 }
 
-.aim-pdf-editor__reread {
+.aim-pdf-toolbar__finish {
+  margin-left: auto;
+}
+
+.aim-pdf-toolbar__reread {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.9rem;
+  gap: 0.3rem;
+  font-size: 0.85rem;
 }
 
-.aim-pdf-editor__grid {
+.aim-pdf-workspace__line {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 0.75rem;
-}
-
-.aim-pdf-card {
+  gap: 0.75rem;
   margin: 0;
-  padding: 0.5rem;
-  border: 1px solid $neutral-border-subtle;
-  border-radius: $radius-6;
-  background: $surface-base;
-  cursor: grab;
-  width: 190px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: $text-muted;
 }
 
-.aim-pdf-card.is-removed .aim-pdf-card__page {
+.aim-pdf-workspace__body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 136px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.aim-pdf-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid $neutral-border-subtle;
+  background: $surface-base;
+}
+
+.aim-pdf-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: $radius-6;
+  background: none;
+  font-size: 0.72rem;
+  color: $text-muted;
+  cursor: grab;
+}
+
+.aim-pdf-thumb.is-current {
+  border-color: $text-strong;
+}
+
+.aim-pdf-thumb.is-removed canvas {
   opacity: 0.25;
 }
 
-.aim-pdf-card__page {
-  display: flex;
-  justify-content: center;
-  min-height: 120px;
-}
-
-.aim-pdf-card__page canvas {
+.aim-pdf-thumb canvas {
   max-width: 100%;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
 }
 
-.aim-pdf-card figcaption {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.4rem;
-  font-size: 0.8rem;
-}
-
-.aim-pdf-card__label {
+.aim-pdf-thumb span {
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.aim-pdf-card__tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+.aim-pdf-stage {
+  overflow: auto;
+  padding: 12px;
 }
 
-.aim-pdf-editor__big {
+.aim-pdf-stage canvas {
   display: block;
-  max-width: 100%;
-  margin: 0 auto 0.75rem;
-  cursor: crosshair;
+  margin: 0 auto;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
 }
 
-.aim-pdf-editor__text {
+.aim-pdf-stage canvas.is-marking {
+  cursor: crosshair;
+}
+
+.aim-pdf-textbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.aim-pdf-editor__text textarea {
-  flex: 1 1 18rem;
+.aim-pdf-textbar textarea {
+  flex: 1 1 16rem;
 }
 
-.aim-pdf-editor__texts {
-  margin: 0.5rem 0;
+.aim-pdf-textbar ul {
+  flex-basis: 100%;
+  margin: 0;
   padding-left: 1.2rem;
 }
 

@@ -14,10 +14,8 @@ module Aim
     before_action :set_invoice
     before_action :require_pdf_editor
 
-    def show
-      @versions = Aim::PdfVersions.kept(@invoice)
-      @can_reread = @invoice.can_move_to?('received')
-    end
+    # The editor lives in the review and Fiscal pages' Document panel now.
+    def show = redirect_to(return_path)
 
     # The PDF as received (never the approval-stamped copy): what the editor
     # works on.
@@ -86,7 +84,7 @@ module Aim
     end
     helper_method :return_path
 
-    def back_to_editor(alert:) = redirect_to(aim_edit_pdf_invoice_path(@invoice.batch_id, from: params[:from]), alert: alert)
+    def back_to_editor(alert:) = redirect_to(return_path, alert: alert)
 
     # Read it again with the AI, when asked and the pipeline allows it.
     def finish(notice)
