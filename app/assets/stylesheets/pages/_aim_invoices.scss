@@ -793,12 +793,33 @@
   gap: 10px;
 }
 
-/* Wrapping is expected at narrow widths: rows stay right-aligned and each
-   button keeps its own width rather than stretching to fill the row. */
+/* One row (#182): More on the left, Save Changes and the main action on the
+   right. Wrapping is expected at narrow widths; each button keeps its width. */
 .aim-review-action-strip {
   column-gap: 6px;
   justify-content: flex-end;
   row-gap: 8px;
+  width: 100%;
+}
+
+.aim-review-more {
+  margin-right: auto;
+}
+
+.aim-review-action-strip__main {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.aim-review-action-strip .btn[hidden] {
+  display: none;
+}
+
+.aim-review-more .aim-actions-menu__list {
+  left: 0;
+  right: auto;
 }
 
 .aim-review-action-strip .btn {
@@ -1623,6 +1644,7 @@
   }
 
   > a,
+  > button,
   form button {
     background: none;
     border: 0;

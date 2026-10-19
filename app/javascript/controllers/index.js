@@ -92,6 +92,7 @@ import CoaCustomerLookupController from "controllers/coa_customer_lookup_control
 import CustomerLookupRowsController from "controllers/customer_lookup_rows_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 import AimMoveModalController from "controllers/aim_move_modal_controller"
+import AimPressController from "controllers/aim_press_controller"
 import AimPdfEditorController from "controllers/aim_pdf_editor_controller"
 import AimAcknowledgeController from "controllers/aim_acknowledge_controller"
 import AimDropzoneController from "controllers/aim_dropzone_controller"
@@ -224,6 +225,7 @@ application.register("org-cascade", OrgCascadeController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
 application.register("aim-move-modal", AimMoveModalController)
+application.register("aim-press", AimPressController)
 application.register("aim-pdf-editor", AimPdfEditorController)
 application.register("aim-acknowledge", AimAcknowledgeController)
 application.register("aim-dropzone", AimDropzoneController)
