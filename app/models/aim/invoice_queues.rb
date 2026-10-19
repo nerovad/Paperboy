@@ -32,13 +32,20 @@ module Aim
     # The queues a person works.
     WORK_QUEUES = %w[needs_review ready_for_approval failed].freeze
 
+    # Lists of what AIM staff have not yet acknowledged (#169): a rejected or
+    # deleted invoice stays until someone says "seen, and it is fine". Shared:
+    # one person's acknowledgement clears it for everyone.
+    ACKNOWLEDGED_QUEUES = %w[rejected deleted].freeze
+
     included do
       scope :in_queue, ->(queue) { where(state: QUEUES.fetch(queue.to_s).fetch(:states)) }
       scope :newest_first, -> { order(created_at: :desc, id: :desc) }
+      scope :unacknowledged, -> { where(acknowledged_at: nil) }
 
       # The finished lists window and search on when an invoice finished
       # (#169); a restore takes it back out. The worker's Db#transition does
-      # the same.
+      # the same. Any move clears an acknowledgement, so an invoice rejected
+      # again comes back as new.
       before_save :date_the_finish, if: :will_save_change_to_state?
     end
 
@@ -48,18 +55,40 @@ module Aim
       end
 
       # How many invoices each queue holds, for the sidebar and the dashboard.
+      # Rejected and Deleted count what is still to acknowledge.
       def queue_counts
         by_state = group(:state).count
-        QUEUES.to_h { |name, queue| [name, queue[:states].sum { |state| by_state.fetch(state, 0) }] }
+        pending = unacknowledged.where(state: ACKNOWLEDGED_QUEUES).group(:state).count
+        QUEUES.to_h do |name, queue|
+          counted = ACKNOWLEDGED_QUEUES.include?(name) ? pending : by_state
+          [name, queue[:states].sum { |state| counted.fetch(state, 0) }]
+        end
       end
     end
 
     def queue = self.class.queue_for(state)
 
+    def acknowledgeable? = ACKNOWLEDGED_QUEUES.include?(state) && acknowledged_at.nil?
+
+    # Seen, and fine: off the Rejected or Deleted list, with a history line.
+    # Nothing happens (nil) when there is nothing to acknowledge. Written with
+    # update_columns, so the claim, updated_at and the edit trail are
+    # untouched; the event is the record.
+    def acknowledge!(actor:, name: nil)
+      return unless acknowledgeable?
+
+      transaction do
+        update_columns(acknowledged_at: Time.current, acknowledged_by: actor)
+        events.create!(action: 'acknowledged', actor: actor, note: "acknowledged by #{name.presence || actor}")
+      end
+    end
+
     private
 
     def date_the_finish
       self.finished_at = terminal? ? Time.current : nil
+      self.acknowledged_at = nil
+      self.acknowledged_by = nil
     end
   end
 end

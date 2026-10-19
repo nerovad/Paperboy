@@ -1,5 +1,8 @@
 <%# One queue table. With `movable`, the last column is a checkbox: tick one
-    invoice or several, then Move selected (aim_move_modal_controller). %>
+    invoice or several, then Move selected (aim_move_modal_controller). With
+    `acknowledging` (Rejected and Deleted, #169), the same for Acknowledge
+    selected (aim_acknowledge_controller), and each row has its own button. %>
+<% acknowledging = local_assigns.fetch(:acknowledging, false) %>
 <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
 <table class="submission-table aim-queue-table aim-queue-table--review">
   <thead>
@@ -18,6 +21,13 @@
         <th class="aim-select-cell">
           <label class="aim-select-all">
             <input type="checkbox" aria-label="Select all shown" data-action="aim-move-modal#selectAll"> Move
+          </label>
+        </th>
+      <% end %>
+      <% if acknowledging %>
+        <th class="aim-select-cell">
+          <label class="aim-select-all">
+            <input type="checkbox" aria-label="Select all to acknowledge" data-action="aim-acknowledge#selectAll"> All
           </label>
         </th>
       <% end %>
@@ -43,6 +53,11 @@
                         aim_invoice_path(invoice.batch_id, queue: @queue),
                         data: { turbo: false }, class: 'btn approve compact' %>
           <% end %>
+          <% if invoice.acknowledgeable? && aim_queue_access? %>
+            <%= button_to 'Acknowledge', acknowledge_aim_invoices_path(queue: @queue), method: :patch,
+                          params: { 'ids[]' => invoice.batch_id }, form: { class: 'aim-row-form', data: { turbo: false } },
+                          class: 'btn compact', title: 'Seen, and fine: take it off this list' %>
+          <% end %>
         </td>
         <td class="is-strong"><%= invoice.vendor_name.presence || invoice.extracted_vendor_name.presence || 'N/A' %></td>
         <td><%= invoice.invoice_number.presence || 'N/A' %></td>
@@ -57,11 +72,21 @@
           <% if invoice.awaiting_second_approval? %><span class="badge is-scheduled">Second approval</span><% end %>
           <% if invoice.manual_entry %><span class="badge is-pending" title="The AI has not read it">Manual Data Entry Needed</span><% end %>
           <%= aim_duplicate_pill(invoice) %>
+          <% if invoice.acknowledged_at %>
+            <span class="badge is-scheduled" title="by <%= invoice.acknowledged_by %> on <%= l(invoice.acknowledged_at.to_date, format: :long) %>">Acknowledged</span>
+          <% end %>
         </td>
         <% if movable %>
           <td class="aim-select-cell">
             <input type="checkbox" value="<%= invoice.batch_id %>" data-budget-unit="<%= invoice.budget_unit %>" aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"
                    data-aim-move-modal-target="check" data-action="aim-move-modal#count">
+          </td>
+        <% end %>
+        <% if acknowledging %>
+          <td class="aim-select-cell">
+            <input type="checkbox" name="ids[]" value="<%= invoice.batch_id %>" form="aim-acknowledge-form"
+                   aria-label="Select <%= invoice.invoice_number.presence || invoice.batch_id %>"
+                   data-aim-acknowledge-target="check" data-action="aim-acknowledge#count">
           </td>
         <% end %>
       </tr>

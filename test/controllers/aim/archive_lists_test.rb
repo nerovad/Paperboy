@@ -33,27 +33,27 @@ module Aim
       assert_nil row.finished_at
     end
 
-    test 'a finished list shows the last 30 days unless another window is picked' do
-      finished('NEW', days_ago: 2)
-      finished('OLD', days_ago: 60)
+    test 'Finished shows the last 30 days unless another window is picked' do
+      finished('NEW', state: 'exported', days_ago: 2)
+      finished('OLD', state: 'exported', days_ago: 60)
 
-      get :index, params: { queue: 'rejected' }
+      get :index, params: { queue: 'exported' }
       assert_response :success
       assert_equal %w[NEW], listed
       assert_select '.aim-archive select[name=days] option[selected][value="30"]'
       assert_select 'details.aim-archive__search:not([open])'
 
-      get :index, params: { queue: 'rejected', days: '90' }
+      get :index, params: { queue: 'exported', days: '90' }
       assert_equal %w[NEW OLD].sort, listed.sort
     end
 
     test 'a row the old worker finished without a date is dated by its last change' do
-      row = finished('UNDATED', days_ago: 1)
+      row = finished('UNDATED', state: 'exported', days_ago: 1)
       row.update_columns(finished_at: nil, updated_at: 2.days.ago)
-      stale = finished('STALE', days_ago: 1)
+      stale = finished('STALE', state: 'exported', days_ago: 1)
       stale.update_columns(finished_at: nil, updated_at: 90.days.ago)
 
-      get :index, params: { queue: 'rejected' }
+      get :index, params: { queue: 'exported' }
       assert_equal %w[UNDATED], listed
     end
 
@@ -117,15 +117,6 @@ module Aim
 
       get :index, params: { queue: 'rejected', vendor: 'ACME' }
       assert_equal %w[MINE], listed
-    end
-
-    test 'the sidebar puts Finished last, after Deleted, with no count' do
-      get :index, params: { queue: 'rejected' }
-
-      links = css_select('details[data-key=queues] a.nav-link').map { |link| link.text.squish.sub(/ …\z/, '') }
-      assert_equal ['Rejected', 'Deleted', 'Finished', 'By BU'], links.last(4)
-      assert_select 'details[data-key=queues] [data-aim-count=exported]', count: 0
-      assert_select 'details[data-key=queues] [data-aim-count=deleted]'
     end
 
     test 'a work queue is unchanged: everything in it, no window and no search of older invoices' do

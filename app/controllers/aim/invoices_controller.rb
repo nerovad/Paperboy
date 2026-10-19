@@ -15,6 +15,7 @@ module Aim
     include Aim::StoredPdf
     include Aim::CodingLineEdits
     include Aim::FinishedLists
+    include Aim::InvoiceAcknowledgements
 
     before_action :require_aim_admin, :remember_queue_page, only: :index
     before_action :set_queue

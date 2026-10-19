@@ -2,7 +2,9 @@
 
 module Aim
   # The finished lists (#169) -- Finished, Rejected and Deleted, and Fiscal's
-  # Archived -- show a recent window, or what Search older invoices found, at most Aim::ArchiveSearch::CAP rows. The working lists show
+  # Archived -- show a recent window, or what Search older invoices found,
+  # except Rejected and Deleted, which show what is still to acknowledge
+  # however old (@acknowledging), at most Aim::ArchiveSearch::CAP rows. The working lists show
   # everything in them. Sets @archive on a finished list, for the search bar.
   module FinishedLists
     extend ActiveSupport::Concern
@@ -14,6 +16,9 @@ module Aim
       return scope.to_a unless Aim::ArchiveSearch::QUEUES.include?(@queue)
 
       @archive = Aim::ArchiveSearch.new(params)
+      @acknowledging = Aim::Invoice::ACKNOWLEDGED_QUEUES.include?(@queue) && !@archive.searching?
+      return @archive.fetch(scope.unacknowledged) if @acknowledging
+
       invoices = Aim::Invoice.arel_table
       @archive.fetch(@archive.window(@archive.invoices(scope), invoices[:finished_at], invoices[:updated_at]))
     end

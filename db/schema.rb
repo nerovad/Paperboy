@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_110000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -296,6 +296,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_100000) do
   end
 
   create_table "aim.invoices", force: :cascade do |t|
+    t.datetime "acknowledged_at"
+    t.string "acknowledged_by", limit: 255
     t.string "agency", limit: 3
     t.integer "assigned_employee_id"
     t.string "assigned_to"
@@ -354,6 +356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_100000) do
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
     t.index ["invoice_total"], name: "index_aim_invoices_on_invoice_total"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
+    t.index ["state", "acknowledged_at"], name: "index_aim_invoices_on_state_and_acknowledged_at"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
     t.index ["state", "finished_at"], name: "index_aim_invoices_on_state_and_finished_at"
   end

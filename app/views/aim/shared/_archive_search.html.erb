@@ -9,9 +9,12 @@
 <% recent = "#{url}?#{{ field => current, **keep }.to_query}" %>
 <section class="aim-archive" aria-label="Finished invoices">
   <div class="aim-archive__window">
-    <% if archive.searching? %>
+    <% if @acknowledging %>
+      <p>Waiting to be acknowledged, however old. Acknowledge what you have seen and it leaves this list for everyone;
+        Search older invoices still finds it.</p>
+    <% elsif archive.searching? %>
       <p>Search: <strong><%= pluralize(shown, 'invoice') %></strong> <%= archive.describe %>.</p>
-      <%= link_to 'Back to recent', recent, class: 'btn ghost compact' %>
+      <%= link_to Aim::Invoice::ACKNOWLEDGED_QUEUES.include?(current) ? 'Back to the list' : 'Back to recent', recent, class: 'btn ghost compact' %>
     <% else %>
       <%= form_with url: url, method: :get, data: { turbo: false, controller: 'auto-submit' } do %>
         <%= hidden_field_tag field, current, id: nil %>

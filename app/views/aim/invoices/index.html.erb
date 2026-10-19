@@ -31,7 +31,10 @@
 
   <% if @invoices.empty? %>
     <section class="aim-panel aim-empty-state">
-      <p><%= @archive ? @archive.nothing : 'Nothing is in this queue.' %></p>
+      <p><%= if @acknowledging then 'Nothing to acknowledge. Search older invoices finds the rest.'
+             elsif @archive then @archive.nothing
+             else 'Nothing is in this queue.'
+             end %></p>
     </section>
   <% else %>
     <% if @sections %>
@@ -43,6 +46,18 @@
         </div>
         <%= render 'aim/shared/list_pager' %>
         <%= render 'move_modal' %>
+      </div>
+    <% elsif @acknowledging %>
+      <%# Rejected and Deleted (#169): what nobody has acknowledged yet. %>
+      <div class="aim-list-frame" data-controller="aim-acknowledge">
+        <%= form_with url: acknowledge_aim_invoices_path(queue: @queue), method: :patch, id: 'aim-acknowledge-form',
+                      class: 'aim-bulk-bar', data: { turbo: false } do %>
+          <button type="submit" class="btn approve compact" disabled data-aim-acknowledge-target="button"><span>Acknowledge selected (<span data-aim-acknowledge-target="count">0</span>)</span></button>
+        <% end %>
+        <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
+          <%= render 'rows', invoices: @invoices, movable: false, acknowledging: true %>
+        </section>
+        <%= render 'aim/shared/list_pager' %>
       </div>
     <% else %>
       <div class="aim-list-frame">

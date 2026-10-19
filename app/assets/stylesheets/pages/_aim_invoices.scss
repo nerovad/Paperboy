@@ -1134,6 +1134,16 @@
   gap: 0.5rem;
 }
 
+// A row's own one-click button beside View (Acknowledge, #169).
+.aim-queue-table td.action-buttons {
+  white-space: nowrap;
+}
+
+.aim-row-form {
+  display: inline-block;
+  margin: 0 0 0 0.35rem;
+}
+
 // Search box above a queue.
 .aim-queue-search {
   max-width: 36rem;
