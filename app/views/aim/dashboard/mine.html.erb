@@ -12,6 +12,9 @@
     </div>
   </header>
 
+  <%= render 'aim/shared/find_box', url: aim_find_path,
+                                    wheres: Aim::Invoice::QUEUES.map { |queue, config| [config[:label], queue] } %>
+
   <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
 
   <h2 class="aim-profile-heading">Waiting longest in my queue</h2>

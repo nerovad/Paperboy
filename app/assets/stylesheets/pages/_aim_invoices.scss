@@ -1056,6 +1056,35 @@
   text-transform: none;
 }
 
+// Find an invoice (#180), on the dashboards and its results pages.
+.aim-find {
+  margin-bottom: 1rem;
+}
+
+.aim-find__quick {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 44rem;
+}
+
+.aim-find__quick input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aim-find__more summary {
+  cursor: pointer;
+  margin-top: 0.4rem;
+  color: $text-muted;
+  font-size: 0.9rem;
+}
+
+.aim-archive__form .aim-find__flag {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 // Above a finished list (#169): the recent window, and Search older invoices.
 .aim-archive {
   display: flex;

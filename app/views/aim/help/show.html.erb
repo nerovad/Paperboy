@@ -3,7 +3,7 @@
 <% sections = {
      'start' => 'Getting around', 'roles' => 'Who can do what', 'groups' => 'Agency groups',
      'upload' => 'Uploading invoices', 'working' => 'Working an invoice', 'duplicates' => 'Possible duplicates',
-     'older' => 'Finding an old invoice', 'waiting' => 'Waiting too long', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
+     'find' => 'Find an invoice', 'older' => 'Finding an old invoice', 'waiting' => 'Waiting too long', 'fiscal' => 'Fiscal', 'setup' => 'Setting up a group', 'alerts' => 'Email alerts', 'faq' => 'Quick answers'
    } %>
 <div class="aim-page aim-help">
   <header class="aim-page-header">
@@ -113,6 +113,20 @@
       <li><strong>Reject as duplicate</strong> -- rejected, naming the other.</li>
       <li><strong>Replacement</strong> -- it replaces the other; both say so, with links.</li>
       <li><strong>Not a duplicate</strong> -- it carries on; it is not flagged again unless its vendor, number or total change.</li>
+    </ul>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section" id="find">
+    <h2>Find an invoice</h2>
+    <p>The box at the top of the AIM Dashboard (and of the Fiscal Dashboard, for Fiscal) finds any invoice, whatever queue
+      it is in.</p>
+    <ul>
+      <li>Type an <strong>AIM #</strong> (<em>AIM-118</em>) to open that invoice, or any part of the vendor, the invoice # or
+        the batch id, or an exact amount. One match opens straight away; several are listed with where each one is.</li>
+      <li><strong>More filters:</strong> where it is, owner, budget unit, agency, the dates it was received between, manual
+        data entry, possible duplicate, and stale.</li>
+      <li>You only find what you could already open: AIM Admins, the groups picked in Managing; anyone else, their own
+        invoices; Fiscal, their groups' invoices with Fiscal.</li>
     </ul>
   </section>
 

@@ -1,0 +1,32 @@
+<%# Find an invoice (#180), AIM's side: every queue in one list. %>
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Find an invoice</h1>
+      <p class="aim-page-subtitle">
+        <%= aim_queue_access? ? 'Every invoice in the agency groups you manage, wherever it is.' : 'Every invoice in your queue, wherever it is now.' %>
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' if aim_queue_access? %>
+      <% if @finder.searching? %><span class="aim-count-pill"><%= pluralize(@invoices.size, 'invoice') %></span><% end %>
+    </div>
+  </header>
+
+  <%= render 'aim/shared/find_box', url: aim_find_path, finder: @finder,
+                                    wheres: Aim::Invoice::QUEUES.map { |queue, config| [config[:label], queue] } %>
+  <%= render 'aim/find/results_note', finder: @finder %>
+
+  <% if !@finder.searching? %>
+    <section class="aim-panel aim-empty-state"><p>Type an AIM #, invoice #, vendor or amount, or pick a filter.</p></section>
+  <% elsif @invoices.empty? %>
+    <section class="aim-panel aim-empty-state"><p>Nothing matches.</p></section>
+  <% else %>
+    <div class="aim-list-frame">
+      <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
+        <%= render 'aim/invoices/rows', invoices: @invoices, movable: false, fiscal_statuses: @fiscal %>
+      </section>
+      <%= render 'aim/shared/list_pager' %>
+    </div>
+  <% end %>
+<% end %>
