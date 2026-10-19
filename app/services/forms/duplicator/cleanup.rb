@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/cleanup.rb
-
 module Forms
   class Duplicator
     # Deletes the rows a failed duplication wrote. The template's own

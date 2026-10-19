@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module DataRunner
+  # One queue job per group run. A missing row, or a row that is no longer
+  # queued, means the run was cancelled or already claimed, so the job
+  # returns. Print 2 Mail OMS items run in a private workspace and receive
+  # DATARUNNER_QUEUE_OMS. Other groups share the checkout's output tree.
   class GroupRefreshJob < ApplicationJob
     queue_as :default
 

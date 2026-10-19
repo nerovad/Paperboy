@@ -24,6 +24,9 @@ namespace :forms do
     puts "  #{snapshot['forms'].size} forms, #{fields} fields"
   end
 
+  # Safe to run again: a dry run is rolled back, a crash rolls back the whole
+  # run, and once the database matches the file a run prints "Already in sync."
+  # PRUNE=1 also removes fields that are missing from the file.
   desc 'Apply db/forms.yml to this environment: creates missing forms, matches their workflow, adds fields. DRY_RUN=1 previews; PRUNE=1 also removes fields missing from the file'
   task sync: :environment do
     dry = ENV['DRY_RUN'].present?

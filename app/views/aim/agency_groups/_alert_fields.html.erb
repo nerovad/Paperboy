@@ -1,0 +1,21 @@
+<%# One set of alert settings (#131): each kind on or off, with its days.
+    Locals: values ({ kind => { on:, days: } }), prefix for ids. %>
+<table class="submission-table aim-people-table">
+  <thead><tr><th>Who</th><th>Is emailed about</th><th>On</th></tr></thead>
+  <tbody>
+    <% Aim::AlertSetting::KINDS.each do |kind, info| %>
+      <tr>
+        <td><%= info[:who] %></td>
+        <td>
+          <%= info[:what] %>
+          <% if info[:days] %>
+            <%= number_field_tag "days[#{kind}]", values.dig(kind, :days), min: 1, step: 1, id: "#{prefix}-days-#{kind}",
+                                 class: 'aim-alert-days', aria: { label: "Days for #{info[:what]}" } %> days
+          <% end %>
+        </td>
+        <td><%= check_box_tag "on[#{kind}]", '1', values.dig(kind, :on), id: "#{prefix}-on-#{kind}",
+                              aria: { label: "#{info[:who]}: #{info[:what]}" } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

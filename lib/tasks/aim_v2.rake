@@ -25,6 +25,7 @@ namespace :aim do
       puts "aim.vendor_rules: #{added} added, #{kept} already present, from #{path}"
     end
 
+    # Safe to run again: a PDF already in the store is skipped, and v1's folders are only read.
     desc 'Copy the PDFs of rows v1 left open from its queue folders into the v2 store'
     task adopt_v1_pdfs: :environment do
       backend = ENV['AIM_V1_BACKEND_DIR'].presence || File.join(ENV.fetch('AIM_LINUX_QUEUE_BASE_PATH'), '_BACK_END')
@@ -32,6 +33,7 @@ namespace :aim do
       puts "store: #{adopted} PDFs adopted from #{backend}, #{missing} rows still without one"
     end
 
+    # A second run closes nothing more (the rows are finished), but the first cannot be undone.
     desc 'Close rows v1 left open as deleted (BEFORE=<time>, ACTOR=<email>)'
     task clear_v1_leftovers: :environment do
       before = Time.zone.parse(ENV.fetch('BEFORE'))
@@ -39,12 +41,14 @@ namespace :aim do
       puts "closed #{closed} rows created before #{before}"
     end
 
+    # Safe to run again: it adds only people who are not on the list yet.
     desc 'Add everyone who works AIM through a group to the Admin screen list (item a.1)'
     task seed_members: :environment do
       added = Aim::Member.seed_from_groups!(added_by: 'aim:v2:seed_members')
       puts "aim.members: #{added} added from the AIM groups"
     end
 
+    # Safe to run again: people already on the list are only given the Fusion details.
     desc 'Add the people in a CSV of employee ids to the AIM users list (item a.1c)'
     task import_members: :environment do
       path = ENV['AIM_SEED_FILE'].presence || Rails.root.join('docs/aim/fusion_gsa_users.csv').to_s
@@ -59,6 +63,7 @@ namespace :aim do
       puts "Fusion app admins not in aim_admin (add in ACL if they should be AIM Admins): #{admins_elsewhere.join(', ')}" if admins_elsewhere.any?
     end
 
+    # Safe to run again: it looks only at invoices with no linked employee yet.
     desc 'Link open invoices owned by a name to the employee of that name'
     task link_owners: :environment do
       linked, unmatched = Aim::V2Seeds.link_owners
@@ -66,6 +71,7 @@ namespace :aim do
       unmatched.each { |name, count| puts "  no single employee named #{name.inspect} (#{count} invoices)" }
     end
 
+    # A second run purges nothing more, but the first deletes the rows and cannot be undone.
     desc 'Purge finished rows created before BEFORE=<time>, with their events'
     task purge_before: :environment do
       before = Time.zone.parse(ENV.fetch('BEFORE'))

@@ -1,0 +1,45 @@
+<%# The group's budget units (#131). %>
+  <h2 class="aim-profile-heading" id="units">Budget units in this group (<%= own_units.size %>)</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <% if admin %>
+      <p class="aim-agency-group-meta">
+        <% if @group.custom %>
+          Ticked units are this group's, and AIM uses them. Untick one to send it back to <%= @group.agency_id %>'s own group.
+        <% else %>
+          Ticked units are the <%= @group.agency_id %> units AIM uses: the same setting as
+          <%= link_to "AIM's Budget Units", aim_enabled_units_path %>. Untick one to stop AIM using it.
+          To give some units their own Fiscal, tick them in a custom group.
+        <% end %>
+      </p>
+      <%= form_with url: units_aim_agency_group_path(@group), method: :patch, local: true do %>
+        <div class="aim-agency-group-columns">
+          <% agency_units.each do |unit| %>
+            <% other = elsewhere[unit.unit] %>
+            <% next if other && !@group.custom %>
+            <label>
+              <%= check_box_tag 'units[]', unit.unit, own_units.include?(unit.unit), id: "group-unit-#{unit.unit}",
+                                disabled: other.present? %>
+              <span><%= unit.label %><% if other %> <em class="aim-agency-group-meta">(in <%= other.name %>)</em><% end %></span>
+            </label>
+          <% end %>
+        </div>
+        <div class="aim-form-actions"><button type="submit" class="btn approve compact">Save budget units</button></div>
+      <% end %>
+    <% else %>
+      <ul class="aim-agency-group-columns">
+        <% agency_units.select { |unit| own_units.include?(unit.unit) }.each do |unit| %>
+          <li><%= unit.label %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% in_custom = agency_units.select { |unit| elsewhere[unit.unit] } %>
+    <% if in_custom.any? && !@group.custom %>
+      <p class="aim-agency-group-meta">In custom groups:</p>
+      <ul class="aim-agency-group-columns">
+        <% in_custom.each do |unit| %>
+          <% other = elsewhere[unit.unit] %>
+          <li><%= unit.label %> — <%= admin ? link_to(other.name, aim_agency_group_path(other)) : other.name %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>

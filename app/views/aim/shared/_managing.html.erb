@@ -1,0 +1,18 @@
+<%# "Managing" (#131): which agency group this page shows, for anyone who
+    works more than one. A group also shows the groups its Fiscal processes. %>
+<% mine = aim_fiscal_groups %>
+<% offered = mine.nil? ? aim_agency_groups.all : mine %>
+<% if mine.nil? || mine.size > 1 %>
+  <%= form_with url: aim_managing_path, method: :patch, local: true, class: 'aim-managing',
+                data: { controller: 'auto-submit' } do %>
+    <%= hidden_field_tag :return_to, request.fullpath %>
+    <label for="aim-managing-group">Managing</label>
+    <%= select_tag :agency_group_id,
+                   options_for_select(offered.map { |group| [aim_agency_group_label(group), group.id] }, aim_managing_group&.id),
+                   include_blank: mine.nil? ? 'Every agency group' : 'All my agency groups', id: 'aim-managing-group',
+                   data: { action: 'change->auto-submit#submit' } %>
+    <noscript><button type="submit" class="btn compact">Show</button></noscript>
+  <% end %>
+<% elsif mine.one? %>
+  <p class="aim-managing"><span>Managing</span> <strong><%= aim_agency_group_label(mine.first) %></strong></p>
+<% end %>

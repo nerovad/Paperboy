@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/task_reassignments_controller.rb
-
 class TaskReassignmentsController < ApplicationController
   before_action :require_login
 
@@ -17,7 +15,6 @@ class TaskReassignmentsController < ApplicationController
       reason: params[:reason]
     )
 
-    # Send email notification
     TaskReassignmentMailer.reassignment_notification(reassignment.id).deliver_later
 
     redirect_to inbox_queue_path, notice: 'Task reassigned successfully.'
@@ -36,7 +33,6 @@ class TaskReassignmentsController < ApplicationController
 
     reassignment = task.take_back!(current_employee_id)
 
-    # Send notification
     TaskReassignmentMailer.take_back_notification(reassignment.id).deliver_later
 
     redirect_to inbox_queue_path, notice: 'Task returned to you.'

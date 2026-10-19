@@ -24,10 +24,15 @@ module Aim
     MONEY_COLUMNS = ['Sales Tax', 'SubTotal', 'Credit Amount', 'Total', 'Split Invoice Amount'].freeze
     MONEY_INDEXES = MONEY_COLUMNS.to_set { |name| COLUMNS.index(name) }.freeze
 
-    attr_reader :records
+    attr_reader :records, :columns
 
-    def initialize(records)
+    # +group+ (an Aim::AgencyGroup) chooses the columns and the format (#131);
+    # without one, every column as comma-separated UTF-8.
+    def initialize(records, group: nil)
       @records = records.to_a
+      @columns = group ? group.export_column_list : COLUMNS
+      @headers = group ? @columns.map { |column| group.export_header(column) } : COLUMNS
+      @format = group&.export_format || 'csv'
       @stamps = self.class.approval_stamps(@records.map(&:invoice_id))
     end
 
@@ -50,12 +55,32 @@ module Aim
       {}
     end
 
-    def filename = "AIM_Fiscal_Report_#{Time.current.strftime('%Y%m%d_%H%M%S')}.csv"
+    def tab? = @format == 'tab'
 
-    def rows = records.map { |record| defused(row(record)) }
+    # AIM_Fiscal_Report_000124.csv for a saved report (#131), a dated draft
+    # otherwise.
+    def filename(number = nil)
+      stem = number ? format('%06d', number) : "DRAFT_#{Time.current.strftime('%Y%m%d_%H%M%S')}"
+      "AIM_Fiscal_Report_#{stem}.#{tab? ? 'txt' : 'csv'}"
+    end
+
+    # The header row, as the layout names the columns.
+    def header_row = @headers
+
+    def content_type = tab? ? 'text/tab-separated-values' : 'text/csv'
+
+    def rows = records.map { |record| picked(defused(row(record))) }
 
     def to_csv
-      CSV.generate { |csv| ([COLUMNS] + rows).each { |line| csv << line } }
+      CSV.generate(col_sep: tab? ? "\t" : ',') { |csv| ([@headers] + rows).each { |line| csv << line } }
+    end
+
+    # What is sent: UTF-8, or for the tab format UTF-16 with its byte-order
+    # mark, as Excel saves "Unicode text".
+    def body
+      return to_csv unless tab?
+
+      "\uFEFF#{to_csv}".encode('UTF-16LE')
     end
 
     private
@@ -80,6 +105,13 @@ module Aim
     # and whatever Fiscal wrote.
     def description(record)
       [@stamps[record.invoice_id], record.description.presence].compact.join(' _ ')
+    end
+
+    # The group's columns, in its order, from a full row.
+    def picked(cells)
+      return cells if columns.equal?(COLUMNS)
+
+      columns.map { |name| cells[COLUMNS.index(name)] }
     end
 
     def defused(cells)

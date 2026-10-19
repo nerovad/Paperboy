@@ -30,7 +30,7 @@ class ProbationTransferRequest < ApplicationRecord
              foreign_key: :unit,
              optional: true
 
-  # === Friendly display helpers ===
+  # Friendly display helpers
   def agency_long_name     = agency_record&.long_name     || agency
   def division_long_name   = division_record&.long_name   || division
   def department_long_name = department_record&.long_name || department

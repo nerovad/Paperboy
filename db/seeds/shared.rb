@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# db/seeds/shared.rb
 module Seeds
   SEED_KEY = (ENV['SEED_KEY'] || '2025-09-30').hash
   srand SEED_KEY
@@ -18,7 +17,6 @@ module Seeds
   DEPARTMENTS = ['Operations Support', 'Field Services', 'Court Services'].freeze
   UNITS = %w[MB3 ISSJ PSU VFS OFS-1 OFS-2 AI-1 AI-2 AI-3].freeze
 
-  # Parking lots & vehicles
   LOTS    = ['R Lot', 'A', 'B', 'C', 'Visitor', 'Overflow'].freeze
   COLORS  = %w[Black White Silver Gray Blue Red Green].freeze
   MAKES_MODELS = [
@@ -30,7 +28,6 @@ module Seeds
     ['Chevy',  %w[Silverado Malibu Equinox Bolt]]
   ].freeze
 
-  # Probation
   WORK_LOCATIONS = [
     'Adult Court Services', 'Adult Field Services', 'AI-1', 'AI-2', 'AI-3', 'ISSJ',
     'JF Detention', 'JF Programming', 'PSU', 'STU', 'VFS', 'OFS-1', 'OFS-2'

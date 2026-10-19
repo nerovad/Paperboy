@@ -7,7 +7,6 @@ class FleetVehicleGaragingFormPdfGenerator
     logo_path = Rails.root.join('app', 'assets', 'images', 'Ventura_Logo.png')
 
     Prawn::Document.new(page_size: 'A4', margin: 40) do |pdf|
-      # Header with logo
       pdf.image(logo_path.to_s, width: 80) if File.exist?(logo_path)
 
       pdf.move_down 10
@@ -16,7 +15,6 @@ class FleetVehicleGaragingFormPdfGenerator
 
       PdfReference.render(pdf, submission)
 
-      # Employee Info
       pdf.text 'Employee Information', size: 14, style: :bold
       pdf.move_down 5
       pdf.text "Name: #{submission.name}"

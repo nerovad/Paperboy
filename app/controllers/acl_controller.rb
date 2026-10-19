@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/acl_controller.rb
 class AclController < ApplicationController
   # Membership of this group confers full system-admin rights everywhere, so an
   # 'acl' grantee who could edit it — or rename any group into it — could
@@ -145,7 +144,7 @@ class AclController < ApplicationController
     redirect_to acl_path(@group), notice: 'Member removed.'
   end
 
-  # --- Contractors (non-Active-Directory members) ---
+  # Contractors (non-Active-Directory members)
   # Provisioning a contractor lives on the group screen so it sits right next to
   # "Add Member" (the AD-user search). Creating one also adds the Employee_Groups
   # membership in the same step, so the existing ACL/permission pipeline picks
@@ -265,7 +264,7 @@ class AclController < ApplicationController
     redirect_to permissions_acl_path(@group), notice: 'Permissions saved successfully.'
   end
 
-  # --- Organization Permissions ---
+  # Organization Permissions
 
   def org_permissions
     @dropdown_items = DROPDOWN_ITEMS
@@ -280,7 +279,6 @@ class AclController < ApplicationController
     @department_id = params[:department_id]
     @unit_id = params[:unit_id]
 
-    # Build the org label for display
     @org_label = build_org_label
 
     # Load effective permissions — merge all levels in this org chain
@@ -508,7 +506,6 @@ class AclController < ApplicationController
       forms << form
     end
 
-    # Add all FormTemplates
     Forms::Template.order(:name).each do |template|
       forms << { key: template.id.to_s, label: template.name }
     end

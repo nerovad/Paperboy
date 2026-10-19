@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/models/scheduled_report.rb
 class ScheduledReport < ApplicationRecord
   include RecurringSchedule
 

@@ -20,8 +20,9 @@
       <% if selectable %>
         <th class="aim-select-cell">
           <label class="aim-select-all">
+            <%# Every invoice the search leaves, on every page (#101), not the hidden ones. %>
             <input type="checkbox" aria-label="Select all in this list" data-select-all-target="selectAll"
-                   data-action="select-all#toggle"> All
+                   data-action="aim-queue-filter#selectMatching"> All
           </label>
         </th>
       <% end %>
@@ -52,7 +53,11 @@
         <% if %w[exported archived].include?(status) %>
           <td><%= record.exported_at&.in_time_zone&.strftime('%m/%d/%y %H:%M') || '—' %></td>
         <% end %>
-        <td><%= aim_fiscal_badge(record) %></td>
+        <td>
+          <%= aim_fiscal_badge(record) %>
+          <% if record.invoice.manual_entry %><span class="badge is-pending">Manual Data Entry Needed</span><% end %>
+          <%= aim_duplicate_pill(record.invoice) %>
+        </td>
         <% if selectable %>
           <td class="aim-select-cell">
             <input type="checkbox" name="record_ids[]" value="<%= record.id %>"

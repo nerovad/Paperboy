@@ -66,10 +66,13 @@ module Aim
       assert_equal 0, counts['fiscal_review']
     end
 
-    test 'Fiscal shows among a person\'s roles' do
-      Aim::Member.create!(employee_id: 91, fiscal: true)
-
+    test 'Fiscal and Group Admin show among a person\'s roles' do
+      group = Aim::AgencyGroup.for_agency!('GSA')
+      group.roles.create!(employee_id: 91, role: 'fiscal')
       assert_equal %w[User Fiscal], Aim::Users.roles_of(91)
+
+      group.roles.create!(employee_id: 91, role: 'admin')
+      assert_equal ['User', 'Group Admin', 'Fiscal'], Aim::Users.roles_of(91)
     end
   end
 end

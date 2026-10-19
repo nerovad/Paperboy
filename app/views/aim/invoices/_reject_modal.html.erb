@@ -1,0 +1,38 @@
+<%# Reject's dialog (#131): when to reject rather than send back or move, then
+    a reason from the list -- every group's, then the invoice's group's own --
+    or Other with a typed one. It sits inside the review form, as the shared
+    reason dialog does (aim_reason_controller). %>
+<% reasons = Aim::RejectReason.offered_for(aim_agency_groups.for_invoice(@invoice)) %>
+<div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
+  <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="aim-reject-title">
+    <div class="pb-modal__header">
+      <h3 id="aim-reject-title" data-aim-reason-target="title">Reject invoice</h3>
+      <button type="button" class="pb-modal__close" data-action="aim-reason#close" aria-label="Close">✕</button>
+    </div>
+    <div class="pb-modal__body">
+      <div class="aim-reject-guide">
+        <p><strong>Reject</strong> when this should not be paid through AIM at all: not an invoice, not ours, or a duplicate.
+           It leaves AIM and a copy goes back to the submitter.</p>
+        <p><strong>Send Back</strong> when the invoice is fine but AIM read it wrong or something is missing: it returns to AIM review.</p>
+        <p><strong>Move</strong> when it belongs in someone else's queue.</p>
+      </div>
+      <div class="form-group">
+        <label for="aim-reject-reason">Reason</label>
+        <select id="aim-reject-reason" name="reason" class="form-control" data-aim-reason-target="reason" disabled>
+          <option value="">Pick a reason…</option>
+          <% reasons.each do |label| %><option value="<%= label %>"><%= label %></option><% end %>
+          <option value="<%= Aim::RejectReason::OTHER %>">Other (type it below)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="aim-reject-other">Other reason, or more detail</label>
+        <textarea id="aim-reject-other" name="reason_other" class="form-control" rows="2"
+                  placeholder="Needed when the reason is Other"></textarea>
+      </div>
+      <div class="pb-modal__actions">
+        <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
+        <button type="submit" name="invoice_action" value="reject" class="btn deny" data-aim-reason-target="submit">Reject</button>
+      </div>
+    </div>
+  </div>
+</div>

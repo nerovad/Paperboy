@@ -16,7 +16,7 @@ module Aim
     extend ActiveSupport::Concern
 
     # Aim::InvoiceActions::ACTIONS names an owner may post.
-    OWNER_ACTIONS = %w[save approve send_back reject].freeze
+    OWNER_ACTIONS = %w[save approve send_back reject return_to_first].freeze
     # What a BU Admin may do to someone else's invoice in their BUs: look,
     # move and claim -- never approve it (decided 2026-09-25).
     BU_ADMIN_ACTIONS = %w[show pdf reassign claim].freeze

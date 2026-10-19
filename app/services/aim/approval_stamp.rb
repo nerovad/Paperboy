@@ -19,7 +19,17 @@ module Aim
       return if approved.nil?
 
       ["#{invoice.created_at.in_time_zone.strftime('%m/%d/%Y')}- Invoice Date:#{invoice.invoice_date&.strftime('%Y%m%d')}",
-       approved]
+       first_approval(invoice), approved].compact
+    end
+
+    # The high-dollar first approval (#131), above the final one:
+    # "1st: Last, First_mm/dd/yyyy_hh:mm:ss".
+    def first_approval(invoice)
+      return if invoice.first_approved_by.blank? || invoice.first_approved_at.nil?
+
+      name = Aim::FiscalExport.approver_names([invoice.first_approved_by]).fetch(invoice.first_approved_by.downcase,
+                                                                                 invoice.first_approved_by)
+      "1st: #{name}_#{invoice.first_approved_at.in_time_zone.strftime('%m/%d/%Y_%H:%M:%S')}"
     end
 
     def path(invoice) = File.join(invoice.store_dir, "#{invoice.batch_id}.stamped.pdf")

@@ -33,12 +33,12 @@ module Billing
     test 'queries all definitions using the active period' do
       connection = Minitest::Mock.new
       connection.expect(:exec_query, ActiveRecord::Result.empty) do |sql|
-        assert_equal 10, sql.scan('SELECT ').length - sql.scan('SELECT 1').length
+        assert_equal check_count, sql.scan('SELECT ').length - sql.scan('SELECT 1').length
         assert_includes sql, start_date
         assert_includes sql, end_date
         refute_includes sql, "''#{start_date}''"
         assert_includes sql, 'GSABSS.dbo.tc60_services'
-        assert_equal 10, sql.scan('fnTC60PostingRef(T.[TYPE]').length
+        assert_equal check_count, sql.scan('fnTC60PostingRef(T.[TYPE]').length
         true
       end
 
@@ -68,6 +68,11 @@ module Billing
     end
 
     private
+
+    # Every check adds one SELECT and one period predicate to the query.
+    def check_count
+      Audit::GROUPS.sum { |group| group.checks.size }
+    end
 
     def period
       FakePeriod.new(start_date: Date.iso8601(start_date), end_date: Date.iso8601(end_date))

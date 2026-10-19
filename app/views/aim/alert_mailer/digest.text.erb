@@ -1,0 +1,12 @@
+Hello <%= @employee.first_name %>,
+
+These AIM invoices are waiting on you or your budget units.
+<% @sections.each do |heading, invoices| %>
+
+<%= heading %> (<%= invoices.size %>)
+<% invoices.each do |invoice| %>
+- <%= [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id %>, <%= invoice.budget_unit %>: <%= aim_invoice_url(invoice.batch_id) %>
+<% end %>
+<% end %>
+
+Open AIM: <%= aim_root_url %>

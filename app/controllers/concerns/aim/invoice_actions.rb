@@ -27,11 +27,12 @@ module Aim
       'learn_and_retry' => :learn_and_retry,
       'learn_and_send' => :learn_and_send,
       'retry_export' => :retry_export
-    }.freeze
+    }.merge(Aim::InvoiceRoutingActions::ACTIONS).freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
     # The value is the button's label, for the refusal without one.
-    REASON_ACTIONS = { 'reject' => 'Reject', 'delete' => 'Delete', 'send_back' => 'Send Back' }.freeze
+    REASON_ACTIONS = { 'reject' => 'Reject', 'delete' => 'Delete', 'send_back' => 'Send Back',
+                       'send_to_queue' => 'Send to a queue', 'return_to_first' => 'Return to first approver' }.freeze
 
     private
 
@@ -66,15 +67,21 @@ module Aim
       return refuse('Approve it from its queue: send it to approval first.') unless @invoice.state == 'ready_for_approval'
       return refuse_unready unless @invoice.ready_for_a_user?
       return refuse('Pick or enter the coding first.') if coding_unpicked?
+      return second_approval_first if @invoice.needs_second_approval?(current_user_employee_id)
+      if @invoice.awaiting_second_approval? && !@invoice.second_approver?(current_user_employee_id, staff: staff?)
+        return refuse("This is waiting for #{@invoice.second_approval_setting&.second_approver_name}'s second approval.")
+      end
 
       @invoice.request_export!(actor: current_user_email)
       Aim::StampApprovedJob.perform_later(@invoice.id)
       finish('Invoice approved. It is on its way to billing and Fiscal.')
     end
 
+    # Back to Action Needed as "Sent back" (#160): the reason shows on a red
+    # banner at the top of the invoice and in its history, not in its notes.
     def send_back
       @invoice.transition_to!('needs_review', actor: current_user_email, note: "reason: #{reason}",
-                                              notes: notes_with('Sent back'))
+                                              review_reason: 'sent_back', review_note: reason)
       finish('Invoice sent back to AIM review.')
     end
 
@@ -110,8 +117,7 @@ module Aim
     end
 
     def reject
-      folder = File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
-                         "#{@invoice.submitter.presence || 'Unknown'}_#{@invoice.budget_unit.presence || 'Unknown'}")
+      folder = rejected_folder(@invoice)
       copied = keep_copy(folder)
       @invoice.transition_to!('rejected', actor: current_user_email, notes: notes_with('Rejected'),
                                           note: "reason: #{reason}; #{copied ? "copy in #{File.basename(folder)}" : 'no PDF to copy'}")
@@ -151,7 +157,15 @@ module Aim
                   alert: "This invoice still needs #{@invoice.missing_for_a_user.to_sentence}. Fill that in first."
     end
 
-    def reason = params[:reason].to_s.squish
+    # The reason given. Reject offers a list (#131): "Other" is the typed
+    # reason; any other pick is kept with the detail typed beside it.
+    def reason
+      picked = params[:reason].to_s.squish
+      typed = params[:reason_other].to_s.squish
+      return typed if picked == Aim::RejectReason::OTHER
+
+      [picked.presence, (typed.presence if picked.present?)].compact.join(' — ')
+    end
 
     def refuse(message) = redirect_to(aim_invoice_path(@invoice.batch_id, queue: @queue), alert: message)
 
@@ -173,13 +187,19 @@ module Aim
 
     # A copy of the PDF for the people who look in that folder today, or nil
     # when the PDF is not in the store -- which the event then says.
-    def keep_copy(folder)
-      return unless File.file?(@invoice.pdf_path)
+    def keep_copy(folder, invoice = @invoice)
+      return unless File.file?(invoice.pdf_path)
 
       FileUtils.mkdir_p(folder)
-      copy = File.join(folder, "#{@invoice.batch_id}.pdf")
-      FileUtils.cp(@invoice.pdf_path, copy)
+      copy = File.join(folder, "#{invoice.batch_id}.pdf")
+      FileUtils.cp(invoice.pdf_path, copy)
       copy
+    end
+
+    # Where a rejected invoice's PDF is copied for its submitter.
+    def rejected_folder(invoice)
+      File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
+                "#{invoice.submitter.presence || 'Unknown'}_#{invoice.budget_unit.presence || 'Unknown'}")
     end
 
     # Rows arrive as split[0][pages_text] and so on, one per invoice.

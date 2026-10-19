@@ -1,11 +1,14 @@
-<div class="aim-page" data-controller="aim-queue-filter">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data(aim_queue_filter_reason_value: params[:reason]) do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= aim_queue_label(@queue) %></h1>
       <p class="aim-page-subtitle"><%= aim_queue_description(@queue) %></p>
     </div>
 
-    <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <span class="aim-count-pill"><%= pluralize(@invoices.length, 'invoice') %></span>
+    </div>
   </header>
 
   <%= render 'aim/invoices/search_box' %>
@@ -29,15 +32,21 @@
   <% else %>
     <% if @sections %>
       <%# BU, then its shared queue and each person, then invoices: collapsed until opened. %>
-      <div data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
+      <div class="aim-list-frame" data-controller="aim-move-modal" data-aim-move-modal-bulk-url-value="<%= reassign_many_aim_invoices_path(queue: @queue) %>">
         <%= render 'aim/invoices/bulk_bar' %>
-        <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: false %>
+        <div class="aim-list-scroll" data-aim-queue-filter-target="scroll">
+          <%= render 'aim/shared/bu_sections', sections: @sections, people_tools: false %>
+        </div>
+        <%= render 'aim/shared/list_pager' %>
         <%= render 'move_modal' %>
       </div>
     <% else %>
-      <section class="aim-panel aim-queue-panel">
-        <%= render 'rows', invoices: @invoices, movable: false %>
-      </section>
+      <div class="aim-list-frame">
+        <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
+          <%= render 'rows', invoices: @invoices, movable: false %>
+        </section>
+        <%= render 'aim/shared/list_pager' %>
+      </div>
     <% end %>
   <% end %>
-</div>
+<% end %>

@@ -14,7 +14,7 @@ class StartupConfigurationTest < ActiveSupport::TestCase
   test 'reports missing configuration values' do
     warnings = StartupConfiguration.warnings(env: {})
 
-    assert_equal 14, warnings.length
+    assert_equal expected_warning_count, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_ROOT', value: '(undefined)', error: 'is not defined.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: '(undefined)', error: 'is not defined.' }
@@ -44,7 +44,7 @@ class StartupConfigurationTest < ActiveSupport::TestCase
       database_checker: -> { false }
     )
 
-    assert_equal 14, warnings.length
+    assert_equal expected_warning_count, warnings.length
     assert_includes warnings, { key: 'AIM_ROOT', value: '/aim', error: 'is not reachable.' }
     assert_includes warnings, { key: 'GSABSS_HOST', value: 'sql.example', error: 'is not reachable.' }
     assert(warnings.all? { |warning| warning.fetch(:error) == 'is not reachable.' })
@@ -100,5 +100,12 @@ class StartupConfigurationTest < ActiveSupport::TestCase
 
     assert_includes shortcut_paths, '/datarunner/00_ShippingStation.lnk'
     refute_includes directory_paths, '/datarunner/00_ShippingStation.lnk'
+  end
+
+  private
+
+  # One warning for each path, plus one for the host and one for the database.
+  def expected_warning_count
+    StartupConfiguration::PATHS.size + 2
   end
 end

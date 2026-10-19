@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_15_140000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -56,6 +56,77 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
+  end
+
+  create_table "aim.agency_group_coverages", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.bigint "covered_group_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "covered_group_id"], name: "index_aim_agency_group_coverages_on_pair", unique: true
+    t.index ["covered_group_id"], name: "index_aim_agency_group_coverages_on_covered"
+  end
+
+  create_table "aim.agency_group_roles", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "employee_id", null: false
+    t.string "granted_by", limit: 255
+    t.string "role", limit: 20, null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "employee_id", "role"], name: "index_aim_agency_group_roles_on_group_person_role", unique: true
+    t.index ["employee_id"], name: "index_aim_agency_group_roles_on_employee"
+  end
+
+  create_table "aim.agency_group_units", force: :cascade do |t|
+    t.string "added_by", limit: 255
+    t.bigint "agency_group_id", null: false
+    t.string "agency_id", limit: 10, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id"], name: "index_aim_agency_group_units_on_group"
+    t.index ["agency_id", "budget_unit"], name: "index_aim_agency_group_units_on_agency_and_unit", unique: true
+  end
+
+  create_table "aim.agency_groups", force: :cascade do |t|
+    t.string "agency_id", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.boolean "custom", default: false, null: false
+    t.text "export_columns"
+    t.string "export_format", limit: 10, default: "csv", null: false
+    t.text "hold_reasons"
+    t.string "name", limit: 100, null: false
+    t.string "required_fields", limit: 500
+    t.text "tag_suggestions"
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_id", "custom"], name: "index_aim_agency_groups_on_agency_and_custom"
+    t.index ["name"], name: "index_aim_agency_groups_on_name", unique: true
+  end
+
+  create_table "aim.alert_settings", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.string "budget_unit", limit: 10
+    t.datetime "created_at", null: false
+    t.integer "days"
+    t.boolean "enabled", default: true, null: false
+    t.string "kind", limit: 40, null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_group_id", "budget_unit", "kind"], name: "index_aim_alert_settings_on_group_unit_kind", unique: true
+  end
+
+  create_table "aim.budget_unit_settings", force: :cascade do |t|
+    t.string "agency_id", limit: 10, null: false
+    t.string "budget_unit", limit: 10, null: false
+    t.datetime "created_at", null: false
+    t.decimal "second_approval_over", precision: 15, scale: 2
+    t.integer "second_approver_employee_id"
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_id", "budget_unit"], name: "index_aim_budget_unit_settings_on_agency_and_unit", unique: true
   end
 
   create_table "aim.coding_imports", force: :cascade do |t|
@@ -184,6 +255,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.index ["status"], name: "index_aim_fiscal_records_on_status"
   end
 
+  create_table "aim.fiscal_report_invoices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "fiscal_report_id", null: false
+    t.bigint "invoice_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fiscal_report_id", "invoice_id"], name: "index_aim_fiscal_report_invoices_on_pair", unique: true
+    t.index ["invoice_id"], name: "index_aim_fiscal_report_invoices_on_invoice"
+  end
+
+  create_table "aim.fiscal_reports", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.binary "content"
+    t.datetime "created_at", null: false
+    t.string "created_by", limit: 255, null: false
+    t.datetime "expires_at", null: false
+    t.string "export_format", limit: 10, null: false
+    t.string "file_name", limit: 255, null: false
+    t.integer "invoice_count", default: 0, null: false
+    t.string "layout_name", limit: 150, null: false
+    t.datetime "purged_at"
+    t.bigint "replaces_report_id"
+    t.bigint "report_template_id"
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id"], name: "index_aim_fiscal_reports_on_group"
+    t.index ["expires_at"], name: "index_aim_fiscal_reports_on_expires_at"
+  end
+
   create_table "aim.invoice_events", force: :cascade do |t|
     t.string "action", limit: 50, null: false
     t.string "actor", null: false
@@ -215,8 +313,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.string "customer_number", limit: 100
     t.string "document_type", limit: 50
     t.datetime "exported_at"
+    t.string "duplicate_checked_key", limit: 450
+    t.bigint "duplicate_of_id"
     t.text "extracted"
     t.string "extracted_vendor_name"
+    t.datetime "first_approved_at"
+    t.string "first_approved_by", limit: 255
     t.boolean "high_confidence"
     t.date "invoice_date"
     t.string "invoice_number", limit: 100
@@ -224,17 +326,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.string "lease_owner", limit: 100
     t.datetime "lease_until"
     t.text "manifest"
+    t.boolean "manual_entry", default: false, null: false
     t.text "notes"
     t.string "order_number", limit: 100
     t.integer "page_count"
     t.bigint "parent_id"
     t.text "review_note"
+    t.bigint "replaces_invoice_id"
     t.string "review_reason", limit: 40
     t.decimal "sales_tax", precision: 15, scale: 2
     t.string "source_filename", limit: 260
     t.string "source_path", limit: 1000
     t.boolean "split_check", default: true, null: false
     t.string "state", limit: 50, null: false
+    t.string "straight_to_fiscal_by", limit: 255
     t.string "submitter"
     t.decimal "subtotal", precision: 15, scale: 2
     t.datetime "updated_at", null: false
@@ -244,6 +349,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.index ["coded_at"], name: "index_aim_invoices_on_coded_at"
     t.index ["command", "lease_until"], name: "index_aim_invoices_on_command_and_lease_until"
     t.index ["content_hash"], name: "index_aim_invoices_on_content_hash"
+    t.index ["invoice_total"], name: "index_aim_invoices_on_invoice_total"
     t.index ["parent_id"], name: "index_aim_invoices_on_parent_id"
     t.index ["state", "budget_unit"], name: "index_aim_invoices_on_state_and_budget_unit"
   end
@@ -260,6 +366,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
     t.string "fusion_team", limit: 100
     t.datetime "updated_at", null: false
     t.index ["employee_id"], name: "index_aim_members_on_employee_id", unique: true
+  end
+
+  create_table "aim.reject_reasons", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.datetime "created_at", null: false
+    t.string "label", limit: 200, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_group_id", "position"], name: "index_aim_reject_reasons_on_group_and_position"
+  end
+
+  create_table "aim.report_templates", force: :cascade do |t|
+    t.bigint "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.text "export_columns"
+    t.string "export_format", limit: 10, default: "csv", null: false
+    t.string "name", limit: 100, null: false
+    t.datetime "updated_at", null: false
+    t.string "updated_by", limit: 255
+    t.index ["agency_group_id", "name"], name: "index_aim_report_templates_on_group_and_name", unique: true
   end
 
   create_table "aim.user_budget_units", force: :cascade do |t|
@@ -1075,6 +1202,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   create_table "form_template_routing_steps", force: :cascade do |t|
     t.string "approve_button_label"
     t.string "authorization_service_type"
+    t.text "button_labels"
     t.boolean "complete_on_edit", default: false, null: false
     t.string "completion_rule", default: "all", null: false
     t.string "condition_field_name"
@@ -2126,6 +2254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_120000) do
   end
 
   create_table "user_settings", force: :cascade do |t|
+    t.text "app_homes"
     t.text "column_prefs"
     t.datetime "created_at", null: false
     t.integer "dam_storage_location_id"

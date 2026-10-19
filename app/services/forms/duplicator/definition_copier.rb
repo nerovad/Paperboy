@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator/definition_copier.rb
-
 module Forms
   class Duplicator
     # Copies the database half of a form: the template row and its fields, and

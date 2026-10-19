@@ -80,7 +80,7 @@ module Forms
       trigger_event == 'submit' ? 'new_submission' : 'status_changed'
     end
 
-    # --- Builder display helpers ---
+    # Builder display helpers
 
     def trigger_label
       case trigger_event

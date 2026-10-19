@@ -4,18 +4,27 @@
 - Generated Ruby conforms to `.rubocop.yml`.
 
 ## CI Pipeline
-- run unit test and examine errors; f
+- Run the checks and examine the errors:
   ```bash
-     bin/unit-tests
-  * Use 10.135.204.161 when GSASQL16 cannot be resolved
+  bin/unit-test
+  ```
+  It runs RuboCop, Brakeman, bundle-audit and `rails test`, and writes the
+  output to `error.log`. Pass a test path to run less than the whole suite.
 - Tests use SQL Server, not SQLite. `config/database.yml` accepts
   `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
   unavailable; for example:
   `PAPERBOY_TEST_DATABASE=Paperboy_Test bundle exec rake test`
-- The configured test database is a scratch base. Rails test setup creates
-  schema-loaded, per-worker databases with a run identifier and worker suffix
-  for parallel tests, then drops them after the run. The test login therefore
-  needs permission to create and drop databases and load the schema.
+- Locally, the configured test database is a scratch base. Rails test setup
+  creates schema-loaded, per-worker databases with a run identifier and worker
+  suffix for parallel tests, then drops them after the run. The test login
+  therefore needs permission to create and drop databases and load the schema.
+- In CI (`.github/workflows/ci.yml`) the login cannot create databases. The
+  test job sets `PARALLEL_WORKERS=1` and runs against one pre-made database
+  whose name ends in `_CI` (`Paperboy_CI` by default). The `Reset CI database`
+  step runs `bundle exec rails ci:reset_database`, which empties that database
+  and loads `db/schema.rb`. It never creates or drops a database and refuses
+  any name that does not end in `_CI`. The test job is skipped while the
+  `CI_SQL_HOST` variable is unset.
 - Never point tests at `Paperboy_Dev`, staging, or production data. If
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
 ## Software Changes
@@ -29,6 +38,44 @@
   * Do not indent proposed commit
 - Git
   * use git mv when moving files
+
+## Principles
+
+Paperboy adopts the following 24 principles.
+They steer judgment calls. They never replace a rule elsewhere in this file;
+where a principle and a rule conflict, the rule wins.
+
+- **Build less:** Laziness Protocol, Subtract Before You Add, Minimize Reader Load,
+  Redesign from First Principles, Outcome-Oriented Execution.
+- **Think first:** Foundational Thinking, Attack the Premise, Experience First,
+  Exhaust the Design Space, Build the Lever.
+- **Architecture:** Model the Domain, Boundary Discipline, Type System Discipline,
+  Make Operations Idempotent, Migrate Callers Then Delete Legacy APIs,
+  Separate Before Serializing Shared State.
+- **Verification:** Prove It Works, Fix Root Causes, Sequence Work into Verifiable
+  Units, Test Behavior, Not Implementation, Explain the Number.
+- **Delegation and meta:** Guard the Context Window, Never Block on the Human,
+  Encode Lessons in Structure.
+
+Rules:
+
+- **Cite the principle you applied.** Every PR's Implementation notes and every
+  non-obvious decision in an issue or PR comment names the principle and the
+  decision it changed, in the form `Principle: <name> - <decision>`. A name with
+  no decision behind it does not count.
+- **Prove It Works.** Before calling a task done, run the real thing and show the
+  real result: the page rendered, the rake task's output, the rows written, the
+  CI run's log. Green tests alone are a proxy. Paste the evidence under
+  `Checks run` in the pull request.
+- **Never Block on the Human applies only to reversible work** (code, notes,
+  drafts, branches). It does **not** override Roy's approval for production SQL,
+  Active Directory (AD) changes, merges, or sending email: those always wait for an
+  explicit OK, as do force-pushes, deploys, and posting outside the repository.
+- **Make Operations Idempotent.** A script, rake task, or CI step that changes
+  state says in its comment what a second run, and a run after a crash, does.
+- **Encode Lessons in Structure.** When a correction is made twice, add a
+  RuboCop cop, a test, or a CI check instead of another paragraph here.
+
 ## Workflow commands
 The Paperboy repository uses issue-linked branches and worktrees for
 implementation work. The commands below use the Gitea API and read `GITEA_TOKEN` from the

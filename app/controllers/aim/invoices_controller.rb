@@ -6,6 +6,7 @@ module Aim
   # it; the PDF is read from the store and never moved.
   class InvoicesController < BaseController
     include Aim::InvoiceActions
+    include Aim::InvoiceRoutingActions
     include Aim::InvoiceCodingActions
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
@@ -27,7 +28,8 @@ module Aim
       reading_database("list the #{@queue} queue", alert: 'The invoice database could not be read.',
                                                    empty: { invoices: [], reason_counts: {} }) do
         # The reason filter is on the page itself; every Action Needed row is sent.
-        @invoices = Aim::Invoice.in_queue(@queue).newest_first.to_a
+        # Narrowed to the agency groups picked in Managing (#131).
+        @invoices = helpers.aim_agency_groups.invoices(helpers.aim_managing_groups).in_queue(@queue).newest_first.to_a
         @reason_counts = @queue == 'needs_review' ? @invoices.map { |i| helpers.aim_filter_reason(i) }.compact.tally : {}
         # Budget unit -> shared queue and each person -> invoices, as on By BU.
         @sections = Aim::BuSections.build(@invoices, coa: Aim::Units.new) if @queue == 'ready_for_approval'
@@ -44,7 +46,9 @@ module Aim
         return redirect_to aim_invoices_path(queue: @queue), notice: 'Invoice unclaimed.'
       end
 
-      save_fields
+      return keep_typed unless save_fields_or_keep
+
+      @invoice.finish_manual_entry!(actor: current_user_email)
       perform(invoice_action)
     rescue Aim::Invoice::IllegalTransition, ActiveRecord::RecordInvalid, ArgumentError => e
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), alert: e.message
@@ -97,6 +101,26 @@ module Aim
     end
 
     def pdf_present? = stored_pdf_path.present?
+
+    # False when a field could not be saved (an amount AIM cannot read, #166):
+    # nothing is saved, and keep_typed shows the form again as it was typed.
+    def save_fields_or_keep
+      save_fields
+      true
+    rescue ActiveRecord::RecordInvalid => e
+      raise unless e.record == @invoice
+
+      @save_error = e.record.errors.full_messages.to_sentence
+      false
+    end
+
+    # The review page again, with everything the person typed still in it and
+    # why it was not saved -- not a reload that loses their work.
+    def keep_typed
+      prepare_review
+      flash.now[:alert] = "Not saved: #{@save_error}. Everything you typed is still here."
+      render :show, status: :unprocessable_content
+    end
 
     def save_fields
       permitted = params.fetch(:invoice, {}).permit(*Aim::Invoice::EDITABLE_FIELDS).to_h

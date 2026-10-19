@@ -6,7 +6,10 @@
     </div>
     <span class="aim-count-pill"><%= pluralize(@aliases.length, 'alias') %></span>
   </header>
-  <%= turbo_frame_tag 'aim-vendor-aliases' do %>
+  <%# The list pages inside the frame (#101), so a Save or Remove redraws it
+      paged; the frame itself takes no room of its own. %>
+  <%= turbo_frame_tag 'aim-vendor-aliases', class: 'aim-list-frame-host' do %>
+  <%= tag.div class: 'aim-list-frame', data: aim_paged_list_data do %>
     <%= render 'aim/shared/frame_flash' %>
 
   <section class="aim-panel aim-vendor-panel">
@@ -22,17 +25,14 @@
         <option value="<%= name %>"></option>
       <% end %>
     </datalist>
-
-    <%= form_with url: aim_vendor_aliases_path, method: :get, local: true, class: 'aim-inline-form' do |form| %>
-      <%= form.text_field :q, value: @filter, placeholder: 'Filter', autocomplete: 'off' %>
-      <%= form.submit 'Filter', class: 'btn compact' %>
-    <% end %>
   </section>
+
+  <%= render 'aim/invoices/search_box', placeholder: 'Search the spelling, official name, note or who learned it…', empty: 'No alias matches.' %>
 
   <% if @aliases.empty? %>
     <section class="aim-panel aim-empty-state"><p>No aliases yet.</p></section>
   <% else %>
-    <section class="aim-panel aim-queue-panel">
+    <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
       <table class="submission-table aim-queue-table">
         <thead>
           <tr>
@@ -45,7 +45,7 @@
         </thead>
         <tbody>
           <% @aliases.each do |row| %>
-            <tr>
+            <tr data-aim-queue-filter-target="row" data-search="<%= [row.extracted_name, row.normalized_name, row.note, row.learned_by].compact.join(' ') %>">
               <td class="is-strong"><%= row.extracted_name %></td>
               <td>
                 <%= form_with url: aim_vendor_alias_path(row), method: :patch, local: true, class: 'aim-inline-form' do |form| %>
@@ -66,6 +66,8 @@
         </tbody>
       </table>
     </section>
+    <%= render 'aim/shared/list_pager' %>
+  <% end %>
   <% end %>
   <% end %>
 </div>

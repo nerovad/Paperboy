@@ -58,10 +58,6 @@ module Aim
       row.reload
     end
 
-    # ---------------------------------------------------------------
-    # Queues
-    # ---------------------------------------------------------------
-
     test 'a queue lists the rows in its states, newest first' do
       older = invoice('4601.A', state: 'approved', pdf: false)
       newer = invoice('4601.B', state: 'exporting', pdf: false)
@@ -90,10 +86,6 @@ module Aim
 
       assert_redirected_to aim_root_path
     end
-
-    # ---------------------------------------------------------------
-    # The review page
-    # ---------------------------------------------------------------
 
     test 'opening an invoice claims it on the row, by name' do
       row = invoice('4601.F')
@@ -210,10 +202,6 @@ module Aim
       assert_redirected_to aim_invoices_path(queue: 'needs_review')
     end
 
-    # ---------------------------------------------------------------
-    # Actions
-    # ---------------------------------------------------------------
-
     test 'save writes the reviewed fields and notes to the row' do
       row = invoice('4601.K', pdf: false)
 
@@ -225,6 +213,24 @@ module Aim
       assert_equal Date.new(2026, 6, 22), row.invoice_date
       assert_equal %w[checked Credit], [row.notes, row.document_type]
       assert_equal 'needs_review', row.state
+    end
+
+    test 'a total typed with commas or a dollar sign is saved whole; one that is not an amount is refused (#166)' do
+      row = invoice('4601.K2', pdf: false, invoice_total: 10)
+
+      act(row, 'save', invoice: { invoice_total: '999,999,999.99', subtotal: '$1,234.50', sales_tax: '(1.25)' })
+      assert_equal [BigDecimal('999999999.99'), BigDecimal('1234.50'), BigDecimal('-1.25')], [row.invoice_total, row.subtotal, row.sales_tax]
+
+      act(row, 'save', invoice: { invoice_total: 'about 12', vendor_name: 'Typed Vendor', notes: 'typed note' })
+      assert_equal BigDecimal('999999999.99'), row.invoice_total, 'nothing saved'
+      assert_not_equal 'Typed Vendor', row.vendor_name, 'nothing saved'
+      # The form comes back as typed, saying why, rather than a reload (#166).
+      assert_response :unprocessable_content
+      assert_select 'input[name=?][value=?]', 'invoice[invoice_total]', 'about 12'
+      assert_select 'input[name=?][value=?]', 'invoice[vendor_name]', 'Typed Vendor'
+      assert_select 'textarea[name=?]', 'invoice[notes]', text: 'typed note'
+      assert_select 'input[name=?][data-aim-money-target=field]', 'invoice[subtotal]'
+      assert_match(/Not saved: Invoice total "about 12" is not an amount AIM can save/, flash[:alert])
     end
 
     test 'send to approval moves the row and releases the claim' do
@@ -351,9 +357,19 @@ module Aim
 
       act(row, 'send_back', reason: 'wrong PO')
 
-      assert_equal 'needs_review', row.state
+      assert_equal ['needs_review', 'sent_back', 'wrong PO'], [row.state, row.review_reason, row.review_note]
       assert_equal 'reason: wrong PO', row.events.last.note
-      assert_match(/Sent back by Aim Staff: wrong PO\z/, row.notes)
+      assert_nil row.notes, 'the reason is on the banner, not in the notes (#160)'
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select '.aim-notice-chip[aria-controls=aim-notice-sent-back]', text: /Sent back/
+      assert_select '.aim-notice-tray #aim-notice-sent-back[hidden]'
+      assert_select '.aim-readonly-banner p', text: /wrong PO/
+      assert_select '.aim-page-header .badge', text: 'Sent back', count: 0
+      assert_select '.aim-ticket', 0
+
+      act(row, 'send_to_approval')
+      assert_nil row.review_reason, 'cleared once it moves on'
     end
 
     test 'reject, delete and send back need a reason, and nothing moves without one' do
@@ -420,6 +436,229 @@ module Aim
       assert File.exist?(row.pdf_path), 'the store keeps its copy'
     end
 
+    test 'reject offers every group\'s reasons and the invoice\'s group\'s, with Other typed (#131)' do
+      group = Aim::AgencyGroup.for_agency!('GSA')
+      Aim::RejectReason.replace!(nil, "Duplicate invoice\nNot an invoice", by: 'test')
+      Aim::RejectReason.replace!(group, 'Not ours', by: 'test')
+      row = invoice('4601.R', agency: 'GSA')
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select 'select[name=reason] option', text: 'Not ours'
+      assert_select 'select[name=reason] option[value=?]', Aim::RejectReason::OTHER
+      assert_select '.aim-reject-guide', text: /Send Back/
+
+      act(row, 'reject', reason: Aim::RejectReason::OTHER)
+      assert_equal 'needs_review', row.state, 'Other needs a typed reason'
+
+      act(row, 'reject', reason: 'Duplicate invoice', reason_other: 'see 4601.Q')
+      assert_equal 'rejected', row.state
+      assert_includes row.notes, 'Duplicate invoice — see 4601.Q'
+    end
+
+    test 'an AIM Admin sends an invoice to a queue from anywhere, flagged for typing in (#131)' do
+      person = Employee.where.not(first_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      row = invoice('4601.M', state: 'received', command: 'extract', pdf: false)
+
+      act(row, 'send_to_queue', send_owner: person.id, send_manual: '1', reason: 'AI cannot read it')
+
+      assert_equal ['ready_for_approval', nil, true, person.id], [row.state, row.command, row.manual_entry, row.assigned_employee_id]
+      assert_includes row.events.pluck(:note).join("\n"), 'Manual Data Entry Needed: AI cannot read it'
+    end
+
+    test 'sending to a queue needs a reason, and not while the worker has it' do
+      row = invoice('4601.N', state: 'extracting', pdf: false)
+      act(row, 'send_to_queue', reason: 'stuck')
+      assert_equal 'extracting', row.state
+
+      row = invoice('4601.O', pdf: false)
+      act(row, 'send_to_queue')
+      assert_equal 'needs_review', row.state
+    end
+
+    test 'the flag clears once the details are typed in' do
+      row = invoice('4601.P', state: 'ready_for_approval', vendor_name: nil, manual_entry: true, pdf: false)
+      act(row, 'save', invoice: { invoice_number: 'X-1' })
+      assert row.manual_entry, 'still no vendor'
+
+      act(row, 'save', invoice: { vendor_name: 'ACME' })
+      assert_not row.manual_entry
+      assert_includes row.events.pluck(:note), 'Manual data entry done'
+    end
+
+    def as_second_approver(employee)
+      session[:user] = { 'email' => employee.email.presence || 'second@example.com', 'employee_id' => employee.id }
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+    end
+
+    test 'over the BU\'s amount, the first approval sends it to the second approver; theirs finishes it (#131)' do
+      second = Employee.where.not(first_name: [nil, '']).where.not(id: 42).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: second.id)
+      Aim::BudgetUnitSetting.create!(agency_id: 'GSA', budget_unit: '4601', second_approval_over: 100,
+                                     second_approver_employee_id: second.id)
+      row = invoice('4601.H', state: 'ready_for_approval', agency: 'GSA', invoice_total: 500, assigned_employee_id: 42, pdf: false)
+
+      act(row, 'approve')
+      assert_equal ['ready_for_approval', REVIEWER, second.id], [row.state, row.first_approved_by, row.assigned_employee_id]
+      assert row.awaiting_second_approval?
+
+      as_second_approver(second)
+      act(row, 'approve')
+      assert_equal 'approved', row.state, 'the second approver finishes it'
+      assert_equal REVIEWER, row.first_approved_by, 'kept for the stamp'
+      assert_match(/\A1st: /, Aim::ApprovalStamp.lines(row).second)
+    end
+
+    test 'the second approver may return it to the first; under the amount one approval is enough' do
+      second = Employee.where.not(first_name: [nil, '']).where.not(id: 42).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: second.id)
+      Aim::BudgetUnitSetting.create!(agency_id: 'GSA', budget_unit: '4601', second_approval_over: 100,
+                                     second_approver_employee_id: second.id)
+      row = invoice('4601.I', state: 'ready_for_approval', agency: 'GSA', invoice_total: 500, pdf: false,
+                              first_approved_by: REVIEWER, first_approved_at: Time.current, assigned_employee_id: second.id)
+
+      as_second_approver(second)
+      act(row, 'return_to_first', reason: 'wrong object code')
+      assert_nil row.first_approved_by
+      assert_includes row.events.pluck(:note), 'Returned to the first approver: wrong object code'
+
+      small = invoice('4601.J', state: 'ready_for_approval', agency: 'GSA', invoice_total: 50, pdf: false)
+      assert_not small.needs_second_approval?(42)
+    end
+
+    test 'a possible duplicate goes to Action Needed linked to the other; staff decide (#131)' do
+      first = invoice('4601.D1', state: 'exported', vendor_name: 'ACME Inc', invoice_number: 'INV 9', invoice_total: 10, pdf: false)
+      row = invoice('4601.D2', state: 'ready_for_approval', vendor_name: 'acme inc', invoice_number: 'inv9', invoice_total: 10, pdf: false)
+
+      Aim::DuplicateCheckJob.perform_now
+      row.reload
+      assert_equal ['needs_review', 'duplicate', first.id], [row.state, row.review_reason, row.duplicate_of_id]
+      assert_includes first.events.pluck(:note), '4601.D2 may be a duplicate of this one'
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select 'a[href=?]', aim_invoice_path(first.batch_id)
+      # The answers sit on the banner (#160) and submit the invoice form; the
+      # two are compared, the different fields marked. The original is
+      # exported, so Replacement is greyed out and says why.
+      assert_select 'form#aim-invoice-form'
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Vendor'
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Total', count: 0
+      %w[reject_duplicate not_duplicate].each do |answer|
+        assert_select ".aim-readonly-banner__actions button[value=#{answer}][form=aim-invoice-form]"
+        assert_select ".aim-review-action-strip button[value=#{answer}]", 0
+      end
+      assert_select '.aim-readonly-banner__actions span[title*="already been processed"] button[disabled]', text: 'Replacement'
+      assert_select 'button[value=replacement]', 0
+      act(row, 'replacement')
+      assert_equal ['needs_review', first.id], [row.state, row.duplicate_of_id], 'refused once the original is processed'
+
+      act(row, 'not_duplicate')
+      assert_equal [nil, nil], [row.review_reason, row.duplicate_of_id]
+      Aim::DuplicateCheckJob.perform_now
+      assert_nil row.reload.duplicate_of_id, '"not a duplicate" sticks while the details stay the same'
+    end
+
+    test 'only the later of two is flagged, and nothing that arrived before the check began' do
+      first = invoice('4601.F1', state: 'ready_for_approval', invoice_total: 30, pdf: false)
+      row = invoice('4601.F2', state: 'ready_for_approval', invoice_total: 30, pdf: false)
+      old = invoice('4601.F3', state: 'ready_for_approval', invoice_total: 30, pdf: false, created_at: Time.zone.parse('2026-10-01'))
+
+      Aim::DuplicateCheckJob.perform_now
+
+      assert_equal [nil, first.id, nil], [first.reload.duplicate_of_id, row.reload.duplicate_of_id, old.reload.duplicate_of_id]
+    end
+
+    test 'a replacement goes to the original queue and the original is rejected as replaced (#160)' do
+      person = Employee.where.not(first_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      first = invoice('4601.E1', state: 'ready_for_approval', invoice_total: 20, assigned_employee_id: person.id,
+                                 assigned_to: person.first_name, assignment_source: 'reassigned')
+      row = invoice('4601.E2', state: 'ready_for_approval', invoice_total: 20, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+
+      get :show, params: { id: row.reload.batch_id, queue: row.queue }
+      assert_select '[data-controller~=aim-replace] button[data-action="aim-replace#open"]', text: 'Replacement'
+      assert_select 'input[name=replace_to][value=same][form=aim-invoice-form][checked]'
+      assert_select 'select[name=replace_owner][form=aim-invoice-form]'
+
+      act(row, 'replacement', replace_to: 'same')
+      assert_equal ['ready_for_approval', person.id, first.id, nil], [row.state, row.assigned_employee_id, row.replaces_invoice_id, row.duplicate_of_id]
+      first.reload
+      assert_equal 'rejected', first.state
+      assert_includes first.notes, "Replaced by #{row.batch_id}"
+      assert_equal row, first.replaced_by
+      assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.E1.pdf')), 'its PDF copied as a Reject would'
+      Aim::DuplicateCheckJob.perform_now
+      assert_nil row.reload.duplicate_of_id, 'a replacement is not flagged again'
+    end
+
+    test 'a replacement can go to another queue; a duplicate sent on stays a known duplicate (#160)' do
+      first = invoice('4601.G1', state: 'needs_review', invoice_total: 25, pdf: false)
+      row = invoice('4601.G2', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+
+      act(row.reload, 'replacement', replace_to: 'other', replace_owner: '')
+      assert_equal [nil, 'rejected'], [row.assigned_employee_id, first.reload.state]
+
+      third = invoice('4601.G3', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal first.id, third.reload.duplicate_of_id, 'matched with the earliest copy, rejected or not'
+      act(third, 'send_to_approval')
+      assert third.known_duplicate?
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      # A chip in the header drops the notice down, hidden until opened (#160).
+      assert_select '.aim-review-header .aim-notice-chip[aria-controls=aim-notice-known-duplicate]', text: /Known duplicate/
+      assert_select '.aim-notice-tray #aim-notice-known-duplicate.aim-duplicate-banner[hidden]'
+      assert_select '.aim-readonly-banner__actions', 0
+    end
+
+    test 'straight to Fiscal is noted as a known duplicate, not stopped (#160)' do
+      first = invoice('4601.H1', state: 'exported', invoice_total: 33, pdf: false)
+      row = invoice('4601.H2', state: 'ready_for_approval', invoice_total: 33, pdf: false, straight_to_fiscal_by: 'jane@example.com')
+
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal ['ready_for_approval', nil], [row.reload.state, row.duplicate_of_id], 'the every-minute check leaves it alone'
+
+      Aim::StraightToFiscalJob.perform_now
+      row.reload
+      assert_equal ['approved', first.id, nil], [row.state, row.duplicate_of_id, row.review_reason]
+      assert_equal :known, row.duplicate_status
+      assert_includes row.events.pluck(:note).join("\n"), "Known duplicate of #{first.batch_id}"
+      assert_includes first.events.pluck(:note).join("\n"), 'it was sent straight to Fiscal'
+    end
+
+    test 'a row pill says where an invoice stands as a duplicate; a reason shows only in Action Needed (#160)' do
+      helper = ApplicationController.helpers
+      first = invoice('4601.P1', state: 'ready_for_approval', invoice_total: 44, pdf: false)
+      row = invoice('4601.P2', state: 'needs_review', invoice_total: 44, pdf: false, review_reason: 'duplicate', duplicate_of_id: first.id)
+      assert_nil helper.aim_duplicate_pill(row), 'Action Needed already says Possible duplicate'
+
+      row.update_columns(state: 'rejected')
+      assert_match 'Rejected duplicate', helper.aim_duplicate_pill(row)
+      assert_equal 'Rejected', helper.aim_status_badge(row, nil).last, 'its reason is not its status once rejected'
+
+      row.update_columns(review_reason: nil, state: 'ready_for_approval')
+      assert_match 'Known duplicate', helper.aim_duplicate_pill(row)
+
+      newer = invoice('4601.P3', state: 'ready_for_approval', invoice_total: 44, pdf: false, replaces_invoice_id: first.id)
+      helper.instance_variable_set(:@aim_replaced_ids, nil) # looked up once per page; this is a new page
+      assert_match 'Replacement', helper.aim_duplicate_pill(newer)
+      assert_match 'Replaced', helper.aim_duplicate_pill(first)
+    end
+
+    test 'a duplicate is rejected naming the other' do
+      first = invoice('4601.E4', state: 'exported', invoice_total: 21, pdf: false)
+      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 21)
+      Aim::DuplicateCheckJob.perform_now
+      act(third.reload, 'reject_duplicate')
+      assert_equal 'rejected', third.state
+      assert_includes third.notes, "Duplicate of #{first.batch_id}"
+
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      assert_select '.aim-notice-chip', text: /Rejected duplicate/
+      assert_select '.aim-notice-chip', text: /Possible duplicate/, count: 0
+    end
+
     test 'delete keeps a copy and ends the invoice' do
       row = invoice('4601.T')
 
@@ -446,10 +685,6 @@ module Aim
 
       assert_nil row.claimed_by
     end
-
-    # ---------------------------------------------------------------
-    # Splits
-    # ---------------------------------------------------------------
 
     def split_params(*rows)
       rows.each_with_index.to_h do |(vendor, number, pages), index|
@@ -497,10 +732,6 @@ module Aim
       assert_equal %w[received extract], [row.state, row.command]
       assert_not row.split_check
     end
-
-    # ---------------------------------------------------------------
-    # People's queues
-    # ---------------------------------------------------------------
 
     test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do
       invoice('4601.O1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -560,10 +791,6 @@ module Aim
       assert_match(/finished/, flash[:alert])
       assert_nil row.reload.assigned_to
     end
-
-    # ---------------------------------------------------------------
-    # Owners who are not AIM staff
-    # ---------------------------------------------------------------
 
     def as_owner_not_staff
       session[:user] = session[:user].merge('employee_id' => 7)
@@ -628,10 +855,6 @@ module Aim
       assert_select 'tr[data-aim-queue-filter-target=row][data-search*=?]', 'House Sanitary Supply OP-41664_FM-28844'
     end
 
-    # ---------------------------------------------------------------
-    # Shared queues
-    # ---------------------------------------------------------------
-
     test 'a shared-queue invoice in a BU whose shared queue someone has switched on is theirs to work and claim' do
       employee = Employee.where.not(unit: [nil, '']).order(:id).first || skip('no employee with a unit to test with')
       row = invoice('4601.SQ1', state: 'ready_for_approval', budget_unit: employee.unit)
@@ -654,10 +877,6 @@ module Aim
       post :claim, params: { id: row.batch_id, queue: 'ready_for_approval' }
       assert_equal employee.id, row.reload.assigned_employee_id
     end
-
-    # ---------------------------------------------------------------
-    # Moving several at once
-    # ---------------------------------------------------------------
 
     test 'ticked invoices move together, and the queue pages offer the checkboxes' do
       a = invoice('4601.B1', state: 'ready_for_approval', pdf: false, assigned_to: 'Jane Doe', assigned_employee_id: 7,
@@ -689,10 +908,6 @@ module Aim
       assert_nil mine.reload.assigned_employee_id
       assert_equal 8, theirs.reload.assigned_employee_id
     end
-
-    # ---------------------------------------------------------------
-    # Restoring
-    # ---------------------------------------------------------------
 
     test 'staff restore a rejected invoice to action needed, with the reason kept' do
       row = invoice('4601.RS1', state: 'rejected', pdf: false)

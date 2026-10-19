@@ -2,7 +2,6 @@
 
 module Forms
   class WorkScheduleOrLocationUpdateFormsController < Forms::BaseController
-    # Generated controller for WorkScheduleOrLocationUpdateForm form
     before_action :set_work_schedule_or_location_update_form, only: %i[show edit update pdf approve deny update_status]
 
     def new
@@ -13,16 +12,13 @@ module Forms
 
       redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
-      # Load user groups for field restrictions
       @current_user_groups = current_user_group_ids
 
-      # --- Organization chain (same pattern you use now) ---
       unit        = Coa::Unit.resolve_for_employee(@employee)
       department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
       division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
       agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
-      # --- Prefill values (everything prefilled exactly like you do now) ---
       @prefill_data = {
         employee_id: @employee.employee_id,
         name: [@employee.first_name, @employee.last_name].compact.join(' '),
@@ -34,7 +30,6 @@ module Forms
         unit: unit&.unit_id
       }
 
-      # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
       @agency_options = Coa::Agency.order(:long_name).pluck(:long_name, :agency_id)
 
       @division_options = if agency
@@ -49,7 +44,6 @@ module Forms
                               []
                             end
 
-      # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
       @unit_options = if department
                         Coa::Unit.where(department_id: department.department_id)
                                  .order(:unit_id)
@@ -74,8 +68,6 @@ module Forms
         @work_schedule_or_location_update_form.update(status: :step_1_pending, approver_id: approver_id)
         redirect_to form_success_path, notice: 'Form submitted and routed to supervisor for approval.', allow_other_host: false, status: :see_other
       else
-        # Rebuild options on failure (same as in new)
-        # (We intentionally repeat the logic to keep this template self-contained.)
         emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
         unit        = Coa::Unit.resolve_for_employee(emp)
         department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
@@ -108,12 +100,9 @@ module Forms
       end
     end
 
-    def show
-      # Display the submission details
-    end
+    def show; end
 
     def edit
-      # Edit form - rebuild options same as new
       setup_form_options
     end
 
@@ -216,12 +205,10 @@ module Forms
                         []
                       end
 
-      # Load user groups for field restrictions
       @current_user_groups = current_user_group_ids
     end
 
     def work_schedule_or_location_update_form_params
-      # Only the baseline fields you asked for
       params.require(:work_schedule_or_location_update_form).permit(
         :name, :phone, :email, :agency, :division, :department, :unit
       )

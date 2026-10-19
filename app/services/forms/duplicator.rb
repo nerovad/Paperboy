@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/duplicator.rb
-
 require 'open3'
 
 module Forms

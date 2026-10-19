@@ -19,6 +19,16 @@ pages:
     slug: Architecture
     section: Start
     keep: false
+  # Edited on the wiki. The source files are not in git, so publish
+  # leaves the page bodies alone and only lists them in Home and the sidebar.
+  - source: docs/PFA_DASHBOARDS.md
+    slug: PFA-Dashboards
+    section: Start
+    keep: false
+  - source: docs/BILLING_SELECT_DASHBOARD.md
+    slug: Billing-Select-Dashboard
+    section: Start
+    keep: false
 
   - source: docs/gitea-automation.md
     slug: Gitea-Workflow

@@ -33,7 +33,7 @@ module Forms
     # Virtual attribute to track routing steps being submitted (before they're saved)
     attr_accessor :pending_routing_steps
 
-    # --- Metadata -------------------------------------------------------------
+    # Metadata
     # What the sidebar's Advanced Search facets on: who owns the form, what kind
     # of form it is, its official number, and a line saying what it is for.
     # Every one of these is descriptive. None of them gate access — who may see
@@ -83,7 +83,6 @@ module Forms
         .sort
     end
 
-    # Available inbox button types
     INBOX_BUTTON_TYPES = {
       'view_pdf' => { label: 'View PDF', description: 'Download or view the form as PDF' },
       'edit' => { label: 'Edit', description: 'Edit the submitted form' },
@@ -94,6 +93,15 @@ module Forms
       'status_dropdown' => { label: 'Status Dropdown', description: 'Quick status change dropdown' },
       'status_history' => { label: 'Status History', description: 'View the workflow status timeline in a modal' }
     }.freeze
+
+    # The buttons whose text a routing step may replace. The status dropdown
+    # is a select and shows no text of its own.
+    LABELED_INBOX_BUTTONS = INBOX_BUTTON_TYPES.except('status_dropdown').freeze
+
+    # The stock text of an inbox button.
+    def self.inbox_button_text(button_type)
+      INBOX_BUTTON_TYPES.dig(button_type.to_s, :label)
+    end
 
     has_many :form_fields, class_name: 'Forms::Field', foreign_key: :form_template_id, dependent: :destroy
     has_many :routing_steps, -> { order(:step_number) }, class_name: 'Forms::TemplateRoutingStep',
@@ -174,6 +182,11 @@ module Forms
 
     def enabled_inbox_buttons
       inbox_buttons || []
+    end
+
+    # A template carries no labels of its own; only a routing step does.
+    def button_text(button_type)
+      self.class.inbox_button_text(button_type)
     end
 
     def table_name

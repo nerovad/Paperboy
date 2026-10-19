@@ -352,8 +352,10 @@ worker databases isolated from development and staging data.
 
 Entra's callback is `/auth/callback`, which is not registered for
 `localhost:3001` in the app registration, so OAuth will not complete
-locally. Use the impersonation route instead: `POST /login`
-(`sessions#create_legacy`) takes an employee id.
+locally. In development and test, `POST /login`
+(`sessions#create_legacy`) signs in with an employee id and checks no
+password. Outside those environments it returns 403 and sets no
+session. Admin impersonation is `Admin::ImpersonationsController`.
 
 ### Assets
 

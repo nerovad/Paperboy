@@ -45,12 +45,10 @@ module RecurringSchedule
                when 'daily'
                  base_time.change(hour: hour, min: minute, sec: 0)
                when 'weekly'
-                 # Find next occurrence of day_of_week
                  days_until = (day_of_week - base_time.wday) % 7
                  days_until = 7 if days_until.zero? && base_time.hour >= hour
                  (base_time + days_until.days).change(hour: hour, min: minute, sec: 0)
                when 'monthly'
-                 # Next occurrence of day_of_month
                  target_date = base_time.change(day: [day_of_month, base_time.end_of_month.day].min)
                  target_date = target_date.next_month if target_date <= base_time
                  target_date.change(hour: hour, min: minute, sec: 0)

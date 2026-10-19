@@ -15,10 +15,8 @@ class BikeLockerForm < ApplicationRecord
   # locker_number repeats across lots (E/R/ECCH/Saticoy all have a "1").
   belongs_to :locker, class_name: 'BikeLocker', optional: true
 
-  # Scopes
   scope :for_employee, ->(employee_id) { where(employee_id: employee_id) }
 
-  # Minimal baseline validations; adjust or remove as needed
   validates :name, :email, presence: true
   validate :column_names_must_be_valid_identifiers
 
@@ -30,7 +28,7 @@ class BikeLockerForm < ApplicationRecord
   # is free, or already held by this same employee (edit / re-submit).
   validate :locker_must_be_available, if: -> { locker && will_save_change_to_locker_id? }
 
-  # --- Locker lifecycle (called from the controller alongside status changes) ---
+  # Locker lifecycle (called from the controller alongside status changes)
   # Submission reserves the locker; final approval assigns it; denial frees it.
   def reserve_locker!
     locker&.update!(status: :reserved, assigned_employee_id: employee_id.to_s, assigned_at: Time.current)
@@ -69,7 +67,6 @@ class BikeLockerForm < ApplicationRecord
     self.class.name.demodulize.titleize
   end
 
-  # Get the form template for this model (for button configuration)
   def form_template
     @form_template ||= Forms::Template.find_by(class_name: self.class.name)
   end

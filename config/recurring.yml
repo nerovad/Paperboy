@@ -34,6 +34,26 @@ production: &production
     queue: default
     schedule: every 10 minutes
     description: Codes AIM invoices waiting for approval from the coding rules
+  aim_straight_to_fiscal:
+    class: Aim::StraightToFiscalJob
+    queue: default
+    schedule: every minute
+    description: Approves AIM invoices uploaded straight to Fiscal once the AI has read them
+  aim_duplicate_check:
+    class: Aim::DuplicateCheckJob
+    queue: default
+    schedule: every minute
+    description: Flags possible duplicate AIM invoices for AIM staff
+  aim_alert_digest:
+    class: Aim::AlertDigestJob
+    queue: default
+    schedule: at 7am every day
+    description: Emails AIM's daily alert digest; nothing unless AIM_EMAIL_ALERTS=on
+  aim_purge_fiscal_reports:
+    class: Aim::PurgeFiscalReportsJob
+    queue: default
+    schedule: at 3am every day
+    description: Purges the files of AIM Fiscal reports a year old
   dam_watch_folders:
     class: Dam::WatchFolderIngestJob
     queue: default

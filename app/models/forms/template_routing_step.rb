@@ -6,6 +6,7 @@ module Forms
 
     def self.model_name = ActiveModel::Name.new(self, nil, 'FormTemplateRoutingStep')
     attribute :inbox_buttons, :json, default: []
+    attribute :button_labels, :json, default: {}
 
     belongs_to :form_template, class_name: 'Forms::Template'
 
@@ -55,17 +56,21 @@ module Forms
       inbox_buttons.include?(button_type.to_s)
     end
 
-    # Text for the inbox Approve button at this step. An optional per-step
-    # override (e.g. "Permit Printed") that still performs the normal approve
-    # action; blank falls back to the default "Approve".
-    def approve_button_text
-      approve_button_label.presence || 'Approve'
+    # Custom inbox button text at this step, keyed by button type. Guarded
+    # against double-encoded JSON like inbox_buttons.
+    def button_labels
+      val = super
+      val = JSON.parse(val) while val.is_a?(String)
+      val.is_a?(Hash) ? val : {}
+    rescue JSON::ParserError
+      {}
     end
 
-    # Text for the inbox Deny button at this step, with the same override
-    # semantics as approve_button_text.
-    def deny_button_text
-      deny_button_label.presence || 'Deny'
+    # Text for an inbox button at this step. An optional per-step override
+    # (e.g. Approve as "Permit Printed") that still performs the button's
+    # normal action; blank falls back to the stock text.
+    def button_text(button_type)
+      button_labels[button_type.to_s].presence || Forms::Template.inbox_button_text(button_type)
     end
 
     def multiple?

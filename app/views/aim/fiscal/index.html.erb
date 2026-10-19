@@ -1,13 +1,16 @@
 <%# The Fiscal stage (item f): one list per status, as one list or grouped by
     budget unit. The Report Queue and Exported tick invoices for the report. %>
 <% selectable = aim_fiscal_exportable?(@status) %>
-<div class="aim-page" data-controller="aim-queue-filter">
+<%= tag.div class: 'aim-page', data: aim_paged_list_data do %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= Aim::FiscalRecord::STATUS_LABELS[@status] %></h1>
       <p class="aim-page-subtitle"><%= aim_fiscal_description(@status) %></p>
     </div>
-    <span class="aim-count-pill"><%= pluralize(@records.size, 'invoice') %></span>
+    <div class="aim-page-header__pills">
+      <%= render 'aim/shared/managing' %>
+      <span class="aim-count-pill"><%= pluralize(@records.size, 'invoice') %></span>
+    </div>
   </header>
 
   <% if @records.empty? %>
@@ -22,20 +25,26 @@
     </div>
 
     <% if selectable %>
-      <%= form_with url: aim_fiscal_export_path, method: :post, local: true, class: 'aim-fiscal-export',
-                    data: { turbo: false } do %>
+      <%# Preview first (#131): the dialog offers a draft download, or processing. %>
+      <%= form_with url: aim_fiscal_export_preview_path, method: :post, class: 'aim-fiscal-export aim-list-frame',
+                    data: { turbo_frame: 'aim-report-preview' } do %>
         <div class="aim-fiscal-export__bar">
-          <button type="submit" class="btn approve compact">
-            <%= @status == 'ready' ? 'Download report (CSV)' : 'Download again (CSV)' %>
-          </button>
+          <%= select_tag :report_template, grouped_options_for_select(aim_report_template_options),
+                         include_blank: 'Each group\'s Default', aria: { label: 'Report template' } %>
+          <button type="submit" class="btn approve compact">Preview report</button>
           <span class="aim-fiscal-export__hint">
-            <%= @status == 'ready' ? 'Reported invoices move to Exported. Refresh after the download.' : 'They stay in Exported.' %>
+            You see the report before anything happens. Saved reports are under <%= link_to 'Reports', aim_fiscal_reports_path %>.
           </span>
         </div>
         <%= render 'list', selectable: selectable %>
+        <%= render 'aim/shared/list_pager' %>
       <% end %>
+      <%= turbo_frame_tag 'aim-report-preview' %>
     <% else %>
-      <%= render 'list', selectable: selectable %>
+      <div class="aim-list-frame">
+        <%= render 'list', selectable: selectable %>
+        <%= render 'aim/shared/list_pager' %>
+      </div>
     <% end %>
   <% end %>
-</div>
+<% end %>

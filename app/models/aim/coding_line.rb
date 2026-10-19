@@ -13,6 +13,9 @@ module Aim
   class CodingLine < Record
     include Aim::CodingFields
     include Aim::Audited
+    include Aim::MoneyAttributes
+
+    money_attributes :amount
 
     audit_record_lifecycle!
 

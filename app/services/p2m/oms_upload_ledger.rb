@@ -9,6 +9,11 @@ require_relative '../../../lib/paperboy/file_store'
 require_relative 'paths'
 
 module P2m
+  # The checks and the row for staging one OMS job. Companion, Presort and
+  # MoveResults must agree before the job can be staged. Checksums are kept
+  # so a later stage of the same number is refused when the files changed.
+  # Once the import tables hold the number, reconcile marks the row imported
+  # and, when Processed has the folder, completed.
   # rubocop:disable-next Metrics/ClassLength
   class OmsUploadLedger
     MARKER_PATTERN = /\AMail\.dat_(\d{8,9})\.zip\z/i
@@ -22,7 +27,13 @@ module P2m
     OMS_FILE_PATTERNS = [MARKER_PATTERN, COMPANION_PATTERN, PRODUCTION_PATTERN,
                          PREFIX_REPORT_PATTERN, SUFFIX_REPORT_PATTERN, PRESORT_PATTERN,
                          MOVE_PATTERN].freeze
+    # Presort and MoveResults are UTF-16 LE tab files from the postal export.
     TSV_OPTIONS = { headers: true, col_sep: "\t", encoding: 'UTF-16LE:UTF-8', liberal_parsing: true }.freeze
+    IMPORT_SOURCES = [
+      { table: 'Companion', number: 'OMSNumber', imported_at: 'ImportDateTime' },
+      { table: 'DailyPresort', number: 'omsnumber', imported_at: 'importdatetime' },
+      { table: 'MoveResults', number: 'OMSNumber', imported_at: 'ImportDateTime' }
+    ].freeze
 
     class ImportStarted < StandardError; end
     class ChangedFiles < StandardError; end
@@ -114,20 +125,24 @@ module P2m
     def imported_dataset_at(oms_number)
       connection = OmsUpload.connection
       oms = connection.quote(oms_number.to_s)
-      tables = %w[companions daily_presorts move_results]
-      return unless tables.all? { |table| connection.data_source_exists?(table) }
-      return unless tables.all? { |table| imported_table_has_oms?(connection, table, oms) }
+      return unless IMPORT_SOURCES.all? { |source| imported_table_has_oms?(connection, source, oms) }
 
-      selects = tables.map do |table|
-        "SELECT MAX(importdatetime) AS imported_at FROM #{connection.quote_table_name(table)} " \
-          "WHERE omsnumber = #{oms}"
+      selects = IMPORT_SOURCES.map do |source|
+        "SELECT MAX(#{connection.quote_column_name(source[:imported_at])}) AS imported_at " \
+          "FROM #{qualified_import_table(connection, source)} " \
+          "WHERE #{connection.quote_column_name(source[:number])} = #{oms}"
       end
       connection.select_value("SELECT MAX(imported_at) FROM (#{selects.join(' UNION ALL ')}) imports") || Time.current
     end
 
-    def imported_table_has_oms?(connection, table, oms)
-      sql = "SELECT COUNT(*) FROM #{connection.quote_table_name(table)} WHERE omsnumber = #{oms}"
+    def imported_table_has_oms?(connection, source, oms)
+      sql = "SELECT COUNT(*) FROM #{qualified_import_table(connection, source)} " \
+            "WHERE #{connection.quote_column_name(source[:number])} = #{oms}"
       connection.select_value(sql).to_i.positive?
+    end
+
+    def qualified_import_table(connection, source)
+      connection.quote_table_name(['GSAP2M', 'dbo', source[:table]].join('.'))
     end
 
     def staged_paths(oms_number)
@@ -178,6 +193,8 @@ module P2m
       false
     end
 
+    # Checksums and CSV parsing need a local path. A remote store is copied
+    # into a temporary directory for the block, then removed.
     def with_materialized_files
       @materialized_directory = Pathname.new(Dir.mktmpdir('paperboy-oms-upload-'))
       yield

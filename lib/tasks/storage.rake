@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# lib/tasks/storage.rake
 namespace :storage do
   # Each environment keeps its uploads under its own root (config/storage.yml).
   # Uploads from before that split sit directly in storage/; this copies the

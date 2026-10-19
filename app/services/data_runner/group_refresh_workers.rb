@@ -33,6 +33,7 @@ module DataRunner
     end
 
     def run
+      # The job thread's connection cannot be shared with the workers.
       ActiveRecord::Base.connection_pool.release_connection
       File.open(TaskRunner.output_path(@log_id), 'a') do |output|
         log = SynchronizedOutput.new(output, Mutex.new)
@@ -51,6 +52,7 @@ module DataRunner
 
         process_item(item, log)
       end
+    # pop(true) raises when the queue is empty, which ends the worker.
     rescue ThreadError
       nil
     ensure

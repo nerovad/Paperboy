@@ -1,0 +1,51 @@
+<%# One agency group (#131), a tab at a time: its budget units, who works
+    them, its Fiscal people and Group Admins, and its Fiscal settings. AIM
+    Admins change everything; a Group Admin its people and settings. %>
+<% admin = aim_user_admin? %>
+<% own_units = @resolver.units_of(@group) %>
+<% agency_units = @units.all.select { |unit| unit.agency == @group.agency_id } %>
+<% elsewhere = Aim::AgencyGroupUnit.includes(:agency_group).where(agency_id: @group.agency_id)
+                                 .where.not(agency_group_id: @group.id).to_h { |row| [row.budget_unit, row.agency_group] } %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title"><%= @group.name %></h1>
+      <p class="aim-page-subtitle">
+        <%= @group.kind_label %> · <%= @units.agency_label(@group.agency_id) %>
+        <% covered_by = @resolver.covered_by(@group) %>
+        <% if covered_by.any? %> · Fiscal also done by <%= covered_by.map(&:name).to_sentence %><% end %>
+      </p>
+    </div>
+    <%= link_to 'Back to Agency Groups', aim_agency_groups_path, class: 'btn compact' %>
+  </header>
+
+  <% if admin && @group.custom %>
+    <section class="aim-panel aim-admin-add-panel">
+      <%= form_with url: aim_agency_group_path(@group), method: :patch, local: true, class: 'aim-inline-form' do %>
+        <strong class="aim-admin-add-panel__label">Name</strong>
+        <%= text_field_tag :name, @group.name, required: true, maxlength: 100, aria: { label: 'Group name' } %>
+        <button type="submit" class="btn compact">Rename</button>
+      <% end %>
+      <%= button_to 'Delete group', aim_agency_group_path(@group), method: :delete, class: 'btn deny compact',
+                    data: { turbo_confirm: "Delete #{@group.name}? Its budget units go back to their agency's group, " \
+                                           'and its people lose their roles in it.', confirm_label: 'Delete' } %>
+    </section>
+  <% end %>
+
+  <%# One part of the group at a time (#131). %>
+  <nav class="aim-people-toolbar__views" aria-label="Group">
+    <% Aim::AgencyGroupsController::TABS.each do |key, label| %>
+      <%= link_to label, aim_agency_group_path(@group, tab: key), class: "btn compact #{@tab == key ? 'active' : 'ghost'}",
+                  aria: { current: (@tab == key ? 'page' : nil) } %>
+    <% end %>
+  </nav>
+
+  <% locals = { admin: admin, own_units: own_units, agency_units: agency_units, elsewhere: elsewhere } %>
+  <%# Each tab by name, so nothing from the address reaches render. %>
+  <% if @tab == 'bu_people' %><%= render 'bu_people', **locals %>
+  <% elsif @tab == 'roles' %><%= render 'roles', **locals %>
+  <% elsif @tab == 'settings' %><%= render 'settings', **locals %>
+  <% elsif @tab == 'alerts' %><%= render 'alerts', **locals %>
+  <% else %><%= render 'units', **locals %>
+  <% end %>
+</div>

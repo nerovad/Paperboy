@@ -41,6 +41,17 @@ module Aim
       tag.span(record.status_label, class: "badge #{FISCAL_BADGES.fetch(record.status, 'is-pending')}")
     end
 
+    # The report templates offered on download (#131), by agency group:
+    # [[group, [["Default", "g12"], ["Payment upload", "t3"]]], ...] for the
+    # groups picked in Managing.
+    def aim_report_template_options
+      groups = aim_managing_groups || aim_agency_groups.all
+      templates = Aim::ReportTemplate.where(agency_group_id: groups.map(&:id)).by_name.group_by(&:agency_group_id)
+      groups.map do |group|
+        [group.name, [['Default', "g#{group.id}"]] + templates.fetch(group.id, []).map { |t| [t.name, "t#{t.id}"] }]
+      end
+    end
+
     # The Report Queue's are reported; exported ones can be downloaded again.
     def aim_fiscal_exportable?(status) = %w[ready exported].include?(status.to_s)
   end
