@@ -24,6 +24,7 @@ module Aim
       'missing_fields' => 'Missing fields',
       'low_confidence' => 'Low confidence read',
       'duplicate' => 'Possible duplicate',
+      'sent_back' => 'Sent back',
       'handwritten' => 'Handwritten amounts',
       'extraction_error' => 'Extraction error',
       'split_error' => 'Split error',
@@ -121,13 +122,16 @@ module Aim
     end
 
     # [badge class, text] for a queue row, classed as submissions are
-    # (SubmissionsHelper#category_badge_class).
+    # (SubmissionsHelper#category_badge_class). The Action Needed reason only
+    # while it is in Action Needed (#160); elsewhere, its state.
     def aim_status_badge(invoice, current_user_email)
       category, text =
         if invoice.held_by?(current_user_email) then [:in_review, 'Open by you']
         elsif invoice.claimed_by_other?(current_user_email) then [:in_review, "Open by #{aim_claimant_label(invoice)}"]
-        elsif invoice.review_reason.present? then [:denied, aim_review_reason_label(invoice.review_reason)]
-        else [:approved, aim_state_label(invoice.state)]
+        elsif invoice.state == 'needs_review' && invoice.review_reason.present?
+          [:denied, aim_review_reason_label(invoice.review_reason)]
+        else
+          [:approved, aim_state_label(invoice.state)]
         end
       [category_badge_class(category), text]
     end

@@ -215,6 +215,24 @@ module Aim
       assert_equal 'needs_review', row.state
     end
 
+    test 'a total typed with commas or a dollar sign is saved whole; one that is not an amount is refused (#166)' do
+      row = invoice('4601.K2', pdf: false, invoice_total: 10)
+
+      act(row, 'save', invoice: { invoice_total: '999,999,999.99', subtotal: '$1,234.50', sales_tax: '(1.25)' })
+      assert_equal [BigDecimal('999999999.99'), BigDecimal('1234.50'), BigDecimal('-1.25')], [row.invoice_total, row.subtotal, row.sales_tax]
+
+      act(row, 'save', invoice: { invoice_total: 'about 12', vendor_name: 'Typed Vendor', notes: 'typed note' })
+      assert_equal BigDecimal('999999999.99'), row.invoice_total, 'nothing saved'
+      assert_not_equal 'Typed Vendor', row.vendor_name, 'nothing saved'
+      # The form comes back as typed, saying why, rather than a reload (#166).
+      assert_response :unprocessable_content
+      assert_select 'input[name=?][value=?]', 'invoice[invoice_total]', 'about 12'
+      assert_select 'input[name=?][value=?]', 'invoice[vendor_name]', 'Typed Vendor'
+      assert_select 'textarea[name=?]', 'invoice[notes]', text: 'typed note'
+      assert_select 'input[name=?][data-aim-money-target=field]', 'invoice[subtotal]'
+      assert_match(/Not saved: Invoice total "about 12" is not an amount AIM can save/, flash[:alert])
+    end
+
     test 'send to approval moves the row and releases the claim' do
       row = invoice('4601.L', review_reason: 'missing_fields', claimed_by: REVIEWER, claimed_at: Time.current)
 
@@ -339,9 +357,19 @@ module Aim
 
       act(row, 'send_back', reason: 'wrong PO')
 
-      assert_equal 'needs_review', row.state
+      assert_equal ['needs_review', 'sent_back', 'wrong PO'], [row.state, row.review_reason, row.review_note]
       assert_equal 'reason: wrong PO', row.events.last.note
-      assert_match(/Sent back by Aim Staff: wrong PO\z/, row.notes)
+      assert_nil row.notes, 'the reason is on the banner, not in the notes (#160)'
+
+      get :show, params: { id: row.batch_id, queue: row.queue }
+      assert_select '.aim-notice-chip[aria-controls=aim-notice-sent-back]', text: /Sent back/
+      assert_select '.aim-notice-tray #aim-notice-sent-back[hidden]'
+      assert_select '.aim-readonly-banner p', text: /wrong PO/
+      assert_select '.aim-page-header .badge', text: 'Sent back', count: 0
+      assert_select '.aim-ticket', 0
+
+      act(row, 'send_to_approval')
+      assert_nil row.review_reason, 'cleared once it moves on'
     end
 
     test 'reject, delete and send back need a reason, and nothing moves without one' do
@@ -509,7 +537,20 @@ module Aim
 
       get :show, params: { id: row.batch_id, queue: row.queue }
       assert_select 'a[href=?]', aim_invoice_path(first.batch_id)
-      assert_select 'button[value=reject_duplicate]'
+      # The answers sit on the banner (#160) and submit the invoice form; the
+      # two are compared, the different fields marked. The original is
+      # exported, so Replacement is greyed out and says why.
+      assert_select 'form#aim-invoice-form'
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Vendor'
+      assert_select '.aim-duplicate-compare tr.is-different th', text: 'Total', count: 0
+      %w[reject_duplicate not_duplicate].each do |answer|
+        assert_select ".aim-readonly-banner__actions button[value=#{answer}][form=aim-invoice-form]"
+        assert_select ".aim-review-action-strip button[value=#{answer}]", 0
+      end
+      assert_select '.aim-readonly-banner__actions span[title*="already been processed"] button[disabled]', text: 'Replacement'
+      assert_select 'button[value=replacement]', 0
+      act(row, 'replacement')
+      assert_equal ['needs_review', first.id], [row.state, row.duplicate_of_id], 'refused once the original is processed'
 
       act(row, 'not_duplicate')
       assert_equal [nil, nil], [row.review_reason, row.duplicate_of_id]
@@ -527,22 +568,95 @@ module Aim
       assert_equal [nil, first.id, nil], [first.reload.duplicate_of_id, row.reload.duplicate_of_id, old.reload.duplicate_of_id]
     end
 
-    test 'a replacement says so at both ends; a duplicate is rejected naming the other' do
-      first = invoice('4601.E1', state: 'exported', invoice_total: 20, pdf: false)
+    test 'a replacement goes to the original queue and the original is rejected as replaced (#160)' do
+      person = Employee.where.not(first_name: [nil, '']).order(:id).first || skip('no employee')
+      Aim::Member.create!(employee_id: person.id)
+      first = invoice('4601.E1', state: 'ready_for_approval', invoice_total: 20, assigned_employee_id: person.id,
+                                 assigned_to: person.first_name, assignment_source: 'reassigned')
       row = invoice('4601.E2', state: 'ready_for_approval', invoice_total: 20, pdf: false)
       Aim::DuplicateCheckJob.perform_now
 
-      act(row.reload, 'replacement')
-      assert_equal first.id, row.replaces_invoice_id
-      assert_equal row, first.reload.replaced_by
+      get :show, params: { id: row.reload.batch_id, queue: row.queue }
+      assert_select '[data-controller~=aim-replace] button[data-action="aim-replace#open"]', text: 'Replacement'
+      assert_select 'input[name=replace_to][value=same][form=aim-invoice-form][checked]'
+      assert_select 'select[name=replace_owner][form=aim-invoice-form]'
+
+      act(row, 'replacement', replace_to: 'same')
+      assert_equal ['ready_for_approval', person.id, first.id, nil], [row.state, row.assigned_employee_id, row.replaces_invoice_id, row.duplicate_of_id]
+      first.reload
+      assert_equal 'rejected', first.state
+      assert_includes first.notes, "Replaced by #{row.batch_id}"
+      assert_equal row, first.replaced_by
+      assert File.exist?(File.join(@tmpdir, '_BACK_END', '_SENT_BACK', 'Jane Doe_4601', '4601.E1.pdf')), 'its PDF copied as a Reject would'
       Aim::DuplicateCheckJob.perform_now
       assert_nil row.reload.duplicate_of_id, 'a replacement is not flagged again'
+    end
 
-      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 20)
+    test 'a replacement can go to another queue; a duplicate sent on stays a known duplicate (#160)' do
+      first = invoice('4601.G1', state: 'needs_review', invoice_total: 25, pdf: false)
+      row = invoice('4601.G2', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+
+      act(row.reload, 'replacement', replace_to: 'other', replace_owner: '')
+      assert_equal [nil, 'rejected'], [row.assigned_employee_id, first.reload.state]
+
+      third = invoice('4601.G3', state: 'ready_for_approval', invoice_total: 25, pdf: false)
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal first.id, third.reload.duplicate_of_id, 'matched with the earliest copy, rejected or not'
+      act(third, 'send_to_approval')
+      assert third.known_duplicate?
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      # A chip in the header drops the notice down, hidden until opened (#160).
+      assert_select '.aim-review-header .aim-notice-chip[aria-controls=aim-notice-known-duplicate]', text: /Known duplicate/
+      assert_select '.aim-notice-tray #aim-notice-known-duplicate.aim-duplicate-banner[hidden]'
+      assert_select '.aim-readonly-banner__actions', 0
+    end
+
+    test 'straight to Fiscal is noted as a known duplicate, not stopped (#160)' do
+      first = invoice('4601.H1', state: 'exported', invoice_total: 33, pdf: false)
+      row = invoice('4601.H2', state: 'ready_for_approval', invoice_total: 33, pdf: false, straight_to_fiscal_by: 'jane@example.com')
+
+      Aim::DuplicateCheckJob.perform_now
+      assert_equal ['ready_for_approval', nil], [row.reload.state, row.duplicate_of_id], 'the every-minute check leaves it alone'
+
+      Aim::StraightToFiscalJob.perform_now
+      row.reload
+      assert_equal ['approved', first.id, nil], [row.state, row.duplicate_of_id, row.review_reason]
+      assert_equal :known, row.duplicate_status
+      assert_includes row.events.pluck(:note).join("\n"), "Known duplicate of #{first.batch_id}"
+      assert_includes first.events.pluck(:note).join("\n"), 'it was sent straight to Fiscal'
+    end
+
+    test 'a row pill says where an invoice stands as a duplicate; a reason shows only in Action Needed (#160)' do
+      helper = ApplicationController.helpers
+      first = invoice('4601.P1', state: 'ready_for_approval', invoice_total: 44, pdf: false)
+      row = invoice('4601.P2', state: 'needs_review', invoice_total: 44, pdf: false, review_reason: 'duplicate', duplicate_of_id: first.id)
+      assert_nil helper.aim_duplicate_pill(row), 'Action Needed already says Possible duplicate'
+
+      row.update_columns(state: 'rejected')
+      assert_match 'Rejected duplicate', helper.aim_duplicate_pill(row)
+      assert_equal 'Rejected', helper.aim_status_badge(row, nil).last, 'its reason is not its status once rejected'
+
+      row.update_columns(review_reason: nil, state: 'ready_for_approval')
+      assert_match 'Known duplicate', helper.aim_duplicate_pill(row)
+
+      newer = invoice('4601.P3', state: 'ready_for_approval', invoice_total: 44, pdf: false, replaces_invoice_id: first.id)
+      helper.instance_variable_set(:@aim_replaced_ids, nil) # looked up once per page; this is a new page
+      assert_match 'Replacement', helper.aim_duplicate_pill(newer)
+      assert_match 'Replaced', helper.aim_duplicate_pill(first)
+    end
+
+    test 'a duplicate is rejected naming the other' do
+      first = invoice('4601.E4', state: 'exported', invoice_total: 21, pdf: false)
+      third = invoice('4601.E3', state: 'ready_for_approval', invoice_total: 21)
       Aim::DuplicateCheckJob.perform_now
       act(third.reload, 'reject_duplicate')
       assert_equal 'rejected', third.state
       assert_includes third.notes, "Duplicate of #{first.batch_id}"
+
+      get :show, params: { id: third.batch_id, queue: third.queue }
+      assert_select '.aim-notice-chip', text: /Rejected duplicate/
+      assert_select '.aim-notice-chip', text: /Possible duplicate/, count: 0
     end
 
     test 'delete keeps a copy and ends the invoice' do

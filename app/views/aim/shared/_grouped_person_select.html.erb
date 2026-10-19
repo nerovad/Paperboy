@@ -2,8 +2,9 @@
     searchable by name, employee id or BU (aim_grouped_search_controller). The
     <select> is what submits. A group whose data-unit matches the select's
     data-priority-unit is listed first: the Move dialog sets it to the
-    invoice's BU. Locals: name, label, and selected (an employee id) if any. %>
-<select name="<%= name %>" class="form-control" aria-label="<%= label %>"
+    invoice's BU. Locals: name, label, and selected (an employee id) if any;
+    form, the id of a form it submits with from outside it. %>
+<select name="<%= name %>" class="form-control" aria-label="<%= label %>"<% if local_assigns[:form] %> form="<%= local_assigns[:form] %>"<% end %>
         data-controller="aim-grouped-search" data-aim-grouped-search-placeholder-value="Search name, employee ID or BU…"
         <%= local_assigns[:target] ? "data-#{local_assigns[:target]}" : '' %>>
   <option value="">Pick a person…</option>

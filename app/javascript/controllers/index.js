@@ -99,6 +99,10 @@ import AimQueueFilterController from "controllers/aim_queue_filter_controller"
 import AimOwnerChoiceController from "controllers/aim_owner_choice_controller"
 import AimPresenceController from "controllers/aim_presence_controller"
 import AimReasonController from "controllers/aim_reason_controller"
+import AimReplaceController from "controllers/aim_replace_controller"
+import AimBannerController from "controllers/aim_banner_controller"
+import AimNoticesController from "controllers/aim_notices_controller"
+import AimMoneyController from "controllers/aim_money_controller"
 import AimSidebarController from "controllers/aim_sidebar_controller"
 import AimColumnOrderController from "controllers/aim_column_order_controller"
 import AimOpenSectionsController from "controllers/aim_open_sections_controller"
@@ -223,6 +227,10 @@ application.register("aim-queue-filter", AimQueueFilterController)
 application.register("aim-owner-choice", AimOwnerChoiceController)
 application.register("aim-presence", AimPresenceController)
 application.register("aim-reason", AimReasonController)
+application.register("aim-replace", AimReplaceController)
+application.register("aim-banner", AimBannerController)
+application.register("aim-notices", AimNoticesController)
+application.register("aim-money", AimMoneyController)
 application.register("aim-sidebar", AimSidebarController)
 application.register("aim-column-order", AimColumnOrderController)
 application.register("aim-open-sections", AimOpenSectionsController)

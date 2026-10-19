@@ -11,59 +11,34 @@
        data-aim-presence-lock-url-value="<%= lock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
        data-aim-presence-unlock-url-value="<%= unlock_aim_invoice_path(@invoice.batch_id, queue: @queue) %>"
      <% end %>>
-  <header class="aim-page-header">
-    <div class="aim-review-heading">
-      <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
-      <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
-      <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
-      <% if @invoice.review_reason.present? %>
-        <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
-      <% end %>
-      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
-      <% if @claimable && !@read_only %>
-        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
-                      class: 'btn take-back compact', form_class: 'aim-claim-form',
-                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
-      <% end %>
-    </div>
-  </header>
-
-  <%# Duplicates (#131): the possible duplicate and its match, and either
-      end of a replacement. %>
-  <% if @invoice.possible_duplicate? %>
-    <% other = @invoice.duplicate_of %>
-    <div class="aim-readonly-banner" role="alert">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">=</span>
-      <div>
-        <strong>Possible duplicate</strong>
-        <p>
-          Same vendor, invoice number and total as
-          <%= link_to other.batch_id, aim_invoice_path(other.batch_id), target: '_blank', rel: 'noopener' %>
-          (<%= aim_state_label(other.state) %>, <%= other.created_at.in_time_zone.strftime('%m/%d/%Y') %>,
-          <%= other.queue_owner %>).
-          <% if aim_queue_access? %>Decide below: reject it as a duplicate, keep it as the replacement, or clear it.<% else %>AIM staff will decide.<% end %>
-        </p>
-      </div>
-    </div>
-  <% end %>
+  <%# The notices (#160): built first, so the header can show a chip for
+      each; their panels drop down from the header over the page, so the PDF
+      keeps its height (aim_notices_controller). %>
+  <% notices = capture do %>
+  <%# Duplicates (#131, #160): the possible duplicate beside its original, and
+      either end of a replacement. %>
+  <%= render 'duplicate_banner' if @invoice.duplicate_of %>
   <% if @invoice.replaces %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Replacement') %>" hidden
+         data-aim-notices-target="panel">
       <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
-      <div><strong>Replacement</strong><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
+      <div><%= aim_notice_heading('Replacement', mark: '↻', tone: :info) %><p>Replaces <%= link_to @invoice.replaces.batch_id, aim_invoice_path(@invoice.replaces.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if (newer = @invoice.replaced_by) %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Replaced') %>" hidden
+         data-aim-notices-target="panel">
       <span class="aim-readonly-banner__mark" aria-hidden="true">↻</span>
-      <div><strong>Replaced</strong><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
+      <div><%= aim_notice_heading('Replaced', mark: '↻', tone: :info) %><p>Replaced by <%= link_to newer.batch_id, aim_invoice_path(newer.batch_id) %>.</p></div>
     </div>
   <% end %>
   <% if @invoice.awaiting_second_approval? %>
     <%# The high-dollar second approval (#131). %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Second approval') %>" hidden
+         data-aim-notices-target="panel">
       <span class="aim-readonly-banner__mark" aria-hidden="true">2</span>
       <div>
-        <strong>Second approval</strong>
+        <%= aim_notice_heading('Second approval', mark: '2', tone: :info) %>
         <p>
           First approved by <%= Aim::FiscalExport.approver_names([@invoice.first_approved_by]).fetch(@invoice.first_approved_by.downcase, @invoice.first_approved_by) %>
           on <%= @invoice.first_approved_at.in_time_zone.strftime('%m/%d/%Y %H:%M') %>. Over the BU's amount, so it waits for
@@ -74,20 +49,38 @@
   <% end %>
   <% if @invoice.manual_entry %>
     <%# Manual Data Entry Needed (#131): typed in by hand, not by the AI. %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
+    <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Manual Data Entry Needed') %>" hidden
+         data-aim-notices-target="panel">
       <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
       <div>
-        <strong>Manual Data Entry Needed</strong>
+        <%= aim_notice_heading('Manual Data Entry Needed', mark: '✎', tone: :info) %>
         <p>The AI has not read this invoice. Type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>.</p>
       </div>
     </div>
   <% end %>
 
+  <%# Sent back (#160): a person sent it back for review, saying why. %>
+  <% if state == 'needs_review' && @invoice.review_reason == 'sent_back' %>
+    <% who, sent_at = aim_sent_back_by(@invoice) %>
+    <div class="aim-readonly-banner aim-notice-panel" role="alert" id="<%= aim_notice_id('Sent back') %>" hidden
+         data-aim-notices-target="panel">
+      <span class="aim-readonly-banner__mark" aria-hidden="true">↩</span>
+      <div>
+        <%= aim_notice_heading('Sent back', mark: '↩', tone: :alert) %>
+        <p>
+          <% if who %>By <%= who %>, <%= sent_at.strftime('%m/%d/%Y %-I:%M %p') %>: <% end %>
+          <%= @invoice.review_note.presence || 'no reason given' %>
+        </p>
+      </div>
+    </div>
+  <% end %>
+
   <% if @read_only %>
-    <div class="aim-readonly-banner" role="alert">
+    <div class="aim-readonly-banner aim-notice-panel" role="alert" id="<%= aim_notice_id('Read only') %>" hidden
+         data-aim-notices-target="panel">
       <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
       <div>
-        <strong>Read only</strong>
+        <%= aim_notice_heading('Read only', mark: '!', tone: :alert) %>
         <% if @claimed_by_other %>
           <p><%= @claim_holder %> is working on this invoice. You can view it, but not change it until they are done.</p>
         <% elsif @invoice.terminal? %>
@@ -96,24 +89,51 @@
           <p>This invoice is in <%= aim_owner_label(@invoice.assigned_to.presence || "#{@invoice.budget_unit} shared") %>.
              <%= 'Claim it to move it to your queue and work it.' if @claimable %></p>
         <% end %>
-        <% if @invoice.restorable? && aim_queue_access? %>
-          <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
-                        class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
-                    data-value="restore_to_needs_review" data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
-            <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
-                    data-value="restore_to_ready_for_approval" data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
-            <%= render 'aim/shared/reason_modal', id: 'aim-restore' %>
-          <% end %>
-        <% end %>
-        <% if @claimable && !@claimed_by_other %>
-          <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
-                        class: 'btn take-back compact',
-                        data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
-        <% end %>
       </div>
+      <%# A notice's buttons sit at its right, as on every notice (#160). %>
+      <% restore = @invoice.restorable? && aim_queue_access? %>
+      <% claim = @claimable && !@claimed_by_other %>
+      <% if restore || claim %>
+        <div class="aim-readonly-banner__actions">
+          <% if restore %>
+            <%= form_with url: restore_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post, local: true,
+                          class: 'aim-restore-form', data: { controller: 'aim-reason', turbo: false } do %>
+              <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                      data-value="restore_to_needs_review" data-commit="Restore to Action Needed" data-title="Restore to Action Needed">Restore to Action Needed</button>
+              <button type="button" class="btn take-back compact" data-action="aim-reason#open" data-variant="approve"
+                      data-value="restore_to_ready_for_approval" data-commit="Restore to Ready for Approval" data-title="Restore to Ready for Approval">Restore to Ready for Approval</button>
+              <%= render 'aim/shared/reason_modal', id: 'aim-restore' %>
+            <% end %>
+          <% end %>
+          <% if claim %>
+            <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                          class: 'btn take-back compact',
+                          data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
+  <% end %>
+  <header class="aim-page-header aim-review-header" data-controller="aim-notices">
+    <div class="aim-review-heading">
+      <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
+      <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
+      <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
+      <%# A reason with a notice of its own shows as that notice's chip. %>
+      <% if state == 'needs_review' && @invoice.review_reason.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
+        <span class="badge is-denied"><%= aim_review_reason_label(@invoice.review_reason) %></span>
+      <% end %>
+      <%= render 'aim/shared/notice_chips' %>
+      <%# Working a shared-queue invoice locks it only while you are in it; Claim moves it to your queue. %>
+      <% if @claimable && !@read_only %>
+        <%= button_to 'Claim', claim_aim_invoice_path(@invoice.batch_id, queue: @queue), method: :post,
+                      class: 'btn take-back compact', form_class: 'aim-claim-form',
+                      data: { turbo: false, turbo_confirm: 'Move this invoice to your queue?' } %>
+      <% end %>
+    </div>
+    <div class="aim-notice-tray"><%= notices %></div>
+  </header>
 
   <div class="aim-document-layout">
     <section class="aim-panel aim-document-panel">
@@ -143,17 +163,19 @@
     <%= turbo_frame_tag 'aim-review-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_invoice_path(@invoice.batch_id, queue: @queue),
                   method: :patch,
-                  local: true,
-                  class: 'aim-panel aim-metadata-form', data: { controller: 'aim-reason' } do |form| %>
+                  local: true, id: 'aim-invoice-form',
+                  class: 'aim-panel aim-metadata-form',
+                  data: { controller: 'aim-reason aim-money', action: 'submit->aim-money#check' } do |form| %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Invoice</h2>
       </div>
 
       <div class="aim-form-scroll">
         <%= render 'aim/shared/frame_flash' %>
-        <% if @invoice.review_note.present? %>
-          <section class="aim-ticket">
-            <h3><%= aim_review_reason_label(@invoice.review_reason.presence || 'note') %></h3>
+        <%# Duplicate and Sent back have chips of their own in the header (#160). %>
+        <% if @invoice.review_note.present? && !%w[duplicate sent_back].include?(@invoice.review_reason) %>
+          <section class="aim-ticket is-folded" data-controller="aim-banner">
+            <%= aim_notice_title(aim_review_reason_label(@invoice.review_reason.presence || 'note'), element: :h3) %>
             <pre><%= @invoice.review_note %></pre>
           </section>
         <% end %>
@@ -186,9 +208,11 @@
                     <%= text_field_tag 'aim_submitter', @invoice.submitter, readonly: true, class: 'aim-readonly-field',
                                        title: 'Who sent the invoice in; it stays as recorded' %>
                   <% else %>
+                    <%# An amount is checked before the form is sent (aim-money, #166). %>
                     <%= form.text_field "invoice[#{field}]",
-                                        value: @invoice.public_send(field),
-                                        disabled: @read_only %>
+                                        value: @invoice.typed_value(field),
+                                        disabled: @read_only,
+                                        data: (Aim::Invoice::MONEY_FIELDS.include?(field) ? { aim_money_target: 'field', label: aim_field_label(field) } : {}) %>
                   <% end %>
                 </div>
                 <% unless @read_only || %w[document_type notes submitter].include?(field) %>
@@ -246,18 +270,6 @@
             <% end %>
 
             <% if state == 'needs_review' %>
-              <% if @invoice.possible_duplicate? && aim_queue_access? %>
-                <%# A possible duplicate (#131): AIM staff's three answers. %>
-                <%= form.button 'Reject as duplicate', name: 'invoice_action', value: 'reject_duplicate',
-                                data: { turbo_confirm: "Reject this as a duplicate of #{@invoice.duplicate_of.batch_id}?",
-                                        confirm_label: 'Reject' },
-                                class: 'btn deny' %>
-                <%= form.button 'Replacement', name: 'invoice_action', value: 'replacement',
-                                data: { turbo_confirm: "Keep this as the replacement for #{@invoice.duplicate_of.batch_id}? Both will say so.",
-                                        confirm_label: 'Replacement' },
-                                class: 'btn reassign', title: "This invoice replaces #{@invoice.duplicate_of.batch_id}" %>
-                <%= form.button 'Not a duplicate', name: 'invoice_action', value: 'not_duplicate', class: 'btn' %>
-              <% end %>
               <% if @invoice.review_reason == 'unknown_vendor' %>
                 <%= form.button 'Learn & Retry AI', name: 'invoice_action', value: 'learn_and_retry',
                                 data: { turbo_confirm: 'Save this vendor match and have the AI read the invoice again?' },
