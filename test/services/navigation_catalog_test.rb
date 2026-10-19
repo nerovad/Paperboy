@@ -95,11 +95,11 @@ class NavigationCatalogTest < ActiveSupport::TestCase
     assert_equal %w[Paperboy Inbox Help], labels(subject)
   end
 
-  test 'SQL Dashboards is offered to a viewer and to an author' do
+  test 'Dashboards is offered to a viewer and to an author' do
     %w[sql_dashboards sql_dashboard_queries].each do |feature|
       subject = catalog(apps: [{ key: 'paperboy', label: 'Paperboy', path: '/' }], features: ["paperboy:#{feature}"])
 
-      assert_equal ['Paperboy', 'SQL Dashboards'], labels(subject)
+      assert_equal %w[Paperboy Dashboards], labels(subject)
     end
   end
 

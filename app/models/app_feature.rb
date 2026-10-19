@@ -34,8 +34,8 @@ DEVELOPMENT_APP_FEATURES = [
 # SQL dashboard and writing the SQL behind one are separate grants.
 PAPERBOY_APP_FEATURES = [
   { key: 'form_collections', label: 'Form Collections (create and manage)' },
-  { key: 'sql_dashboards', label: 'SQL Dashboards (view)' },
-  { key: 'sql_dashboard_queries', label: 'SQL Dashboards (write SQL and build)' }
+  { key: 'sql_dashboards', label: 'Dashboards (view)' },
+  { key: 'sql_dashboard_queries', label: 'Dashboards (write SQL and build)' }
 ].freeze
 
 class AppFeature
