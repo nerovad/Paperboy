@@ -157,6 +157,11 @@ signed_in_only:
     reason: "An agency group's settings, alerts and roles are changed by AIM Admins and the group's Group Admins."
     protected_by: "set_group refuses anyone who is not an AIM Admin or one of that group's Group Admins; agency_group_roles also checks the role being granted (allowed?)."
 
+  - controllers: [aim/find]
+    actions: [index]
+    reason: "Find an invoice, from the AIM Dashboard, for anyone signed in (AIM design: the front door asks only for a sign-in)."
+    protected_by: "AIM Admins search what Managing serves; everyone else only invoices they own (Aim::FindController#searchable)."
+
   - controllers: [aim/uploads]
     actions: [new, create]
     reason: "Anyone signed in may upload an invoice, usually for someone else."

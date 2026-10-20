@@ -5,13 +5,10 @@ module Aim
   # one, leaves the Rejected or Deleted list for everyone, with a history line
   # each. AIM Admins only, and only invoices of the agency groups picked in
   # Managing, as the list shows them. A second click on one already
-  # acknowledged does nothing.
+  # acknowledged does nothing. The AIM Admin gate is declared in
+  # Aim::InvoicesController, beside the index's.
   module InvoiceAcknowledgements
     extend ActiveSupport::Concern
-
-    included do
-      before_action :require_aim_admin, only: :acknowledge
-    end
 
     def acknowledge
       ids = Array(params[:ids]).map(&:to_s).uniq

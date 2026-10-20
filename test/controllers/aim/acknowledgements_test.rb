@@ -61,6 +61,16 @@ module Aim
       assert_equal 1, one.events.where(action: 'acknowledged').count
     end
 
+    test 'only AIM Admins acknowledge' do
+      row = finished('ONE')
+      @controller.define_singleton_method(:current_user_group_names) { Set[] }
+
+      patch :acknowledge, params: { queue: 'rejected', ids: %w[ONE] }
+      assert_redirected_to aim_root_path
+      assert_equal 'Only AIM Admins can open that page.', flash[:alert]
+      assert_nil row.reload.acknowledged_by
+    end
+
     test 'only what Managing serves is acknowledged, and a work-queue invoice never is' do
       finished('MINE', budget_unit: '4601')
       finished('THEIRS', budget_unit: '4602')
