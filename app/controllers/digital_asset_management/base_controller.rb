@@ -4,26 +4,14 @@ module DigitalAssetManagement
   # Base controller for the Digital Asset Management app. Every Digital Asset Management controller should
   # inherit from this so the ACL gate below is applied consistently.
   class BaseController < ApplicationController
-    before_action :require_app_access
+    include ApplicationAccessGate
+
+    gate_application 'digital_asset_management', label: 'Digital Asset Management'
     before_action :load_search_facets
 
     helper_method :dam_employee_id, :dam_favorite?, :dam_access, :dam_can?
 
     private
-
-    # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it Digital Asset Management would stay reachable by
-    # typing the URL. Access is granted per group or org level under
-    # ACL > Applications; system admins bypass it.
-    #
-    # The signed-in check matters: a global (all-org-nil) application grant
-    # applies to everyone, so the grant alone would let a signed-out visitor
-    # through.
-    def require_app_access
-      return if current_user.present? && helpers.can_access_app?('digital_asset_management')
-
-      redirect_to root_path, alert: 'You do not have access to Digital Asset Management.'
-    end
 
     # The sidebar — and so the Advanced Search modal inside it — renders on
     # every DAM page, and the modal's selects are built from live data rather

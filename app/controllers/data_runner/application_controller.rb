@@ -2,15 +2,17 @@
 
 module DataRunner
   class ApplicationController < ::ApplicationController
+    include ApplicationAccessGate
+
     # Reorganizing the DSL catalog is a grant of its own, separate from
     # browsing and running what is in it. Listed here rather than on
     # DslsController so the gate sits beside the app's other one.
     GROUP_ACTIONS = %i[new_group create_group update_group rename_group destroy_group].freeze
 
-    # The DSL index is Data Runner's sign-in panel, and where signed-out
-    # visitors are sent (#signed_out_landing_path), so it stays open.
+    # The DSL index is the sign-in panel, and where signed-out visitors are
+    # sent (#signed_out_landing_path), so it stays open.
     skip_before_action :require_sign_in, if: -> { controller_name == 'dsls' && action_name == 'index' }
-    before_action :require_app_access
+    gate_application 'data_runner', label: 'Data Runner', when_signed_out: :continue
     before_action :require_dsl_access
     before_action :require_group_management
 
@@ -29,22 +31,6 @@ module DataRunner
     # Data Runner's index is its own sign-in panel, so signed-out visitors
     # land there rather than on Paperboy's home page.
     def signed_out_landing_path = data_runner_root_path
-
-    # The sidebar app switcher only *hides* apps the user cannot reach, so this
-    # is the real gate: without it Data Runner stays reachable by typing the
-    # URL. Access is granted per group or org level under ACL > Applications;
-    # system admins bypass it.
-    #
-    # The signed-in check is part of the gate rather than left to
-    # +require_login+: a global (all-org-nil) application grant applies to
-    # everyone, so the grant alone would otherwise let a signed-out visitor
-    # through on the actions that skip login.
-    def require_app_access
-      return unless user_signed_in?
-      return if helpers.can_access_app?('data_runner')
-
-      redirect_to root_path, alert: 'You do not have access to Data Runner.'
-    end
 
     # Every route that names a DSL names it in +params[:name]+ — the catalog is
     # `resources :dsls, param: :name`, so show, edit, update, destroy, run,

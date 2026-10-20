@@ -4,26 +4,14 @@ module Billing
   # Base controller for the Billing app. Every Billing controller should
   # inherit from this so the ACL gate below is applied consistently.
   class BaseController < ApplicationController
-    before_action :require_app_access
+    include ApplicationAccessGate
+
+    gate_application 'billing', label: 'Billing'
 
     private
 
     def set_active_billing_period
       @active_billing_period = ActiveBillingPeriod.current
-    end
-
-    # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it Billing would stay reachable by
-    # typing the URL. Access is granted per group or org level under
-    # ACL > Applications; system admins bypass it.
-    #
-    # The signed-in check matters: a global (all-org-nil) application grant
-    # applies to everyone, so the grant alone would let a signed-out visitor
-    # through.
-    def require_app_access
-      return if current_user.present? && helpers.can_access_app?('billing')
-
-      redirect_to root_path, alert: 'You do not have access to Billing.'
     end
   end
 end

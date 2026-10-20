@@ -4,23 +4,11 @@ module HsaAdoptionCards
   # Base controller for the HSA Adoption Card Search app. Every controller in
   # the app inherits from this so the ACL gate below is applied consistently.
   class BaseController < ApplicationController
-    before_action :require_app_access
+    include ApplicationAccessGate
+
+    gate_application 'hsa_adoption_cards', label: 'HSA Adoption Card Search'
 
     private
-
-    # The sidebar app switcher only *hides* apps the user cannot reach, so
-    # this is the real gate: without it the app would stay reachable by
-    # typing the URL. Access is granted per group or org level under
-    # ACL > Applications; system admins bypass it.
-    #
-    # The signed-in check matters: a global (all-org-nil) application grant
-    # applies to everyone, so the grant alone would let a signed-out visitor
-    # through.
-    def require_app_access
-      return if current_user.present? && helpers.can_access_app?('hsa_adoption_cards')
-
-      redirect_to root_path, alert: 'You do not have access to HSA Adoption Card Search.'
-    end
 
     # Search and Browse are each a grant of their own under ACL > Application
     # Features, so a group can be given one without the other.
