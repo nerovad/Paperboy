@@ -89,7 +89,7 @@
           <% end %>
           <%= aim_duplicate_pill(invoice) %>
           <% if invoice.pdf_purged_at %>
-            <span class="badge is-canceled" title="Purged on <%= invoice.pdf_purged_at.strftime('%B %-d, %Y') %>">PDF purged</span>
+            <span class="badge is-cancelled" title="Purged on <%= invoice.pdf_purged_at.strftime('%B %-d, %Y') %>">PDF purged</span>
           <% end %>
           <% if invoice.acknowledged_at %>
             <span class="badge is-scheduled" title="by <%= invoice.acknowledged_by %> on <%= invoice.acknowledged_at.strftime('%B %-d, %Y') %>">Acknowledged</span>

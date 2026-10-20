@@ -5,7 +5,7 @@
       <p class="aim-page-subtitle">Invoices waiting for your approval. Approve them, send one back, or move it to someone else.</p>
     </div>
     <div class="aim-page-actions">
-      <%= link_to 'Upload Invoices', new_aim_upload_path, class: 'btn approve' %>
+      <%= link_to 'Upload Invoices', new_aim_upload_path, class: 'btn approve compact' %>
       <span class="aim-count-pill"><%= pluralize(@invoices.size, 'invoice') %></span>
     </div>
   </header>

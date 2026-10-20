@@ -60,14 +60,14 @@
       </div>
       <div class="aim-form-actions">
         <div class="aim-action-group">
-          <%= submit_tag 'Save', class: 'btn approve' %>
+          <%= submit_tag 'Save', class: 'btn approve compact' %>
           <% if @objections.any? %>
-            <%= submit_tag 'Save anyway', name: 'save_anyway', class: 'btn warning' %>
+            <%= submit_tag 'Save anyway', name: 'save_anyway', class: 'btn warning compact' %>
           <% end %>
           <% if @rule.in_effect? %>
             <%= button_to 'Retire', retire_aim_coding_rule_path(@rule), method: :patch, form: { style: 'display:inline' },
                           data: { turbo_confirm: "Retire this rule for #{@rule.vendor_name}? Invoices already coded keep it.", confirm_label: 'Retire' },
-                          class: 'btn deny' %>
+                          class: 'btn deny compact' %>
           <% end %>
         </div>
       </div>
