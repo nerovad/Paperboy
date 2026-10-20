@@ -1,0 +1,328 @@
+# Who may open each route, beyond what the code enforces by itself.
+#
+# test/integration/access_gates_test.rb walks every route and fails when one is
+# not covered. A route is covered when the application's base controller
+# protects it:
+#   * a signed-out visitor is sent to sign in (ApplicationController#require_sign_in),
+#   * a signed-in visitor meets an access gate (a before_action named
+#     require_* or authorize_*, such as require_app_access), and
+#   * the environment check runs (ApplicationController#require_environment_access).
+# A route that is open on purpose gets one row below, with the reason and what
+# stops it being misused. Add the row in the pull request that opens the route;
+# a reviewer then sees the decision. A row whose route is gated again, or gone,
+# fails the test too, so this file stays an exact list.
+#
+# A row names its controllers (the route's controller path, such as
+# forms/bike_locker_forms) and, optionally, its actions. Without actions the
+# row covers every action of those controllers.
+
+# A signed-out visitor reaches these on purpose: ApplicationController's
+# require_sign_in is skipped for them.
+public:
+  - controllers: [command_palette]
+    actions: [show]
+    reason: "Fetched into the command palette's frame, which only renders for people who may use it."
+    protected_by: "Answers 403 unless can_use_command_palette? (CommandPaletteController#show)."
+
+  - controllers: [contractor_passwords]
+    reason: "A contractor opens the emailed link to set or reset a password before they can sign in."
+    protected_by: "The link carries a signed token that the controller looks up (find_by_any_token)."
+
+  - controllers: [contractor_sessions]
+    reason: "The contractor sign-in and sign-out screens."
+    protected_by: "Contractor email and password (authenticate_by_password)."
+
+  - controllers: [dam_media]
+    actions: [show]
+    reason: "Publishing services fetch an asset's bytes while a publication is in flight, with no session."
+    protected_by: "A single-use token that is only valid while the publication runs; unknown, spent or expired is a plain 404."
+
+  - controllers: [data_runner/dsls]
+    actions: [index]
+    reason: "The Data Runner sign-in panel is this page when nobody is signed in."
+    protected_by: "A signed-out visitor sees only the panel; every other Data Runner action runs require_login and require_app_access."
+
+  - controllers: [digital_asset_management/files]
+    actions: [show]
+    reason: "Asset thumbnails load through <img> tags, which cannot follow a sign-in redirect."
+    protected_by: "The token must belong to the signed-in employee (Dam::FileToken); anything else is a plain 404."
+
+  - controllers: [forms]
+    actions: [home]
+    reason: "The landing page, with the Login button."
+    protected_by: "It shows no records."
+
+  - controllers: [sessions]
+    reason: "The sign-in and sign-out screens."
+    protected_by: "SessionsController itself."
+
+  - controllers: [who_am_i]
+    actions: [show]
+    reason: "The body of the Who Am I dialog, fetched into a frame."
+    protected_by: "Answers 403 when nobody is signed in (WhoAmIController#show)."
+
+# Signed-in visitors reach these with no require_* or authorize_* gate in front
+# of the action. Each row says what limits them instead.
+signed_in_only:
+  - controllers:
+      - forms/carpool_forms
+      - forms/fleet_vehicle_garaging_forms
+      - forms/form_request_forms
+      - forms/gsa_authorization_form_forms
+      - forms/gym_locker_forms
+      - forms/id_badge_request_forms
+      - forms/leave_of_absence_forms
+      - forms/notice_of_change_forms
+      - forms/osha_reports
+      - forms/parking_lot_submissions
+      - forms/pcard_request_forms
+      - forms/probation_transfer_requests
+      - forms/bike_locker_forms
+      - forms/safety_reports
+      - forms/sheriff_safety_reporting_forms
+      - forms/social_media_forms
+      - forms/telework_log_forms
+      - forms/textbook_and_tuition_reimbursement_forms
+      - forms/work_schedule_or_location_update_forms
+      - forms/workplace_violence_forms
+    actions: [index, new, create]
+    reason: "Anyone signed in may start a submission or list a form's page."
+    protected_by: "Opening, editing or acting on a submission is gated by Forms::BaseController (authorize_submission_view!, authorize_submission_edit!); create records the signed-in employee."
+
+  - controllers: [forms/creative_job_requests, forms/critical_information_reportings]
+    actions: [new, create]
+    reason: "Anyone signed in may file one of these requests."
+    protected_by: "Opening, editing or acting on a submission is gated by Forms::BaseController; create records the signed-in employee."
+
+  - controllers: [forms/bike_locker_forms]
+    actions: [available_lockers]
+    reason: "Feeds the lot-to-locker dropdown on the form."
+    protected_by: "Returns locker numbers and ids only."
+
+  - controllers: [forms/notice_of_change_forms]
+    actions: [accounting_options]
+    reason: "Feeds the accounting dropdowns on the form."
+    protected_by: "Returns the agency's billing options only (Coa::BillingOptions, restricted to the agency)."
+
+  - controllers: [aim/dashboard]
+    actions: [home, index]
+    reason: "AIM's front door and dashboard ask only that someone is signed in (see Aim::BaseController)."
+    protected_by: "The dashboard needs a queue of the person's own (require_queue), and the person's AIM account decides what it lists."
+
+  - controllers: [task_reassignments]
+    actions: [reassign, take_back, history]
+    reason: "Hands a task from the inbox to someone else, takes it back, and lists who held it."
+    protected_by: "Only a sign-in. The actions find the task by type and id and do not check that the person holds it, so this row records a gap to decide on, not a settled rule."
+
+  - controllers: [aim/help]
+    actions: [show]
+    reason: "How AIM works, for anyone signed in."
+    protected_by: "Static help page."
+
+  - controllers: [aim/invoices]
+    actions: [reassign_many]
+    reason: "Moves a batch of invoices to another queue; a member action's gate cannot cover a batch."
+    protected_by: "Every invoice is checked on its own (movable_by_me? in Aim::InvoiceBulkMoves#move_each); the ones the person may not move are skipped."
+
+  - controllers: [aim/my_queue, aim/shared_queues]
+    actions: [index]
+    reason: "Personal queues, open to everyone signed in (AIM design: the front door asks only for a sign-in)."
+    protected_by: "The lists hold only the signed-in person's own invoices and the shared queues of the budget units they cover."
+
+  - controllers: [aim/budget_units]
+    actions: [index]
+    reason: "The BU page, for BU Admins and AIM Admins."
+    protected_by: "The action redirects anyone who administers no budget units (\"You are not a BU Admin.\")."
+
+  - controllers: [aim/people]
+    actions: [index]
+    reason: "Searches the people who work AIM, so whoever holds an invoice can hand it to someone's queue."
+    protected_by: "Returns only people who work AIM, by name and unit."
+
+  - controllers: [aim/counts]
+    actions: [show]
+    reason: "The sidebar, dashboard and My Queue counts."
+    protected_by: "Queue counts are built only when aim_queue_access? is true; everyone else gets their own queue's count."
+
+  - controllers: [aim/modes]
+    actions: [update]
+    reason: "Switches an AIM Admin between Admin and Approver mode for the session."
+    protected_by: "Refuses anyone without real queue access (aim_real_queue_access?)."
+
+  - controllers:
+      - aim/agency_group_alerts
+      - aim/agency_group_roles
+      - aim/agency_group_settings
+      - aim/budget_unit_settings
+    reason: "An agency group's settings, alerts and roles are changed by AIM Admins and the group's Group Admins."
+    protected_by: "set_group refuses anyone who is not an AIM Admin or one of that group's Group Admins; agency_group_roles also checks the role being granted (allowed?)."
+
+  - controllers: [aim/uploads]
+    actions: [new, create]
+    reason: "Anyone signed in may upload an invoice, usually for someone else."
+    protected_by: "The destination budget unit must be one AIM serves, and the file's bytes are checked."
+
+  - controllers: [environment_access]
+    actions: [show]
+    reason: "The page require_environment_access sends people to when they hold no grant for this server."
+    protected_by: "Shows text and a link to Production; redirects home when the grant is held."
+
+  - controllers: [form_library]
+    actions: [index]
+    reason: "The Form Library lists the forms the person may open."
+    protected_by: "The list is built from the person's own form permissions (current_user_form_permission_keys)."
+
+  - controllers: [shared]
+    actions: [form_success, ticket_success]
+    reason: "The page shown after a form or ticket is submitted."
+    protected_by: "Shows a confirmation only."
+
+  - controllers: [records]
+    actions: [index]
+    reason: "The Records landing page lists the tables the person may open."
+    protected_by: "Lists only tables the person may open, and redirects home with \"Access denied.\" when there are none (load_records_tables)."
+
+  - controllers: [records_table]
+    actions: [show, bulk_update]
+    reason: "The generic Records grid and its inline edits."
+    protected_by: "set_table refuses a table the person cannot open (can_access_record_table?); bulk_update applies only the editable columns."
+
+  - controllers:
+      - record_export_schedules
+      - records_email_contacts
+      - records_email_rules
+      - records_emails
+      - records_highlight_rules
+      - records_histories
+    reason: "Dialogs of one Records table, reached from its grid."
+    protected_by: "set_table refuses anyone who cannot open (or, for the editing dialogs, edit) that table."
+
+  - controllers: [inbox]
+    actions: [queue]
+    reason: "The Inbox is each person's own queue."
+    protected_by: "The query is scoped to the signed-in employee and, for supervisors, their reports (InboxQuery)."
+
+  - controllers: [submission_histories]
+    actions: [status, edits]
+    reason: "History fragments the inbox modal fetches for one submission."
+    protected_by: "Answers 403 unless the person may view (and, for edits, edit) that submission (can_view_submission?, can_edit_submission?)."
+
+  - controllers: [submission_comments]
+    actions: [index, create, destroy, attachment]
+    reason: "A submission's comment thread."
+    protected_by: "Visibility follows view access (Forms::SubmissionAccess); only an author or a system admin deletes a comment."
+
+  - controllers: [submissions]
+    actions: [index, status_options, lookup, update_status]
+    reason: "The Submissions page lists the person's own submissions and those they are allowed to see."
+    protected_by: "The list is scoped to the person and their reports; update_status asks can_change_submission_status? for the record."
+
+  - controllers: [saved_searches]
+    actions: [create, destroy]
+    reason: "A person's own saved searches."
+    protected_by: "Rows belong to the signed-in employee, who is the only one who can find them."
+
+  - controllers: [settings]
+    reason: "A person's own settings: table layout, sidebar, default search."
+    protected_by: "Every change is stored against the signed-in employee."
+
+  - controllers: [form_submission_copies]
+    actions: [dismiss]
+    reason: "Dismissing a copy of a submission that was sent to the person."
+    protected_by: "Refuses a copy that is not the signed-in person's (\"Not your copy to dismiss.\")."
+
+  - controllers: [form_subscription_opt_outs]
+    actions: [create, destroy]
+    reason: "A person stepping out of one group subscription's mail, from their Settings page."
+    protected_by: "load_subscription accepts only a subscription that reaches the person through a group they belong to."
+
+  - controllers: [away_periods]
+    actions: [create, destroy]
+    reason: "A person books and cancels their own away cover."
+    protected_by: "The employee id comes from the session, never the form, and a period that is not the person's is refused."
+
+  - controllers: [help]
+    actions: [index]
+    reason: "The Help page."
+    protected_by: "The person's own tickets are listed; all tickets only when ticket_admin? is true."
+
+  - controllers: [help_tickets]
+    reason: "A person's help tickets."
+    protected_by: "A ticket opens only for its owner or a ticket admin (\"Access denied.\" otherwise)."
+
+  - controllers: [lookups]
+    reason: "JSON for the form dropdowns: agencies, divisions, departments, units, employees and answer fill."
+    protected_by: "Answers HTML requests with 406; data is organisation reference data, open to anyone signed in."
+
+  - controllers: [api/nhtsa]
+    actions: [makes, models]
+    reason: "Vehicle make and model lists for the fleet forms."
+    protected_by: "Public vehicle reference data from the NHTSA service."
+
+# Environment check (ApplicationController#require_environment_access) skipped:
+# a visitor without the grant for this server must still be able to sign in,
+# sign out and see the page that explains why.
+environment_exempt:
+  - controllers: [contractor_sessions]
+    reason: "Contractor sign-in and sign-out cannot wait on a grant for this server."
+    protected_by: "The check runs on every other request once the contractor is signed in."
+
+  - controllers: [environment_access]
+    actions: [show]
+    reason: "The page the check redirects to."
+    protected_by: "Shows text and a link to Production."
+
+  - controllers: [sessions]
+    reason: "Sign-in and sign-out cannot wait on a grant for this server."
+    protected_by: "The check runs on every other request once the person is signed in."
+
+# Routes to controllers the Rails framework or a gem provides, which do not
+# inherit ApplicationController and so carry none of its filters.
+framework:
+  - controllers:
+      - action_mailbox/ingresses/mailgun/inbound_emails
+      - action_mailbox/ingresses/mandrill/inbound_emails
+      - action_mailbox/ingresses/postmark/inbound_emails
+      - action_mailbox/ingresses/relay/inbound_emails
+      - action_mailbox/ingresses/sendgrid/inbound_emails
+    reason: "Action Mailbox's inbound email endpoints, which Rails routes in every environment."
+    protected_by: "Each ingress authenticates the sender by its own password or signature."
+
+  - controllers:
+      - rails/conductor/action_mailbox/incinerates
+      - rails/conductor/action_mailbox/inbound_emails
+      - rails/conductor/action_mailbox/inbound_emails/sources
+      - rails/conductor/action_mailbox/reroutes
+    reason: "Rails' Action Mailbox conductor, a development tool."
+    protected_by: "Rails routes it only outside production."
+
+  - controllers:
+      - active_storage/blobs/proxy
+      - active_storage/blobs/redirect
+      - active_storage/disk
+      - active_storage/representations/proxy
+      - active_storage/representations/redirect
+    reason: "Active Storage's own endpoints for serving files."
+    protected_by: "Blobs are addressed by signed, expiring ids; the application links its files through its own token routes instead."
+
+  - controllers: [active_storage/direct_uploads]
+    reason: "Active Storage's endpoint the file fields post to before a form is saved."
+    protected_by: "Only the CSRF token; the endpoint does not ask for a sign-in, so a signed-out visitor can create a blob. This row records a gap to decide on, not a settled rule."
+
+  - controllers: [rails/pwa]
+    reason: "The web app manifest and service worker, which the browser fetches before and outside any sign-in."
+    protected_by: "Static files with no data."
+
+  - controllers: [turbo/native/navigation]
+    reason: "Turbo Native's path-configuration endpoints."
+    protected_by: "Each answers with a fixed response and reads no data."
+
+# Rack applications mounted without a controller.
+mounted:
+  - path: /assets
+    reason: "Compiled stylesheets, scripts and images, which the sign-in page needs."
+    protected_by: "Public files only."
+
+  - path: /cable
+    reason: "Action Cable, mounted by Rails; the application defines no channels of its own."
+    protected_by: "Only turbo-rails' signed stream channel exists, and stream names are signed."
