@@ -54,6 +54,11 @@ production: &production
     queue: default
     schedule: at 3am every day
     description: Purges the files of AIM Fiscal reports a year old
+  aim_purge_deleted_pdfs:
+    class: Aim::PurgeDeletedPdfsJob
+    queue: default
+    schedule: at 3:30am every day
+    description: Purges the PDFs of AIM invoices deleted past the retention period; nothing unless AIM_PURGE_DELETED_PDFS=on
   dam_watch_folders:
     class: Dam::WatchFolderIngestJob
     queue: default

@@ -24,6 +24,10 @@ module Aim
     include Aim::InvoiceDuplicates
     include Aim::Transitions
     include Aim::Audited
+    include Aim::MoneyAttributes
+
+    MONEY_FIELDS = %w[invoice_total subtotal sales_tax].freeze
+    money_attributes(*MONEY_FIELDS)
 
     # Raised by #transition_to! when the move is not one the pipeline makes.
     class IllegalTransition < StandardError; end
@@ -43,7 +47,7 @@ module Aim
     # Why a person is needed. The old review queues, as one column.
     REVIEW_REASONS = %w[
       unknown_type unknown_vendor missing_fields low_confidence handwritten
-      extraction_error split_error export_error duplicate
+      extraction_error split_error export_error duplicate sent_back
     ].freeze
 
     # What the worker does next. NULL means nothing.

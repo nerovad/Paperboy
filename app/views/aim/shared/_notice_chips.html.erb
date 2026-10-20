@@ -1,0 +1,8 @@
+<%# One chip per notice the page built (aim_notice_heading, #160); each drops
+    its panel down from the header (aim_notices_controller). %>
+<% aim_notice_chips.each do |chip| %>
+  <button type="button" class="aim-notice-chip is-<%= chip[:tone] %>" aria-expanded="false" aria-controls="<%= chip[:id] %>"
+          data-action="aim-notices#toggle" data-aim-notices-target="chip">
+    <span class="aim-notice-chip__mark" aria-hidden="true"><%= chip[:mark] %></span><%= chip[:title] %><span class="aim-notice-chip__caret" aria-hidden="true"></span>
+  </button>
+<% end %>

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/submission_policy.rb
-
 module Forms
   # Who may act on a submission from its own detail page, and with which
   # statuses.

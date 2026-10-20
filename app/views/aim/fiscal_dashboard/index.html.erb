@@ -12,6 +12,9 @@
     </div>
   </header>
 
+  <%= render 'aim/shared/find_box', url: aim_fiscal_find_path, fiscal: true,
+                                    wheres: Aim::FiscalRecord::STATUSES.map { |status| [Aim::FiscalRecord::STATUS_LABELS[status], status] } %>
+
   <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
 
   <section class="aim-dashboard-grid" data-controller="aim-counts" data-aim-counts-url-value="<%= aim_counts_path %>">

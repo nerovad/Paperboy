@@ -55,12 +55,23 @@ module Aim
       reject
     end
 
+    # The replacement goes to the original's queue or the one picked in the
+    # prompt (#160), and the original is rejected as replaced, its PDF copied
+    # to the rejected folder as a Reject would. Not once the original has been
+    # processed: the button is greyed out, and this says so if posted anyway.
     def mark_replacement
       return refuse('Only AIM staff decide a possible duplicate.') unless staff? && @invoice.possible_duplicate?
 
       other = @invoice.duplicate_of
-      @invoice.mark_replacement!(actor: current_user_email)
-      redirect_to aim_invoice_path(@invoice.batch_id, queue: @queue), notice: "Marked as the replacement for #{other.batch_id}."
+      return refuse("#{other.batch_id} has already been processed, so it cannot be replaced.") if @invoice.original_processed?
+
+      owner = params[:replace_to] == 'other' ? params[:replace_owner].to_s : nil
+      line = "#{Time.zone.now.strftime('%Y-%m-%d %H:%M')} Rejected by #{current_user_name || current_user_email}: " \
+             "Replaced by #{@invoice.batch_id}"
+      @invoice.replace_original!(actor: current_user_email, owner: owner, by: current_user_employee_id,
+                                 notes: [other.notes.presence, line].compact.join("\n"))
+      keep_copy(rejected_folder(other), other) if other.reload.state == 'rejected'
+      finish("Sent to #{@invoice.queue_owner} as the replacement; #{other.batch_id} rejected as replaced.")
     end
 
     def not_duplicate

@@ -12,16 +12,13 @@ module Forms
 
       redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
-      # Load user groups for field restrictions
       @current_user_groups = current_user_group_ids
 
-      # --- Organization chain (same pattern you use now) ---
       unit        = Coa::Unit.resolve_for_employee(@employee)
       department  = unit ? Coa::Department.find_by(department_id: unit.department_id) : nil
       division    = department ? Coa::Division.find_by(division_id: department.division_id) : nil
       agency      = division ? Coa::Agency.find_by(agency_id: division.agency_id) : nil
 
-      # --- Prefill values ---
       @prefill_data = {
         employee_id: @employee.employee_id,
         name: [@employee.first_name, @employee.last_name].compact.join(' '),

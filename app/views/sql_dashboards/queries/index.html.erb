@@ -1,0 +1,45 @@
+<div class="sql-dashboards">
+  <div class="sql-dashboards__header">
+    <div>
+      <p class="sql-dashboards__crumbs"><%= link_to "Dashboards", sql_dashboards_dashboards_path %></p>
+      <h1>Queries</h1>
+    </div>
+    <div class="sql-dashboards__actions">
+      <%= link_to "New query", new_sql_dashboards_query_path, class: "btn approve" %>
+    </div>
+  </div>
+
+  <% if @queries.any? %>
+    <table class="submission-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Database</th>
+          <th>Chart</th>
+          <th>Cards</th>
+          <th>Last changed</th>
+          <th aria-label="Actions"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @queries.each do |query| %>
+          <tr>
+            <td><%= link_to query.name, edit_sql_dashboards_query_path(query) %></td>
+            <td><%= query.database&.label || query.database_key %></td>
+            <td><%= SqlDashboards::Query::CHART_TYPES[query.chart_type] %></td>
+            <td><%= query.cards.size %></td>
+            <td><%= query.updated_at.strftime("%Y-%m-%d %H:%M") %><% if query.updated_by_name.present? %> by <%= query.updated_by_name %><% end %></td>
+            <td class="sql-dashboards__row-actions">
+              <%= link_to "Edit", edit_sql_dashboards_query_path(query), class: "btn edit compact" %>
+              <%= button_to "Delete", sql_dashboards_query_path(query), method: :delete, class: "btn deny compact",
+                            form: { data: { turbo_confirm: "Delete “#{query.name}”? #{query.cards.size.positive? ? "It is removed from #{pluralize(query.cards.size, 'card')} too." : ''}".strip,
+                                            confirm_title: "Delete query" } } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="sql-dashboards__empty">No queries have been saved yet.</p>
+  <% end %>
+</div>

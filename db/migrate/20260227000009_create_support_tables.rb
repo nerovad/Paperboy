@@ -2,7 +2,6 @@
 
 class CreateSupportTables < ActiveRecord::Migration[8.0]
   def change
-    # Authorization Managers
     create_table :authorization_managers do |t|
       t.string :employee_id, null: false
       t.string :department_id, null: false
@@ -10,7 +9,6 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
     end
     add_index :authorization_managers, %i[employee_id department_id], unique: true
 
-    # Authorized Approvers
     create_table :authorized_approvers do |t|
       t.string :employee_id, null: false
       t.string :department_id, null: false
@@ -54,7 +52,6 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
     add_index :task_reassignments, :from_employee_id
     add_index :task_reassignments, :to_employee_id
 
-    # Saved Searches
     create_table :saved_searches do |t|
       t.string :employee_id, null: false
       t.string :name, null: false
@@ -64,7 +61,6 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
     add_index :saved_searches, :employee_id
     add_index :saved_searches, %i[employee_id name], unique: true
 
-    # Scheduled Reports
     create_table :scheduled_reports do |t|
       t.string :employee_id, null: false
       t.string :form_type, null: false
@@ -84,7 +80,6 @@ class CreateSupportTables < ActiveRecord::Migration[8.0]
     add_index :scheduled_reports, :enabled
     add_index :scheduled_reports, :next_run_at
 
-    # Help Tickets
     create_table :help_tickets do |t|
       t.string :subject, null: false
       t.text :description, null: false

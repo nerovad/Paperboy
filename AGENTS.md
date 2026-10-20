@@ -4,18 +4,27 @@
 - Generated Ruby conforms to `.rubocop.yml`.
 
 ## CI Pipeline
-- run unit test and examine errors; f
+- Run the checks and examine the errors:
   ```bash
-     bin/unit-tests
-  * Use 10.135.204.161 when GSASQL16 cannot be resolved
+  bin/unit-test
+  ```
+  It runs RuboCop, Brakeman, bundle-audit and `rails test`, and writes the
+  output to `error.log`. Pass a test path to run less than the whole suite.
 - Tests use SQL Server, not SQLite. `config/database.yml` accepts
   `PAPERBOY_TEST_DATABASE` when the default `Paperboy_Test` database is
   unavailable; for example:
   `PAPERBOY_TEST_DATABASE=Paperboy_Test bundle exec rake test`
-- The configured test database is a scratch base. Rails test setup creates
-  schema-loaded, per-worker databases with a run identifier and worker suffix
-  for parallel tests, then drops them after the run. The test login therefore
-  needs permission to create and drop databases and load the schema.
+- Locally, the configured test database is a scratch base. Rails test setup
+  creates schema-loaded, per-worker databases with a run identifier and worker
+  suffix for parallel tests, then drops them after the run. The test login
+  therefore needs permission to create and drop databases and load the schema.
+- In CI (`.github/workflows/ci.yml`) the login cannot create databases. The
+  test job sets `PARALLEL_WORKERS=1` and runs against one pre-made database
+  whose name ends in `_CI` (`Paperboy_CI` by default). The `Reset CI database`
+  step runs `bundle exec rails ci:reset_database`, which empties that database
+  and loads `db/schema.rb`. It never creates or drops a database and refuses
+  any name that does not end in `_CI`. The test job is skipped while the
+  `CI_SQL_HOST` variable is unset.
 - Never point tests at `Paperboy_Dev`, staging, or production data. If
   `GSASQL16` cannot be resolved, use `10.135.204.161` for `GSABSS_HOST`.
 ## Software Changes
@@ -614,3 +623,40 @@ Rules:
   the Publish screen to someone without the `publish` grant.
 - Imported assets are filed under an org from their ResourceSpace text by
   `Dam::OrgFromMetadata`; `rake dam:file_assets_by_org` backfills.
+
+## SQL Dashboards
+
+An admin types SQL in the browser, picks a chart, and puts saved queries on
+a dashboard (`SqlDashboards::Query`, `Dashboard`, `Card`). Charts are drawn
+by Chartkick over Chart.js, both served from the `chartkick` gem.
+
+Rules:
+
+- **Typed SQL is never inspected.** What it may do is decided by the login
+  it runs under. `SqlDashboards::Database` swaps the application's login for
+  the read-only one in `SQL_DASHBOARDS_USERNAME` / `SQL_DASHBOARDS_PASSWORD`.
+  Without that login nothing runs. Never fall back to the application's own
+  connection: it can write.
+- **Everything runs through `SqlDashboards::Runner`.** It applies the
+  timeout (`SQL_DASHBOARDS_TIMEOUT`, seconds, default 30) and the row cap
+  (`SQL_DASHBOARDS_ROW_LIMIT`, default 2000), writes the `Event`, and returns
+  a `Result` instead of raising, so a failed query is shown where its chart
+  would have been.
+- **The login decides what can be read, not the picker.** The editor offers
+  Paperboy and GSABSS as the database a query starts in. Billing's tables
+  are in GSABSS, so billing is covered. A query may name any other database
+  on the server in full (`[GSA Scan].dbo.…`) and it works wherever the
+  read-only login has been given a user. A stored procedure runs only if the
+  login was granted `EXECUTE` on it. A database on another server is an
+  entry in `SqlDashboards::Database::ALL` and a connection class.
+- **The column order picks the chart; there is no chart builder.** First
+  column label or x, second the value, optional third the series
+  (`SqlDashboards::ChartData`). A new chart type is added there and to
+  `Query::CHART_TYPES`.
+- **No inline chart script.** A chart is a `data-controller="sql-chart"`
+  element carrying its rows as JSON; do not use Chartkick's view helpers,
+  which emit `<script>` tags the CSP nonce would have to cover.
+- Looking is the `paperboy:sql_dashboards` feature grant. Writing SQL and
+  building dashboards is `paperboy:sql_dashboard_queries`, deliberately
+  separate; it also lets its holder look.
+- The Metabase dashboards at `/dashboards` are a different, older feature.

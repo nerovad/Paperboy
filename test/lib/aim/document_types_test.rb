@@ -27,5 +27,13 @@ module Aim
 
       assert_equal unknown, Aim::Invoice::UNSETTLED_DOCUMENT_TYPE
     end
+
+    # The worker dates an invoice's finish on the same states Rails does (#169).
+    test 'Rails and the workers finish on the same states' do
+      declaration = Rails.root.join('script/python/aim/v2/store.py').read[/^FINISHED_STATES\s*=\s*\(([^)]*)\)/, 1]
+
+      assert declaration, 'FINISHED_STATES is not declared in script/python/aim/v2/store.py'
+      assert_equal Aim::Invoice::TERMINAL_STATES.sort, declaration.scan(/"([^"]+)"/).flatten.sort
+    end
   end
 end

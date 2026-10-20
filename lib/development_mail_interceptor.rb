@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-# lib/development_mail_interceptor.rb
 class DevelopmentMailInterceptor
   def self.delivering_email(message)
-    # Store original recipients for debugging
     original_to = message.to
     original_cc = message.cc
     original_bcc = message.bcc
@@ -15,7 +13,6 @@ class DevelopmentMailInterceptor
     message.cc = nil
     message.bcc = nil
 
-    # Add original recipients to subject for clarity
     original_recipients = [original_to, original_cc, original_bcc].flatten.compact.join(', ')
     message.subject = "[DEV - would send to: #{original_recipients}] #{message.subject}"
 

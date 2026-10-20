@@ -23,13 +23,26 @@
 #   bin/env-pull --lockbox ~/src/LockBox
 #
 # The LockBox checkout is --lockbox, then $LOCKBOX_DIR, then the LockBox
-# directory beside this repo. bin/deploy-dev, bin/deploy-stage and bin/deploy
-# run this on every deploy; NO_ENV_PULL=1 skips it there.
+# directory beside the shared checkout, which is where it is from a linked
+# worktree too. .env is written in the tree this script belongs to; .env.local
+# is read from that tree, or from the shared checkout when the tree has none.
+# bin/deploy-dev, bin/deploy-stage and bin/deploy run this on every deploy;
+# NO_ENV_PULL=1 skips it there.
 #
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LOCKBOX="${LOCKBOX_DIR:-$APP_DIR/../LockBox}"
+# shellcheck disable=SC1091
+source "$APP_DIR/bin/checkout-common"
+# Not a git checkout (a copied tree): this directory is the shared root.
+SHARED_ROOT="$(paperboy_shared_root "$APP_DIR" 2>/dev/null || echo "$APP_DIR")"
+if [ -n "${LOCKBOX_DIR:-}" ]; then
+  LOCKBOX="$LOCKBOX_DIR"
+  LOCKBOX_FROM="LOCKBOX_DIR"
+else
+  LOCKBOX="$SHARED_ROOT/../LockBox"
+  LOCKBOX_FROM="beside the shared checkout $SHARED_ROOT"
+fi
 SOURCE_NAME="Paperboy.env"
 CHECK=0
 PULL=1
@@ -42,17 +55,17 @@ while [ $# -gt 0 ]; do
     --check) CHECK=1; shift ;;
     --no-pull) PULL=0; shift ;;
     --prune) PRUNE=1; shift ;;
-    --lockbox) [ $# -ge 2 ] || die "--lockbox needs a directory"; LOCKBOX="$2"; shift 2 ;;
-    -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --lockbox) [ $# -ge 2 ] || die "--lockbox needs a directory"; LOCKBOX="$2"; LOCKBOX_FROM="--lockbox"; shift 2 ;;
+    -h|--help) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
   esac
 done
 
 ENV_FILE="$APP_DIR/.env"
-LOCAL_FILE="$APP_DIR/.env.local"
+LOCAL_FILE="$(paperboy_env_file .env.local "$APP_DIR" || true)"
 SOURCE="$LOCKBOX/$SOURCE_NAME"
 
-[ -d "$LOCKBOX/.git" ] || die "no LockBox checkout at $LOCKBOX
+[ -d "$LOCKBOX/.git" ] || die "no LockBox checkout at $LOCKBOX ($LOCKBOX_FROM)
 !!! Clone it there, or name it with --lockbox or LOCKBOX_DIR."
 LOCKBOX="$(cd "$LOCKBOX" && pwd)"
 

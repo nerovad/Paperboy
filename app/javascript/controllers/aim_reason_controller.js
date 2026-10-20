@@ -12,7 +12,7 @@ export default class extends Controller {
   static targets = ["backdrop", "title", "reason", "submit"]
 
   connect() {
-    this.onKey = (event) => { if (event.key === "Escape" && !this.backdropTarget.hidden) this.close() }
+    this.onKey = (event) => { if (event.key === "Escape" && this.hasBackdropTarget && !this.backdropTarget.hidden) this.close() }
     document.addEventListener("keydown", this.onKey)
   }
 

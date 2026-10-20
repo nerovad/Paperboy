@@ -1,0 +1,22 @@
+<%# Stale (#170): invoices in an active queue waiting Aim::Waiting.stale_days
+    or more, by queue and owner. Shown, never moved or purged. %>
+<h2 class="aim-profile-heading">Stale: waiting <%= pluralize(Aim::Waiting.stale_days, 'day') %> or more</h2>
+<section class="aim-panel aim-agency-group-panel aim-stale-panel">
+  <% if stale.any? %>
+    <table class="submission-table aim-people-table">
+      <thead><tr><th>Queue</th><th>Owner</th><th>Invoices</th><th>Longest</th></tr></thead>
+      <tbody>
+        <% stale.each do |queue, owner, count, days| %>
+          <tr>
+            <td class="is-strong"><%= link_to aim_queue_label(queue), aim_invoices_path(queue: queue) %></td>
+            <td><%= owner == Aim::Invoice::SHARED_QUEUE ? 'Shared queue' : owner %></td>
+            <td><%= count %></td>
+            <td><span class="badge is-denied"><%= pluralize(days, 'day') %></span></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="aim-agency-group-meta">Nothing has waited that long.</p>
+  <% end %>
+</section>

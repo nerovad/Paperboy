@@ -25,7 +25,7 @@ module AuditableEdits
   IGNORED_COLUMNS = %w[
     id created_at updated_at status approver_id
     claimed_by claimed_by_name claimed_at lease_owner lease_until attempt command extracted manifest coded_at
-    updated_by set_by stamped_at stamp_error exported_at archived_at
+    updated_by set_by stamped_at stamp_error exported_at archived_at finished_at acknowledged_at acknowledged_by pdf_purged_at
   ].freeze
 
   # What an encrypted attribute's value is recorded as. That it changed is

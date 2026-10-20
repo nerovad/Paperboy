@@ -6,6 +6,10 @@ module Aim
   # second_approval_over goes, after its first approval, to the second
   # approver's queue.
   class BudgetUnitSetting < Record
+    include Aim::MoneyAttributes
+
+    money_attributes :second_approval_over
+
     # What the amount box starts at for a BU with no second approval yet
     # (Joshua, 2026-10-15). Nothing applies until a second approver is named.
     DEFAULT_SECOND_APPROVAL_OVER = 25_000

@@ -13,7 +13,7 @@ gem 'rails', '~> 8.1.3'
 # removed that calling convention and breaks every cookie-backed session.
 gem 'json', '< 3.0'
 source 'http://gsa-gitea:3000/api/packages/BSS/rubygems' do
-  gem 'smb_shortcut', '1.1.5'
+  gem 'smb_shortcut', '1.1.7'
 end
 
 # Asset pipeline: Sprockets serves and digests; dartsass-rails compiles SCSS
@@ -30,7 +30,6 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem 'web-console'
 end
-# gem "pg"  # Uncomment to switch back to PostgreSQL
 # MSSQL (primary database + billing stored procedures)
 gem 'activerecord-sqlserver-adapter'
 gem 'tiny_tds', force_ruby_platform: true
@@ -140,3 +139,6 @@ gem 'sass-embedded', '~> 1.94'
 
 # Pagination
 gem 'pagy'
+
+# Chart.js and chartkick.js for SQL Dashboards (importmap pins, no CDN)
+gem 'chartkick', '~> 5.2'

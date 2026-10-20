@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/concerns/filterable.rb
 module Filterable
   extend ActiveSupport::Concern
 
@@ -42,7 +41,6 @@ module Filterable
       end
     end
 
-    # Apply date filters
     date_filters.each do |config|
       param_value = params[config[:param]]
       next unless param_value.present?

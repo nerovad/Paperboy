@@ -56,6 +56,7 @@
         <td>
           <%= aim_fiscal_badge(record) %>
           <% if record.invoice.manual_entry %><span class="badge is-pending">Manual Data Entry Needed</span><% end %>
+          <%= aim_duplicate_pill(record.invoice) %>
         </td>
         <% if selectable %>
           <td class="aim-select-cell">

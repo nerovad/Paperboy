@@ -92,6 +92,9 @@ import CoaCustomerLookupController from "controllers/coa_customer_lookup_control
 import CustomerLookupRowsController from "controllers/customer_lookup_rows_controller"
 import AimOcrController from "controllers/aim_ocr_controller"
 import AimMoveModalController from "controllers/aim_move_modal_controller"
+import AimPressController from "controllers/aim_press_controller"
+import AimPdfEditorController from "controllers/aim_pdf_editor_controller"
+import AimAcknowledgeController from "controllers/aim_acknowledge_controller"
 import AimDropzoneController from "controllers/aim_dropzone_controller"
 import AimPersonSearchController from "controllers/aim_person_search_controller"
 import AimCountsController from "controllers/aim_counts_controller"
@@ -99,6 +102,10 @@ import AimQueueFilterController from "controllers/aim_queue_filter_controller"
 import AimOwnerChoiceController from "controllers/aim_owner_choice_controller"
 import AimPresenceController from "controllers/aim_presence_controller"
 import AimReasonController from "controllers/aim_reason_controller"
+import AimReplaceController from "controllers/aim_replace_controller"
+import AimBannerController from "controllers/aim_banner_controller"
+import AimNoticesController from "controllers/aim_notices_controller"
+import AimMoneyController from "controllers/aim_money_controller"
 import AimSidebarController from "controllers/aim_sidebar_controller"
 import AimColumnOrderController from "controllers/aim_column_order_controller"
 import AimOpenSectionsController from "controllers/aim_open_sections_controller"
@@ -115,6 +122,7 @@ import NavigationProgressController from "controllers/navigation_progress_contro
 import P2mQualityControlController from "controllers/p2m_quality_control_controller"
 import StartupWarningController from "controllers/startup_warning_controller"
 import PfaGridController from "controllers/pfa_grid_controller"
+import SqlChartController from "controllers/sql_chart_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
@@ -139,6 +147,7 @@ application.register("navigation-progress", NavigationProgressController)
 application.register("p2m-quality-control", P2mQualityControlController)
 application.register("startup-warning", StartupWarningController)
 application.register("pfa-grid", PfaGridController)
+application.register("sql-chart", SqlChartController)
 application.register("coa-account-fields", CoaAccountFieldsController)
 application.register("approve-modal", ApproveModalController)
 application.register("reassign-modal", ReassignModalController)
@@ -216,6 +225,9 @@ application.register("org-cascade", OrgCascadeController)
 application.register("coa-billing-lookup", CoaBillingLookupController)
 application.register("aim-ocr", AimOcrController)
 application.register("aim-move-modal", AimMoveModalController)
+application.register("aim-press", AimPressController)
+application.register("aim-pdf-editor", AimPdfEditorController)
+application.register("aim-acknowledge", AimAcknowledgeController)
 application.register("aim-dropzone", AimDropzoneController)
 application.register("aim-person-search", AimPersonSearchController)
 application.register("aim-counts", AimCountsController)
@@ -223,6 +235,10 @@ application.register("aim-queue-filter", AimQueueFilterController)
 application.register("aim-owner-choice", AimOwnerChoiceController)
 application.register("aim-presence", AimPresenceController)
 application.register("aim-reason", AimReasonController)
+application.register("aim-replace", AimReplaceController)
+application.register("aim-banner", AimBannerController)
+application.register("aim-notices", AimNoticesController)
+application.register("aim-money", AimMoneyController)
 application.register("aim-sidebar", AimSidebarController)
 application.register("aim-column-order", AimColumnOrderController)
 application.register("aim-open-sections", AimOpenSectionsController)

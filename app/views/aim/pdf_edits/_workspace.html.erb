@@ -1,0 +1,101 @@
+<%# Edit PDF (#181), inside the Document Preview: hidden until Edit PDF
+    (aim_pdf_editor_controller). A page strip on the left (click to look,
+    drag to reorder), the chosen page big, one toolbar; Swap and Apply change
+    the PDF at once, Cancel puts the viewer back. Locals: invoice, from
+    ('fiscal' on Fiscal's page). %>
+<% from = local_assigns[:from] %>
+<% reread = invoice.can_move_to?('received') %>
+<div class="aim-pdf-workspace" hidden data-aim-pdf-editor-target="editor">
+  <div class="aim-pdf-toolbar">
+    <span class="aim-pdf-toolbar__group" role="group" aria-label="This page">
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#turnLeft">Turn left</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#turnRight">Turn right</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#crop">Crop</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#clearCrop">Uncrop</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#text">Text</button>
+      <button type="button" class="btn compact deny" data-action="aim-pdf-editor#toggleRemove" data-aim-pdf-editor-target="removeButton">Remove page</button>
+    </span>
+    <span class="aim-pdf-toolbar__group" role="group" aria-label="The whole PDF">
+      <label class="btn compact">Add pages from a PDF
+        <input type="file" accept="application/pdf" hidden data-aim-pdf-editor-target="insertPicker" data-action="change->aim-pdf-editor#addPdf">
+      </label>
+      <%= form_with url: aim_replace_pdf_invoice_path(invoice.batch_id, from: from), method: :post, multipart: true,
+                    class: 'aim-pdf-toolbar__swap', data: { turbo: false } do %>
+        <label class="btn compact">Swap the whole PDF…
+          <%= file_field_tag :file, accept: 'application/pdf', hidden: true, id: nil,
+                             data: { action: 'change->aim-pdf-editor#swap' } %>
+        </label>
+        <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
+      <% end %>
+    </span>
+    <% versions = Aim::PdfVersions.all(invoice).reverse %>
+    <% if versions.any? %>
+      <%# Every swap, edit and restore (#182): look at any, or make one current again. %>
+      <details class="aim-actions-menu aim-pdf-versions" data-controller="aim-actions-menu">
+        <summary class="btn compact ghost">Versions (<%= versions.size %>) ▾</summary>
+        <div class="aim-actions-menu__list">
+          <% versions.each_with_index do |version, index| %>
+            <div class="aim-pdf-versions__row">
+              <span class="aim-pdf-versions__line"><%= aim_pdf_version_line(version) %><%= ' (current)' if index.zero? %></span>
+              <%= link_to 'View', aim_pdf_version_invoice_path(invoice.batch_id, version.number), target: '_blank', rel: 'noopener', class: 'btn compact ghost' %>
+              <% unless index.zero? %>
+                <%= button_to 'Restore', aim_restore_pdf_version_invoice_path(invoice.batch_id, version.number, from: from), method: :post,
+                              class: 'btn compact', form: { data: { turbo: false } },
+                              data: { turbo_confirm: "Make version #{version.number} the current PDF? The current one stays as a version.",
+                                      confirm_title: 'Restore a version', confirm_label: 'Restore' } %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+    <span class="aim-pdf-toolbar__group aim-pdf-toolbar__finish">
+      <% if reread %>
+        <label class="aim-pdf-toolbar__reread"><input type="checkbox" data-aim-pdf-editor-target="reread"> Read it again with the AI</label>
+      <% end %>
+      <button type="button" class="btn compact" data-action="aim-pdf-editor#cancel">Cancel</button>
+      <%= form_with url: aim_edit_pdf_invoice_path(invoice.batch_id, from: from), method: :patch, multipart: true,
+                    class: 'aim-pdf-toolbar__apply', data: { turbo: false, aim_pdf_editor_target: 'form' } do %>
+        <%= hidden_field_tag :pages, '', id: nil, data: { aim_pdf_editor_target: 'pages' } %>
+        <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
+        <input type="file" name="inserts[]" multiple hidden data-aim-pdf-editor-target="inserts">
+        <button type="submit" class="btn approve compact" data-action="aim-pdf-editor#apply">Apply changes</button>
+      <% end %>
+    </span>
+  </div>
+  <p class="aim-pdf-workspace__line">
+    <span class="aim-pdf-zoom" role="group" aria-label="Zoom">
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomOut" aria-label="Zoom out">−</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitPage">Fit page</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitWidth">Fit width</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomIn" aria-label="Zoom in">+</button>
+      <span data-aim-pdf-editor-target="zoomLabel"></span>
+    </span>
+    <strong data-aim-pdf-editor-target="pageLabel"></strong>
+    <span data-aim-pdf-editor-target="hint"></span>
+    <span data-aim-pdf-editor-target="status"></span>
+  </p>
+  <div class="aim-pdf-workspace__body">
+    <div class="aim-pdf-strip" data-aim-pdf-editor-target="strip" aria-label="Pages: click to look, drag to reorder"></div>
+    <div class="aim-pdf-stage">
+      <%# The selected text box (#182): size, bold, colour, background, border. %>
+      <div class="aim-pdf-textbar" hidden data-aim-pdf-editor-target="textBar">
+        <strong>Text box</strong>
+        <label>Size <%= select_tag :box_size, options_for_select([8, 9, 10, 11, 12, 14, 16, 18, 24, 36], 12), id: nil,
+                                   data: { aim_pdf_editor_target: 'boxSize', action: 'change->aim-pdf-editor#boxStyle' } %></label>
+        <label><input type="checkbox" data-aim-pdf-editor-target="boxBold" data-action="change->aim-pdf-editor#boxStyle"> Bold</label>
+        <label>Colour <%= select_tag :box_color, options_for_select([%w[Black black], %w[Red red], %w[Blue blue]]), id: nil,
+                                     data: { aim_pdf_editor_target: 'boxColor', action: 'change->aim-pdf-editor#boxStyle' } %></label>
+        <label>Background <%= select_tag :box_bg, options_for_select([%w[None none], %w[White white], ['Yellow highlight', 'yellow']]), id: nil,
+                                         data: { aim_pdf_editor_target: 'boxBg', action: 'change->aim-pdf-editor#boxStyle' } %></label>
+        <label><input type="checkbox" data-aim-pdf-editor-target="boxBorder" data-action="change->aim-pdf-editor#boxStyle"> Border</label>
+        <button type="button" class="btn deny compact" data-action="aim-pdf-editor#boxDelete">Delete box</button>
+      </div>
+      <div class="aim-pdf-stage__page">
+        <canvas data-aim-pdf-editor-target="stage"
+                data-action="pointerdown->aim-pdf-editor#pointerDown pointermove->aim-pdf-editor#pointerMove pointerup->aim-pdf-editor#pointerUp pointercancel->aim-pdf-editor#pointerUp"></canvas>
+        <div class="aim-pdf-boxes" data-aim-pdf-editor-target="boxLayer" data-action="pointerdown->aim-pdf-editor#layerDown"></div>
+      </div>
+    </div>
+  </div>
+</div>

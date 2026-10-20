@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
   before_action :require_reports_access
 
@@ -35,12 +34,9 @@ class ReportsController < ApplicationController
       return
     end
 
-    # Check if this is a scheduled report
     if params[:schedule] == '1'
-      # Create scheduled report
       create_scheduled_report(employee_id, form_type, format_param, status)
     else
-      # Generate one-time report
       generate_one_time_report(employee_id, form_type, format_param, status)
     end
   end
@@ -78,7 +74,6 @@ class ReportsController < ApplicationController
     form_type = params[:form_type]
 
     begin
-      # Get the model class
       template = Forms::Template.all.find { |t| t.class_name.tableize == form_type }
 
       if template.nil?
@@ -100,7 +95,6 @@ class ReportsController < ApplicationController
           fallback_key.to_s.titleize
       }
 
-      # Check if model has STATUS_MAP constant
       if model_class.const_defined?(:STATUS_MAP)
         status_map = model_class::STATUS_MAP
 
@@ -113,7 +107,6 @@ class ReportsController < ApplicationController
         end.sort_by { |opt| opt[:value].to_i }
 
         render json: { status_options: options }
-      # Check if model uses Rails enum for status
       elsif model_class.defined_enums.key?('status')
         status_enum = model_class.defined_enums['status']
 

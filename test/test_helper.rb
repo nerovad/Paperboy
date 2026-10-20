@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 ENV['RAILS_ENV'] ||= 'test'
+# The read-only SQL Dashboards login in .env has no user in the per-worker test
+# databases. With it set, SqlDashboards' connection classes open their own pool,
+# fixtures begin a transaction on every writing pool, and nearly every test
+# fails. Blank it before boot (dotenv leaves a set variable alone); the
+# feature's tests stand in for the login with SqlDashboards::TestAccess.
+ENV['SQL_DASHBOARDS_USERNAME'] = ''
 require_relative '../config/environment'
 
 # A _CI database is emptied and loaded only by `bin/rails ci:reset_database`.
@@ -17,6 +23,7 @@ require_relative 'support/isolated_dsl_catalog'
 require_relative 'support/dam/fake_catalog'
 require_relative 'support/dam/resource_space_bundle'
 require_relative 'support/dam/controller_sign_in'
+require_relative 'support/sql_dashboards/test_access'
 
 # Existing tests use callable objects as stubbed return values (for example,
 # service doubles exposing #call). minitest-mock treats every callable value as
@@ -44,7 +51,6 @@ module ActiveSupport
 
     class_attribute :parallel_database_run_started, default: false
 
-    # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors, parallelize_databases: false)
 
     parallelize_before_fork do

@@ -219,6 +219,199 @@
   font-size: 0.85rem;
 }
 
+// The review page's notices as chips in its header (aim_notices_controller,
+// #160): a chip drops its panel down over the page, so the PDF and the fields
+// keep their height.
+.aim-review-header {
+  position: relative;
+}
+
+.aim-notice-chip {
+  align-items: center;
+  background: $error-bg;
+  border: 1px solid $error-border;
+  border-radius: 999px;
+  color: $danger-deep;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 6px;
+  letter-spacing: 0.3px;
+  padding: 3px 10px 3px 4px;
+  text-transform: uppercase;
+
+  &.is-info {
+    background: $surface-subtle;
+    border-color: $neutral-border-subtle;
+    color: $brand-navy;
+
+    .aim-notice-chip__mark {
+      background: $brand-navy;
+    }
+  }
+
+  &[aria-expanded="true"] {
+    box-shadow: 0 0 0 2px currentcolor;
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+.aim-notice-chip__mark {
+  align-items: center;
+  background: $red-alert-border;
+  border-radius: 50%;
+  color: $surface-base;
+  display: inline-flex;
+  font-size: 0.72rem;
+  height: 18px;
+  justify-content: center;
+  width: 18px;
+}
+
+.aim-notice-chip__caret::before {
+  content: "\25BC";
+  font-size: 0.6rem;
+}
+
+.aim-notice-chip[aria-expanded="true"] .aim-notice-chip__caret::before {
+  content: "\25B2";
+}
+
+.aim-notice-tray {
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+}
+
+.aim-notice-panel {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  margin-bottom: 0;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+// A notice folds to its title (aim_banner_controller, #160) and starts
+// folded: the title is the toggle, with a caret and, folded, a small
+// "Expand"; folded, only the title and any buttons remain.
+.aim-readonly-banner .aim-readonly-banner__toggle,
+.aim-ticket .aim-readonly-banner__toggle {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+}
+
+// Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
+.aim-readonly-banner__caret::before {
+  content: "\25BC";
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.aim-readonly-banner__hint {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.aim-readonly-banner.is-folded {
+  align-items: center;
+  padding-bottom: 8px;
+  padding-top: 8px;
+
+  p,
+  table {
+    display: none;
+  }
+
+  // Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
+.aim-readonly-banner__caret::before {
+    content: "\25B6";
+  }
+
+  .aim-readonly-banner__hint {
+    display: inline;
+  }
+}
+
+// A possible duplicate beside its original (#160): the text and the two
+// invoices' fields, differences marked, then the answers at the right.
+.aim-duplicate-banner__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aim-duplicate-compare {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 8px;
+
+  th,
+  td {
+    padding: 2px 14px 2px 0;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  tbody th {
+    color: $text-muted;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  td {
+    color: $text-color;
+  }
+
+  tr.is-different td {
+    background: $warning-bg;
+    font-weight: 600;
+  }
+}
+
+// A banner's own answers (the duplicate decision, #160), at its right.
+.aim-readonly-banner__actions {
+  align-self: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .aim-empty-state {
   color: $text-muted;
   padding: 42px;
@@ -600,17 +793,44 @@
   gap: 10px;
 }
 
-/* Wrapping is expected at narrow widths: rows stay right-aligned and each
-   button keeps its own width rather than stretching to fill the row. */
+/* One row (#182): More on the left, Save Changes and the main action on the
+   right. Wrapping is expected at narrow widths; each button keeps its width. */
 .aim-review-action-strip {
   column-gap: 6px;
   justify-content: flex-end;
   row-gap: 8px;
+  width: 100%;
+}
+
+.aim-review-more {
+  margin-right: auto;
+}
+
+.aim-review-action-strip__main {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.aim-review-action-strip .btn[hidden] {
+  display: none;
+}
+
+.aim-review-more .aim-actions-menu__list {
+  left: 0;
+  right: auto;
 }
 
 .aim-review-action-strip .btn {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+// An amount the form will not send (aim_money_controller, #166).
+.aim-metadata-form input.is-invalid {
+  border-color: $danger;
+  box-shadow: 0 0 0 2px rgba($danger, 0.2);
 }
 
 .aim-ticket {
@@ -632,6 +852,38 @@
   font-size: 0.82rem;
   margin: 0;
   white-space: pre-wrap;
+}
+
+// Folded like the page's notices (aim_banner_controller, #160).
+.aim-ticket.is-folded {
+  padding-bottom: 8px;
+  padding-top: 8px;
+
+  h3 {
+    margin: 0;
+  }
+
+  pre {
+    display: none;
+  }
+
+  // Clicked, the title shows no outline; reached by keyboard, it still does.
+.aim-readonly-banner__toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// The round icon folds and opens the notice too.
+.aim-readonly-banner__mark[data-action] {
+  cursor: pointer;
+}
+
+.aim-readonly-banner__caret::before {
+    content: "\25B6";
+  }
+
+  .aim-readonly-banner__hint {
+    display: inline;
+  }
 }
 
 .aim-split-summary {
@@ -825,6 +1077,382 @@
   text-transform: none;
 }
 
+// Edit PDF (#181), inside the Document Preview: a page strip, the chosen
+// page big, one toolbar.
+.aim-document-panel .aim-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.aim-document-view,
+.aim-pdf-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aim-document-view[hidden],
+.aim-pdf-workspace[hidden],
+.aim-pdf-textbar[hidden],
+.aim-document-panel .aim-panel-header .btn[hidden] {
+  display: none;
+}
+
+.aim-pdf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid $neutral-border-subtle;
+  background: $surface-base;
+}
+
+.aim-pdf-toolbar__group,
+.aim-pdf-toolbar__swap,
+.aim-pdf-toolbar__apply {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.aim-pdf-versions .aim-actions-menu__list {
+  left: 0;
+  right: auto;
+  min-width: 34rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.aim-pdf-versions__row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.aim-pdf-versions__line {
+  flex: 1;
+}
+
+.aim-pdf-versions__row form {
+  margin: 0;
+}
+
+.aim-pdf-toolbar__finish {
+  margin-left: auto;
+}
+
+.aim-pdf-toolbar__reread {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.aim-pdf-workspace__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.aim-pdf-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.aim-pdf-workspace__line {
+  align-items: center;
+}
+
+.aim-pdf-workspace__body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 136px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.aim-pdf-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid $neutral-border-subtle;
+  background: $surface-base;
+}
+
+.aim-pdf-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: $radius-6;
+  background: none;
+  font-size: 0.72rem;
+  color: $text-muted;
+  cursor: grab;
+}
+
+.aim-pdf-thumb.is-current {
+  border-color: $text-strong;
+}
+
+.aim-pdf-thumb.is-removed canvas {
+  opacity: 0.25;
+}
+
+.aim-pdf-thumb canvas {
+  max-width: 100%;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+}
+
+.aim-pdf-thumb span {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aim-pdf-stage {
+  overflow: auto;
+  padding: 12px;
+}
+
+.aim-pdf-stage canvas {
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
+}
+
+.aim-pdf-stage canvas.is-marking {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.aim-pdf-textbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.aim-pdf-textbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+// The big page with its text boxes over it (#182).
+.aim-pdf-stage__page {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.aim-pdf-stage__page canvas {
+  margin: 0;
+}
+
+.aim-pdf-boxes {
+  position: absolute;
+  pointer-events: none;
+}
+
+.aim-pdf-boxes[data-mode="text"] {
+  cursor: text;
+  pointer-events: auto;
+}
+
+.aim-pdf-box {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: auto;
+  font-family: Helvetica, Arial, sans-serif;
+  line-height: 1.2;
+}
+
+.aim-pdf-boxes[data-mode="crop"] .aim-pdf-box {
+  pointer-events: none;
+}
+
+.aim-pdf-box:hover,
+.aim-pdf-box.is-selected {
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.aim-pdf-box__text {
+  min-height: 1.2em;
+  padding: 2px;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.aim-pdf-box__bar {
+  position: absolute;
+  top: -12px;
+  left: -1px;
+  right: -1px;
+  height: 10px;
+  border-radius: 3px 3px 0 0;
+  background: #2563eb;
+  cursor: move;
+  opacity: 0;
+}
+
+.aim-pdf-box__grip {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #2563eb;
+  cursor: nwse-resize;
+  opacity: 0;
+}
+
+.aim-pdf-box:hover .aim-pdf-box__bar,
+.aim-pdf-box:hover .aim-pdf-box__grip,
+.aim-pdf-box.is-selected .aim-pdf-box__bar,
+.aim-pdf-box.is-selected .aim-pdf-box__grip {
+  opacity: 1;
+}
+
+// Find an invoice (#180), on the dashboards and its results pages.
+.aim-find {
+  margin-bottom: 1rem;
+}
+
+.aim-find__quick {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 44rem;
+}
+
+.aim-find__quick input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.aim-find__more summary {
+  cursor: pointer;
+  margin-top: 0.4rem;
+  color: $text-muted;
+  font-size: 0.9rem;
+}
+
+.aim-archive__form .aim-find__flag {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+// Above a finished list (#169): the recent window, and Search older invoices.
+.aim-archive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.aim-archive__window,
+.aim-archive__window form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.aim-archive__window p {
+  margin: 0;
+}
+
+.aim-archive__problem {
+  margin: 0;
+  color: $danger;
+}
+
+.aim-archive__search summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: $text-strong;
+}
+
+.aim-archive__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.aim-archive__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.aim-archive__form input[type="search"],
+.aim-archive__form input[type="text"] {
+  width: 10rem;
+}
+
+.aim-archive__form select {
+  width: 13rem;
+}
+
+.aim-archive__dates {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.aim-archive__dates legend {
+  float: left;
+  margin-right: 0.25rem;
+  padding: 0;
+}
+
+.aim-archive__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// A row's own one-click button beside View (Acknowledge, #169).
+.aim-queue-table td.action-buttons {
+  white-space: nowrap;
+}
+
+.aim-row-form {
+  display: inline-block;
+  margin: 0 0 0 0.35rem;
+}
+
 // Search box above a queue.
 .aim-queue-search {
   max-width: 36rem;
@@ -974,6 +1602,12 @@
   margin-top: 0.5rem;
 }
 
+// In a notice's buttons at its right (#160), level with them.
+.aim-readonly-banner__actions .aim-restore-form {
+  flex-wrap: nowrap;
+  margin-top: 0;
+}
+
 // Users & Queues: the Add a person picker's dropdown floats over the list
 // below it, so its panel neither clips it nor paints under the next panel.
 .aim-admin-add-panel {
@@ -1109,6 +1743,7 @@
   }
 
   > a,
+  > button,
   form button {
     background: none;
     border: 0;
@@ -1962,6 +2597,11 @@ ul.aim-agency-group-columns {
   border: 1px solid $neutral-border-subtle;
   border-left: 5px solid $brand-navy;
   color: $text-color;
+
+  // An information notice's title is navy, not the warnings' red (#160).
+  strong {
+    color: $brand-navy;
+  }
 
   .aim-readonly-banner__mark {
     background: $brand-navy;

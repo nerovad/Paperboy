@@ -140,9 +140,19 @@ Rails.application.routes.draw do
     get 'dashboard', to: 'dashboard#index', as: :dashboard
     get 'help', to: 'help#show', as: :help
 
+    # Edit PDF (#181, #182): Apply, Swap, the editor's sources, and versions.
+    scope 'invoices/:id', constraints: { id: %r{[^/]+} } do
+      get 'edit_pdf', to: 'pdf_edits#show', as: :edit_pdf_invoice
+      patch 'edit_pdf', to: 'pdf_edits#update'
+      post 'replace_pdf', to: 'pdf_edits#replace', as: :replace_pdf_invoice
+      get 'pdf_source', to: 'pdf_edits#source', as: :pdf_source_invoice
+      get 'pdf_versions/:number', to: 'pdf_edits#version', as: :pdf_version_invoice, constraints: { number: /\d+/ }
+      post 'pdf_versions/:number/restore', to: 'pdf_edits#restore', as: :restore_pdf_version_invoice, constraints: { number: /\d+/ }
+    end
     resources :invoices, only: %i[index show update], constraints: { id: %r{[^/]+} } do
       collection do
         patch :reassign_many
+        patch :acknowledge
       end
       member do
         get :pdf
@@ -185,6 +195,8 @@ Rails.application.routes.draw do
       resources :roles, only: %i[create destroy], controller: 'agency_group_roles'
     end
     resources :uploads, only: %i[new create]
+    get 'find', to: 'find#index', as: :find
+    get 'fiscal/find', to: 'find#fiscal', as: :fiscal_find
     get 'fiscal', to: 'fiscal#index', as: :fiscal
     get 'fiscal/dashboard', to: 'fiscal_dashboard#index', as: :fiscal_dashboard
     resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
@@ -501,7 +513,8 @@ Rails.application.routes.draw do
   get '/auth/failure', to: 'sessions#failure'
   post '/auth/entra_id', to: 'sessions#setup', as: :auth_setup
 
-  # Legacy login (keep for admin impersonation)
+  # Development and test only. create_legacy returns 403 elsewhere.
+  # Admin impersonation is Admin::ImpersonationsController.
   post '/login', to: 'sessions#create_legacy'
   delete '/logout', to: 'sessions#destroy'
 
@@ -679,6 +692,17 @@ Rails.application.routes.draw do
   # Dashboards
   # ============================================================================
   get '/dashboards', to: 'dashboards#index', as: :dashboards
+
+  # SQL Dashboards: saved SQL drawn as charts (#129)
+  namespace :sql_dashboards do
+    root 'dashboards#index'
+    resources :dashboards do
+      resources :cards, only: %i[show create update destroy]
+    end
+    resources :queries, except: :show do
+      match :preview, on: :collection, via: %i[post patch]
+    end
+  end
 
   # ============================================================================
   # Form Templates & Builder

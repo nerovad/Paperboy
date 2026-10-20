@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/models/concerns/trackable_status.rb
 module TrackableStatus
   extend ActiveSupport::Concern
 
@@ -486,7 +485,7 @@ module TrackableStatus
     Rails.logger.warn("inbox notification dispatch failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
-  # --- Form subscriptions (Forms::Subscription) ---
+  # Form subscriptions (Forms::Subscription)
 
   # Somebody filed this form. Subscribers are a different audience from the
   # approver the inbox notification goes to: they follow a form type rather
@@ -521,7 +520,7 @@ module TrackableStatus
     Rails.logger.warn("subscription #{event} dispatch failed for #{self.class.name} ##{id}: #{e.message}")
   end
 
-  # --- Configurable workflow emails (Forms::TemplateEmailStep) ---
+  # Configurable workflow emails (Forms::TemplateEmailStep)
 
   # Fire any "On submission" email rules right after the record is created.
   def deliver_email_steps_on_submit

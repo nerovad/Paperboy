@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/forms/audit_export/table.rb
-
 require 'csv'
 
 module Forms

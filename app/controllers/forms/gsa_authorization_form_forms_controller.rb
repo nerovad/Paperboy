@@ -4,7 +4,6 @@
 # the established action indentation without a second formatting pass.
 # rubocop:disable-next Style/ClassAndModuleChildren
 class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
-  # Generated controller for GsaAuthorizationFormForm form
   before_action :set_gsa_authorization_form_form, only: %i[show edit update pdf approve deny update_status]
 
   def new
@@ -15,16 +14,13 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
 
     redirect_to login_path, alert: 'Please sign in to start a submission.' and return unless @employee
 
-    # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
 
-    # --- Organization chain (same pattern you use now) ---
     unit        = Unit.find_by(unit_id: @employee['unit'])
     department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
     division    = department ? Division.find_by(division_id: department['division_id']) : nil
     agency      = division ? Agency.find_by(agency_id: division['agency_id']) : nil
 
-    # --- Prefill values (everything prefilled exactly like you do now) ---
     @prefill_data = {
       employee_id: @employee['id'],
       name: [@employee['first_name'], @employee['last_name']].compact.join(' '),
@@ -36,7 +32,6 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
       unit: unit&.unit_id
     }
 
-    # --- Select options (IDs/order match gsabss_selects_controller.js expectations) ---
     @agency_options = Agency.order(:long_name).pluck(:long_name, :agency_id)
 
     @division_options = if agency
@@ -51,7 +46,6 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
                             []
                           end
 
-    # Unit label = "unit_id - long_name", value = unit_id (your current pattern)
     @unit_options = if department
                       Unit.where(department_id: department.department_id)
                           .order(:unit_id)
@@ -73,8 +67,6 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
       redirect_to form_success_path, allow_other_host: false, status: :see_other
       # ROUTING_BLOCK_END
     else
-      # Rebuild options on failure (same as in new)
-      # (We intentionally repeat the logic to keep this template self-contained.)
       emp = employee_id.present? ? Employee.find_by(employee_id: employee_id) : nil
       unit        = emp ? Unit.find_by(unit_id: emp['unit']) : nil
       department  = unit ? Department.find_by(department_id: unit['department_id']) : nil
@@ -107,12 +99,9 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
     end
   end
 
-  def show
-    # Display the submission details
-  end
+  def show; end
 
   def edit
-    # Edit form - rebuild options same as new
     setup_form_options
   end
 
@@ -202,12 +191,10 @@ class Forms::GsaAuthorizationFormFormsController < Forms::BaseController
                       []
                     end
 
-    # Load user groups for field restrictions
     @current_user_groups = current_user_group_ids
   end
 
   def gsa_authorization_form_form_params
-    # Only the baseline fields you asked for
     params.require(:gsa_authorization_form_form).permit(
       :name, :phone, :email, :agency, :division, :department, :unit
     )

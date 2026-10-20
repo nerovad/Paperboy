@@ -1,0 +1,70 @@
+<%# Above a finished list (#169): which window it shows, and Search older
+    invoices -- every finished invoice, searched on the server. Locals: url
+    (the list's path, no params), field (:queue or :status), current (its
+    value), statuses ([[label, value], ...]), shown (rows listed) and keep
+    (params to carry, e.g. the Fiscal view). %>
+<% archive = @archive %>
+<% keep = local_assigns.fetch(:keep, {}) %>
+<% units = Aim::Units.new %>
+<% recent = "#{url}?#{{ field => current, **keep }.to_query}" %>
+<section class="aim-archive" aria-label="Finished invoices">
+  <div class="aim-archive__window">
+    <% if @acknowledging %>
+      <p>Waiting to be acknowledged, however old. Acknowledge what you have seen and it leaves this list for everyone;
+        Search older invoices still finds it.</p>
+    <% elsif archive.searching? %>
+      <p>Search: <strong><%= pluralize(shown, 'invoice') %></strong> <%= archive.describe %>.</p>
+      <%= link_to Aim::Invoice::ACKNOWLEDGED_QUEUES.include?(current) ? 'Back to the list' : 'Back to recent', recent, class: 'btn ghost compact' %>
+    <% else %>
+      <%= form_with url: url, method: :get, data: { turbo: false, controller: 'auto-submit' } do %>
+        <%= hidden_field_tag field, current, id: nil %>
+        <% keep.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+        <label>
+          Showing what finished
+          <%= select_tag :days, options_for_select(Aim::ArchiveSearch::WINDOWS.map { |d| ["in the last #{d} days", d] }, archive.days),
+                         id: nil, data: { action: 'change->auto-submit#submit' } %>
+        </label>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if archive.problems.any? %>
+    <p class="aim-archive__problem" role="alert">Left out of the search: <%= archive.problems.to_sentence %>.</p>
+  <% end %>
+  <% if archive.capped? %>
+    <p class="aim-archive__problem" role="status">
+      Showing the newest <%= Aim::ArchiveSearch::CAP %>. There are more: narrow your search to see the rest.
+    </p>
+  <% end %>
+
+  <details class="aim-archive__search" <%= 'open' if archive.searching? %>>
+    <summary>Search older invoices</summary>
+    <%= form_with url: url, method: :get, class: 'aim-archive__form', data: { turbo: false } do %>
+      <% keep.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+      <% if statuses.size > 1 %>
+        <label>Status <%= select_tag field, options_for_select(statuses, current), id: nil %></label>
+      <% else %>
+        <%= hidden_field_tag field, current, id: nil %>
+      <% end %>
+      <label>Vendor <%= search_field_tag :vendor, params[:vendor], id: nil, autocomplete: 'off' %></label>
+      <label>Invoice # or AIM # <%= search_field_tag :invoice_number, params[:invoice_number], id: nil, autocomplete: 'off' %></label>
+      <label>Amount <%= text_field_tag :amount, params[:amount], id: nil, inputmode: 'decimal', autocomplete: 'off', placeholder: '1,234.50' %></label>
+      <label>Budget unit
+        <%= select_tag :budget_unit, grouped_options_for_select(units.grouped_options, params[:budget_unit]), include_blank: 'Any', id: nil %>
+      </label>
+      <label>Agency
+        <%= select_tag :agency, options_for_select(units.agencies.map { |a| [units.agency_label(a), a] }, params[:agency]), include_blank: 'Any', id: nil %>
+      </label>
+      <fieldset class="aim-archive__dates">
+        <legend>Finished between</legend>
+        <%= date_field_tag :from, params[:from], id: nil, aria: { label: 'Finished from' } %>
+        <span aria-hidden="true">and</span>
+        <%= date_field_tag :to, params[:to], id: nil, aria: { label: 'Finished to' } %>
+      </fieldset>
+      <div class="aim-archive__actions">
+        <button type="submit" class="btn approve compact">Search</button>
+        <%= link_to 'Clear', recent, class: 'btn ghost compact' %>
+      </div>
+    <% end %>
+  </details>
+</section>

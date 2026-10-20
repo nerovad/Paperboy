@@ -1,0 +1,7 @@
+<%# Under the box on a results page: what was found, or why not. %>
+<% if finder.problems.any? %>
+  <p class="aim-archive__problem" role="alert">Left out of the search: <%= finder.problems.to_sentence %>.</p>
+<% end %>
+<% if finder.capped? %>
+  <p class="aim-archive__problem" role="status">Showing the newest <%= Aim::InvoiceFinder::CAP %>. There are more: narrow your search to see the rest.</p>
+<% end %>

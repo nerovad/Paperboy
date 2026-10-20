@@ -7,6 +7,10 @@ require 'tempfile'
 require_relative 'paths'
 
 module P2m
+  # Lists print-and-insert jobs mailed between START_DATE and END_DATE and
+  # moves their files into Processed. move reads the JSON written by the last
+  # search, so a job that is not in that file cannot be moved until the list
+  # is loaded again.
   class PostTestingArchive
     START_DATE = Date.new(2026, 7, 1)
     END_DATE = Date.new(2026, 9, 30)
@@ -132,6 +136,8 @@ module P2m
         :moved
       end
 
+      # Matching bytes are deleted from the historical tree. Different bytes
+      # stop the rest of this job's move; files already moved stay moved.
       def conflict_or_remove(source, destination)
         return :conflict unless FileUtils.compare_file(source, destination)
 

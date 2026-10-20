@@ -13,10 +13,6 @@ module Aim
                            document_type: document_type, actor: 'intake', **attributes)
     end
 
-    # ---------------------------------------------------------------
-    # The table itself
-    # ---------------------------------------------------------------
-
     test 'every state declares where it can go' do
       assert_equal Aim::Invoice::STATES.sort, Aim::Invoice::TRANSITIONS.keys.sort
     end
@@ -56,10 +52,6 @@ module Aim
         assert_equal 1, queues.size, "#{state} is in #{queues.inspect}"
       end
     end
-
-    # ---------------------------------------------------------------
-    # Every allowed move, and every refused one
-    # ---------------------------------------------------------------
 
     test 'every move the pipeline makes is allowed' do
       Aim::Invoice::TRANSITIONS.each do |from, destinations|
@@ -107,10 +99,6 @@ module Aim
       assert_match(/nowhere, it is finished/, error.message)
     end
 
-    # ---------------------------------------------------------------
-    # The rules hold however the move is attempted
-    # ---------------------------------------------------------------
-
     test 'a bare update cannot make a move transition_to! would refuse' do
       invoice = create_invoice(state: 'approved')
 
@@ -155,10 +143,6 @@ module Aim
       assert_not invoice.update(state: 'ready_for_approval')
       assert_includes invoice.errors[:actor], "can't be blank"
     end
-
-    # ---------------------------------------------------------------
-    # Commands: what the screens ask the worker for
-    # ---------------------------------------------------------------
 
     test 'requesting extraction sets received and the extract command in one save' do
       invoice = create_invoice(state: 'needs_review', review_reason: 'missing_fields', review_note: 'no total',
@@ -212,10 +196,6 @@ module Aim
       assert_not create_invoice(state: 'needs_review').update(review_reason: 'bored')
     end
 
-    # ---------------------------------------------------------------
-    # An invoice nobody has typed does not reach a user
-    # ---------------------------------------------------------------
-
     test 'an untyped invoice cannot reach a user' do
       invoice = create_invoice(state: 'needs_review', document_type: 'Unknown')
 
@@ -253,10 +233,6 @@ module Aim
                       invoice_date: Date.new(2026, 9, 1), invoice_total: 10, budget_unit: '4601')
       assert_predicate invoice, :ready_for_a_user?
     end
-
-    # ---------------------------------------------------------------
-    # Small helpers the screens use
-    # ---------------------------------------------------------------
 
     test 'terminal? knows when an invoice is finished' do
       assert_predicate create_invoice(state: 'exported'), :terminal?

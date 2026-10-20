@@ -7,38 +7,52 @@
 <%# What the invoice's agency group requires before archive (#131): Archive refuses without it. %>
 <% required_missing = @record.missing_for_archive(@group).map { |field| aim_fiscal_field_label(field) } %>
 <div class="aim-page aim-review-page">
-  <header class="aim-page-header">
+  <%# The notices are chips in the header that drop down over the page, as on
+      the review page (#160). %>
+  <% notices = capture do %>
+    <%# A duplicate that went on to Fiscal (#160), beside its original. %>
+    <%= render 'aim/invoices/duplicate_banner' if @invoice.duplicate_of %>
+    <% if @invoice.manual_entry %>
+      <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
+      <div class="aim-readonly-banner aim-notice-panel aim-manual-banner" role="status" id="<%= aim_notice_id('Manual Data Entry Needed') %>" hidden
+           data-aim-notices-target="panel">
+        <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
+        <div>
+          <%= aim_notice_heading('Manual Data Entry Needed', mark: '✎', tone: :info) %>
+          <p>Uploaded straight to Fiscal: type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>. It is billed and filed once they are in.</p>
+        </div>
+      </div>
+    <% end %>
+    <% if status == 'on_hold' && @record.hold_reason.present? %>
+      <div class="aim-readonly-banner aim-notice-panel" role="alert" id="<%= aim_notice_id('On hold') %>" hidden data-aim-notices-target="panel">
+        <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
+        <div><%= aim_notice_heading('On hold', mark: '!') %><p><%= @record.hold_reason %></p></div>
+      </div>
+    <% end %>
+  <% end %>
+  <header class="aim-page-header aim-review-header" data-controller="aim-notices">
     <div class="aim-review-heading">
       <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.vendor_name.presence || @invoice.handle %> · <%= @invoice.invoice_number %></h1>
       <%= aim_fiscal_badge(@record) %>
       <% @record.tag_list.each do |tag| %><span class="badge is-scheduled"><%= tag %></span><% end %>
+      <%= render 'aim/shared/notice_chips' %>
     </div>
+    <div class="aim-notice-tray"><%= notices %></div>
   </header>
 
-  <% if @invoice.manual_entry %>
-    <%# Straight to Fiscal (#131): Fiscal types it in; then it exports. %>
-    <div class="aim-readonly-banner aim-manual-banner" role="status">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">✎</span>
-      <div>
-        <strong>Manual Data Entry Needed</strong>
-        <p>Uploaded straight to Fiscal: type the details in from the PDF and save<%= "; still needed: #{@invoice.missing_for_a_user.to_sentence}" unless @invoice.ready_for_a_user? %>. It is billed and filed once they are in.</p>
-      </div>
-    </div>
-  <% end %>
-
-  <% if status == 'on_hold' && @record.hold_reason.present? %>
-    <div class="aim-readonly-banner" role="alert">
-      <span class="aim-readonly-banner__mark" aria-hidden="true">!</span>
-      <div><strong>On hold</strong><p><%= @record.hold_reason %></p></div>
-    </div>
-  <% end %>
-
   <div class="aim-document-layout">
-    <section class="aim-panel aim-document-panel">
+    <%# Swap or edit the PDF here (#181), until Fiscal archives it. %>
+    <% pdf_editable = Aim::PdfVersions.editable?(@invoice) %>
+    <%= tag.section class: 'aim-panel aim-document-panel',
+                    data: (pdf_editable ? aim_pdf_editor_data(@invoice) : {}) do %>
       <div class="aim-panel-header">
         <h2 class="aim-panel-title">Document</h2>
+        <% if pdf_editable %>
+          <button type="button" class="btn edit compact" data-aim-pdf-editor-target="openButton" data-action="aim-pdf-editor#open">Edit PDF</button>
+        <% end %>
       </div>
+      <div class="aim-document-view" data-aim-pdf-editor-target="viewer">
       <% if @pdf_present %>
         <div class="aim-pdf-shell">
           <iframe class="aim-pdf-frame" src="<%= "#{pdf_aim_fiscal_invoice_path(@invoice.batch_id)}#zoom=page-fit" %>"
@@ -47,7 +61,9 @@
       <% else %>
         <div class="aim-empty-state"><p>The PDF is not in the store.</p></div>
       <% end %>
-    </section>
+      </div>
+      <%= render 'aim/pdf_edits/workspace', invoice: @invoice, from: 'fiscal' if pdf_editable %>
+    <% end %>
 
     <%= turbo_frame_tag 'aim-fiscal-panel', target: '_top', class: 'aim-review-frame' do %>
     <%= form_with url: aim_fiscal_invoice_path(@invoice.batch_id), method: :patch, local: true,
@@ -136,28 +152,29 @@
       <div class="aim-form-actions">
         <div class="aim-action-group aim-review-action-strip">
           <% if read_only %>
-            <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn' %>
+            <%= link_to 'Back to Fiscal', fiscal_return_path, class: 'btn compact' %>
           <% else %>
-            <%= button_tag 'Save', name: 'fiscal_action', value: 'save', class: 'btn secondary',
+            <%# As the review page (#182, #187): the second actions, Save, then the main one. %>
+            <% if status == 'on_hold' %>
+              <%= button_tag 'Release', name: 'fiscal_action', value: 'release', class: 'btn take-back compact' %>
+            <% end %>
+            <% if status == 'ready' %>
+              <%= button_tag 'Back to Fiscal Queue', name: 'fiscal_action', value: 'back_to_review', class: 'btn warning compact' %>
+            <% end %>
+            <% if @record.can_move_to?('on_hold') %>
+              <button type="button" class="btn warning compact" data-action="aim-reason#open"
+                      data-value="hold" data-commit="Hold" data-title="Put on hold">Hold</button>
+            <% end %>
+            <%= button_tag 'Save', name: 'fiscal_action', value: 'save', class: 'btn compact',
                                    data: { turbo_frame: 'aim-fiscal-panel' } %>
             <% if @record.can_move_to?('ready') %>
-              <%= button_tag 'Add to Report Queue', name: 'fiscal_action', value: 'make_ready', class: 'btn approve',
+              <%= button_tag 'Add to Report Queue', name: 'fiscal_action', value: 'make_ready', class: 'btn approve compact',
                                                     data: { turbo_confirm: 'Add this invoice to the Report Queue?',
                                                             confirm_label: 'Add' } %>
             <% end %>
-            <% if status == 'on_hold' %>
-              <%= button_tag 'Release', name: 'fiscal_action', value: 'release', class: 'btn take-back' %>
-            <% end %>
-            <% if status == 'ready' %>
-              <%= button_tag 'Back to Fiscal Queue', name: 'fiscal_action', value: 'back_to_review', class: 'btn warning' %>
-            <% end %>
-            <% if @record.can_move_to?('on_hold') %>
-              <button type="button" class="btn warning" data-action="aim-reason#open"
-                      data-value="hold" data-commit="Hold" data-title="Put on hold">Hold</button>
-            <% end %>
             <% if status == 'exported' %>
               <%# Check and pay doc numbers come back after payment, so Archive is where a gap matters. %>
-              <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve',
+              <%= button_tag 'Archive', name: 'fiscal_action', value: 'archive', class: 'btn approve compact',
                                         disabled: required_missing.any?,
                                         title: ("#{@group.name} needs #{required_missing.to_sentence} before archive" if required_missing.any?),
                                         data: { turbo_confirm: missing.any? ? "There is no #{missing.join(' or ')} yet. Archive it anyway?" : 'Archive this invoice? It is finished after this.',

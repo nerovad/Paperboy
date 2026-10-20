@@ -30,16 +30,12 @@ class FormTemplatesController < ApplicationController
     @form_template.pending_routing_steps = params[:routing_steps] if params[:routing_steps].present?
 
     if @form_template.save
-      # Save routing steps
       save_routing_steps(@form_template)
 
-      # Save copy recipients
       save_copy_recipients(@form_template)
 
-      # Save workflow email steps
       save_email_steps(@form_template)
 
-      # Save the wording of the form's notification emails
       save_form_emails(@form_template)
 
       # Sync statuses (user-configured + auto-generated from routing steps)
@@ -132,16 +128,13 @@ class FormTemplatesController < ApplicationController
         resolve_repeat_groups(created_fields, params[:fields])
       end
 
-      # Run the generator command
       class_name = @form_template.class_name
 
-      # Execute the Rails generator
       generator_output, generator_status = run_rails_command('generate', 'paperboy_form', class_name)
 
       # Run db:migrate
       migrate_output, migrate_status = run_rails_command('db:migrate')
 
-      # Check if generation was successful
       if generator_status.success? && migrate_status.success?
         # Create child tables for any repeating sections before wiring the model
         sync_repeating_section_tables(@form_template)
@@ -152,10 +145,8 @@ class FormTemplatesController < ApplicationController
         # Customize generated controller based on submission routing
         customize_generated_controller(@form_template)
 
-        # Add media download routes if needed
         add_media_download_routes(@form_template)
 
-        # Generate dynamic views based on template configuration
         generate_dynamic_view(class_name)
         generate_dynamic_edit_view(class_name)
 
@@ -223,7 +214,6 @@ class FormTemplatesController < ApplicationController
       # Rebuild workflow email steps when they changed
       rebuild_email_steps(@form_template) if email_steps_changed
 
-      # Save the wording of the form's notification emails
       save_form_emails(@form_template)
 
       # Rebuild field records when fields changed (this is data, not code).
@@ -294,7 +284,6 @@ class FormTemplatesController < ApplicationController
     if File.exist?(sidebar_file)
       sidebar_content = File.read(sidebar_file)
 
-      # Remove the line containing this form's path
       updated_content = sidebar_content.lines.reject do |line|
         line.include?(path_name)
       end.join
@@ -310,7 +299,6 @@ class FormTemplatesController < ApplicationController
     migration_file = Dir.glob(Rails.root.join("db/migrate/*_#{migration_name.underscore}.rb")).first
 
     if migration_file
-      # Write the drop_table migration
       migration_content = <<~RUBY
         class #{migration_name} < ActiveRecord::Migration[7.1]
           def change
@@ -680,7 +668,6 @@ class FormTemplatesController < ApplicationController
       generate_unified_status_enum(form_template, content)
     end
 
-    # Add has_many_attached declarations for media_attachment fields
     media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
       # Add only missing declarations (idempotent on re-runs)
@@ -871,7 +858,6 @@ class FormTemplatesController < ApplicationController
     all_statuses = form_template.statuses.ordered.to_a
     return if all_statuses.empty?
 
-    # Find the initial status
     initial_status = all_statuses.find(&:is_initial) || all_statuses.first
     default_key = initial_status.key
 
@@ -889,15 +875,12 @@ class FormTemplatesController < ApplicationController
     # Remove existing blocks first, then insert the new unified block
     # Remove enum block
     content.gsub!(/^\s*enum :status.*?\n\s*\}(,\s*default:\s*:\w+)?/m, '')
-    # Remove existing STATUS_CATEGORIES
     content.gsub!(/^\s*#[^\n]*status categories[^\n]*\n\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
-    # Remove existing STATUS_LABELS
     content.gsub!(/^\s*#[^\n]*status labels[^\n]*\n\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
     # Also remove standalone constants without comments
     content.gsub!(/^\s*STATUS_CATEGORIES\s*=\s*\{.*?\}\.freeze/m, '')
     content.gsub!(/^\s*STATUS_LABELS\s*=\s*\{.*?\}\.freeze/m, '')
 
-    # Clean up blank lines left behind
     content.gsub!(/\n{3,}/, "\n\n")
 
     # Insert after `include TrackableStatus`
@@ -922,7 +905,6 @@ class FormTemplatesController < ApplicationController
 
     # Only update routing logic when routing actually changed (or on initial create)
     if update_routing && form_template.requires_approval?
-      # Add routing logic to the create action
       routing_logic = generate_approval_routing_logic(form_template)
       # generate_* builds the block with a squiggly heredoc that strips
       # indentation; re-indent every line to 6 spaces so the block sits inside
@@ -952,7 +934,6 @@ class FormTemplatesController < ApplicationController
       end
     end
 
-    # Add media attachment fields to permitted params
     media_fields = form_template.form_fields.where(field_type: 'media_attachment')
     if media_fields.any?
       media_params = media_fields.map { |f| "#{f.field_name}: []" }.join(', ')
@@ -1082,7 +1063,6 @@ class FormTemplatesController < ApplicationController
       # Only add if not already present
       next if content.include?(route_line)
 
-      # Insert into the member block for this resource
       content.sub!(
         /(resources :#{form_template.plural_file_name}[^\n]* do\s*\n\s*member do\n)/,
         "\\1            #{route_line}\n"
@@ -1095,10 +1075,8 @@ class FormTemplatesController < ApplicationController
   def routing_fields_changed?
     return false unless @form_template
 
-    # Check if submission type changed
     return true if @form_template.submission_type != params[:form_template][:submission_type]
 
-    # Check if routing steps changed
     current_steps = @form_template.routing_steps.ordered.map do |step|
       {
         routing_type: step.routing_type,
@@ -1564,7 +1542,6 @@ class FormTemplatesController < ApplicationController
         end
       end
 
-      # Create initial/non-end user statuses first
       initial_statuses.each do |data|
         form_template.statuses.create!(data.merge(position: position))
         position += 1
@@ -1577,7 +1554,6 @@ class FormTemplatesController < ApplicationController
         steps.each_with_index do |step, index|
           step_num = index + 1
 
-          # Create step_N_pending
           form_template.statuses.create!(
             name: step.pending_display_name,
             key: "step_#{step_num}_pending",
@@ -1591,7 +1567,6 @@ class FormTemplatesController < ApplicationController
         end
       end
 
-      # Create terminal user statuses last
       terminal_statuses.each do |data|
         form_template.statuses.create!(data.merge(position: position))
         position += 1
@@ -1600,14 +1575,12 @@ class FormTemplatesController < ApplicationController
       # No user statuses but has routing steps — create a default set
       steps = form_template.routing_steps.ordered.to_a
 
-      # Default initial status
       form_template.statuses.create!(
         name: 'In Progress', key: 'in_progress', category: 'pending',
         position: position, is_initial: true, is_end: false, auto_generated: false
       )
       position += 1
 
-      # Auto-generate step statuses
       steps.each_with_index do |step, index|
         step_num = index + 1
 
@@ -1621,7 +1594,6 @@ class FormTemplatesController < ApplicationController
         position += 1
       end
 
-      # Default terminal statuses
       form_template.statuses.create!(
         name: 'Approved', key: 'approved', category: 'approved',
         position: position, is_initial: false, is_end: true, auto_generated: false
@@ -1726,7 +1698,6 @@ class FormTemplatesController < ApplicationController
       disabled_conditional << field if field_data[:conditional_enabled] == '0'
       disabled_answer << field if field_data[:conditional_answer_enabled] == '0'
 
-      # Store conditional reference if present
       if field_data[:conditional_field_id].present? && field_data[:conditional_values].present?
         conditional_refs << {
           field: field,
@@ -1814,7 +1785,6 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_approval_routing_logic(form_template)
-    # Check if using multi-step routing
     return generate_multi_step_routing_logic(form_template) if form_template.routing_steps.any?
 
     # Legacy single-step routing
@@ -1876,7 +1846,6 @@ class FormTemplatesController < ApplicationController
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)
 
-    # Determine which Stimulus controllers to attach
     controllers = ['form-navigation']
     controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
     controllers_attr = controllers.join(' ')
@@ -1885,7 +1854,6 @@ class FormTemplatesController < ApplicationController
       [n, generate_page_visibility_check(form_template, n)]
     end
 
-    # Build the dynamic view content
     content = <<~HTML
       <!-- Generated by Paperboy Form Builder -->
       <div class="form-header">
@@ -1932,7 +1900,6 @@ class FormTemplatesController < ApplicationController
         content += generate_agency_info_fields
       end
 
-      # Add custom fields
       if fields_for_page.any?
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
 
@@ -1961,7 +1928,6 @@ class FormTemplatesController < ApplicationController
       content += "\n"
     end
 
-    # Add navigation buttons
     content += <<~HTML
           <!-- Navigation Buttons -->
           <div class="navigation-buttons d-flex justify-content-between">
@@ -1990,7 +1956,6 @@ class FormTemplatesController < ApplicationController
     # Extract existing custom field blocks before regenerating
     existing_blocks = extract_existing_field_blocks(view_path)
 
-    # Determine which Stimulus controllers to attach
     controllers = ['form-navigation']
     controllers << 'conditional-fields' if form_template.form_fields.conditional.any? || form_template.form_fields.any?(&:conditional_answer?)
     controllers_attr = controllers.join(' ')
@@ -1999,7 +1964,6 @@ class FormTemplatesController < ApplicationController
       [n, generate_page_visibility_check(form_template, n)]
     end
 
-    # Build the dynamic edit view content
     content = <<~HTML
       <!-- Generated by Paperboy Form Builder -->
       <div class="form-header">
@@ -2046,7 +2010,6 @@ class FormTemplatesController < ApplicationController
         content += generate_agency_info_fields_for_edit(form_template)
       end
 
-      # Add custom fields
       if fields_for_page.any?
         content += "        <div class=\"form-row d-flex flex-wrap\">\n"
 
@@ -2075,7 +2038,6 @@ class FormTemplatesController < ApplicationController
       content += "\n"
     end
 
-    # Add navigation buttons
     content += <<~HTML
           <!-- Navigation Buttons -->
           <div class="navigation-buttons d-flex justify-content-between">
@@ -2198,7 +2160,6 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_field_html_for_edit(field, form_template)
-    # Generate restriction check and attributes
     if field.restricted?
       editable_check = generate_editable_check(field, form_template)
       required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ''
@@ -2233,7 +2194,6 @@ class FormTemplatesController < ApplicationController
     # Generate conditional answer data attributes for the form-group div
     conditional_answer_attrs = build_conditional_answer_attrs(field)
 
-    # Build attributes hash string
     attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
@@ -2464,7 +2424,6 @@ class FormTemplatesController < ApplicationController
           <%= form.label :#{field.field_name}, "#{field.label}" %>
       HTML
       html += "            <small class=\"restriction-notice\">#{restriction_label}</small>\n" if restriction_label
-      # Show existing attachments on edit
       html += "            <% if @#{form_template.file_name}.#{field.field_name}.attached? %>\n"
       html += "              <div class=\"existing-attachments\">\n"
       html += "                <small class=\"form-text text-muted\">Currently attached:</small>\n"
@@ -2786,7 +2745,6 @@ class FormTemplatesController < ApplicationController
   end
 
   def generate_field_html(field, form_template)
-    # Generate restriction check and attributes
     if field.restricted?
       editable_check = generate_editable_check(field, form_template)
       required_logic = field.required ? "required: field_#{field.id}_editable && #{field.required}" : ''
@@ -2799,7 +2757,6 @@ class FormTemplatesController < ApplicationController
       restriction_label = nil
     end
 
-    # Generate conditional attributes
     conditional_wrapper_start = ''
     conditional_wrapper_end = ''
     if field.conditional?
@@ -2820,7 +2777,6 @@ class FormTemplatesController < ApplicationController
     # Generate conditional answer data attributes for the form-group div
     conditional_answer_attrs = build_conditional_answer_attrs(field)
 
-    # Build attributes hash string
     attrs = ["class: \"form-control#{' field-readonly' if is_read_only}\""]
     attrs << required_logic if required_logic.present?
     attrs << disabled_attr if disabled_attr.present?
