@@ -15,6 +15,10 @@
 /storage/solid_*.sqlite3-*
 # Default DAM roots and watch folders (PAPERBOY_DAM_ROOTS)
 /storage/dam/
+# Legacy pre-split blobs. bin/rails storage:adopt_legacy copies the ones
+# this database references into the environment root above. .keep stays tracked.
+/storage/*
+!/storage/.keep
 
 # .env is a copy of LockBox/Paperboy.env (bin/env-pull); .env.local holds this
 # machine's own overrides; .env.previous is the copy env-pull replaced.
