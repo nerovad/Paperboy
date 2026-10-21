@@ -90,6 +90,6 @@ module Aim
 
     def fraction(value) = value.to_f.clamp(0.0, 1.0)
 
-    def number(value) = PdfWriter.number(value)
+    def number(value) = Paperboy::Pdf::Writer.number(value)
   end
 end

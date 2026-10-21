@@ -71,5 +71,41 @@ module Aim
         assert File.exist?(Aim::ApprovalStamp.path(@invoice))
       end
     end
+
+    test "the group's layout stamps it; the record names the layout and any safety net it needed (#221)" do
+      in_store do
+        group = Aim::AgencyGroup.for_agency!('GSA')
+        @invoice.update!(agency: 'GSA', budget_unit: '4641')
+        layout = Aim::StampLayout.create!(agency_group: group, created_by: 'fiscal@example.com', area_list: [
+                                            { 'rows' => ['Approved by {approver}'] },
+                                            { 'rows' => ['Budget Unit # {budget_unit}'], 'anchor' => 'top_left',
+                                              'x' => -400, 'y' => 20, 'pages' => 'first' }
+                                          ])
+        write_source(pages: 2)
+        record = Aim::FiscalRecord.create!(invoice: @invoice)
+
+        Aim::ApprovalStamp.stamp!(record)
+
+        record.reload
+        assert_equal [layout.id, 'page 1: moved back inside the page'], [record.stamp_layout_id, record.stamp_warnings]
+        first, second = PDF::Reader.new(Aim::ApprovalStamp.path(@invoice)).pages.map(&:text)
+        assert_includes first, 'Approved by nobody@example.com'
+        assert_includes first, 'Budget Unit # 4641'
+        assert_includes second, 'Approved by nobody@example.com'
+        assert_not_includes second, 'Budget Unit #', 'that area is on the first page only'
+      end
+    end
+
+    test 'a preview stamps nothing on disk' do
+      in_store do
+        write_source(pages: 1)
+        layout = Aim::StampLayout.new(created_by: 'x', area_list: [{ 'rows' => ['PREVIEW {approver}'] }])
+
+        result = Aim::ApprovalStamp.preview(@invoice, layout, values: { 'approver' => 'Martinez, Mark' })
+
+        assert_includes PDF::Reader.new(StringIO.new(result.bytes)).pages.first.text, 'PREVIEW Martinez, Mark'
+        assert_not File.exist?(Aim::ApprovalStamp.path(@invoice))
+      end
+    end
   end
 end

@@ -506,7 +506,7 @@ module Aim
       act(row, 'approve')
       assert_equal 'approved', row.state, 'the second approver finishes it'
       assert_equal REVIEWER, row.first_approved_by, 'kept for the stamp'
-      assert_match(/\A1st: /, Aim::ApprovalStamp.lines(row).second)
+      assert_match(/\A1st: /, Aim::StampLayout.built_in.boxes(Aim::StampFields.values(row)).first.lines.second)
     end
 
     test 'the second approver may return it to the first; under the amount one approval is enough' do

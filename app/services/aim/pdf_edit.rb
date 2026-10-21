@@ -8,7 +8,7 @@ module Aim
   # with text boxes on it, some taken from another PDF. The source is never
   # changed.
   #
-  # Written with Aim::PdfWriter, as the approval stamp is: every object read
+  # Written with Paperboy::Pdf::Writer, as the approval stamp is: every object read
   # with pdf-reader and written out again as a plain PDF. An inserted PDF's
   # objects are renumbered after the source's. Pages left out stay in the
   # file but in no page tree, so nothing shows them.
@@ -51,7 +51,7 @@ module Aim
       kids = place(pages, out, pages_ref)
       root_pages = main.objects.deref(pages_ref).except(:Resources, :MediaBox, :CropBox, :Rotate)
       out[[pages_ref.id, pages_ref.gen]] = root_pages.merge(Kids: kids, Count: kids.size)
-      PdfWriter.new(main.objects.trailer).write(out)
+      Paperboy::Pdf::Writer.new(main.objects.trailer).write(out)
     rescue PDF::Reader::MalformedPDFError, PDF::Reader::UnsupportedFeatureError, NoMethodError, TypeError, KeyError => e
       raise Unreadable, e.message
     end

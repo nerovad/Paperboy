@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_140000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -246,6 +246,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
     t.bigint "invoice_id", null: false
     t.string "pay_doc_number", limit: 100
     t.string "stamp_error", limit: 500
+    t.bigint "stamp_layout_id"
+    t.string "stamp_warnings", limit: 500
     t.datetime "stamped_at"
     t.string "status", limit: 20, default: "review", null: false
     t.string "tags", limit: 500
@@ -413,6 +415,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
     t.datetime "updated_at", null: false
     t.string "updated_by", limit: 255
     t.index ["agency_group_id", "name"], name: "index_aim_report_templates_on_group_and_name", unique: true
+  end
+
+  create_table "aim.stamp_layouts", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.text "areas", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by", null: false
+    t.string "note", limit: 500
+    t.index ["agency_group_id", "id"], name: "index_aim_stamp_layouts_on_group_and_id"
   end
 
   create_table "aim.user_budget_units", force: :cascade do |t|
