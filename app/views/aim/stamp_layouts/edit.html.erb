@@ -1,0 +1,352 @@
+<%# The stamp designer (#221): areas on the left, the pages in the middle
+    (scrolling on their own, zoomable), the selected area's settings on the
+    right (stamp_designer_controller). Check stamps the invoice or an
+    uploaded PDF on the server, writing nothing; Save makes a new version and
+    asks which invoices take it. %>
+<% key = @group&.id || 'default' %>
+<% segmented = lambda do |name, choices, label|
+     tag.div(class: 'stamp-designer__segmented', role: 'group', aria: { label: label }) do
+       safe_join(choices.map do |value, text|
+         tag.button(text, type: 'button', class: 'btn compact', data: { action: 'stamp-designer#choose', key: name, value: value,
+                                                                       stamp_designer_target: 'choice' })
+       end)
+     end
+   end %>
+<div class="aim-page aim-profile-page stamp-designer-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Stamp Layout · <%= stamp_target_name(@group) %></h1>
+      <p class="aim-page-subtitle">
+        Every area prints in the one stamping when an invoice is approved.
+        <% if @layout.built_in? %>Nothing saved yet: this is the stamp AIM has always written.<% end %>
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'All stamp layouts', aim_stamp_layouts_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <div class="stamp-designer" data-controller="stamp-designer"
+       data-stamp-designer-areas-value="<%= @layout.area_list.to_json %>"
+       data-stamp-designer-shrink-value="<%= @layout.page_shrink || 100 %>"
+       data-stamp-designer-position-value="<%= @layout.page_position || 'center' %>"
+       data-stamp-designer-samples-value="<%= stamp_values_data(Aim::StampFields.samples(agency: @group&.agency_id)).to_json %>"
+       data-stamp-designer-worst-value="<%= stamp_values_data(Aim::StampFields.worst_case).to_json %>"
+       data-stamp-designer-formats-value="<%= Aim::StampFields.formats.to_json %>"
+       data-stamp-designer-sample-url-value="<%= sample_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-values-url-value="<%= values_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-preview-url-value="<%= preview_aim_stamp_layout_path(key) %>">
+
+    <section class="aim-panel stamp-designer__bar">
+      <div class="stamp-designer__bar-group">
+        <span class="stamp-designer__label">Preview on</span>
+        <select class="stamp-designer__input" data-stamp-designer-target="sample" data-action="stamp-designer#useInvoice"
+                aria-label="An invoice to preview on">
+          <% @samples.each do |invoice| %>
+            <option value="<%= invoice.id %>"><%= [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id %> (AIM-<%= invoice.id %>)</option>
+          <% end %>
+        </select>
+        <span class="stamp-designer__or">or</span>
+        <label class="btn compact stamp-designer__upload">
+          Upload a PDF
+          <input type="file" accept="application/pdf,.pdf" hidden data-stamp-designer-target="upload" data-action="stamp-designer#useUpload">
+        </label>
+        <span class="stamp-designer__file" data-stamp-designer-target="fileName" hidden></span>
+      </div>
+      <div class="stamp-designer__bar-group">
+        <span class="stamp-designer__label">Fill with</span>
+        <div class="stamp-designer__segmented" role="group" aria-label="Fill the fields with">
+          <% { 'invoice' => ['This invoice', "Exactly what this invoice would print: its own values only. Rows whose fields it does not have yet are left out"],
+               'samples' => ['Samples', 'Typical values'],
+               'worst' => ['Long values', 'Long, realistic values (the longest AIM has seen, or long stand-ins) to see the layout at its fullest'] }.each do |mode, (label, hint)| %>
+            <button type="button" class="btn compact" title="<%= hint %>" data-stamp-designer-target="fill" data-value="<%= mode %>"
+                    data-action="stamp-designer#setFill"><%= label %></button>
+          <% end %>
+        </div>
+        <button type="button" class="btn info compact" data-action="stamp-designer#check">Check</button>
+        <button type="button" class="btn approve compact" data-action="stamp-designer#openSave">Save…</button>
+      </div>
+    </section>
+
+    <div class="stamp-designer__body" data-stamp-designer-target="body">
+      <aside class="aim-panel stamp-designer__side">
+        <div class="aim-panel-header stamp-designer__panel-head">
+          <h2 class="aim-panel-title">Stamp areas</h2>
+          <button type="button" class="btn compact" data-action="stamp-designer#addArea">+ Add</button>
+        </div>
+        <div class="stamp-designer__areas" data-stamp-designer-target="list"></div>
+
+        <div class="aim-panel-header stamp-designer__panel-head">
+          <h2 class="aim-panel-title">Page</h2>
+        </div>
+        <div class="stamp-designer__section">
+          <div class="aim-field">
+            <label for="stamp-shrink">Shrink page contents</label>
+            <select id="stamp-shrink" data-stamp-designer-target="shrink" data-action="stamp-designer#setShrink">
+              <% Aim::StampLayout::SHRINKS.each do |percent| %>
+                <option value="<%= percent %>"><%= percent == 100 ? 'No (100%)' : "#{percent}%" %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="aim-field">
+            <label>Move contents to</label>
+            <div class="stamp-designer__segmented is-wrapping" role="group" aria-label="Move contents to">
+              <% { 'center' => 'Centre', 'top' => 'Top', 'bottom' => 'Bottom', 'left' => 'Left', 'right' => 'Right' }.each do |value, text| %>
+                <button type="button" class="btn compact" data-stamp-designer-target="position" data-value="<%= value %>"
+                        data-action="stamp-designer#setPosition"><%= text %></button>
+              <% end %>
+            </div>
+          </div>
+          <p class="stamp-designer__hint">Shrinks the invoice itself on the stamped copy to make room for the stamp. The stamp is never shrunk.</p>
+        </div>
+      </aside>
+
+      <main class="aim-panel stamp-designer__stage">
+        <div class="aim-panel-header stamp-designer__panel-head">
+          <span class="stamp-designer__hint stamp-designer__status" data-stamp-designer-target="status"></span>
+          <div class="stamp-designer__segmented" role="group" aria-label="Zoom">
+            <button type="button" class="btn compact" data-action="stamp-designer#zoomOut" title="Zoom out">−</button>
+            <span class="stamp-designer__zoom" data-stamp-designer-target="zoomLabel">100%</span>
+            <button type="button" class="btn compact" data-action="stamp-designer#zoomIn" title="Zoom in">+</button>
+            <button type="button" class="btn compact" data-action="stamp-designer#zoomFit" title="Fit the page width">Fit</button>
+          </div>
+        </div>
+        <div class="stamp-designer__scroll" data-stamp-designer-target="scroller">
+          <div class="stamp-designer__pages" data-stamp-designer-target="pages"></div>
+        </div>
+      </main>
+
+      <aside class="aim-panel stamp-designer__side">
+        <div class="aim-panel-header stamp-designer__panel-head">
+          <input type="text" class="stamp-designer__name" maxlength="60" aria-label="Area name"
+                 data-stamp-designer-target="control" data-key="name" data-action="input->stamp-designer#edit">
+          <button type="button" class="btn deny compact" data-action="stamp-designer#removeArea" title="Remove this area">Remove</button>
+        </div>
+        <div class="stamp-designer__side-scroll">
+          <p class="stamp-designer__warnings" data-stamp-designer-target="warnings" hidden></p>
+
+          <details class="stamp-designer__group" open>
+            <summary>Text</summary>
+            <div class="aim-field">
+              <label for="stamp-rows">Rows, one per line</label>
+              <textarea id="stamp-rows" rows="4" data-stamp-designer-target="control rows" data-key="rows"
+                        data-action="input->stamp-designer#edit"></textarea>
+            </div>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label for="stamp-insert">Insert a field</label>
+                <select id="stamp-insert" data-stamp-designer-target="insert" data-action="stamp-designer#insertField">
+                  <option value="">Choose…</option>
+                  <% stamp_field_groups.each do |group, fields| %>
+                    <optgroup label="<%= group %>">
+                      <% fields.each do |field, label, kind| %>
+                        <option value="<%= field %>" data-kind="<%= kind %>"><%= label %></option>
+                      <% end %>
+                    </optgroup>
+                  <% end %>
+                </select>
+              </div>
+              <div class="aim-field">
+                <label for="stamp-date-format">Dates as</label>
+                <select id="stamp-date-format" data-stamp-designer-target="dateFormat">
+                  <% Aim::StampLayoutsHelper::DATE_FORMATS.each do |format, example| %>
+                    <option value="<%= format %>"><%= example %></option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+            <div class="aim-field">
+              <label for="stamp-separator">Insert a separator</label>
+              <select id="stamp-separator" data-stamp-designer-target="separator" data-action="stamp-designer#insertSeparator">
+                <option value="">Choose…</option>
+                <% { ' _ ' => 'Underscore  ( _ )', '_' => 'Underscore, no spaces  (_)', ' - ' => 'Dash  ( - )', ' / ' => 'Slash  ( / )',
+                     ', ' => 'Comma  (, )', ' | ' => 'Bar  ( | )', ' · ' => 'Dot  ( · )', ' ' => 'Space' }.each do |value, label| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+            <p class="stamp-designer__hint">
+              A separator goes in as <code>[ _ ]</code> and prints only when the field after it has a value.
+              A row whose fields are all empty is left out.
+            </p>
+          </details>
+
+          <details class="stamp-designer__group" open>
+            <summary>Look</summary>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label for="stamp-font">Font</label>
+                <select id="stamp-font" data-stamp-designer-target="control" data-key="font" data-action="stamp-designer#edit">
+                  <% Paperboy::Pdf::Fonts::FAMILIES.each do |family, face| %>
+                    <option value="<%= family %>"><%= face[:label] %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div class="aim-field">
+                <label for="stamp-size">Size (pt)</label>
+                <input id="stamp-size" type="number" min="6" max="36" step="0.5" data-stamp-designer-target="control" data-key="size"
+                       data-action="input->stamp-designer#edit">
+              </div>
+            </div>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label for="stamp-colour">Text colour</label>
+                <input id="stamp-colour" type="color" class="stamp-designer__colour" data-stamp-designer-target="control" data-key="color"
+                       data-action="input->stamp-designer#edit">
+              </div>
+              <div class="aim-field">
+                <label>Style</label>
+                <div class="stamp-designer__segmented" role="group" aria-label="Style">
+                  <button type="button" class="btn compact stamp-designer__bold" data-stamp-designer-target="toggle" data-key="bold"
+                          data-action="stamp-designer#toggle" title="Bold">B</button>
+                  <button type="button" class="btn compact stamp-designer__italic" data-stamp-designer-target="toggle" data-key="italic"
+                          data-action="stamp-designer#toggle" title="Italic">I</button>
+                  <button type="button" class="btn compact" data-stamp-designer-target="toggle" data-key="border"
+                          data-action="stamp-designer#toggle" title="A thin border round the area">Border</button>
+                </div>
+              </div>
+            </div>
+            <div class="aim-field">
+              <label>Align</label>
+              <%= segmented.call('align', { 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right' }, 'Align') %>
+            </div>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label for="stamp-background">Background</label>
+                <select id="stamp-background" data-stamp-designer-target="control" data-key="opacity" data-action="stamp-designer#edit">
+                  <% [[1, 'Solid'], [0.75, '75%'], [0.5, '50%'], [0.25, '25%'], [0, 'Clear']].each do |value, label| %>
+                    <option value="<%= value %>"><%= label %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div class="aim-field">
+                <label for="stamp-background-colour">Background colour</label>
+                <input id="stamp-background-colour" type="color" class="stamp-designer__colour" data-stamp-designer-target="control"
+                       data-key="background" data-action="input->stamp-designer#edit">
+              </div>
+            </div>
+            <div class="aim-field">
+              <label for="stamp-leading">Line spacing</label>
+              <select id="stamp-leading" data-stamp-designer-target="control" data-key="leading" data-action="stamp-designer#edit">
+                <% [[1, 'Tight'], [8.5 / 7, 'Normal'], [1.5, 'Loose'], [2, 'Double']].each do |value, label| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+          </details>
+
+          <details class="stamp-designer__group" open>
+            <summary>Placement</summary>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label>Kept to</label>
+                <div class="stamp-designer__anchors" role="group" aria-label="Kept to">
+                  <% Paperboy::Pdf::StampBox::ANCHORS.each do |anchor| %>
+                    <button type="button" class="stamp-designer__anchor" title="<%= anchor.humanize %>" aria-label="<%= anchor.humanize %>"
+                            data-stamp-designer-target="choice" data-key="anchor" data-value="<%= anchor %>"
+                            data-action="stamp-designer#choose"></button>
+                  <% end %>
+                </div>
+              </div>
+              <div class="stamp-designer__offsets">
+                <div class="aim-field">
+                  <label for="stamp-x">Across (pt)</label>
+                  <input id="stamp-x" type="number" step="1" data-stamp-designer-target="control" data-key="x" data-action="input->stamp-designer#edit">
+                </div>
+                <div class="aim-field">
+                  <label for="stamp-y">Up / down (pt)</label>
+                  <input id="stamp-y" type="number" step="1" data-stamp-designer-target="control" data-key="y" data-action="input->stamp-designer#edit">
+                </div>
+              </div>
+            </div>
+            <div class="stamp-designer__pair">
+              <div class="aim-field">
+                <label for="stamp-width">Width (pt)</label>
+                <input id="stamp-width" type="number" min="20" step="1" placeholder="Fits the text" data-stamp-designer-target="control"
+                       data-key="width" data-action="input->stamp-designer#edit">
+              </div>
+              <div class="aim-field">
+                <label for="stamp-rotation">Turn</label>
+                <select id="stamp-rotation" data-stamp-designer-target="control" data-key="rotation" data-action="stamp-designer#edit">
+                  <% Paperboy::Pdf::StampBox::ROTATIONS.each do |degrees| %>
+                    <option value="<%= degrees %>"><%= degrees.zero? ? 'None' : "#{degrees}°" %></option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+            <div class="aim-field">
+              <label>Prints on</label>
+              <%= segmented.call('pages', { 'all' => 'Every page', 'first' => 'First page', 'last' => 'Last page' }, 'Prints on') %>
+            </div>
+            <p class="stamp-designer__hint">Drag an area on the page to move it; drag its right edge to set the width.</p>
+          </details>
+
+          <details class="stamp-designer__group stamp-designer__history">
+            <summary>History · <%= pluralize(@history.size, 'saved version') %></summary>
+            <% if @history.any? %>
+              <ul class="stamp-designer__versions">
+                <% @history.each do |version| %>
+                  <li>
+                    <div>
+                      <strong><%= l(version.created_at.in_time_zone, format: :short) %></strong>
+                      <span><%= version.created_by %> · <%= pluralize(version.area_list.size, 'area') %><%= " · page #{version.page_shrink}% #{version.page_position}" if version.shrink %></span>
+                      <% if version.note.present? %><em><%= version.note %></em><% end %>
+                    </div>
+                    <%= link_to 'Load', edit_aim_stamp_layout_path(key, version: version.id), class: 'btn compact',
+                                title: 'Open this version in the designer; saving it makes it the newest' %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="stamp-designer__hint">Not saved yet.</p>
+            <% end %>
+          </details>
+        </div>
+      </aside>
+    </div>
+
+    <%# Check: the layout stamped by the server, opened in a new tab in the
+        browser's own PDF viewer. Writes nothing. %>
+    <%= form_with url: preview_aim_stamp_layout_path(key), method: :post, multipart: true,
+                  data: { stamp_designer_target: 'checkForm', turbo: false }, html: { target: '_blank' } do %>
+      <%= hidden_field_tag :areas, '', id: nil, data: { stamp_designer_target: 'checkAreas' } %>
+      <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
+      <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
+      <%= hidden_field_tag :fill, '', id: nil, data: { stamp_designer_target: 'checkFill' } %>
+      <%= hidden_field_tag :invoice_id, '', id: nil, data: { stamp_designer_target: 'checkInvoice' } %>
+      <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
+    <% end %>
+
+    <%= form_with url: aim_stamp_layout_path(key), method: :patch, data: { stamp_designer_target: 'form', turbo: false } do %>
+      <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>
+      <%= hidden_field_tag :page_shrink, '', data: { stamp_designer_target: 'shrinkField' } %>
+      <%= hidden_field_tag :page_position, '', data: { stamp_designer_target: 'positionField' } %>
+      <div class="pb-modal-backdrop" data-stamp-designer-target="saveModal" hidden>
+        <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="stamp-save-title">
+          <div class="pb-modal__header">
+            <h3 id="stamp-save-title">Save the stamp layout</h3>
+            <button type="button" class="pb-modal__close" aria-label="Close" data-action="stamp-designer#closeSave">✕</button>
+          </div>
+          <div class="pb-modal__body">
+            <p class="pb-modal__message">The layout is kept as a new version. Which invoices take it?</p>
+            <div class="stamp-designer__choices">
+              <label><input type="radio" name="restamp" value="fiscal" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+                <span>Stamp again the approved invoices still with Fiscal (Fiscal Queue, On Hold, Report Queue). Exported and archived ones keep theirs.</span></label>
+              <label><input type="radio" name="restamp" value="new" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+                <span>New approvals only.</span></label>
+            </div>
+            <div class="aim-field">
+              <label for="stamp-note">Note (optional)</label>
+              <%= text_field_tag :note, '', id: 'stamp-note', maxlength: 500 %>
+            </div>
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="stamp-designer#closeSave">Cancel</button>
+              <button type="button" class="btn approve" data-stamp-designer-target="saveButton" data-action="stamp-designer#save" disabled>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+</div>

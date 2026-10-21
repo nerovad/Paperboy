@@ -4,6 +4,8 @@
 //= link_tree ../../javascript/controllers .js
 //= link form_navigation.js
 //= link pb_modal.js
+//= link pdf_js.js
+//= link stamp_layout.js
 //= link choices_setup.js
 //= link chartkick.js
 //= link Chart.bundle.js
