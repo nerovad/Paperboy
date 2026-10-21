@@ -104,33 +104,9 @@ module Paperboy
       # The lines wrapped to the box at size +at+, and the width they take.
       def wrap(at, room_width)
         limit = [width || Float::INFINITY, room_width].min - (PAD * 2)
-        wrapped = lines.flat_map { |line| wrap_line(line, limit, at) }
+        wrapped = lines.flat_map { |line| TextWrap.lines(line, limit) { |text| text_width(text, at) } }
         inner = width ? limit : wrapped.map { |line| text_width(line, at) }.max.to_f
         [wrapped, [inner, limit].min]
-      end
-
-      def wrap_line(line, limit, at)
-        return [line] if text_width(line, at) <= limit
-
-        out = ['']
-        line.split(/(\s+)/).each do |word|
-          candidate = out.last + word
-          if out.last.empty? || text_width(candidate.rstrip, at) <= limit
-            out[-1] = candidate
-          else
-            out << word.lstrip
-          end
-          out.concat(break_word(out.pop, limit, at)) if text_width(out.last.rstrip, at) > limit
-        end
-        out.map(&:rstrip)
-      end
-
-      # A word longer than the line, broken where it must be.
-      def break_word(word, limit, at)
-        word.each_char.with_object(['']) do |char, pieces|
-          pieces << '' if !pieces.last.empty? && text_width(pieces.last + char, at) > limit
-          pieces[-1] += char
-        end
       end
 
       def anchored(page_width, page_height, box_width, box_height)

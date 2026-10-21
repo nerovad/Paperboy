@@ -44,8 +44,7 @@ module Paperboy
       def render
         out = collect_objects
         @next_id = out.keys.map(&:first).max.to_i + 1
-        @fonts = {}
-        @states = {}
+        @resources = StampResources.new { |object| add(out, object) }
         open_q = add(out, stream("q\n"))
         warnings = {}
         refs = @objects.page_references
@@ -55,7 +54,7 @@ module Paperboy
           boxes = Array(yield(index, refs.size)).select { |box| box.on_page?(index, refs.size) && box.lines.any? }
           next if boxes.empty?
 
-          body, page_warnings = stamp_content(ref, boxes, out)
+          body, page_warnings = stamp_content(ref, boxes)
           warnings[index + 1] = page_warnings if page_warnings.any?
           out[[ref.id, ref.gen]] = stamped_page(ref, open_q, add(out, stream(body)))
         end
@@ -93,21 +92,6 @@ module Paperboy
 
       def stream(content) = PDF::Reader::Stream.new({}, content.b)
 
-      # One font object per face used, and one graphics state per opacity,
-      # shared by every page.
-      def font_name(out, box)
-        base = Fonts.base_font(box.font, bold: box.bold, italic: box.italic)
-        @fonts[base] ||= [:"PbStampF#{@fonts.size + 1}",
-                          add(out, { Type: :Font, Subtype: :Type1, BaseFont: base.to_sym, Encoding: :WinAnsiEncoding })]
-        @fonts[base].first
-      end
-
-      def state_name(out, opacity)
-        key = Writer.number(opacity)
-        @states[key] ||= [:"PbStampGS#{@states.size + 1}", add(out, { Type: :ExtGState, ca: opacity, CA: opacity })]
-        @states[key].first
-      end
-
       # The page with its content wrapped in q/Q, the stamp after it, and the
       # stamp's fonts and graphics states added to its (possibly inherited)
       # resources.
@@ -115,15 +99,7 @@ module Paperboy
         page = @objects[ref].dup
         contents = @objects.deref(page[:Contents])
         contents = [page[:Contents]].compact unless contents.is_a?(Array)
-        resources = (@objects.deref(inherited_value(ref, :Resources)) || {}).dup
-        fonts = (@objects.deref(resources[:Font]) || {}).dup
-        @fonts.each_value { |name, font| fonts[name] = font }
-        resources[:Font] = fonts
-        if @states.any?
-          states = (@objects.deref(resources[:ExtGState]) || {}).dup
-          @states.each_value { |name, state| states[name] = state }
-          resources[:ExtGState] = states
-        end
+        resources = @resources.merged(@objects.deref(inherited_value(ref, :Resources)) || {}) { |value| @objects.deref(value) }
         page.merge(Contents: [open_q, *contents, stamp], Resources: resources)
       end
 
@@ -141,57 +117,21 @@ module Paperboy
 
       def rotation_of(ref) = @objects.deref(inherited_value(ref, :Rotate)).to_i % 360
 
-      def stamp_content(ref, boxes, out)
+      def stamp_content(ref, boxes)
         width, height, matrix = Geometry.orientation(box_of(ref), rotation_of(ref))
         warnings = []
         body = "Q\nq\n#{matrix.map { |n| number(n) }.join(' ')} cm\n"
         boxes.each do |box|
           placed = box.place(width, height)
           warnings.concat(placed.warnings)
-          body << draw(box, placed, out)
+          state = @resources.state_name(box.opacity) if box.background && box.opacity < 1
+          body << StampDrawing.draw(box, placed, font: @resources.font_name(box), state: state)
         end
         body << "Q\n"
         [body, warnings.uniq]
       end
 
-      def draw(box, placed, out)
-        body = +''
-        if box.background
-          body << "q\n"
-          body << "/#{state_name(out, box.opacity)} gs\n" if box.opacity < 1
-          body << "#{rgb(box.background)} rg\n#{rect(placed)} re f\nQ\n"
-        end
-        body << "q\n#{rgb(box.color)} RG\n0.5 w\n#{rect(placed)} re S\nQ\n" if box.border
-        body << "q\n#{rgb(box.color)} rg\nBT\n/#{font_name(out, box)} #{number(placed.size)} Tf\n"
-        baseline = placed.top - StampBox::PAD - (placed.size * Fonts::ASCENT)
-        placed.lines.each_with_index do |line, index|
-          x = line_x(box, placed, line)
-          body << "1 0 0 1 #{number(x)} #{number(baseline - (index * box.line_height(placed.size)))} Tm\n#{literal(line)} Tj\n"
-        end
-        body << "ET\nQ\n"
-      end
-
-      def line_x(box, placed, line)
-        inner = placed.width - (StampBox::PAD * 2)
-        used = box.text_width(line, placed.size)
-        offset = case box.align
-                 when 'right' then inner - used
-                 when 'center' then (inner - used) / 2
-                 else 0
-                 end
-        placed.left + StampBox::PAD + offset
-      end
-
-      def rect(placed) = [placed.left, placed.bottom, placed.width, placed.height].map { |n| number(n) }.join(' ')
-
-      def rgb(hex) = hex.delete('#').scan(/../).map { |pair| number(pair.to_i(16) / 255.0) }.join(' ')
-
       def number(value) = Writer.number(value)
-
-      def literal(text)
-        bytes = text.encode('Windows-1252', invalid: :replace, undef: :replace, replace: '?').b
-        "(#{bytes.gsub(/[\\()]/) { |char| "\\#{char}" }})"
-      end
     end
   end
 end
