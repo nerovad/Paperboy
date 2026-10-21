@@ -42,8 +42,8 @@ module Aim
     def fill_values(invoice)
       case params[:fill]
       when 'worst' then Aim::StampFields.worst_case
-      when 'samples' then Aim::StampFields.samples
-      else invoice ? Aim::StampFields.with_samples(invoice) : Aim::StampFields.samples
+      when 'samples' then Aim::StampFields.samples(agency: @group&.agency_id)
+      else invoice ? Aim::StampFields.with_samples(invoice) : Aim::StampFields.samples(agency: @group&.agency_id)
       end
     end
   end

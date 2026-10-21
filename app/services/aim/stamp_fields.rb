@@ -11,6 +11,19 @@ module Aim
     DATE = '%m/%d/%Y'
     STAMP_TIME = '%m/%d/%Y_%H:%M:%S'
 
+    # The coding fields, in the chart of accounts' order, labelled as the
+    # Fiscal pages label them.
+    CODING = (%w[encumbrance ma_number vendor_code] + Aim::CodingFields::COA_FIELDS).freeze
+
+    # A coding line as a real rule reads, for an install with no coding rules
+    # yet; otherwise the samples come from the fullest real rule
+    # (#rule_sample).
+    CODING_SAMPLE = {
+      'encumbrance' => 'BDO_4640260001', 'vendor_code' => 'VC00014335', 'fund' => 'G001', 'department' => 'GSA',
+      'object_code' => '2051', 'activity' => 'GATV', 'function_code' => 'GFUN', 'major_program' => 'INDR',
+      'program' => 'INDIRECT'
+    }.freeze
+
     FIELDS = {
       'received' => { label: 'Date received', group: 'Approval', format: DATE, sample: Date.new(2025, 6, 24) },
       'invoice_date' => { label: 'Invoice date', group: 'Approval', format: DATE, sample: Date.new(2025, 6, 16) },
@@ -31,13 +44,9 @@ module Aim
       'order_number' => { label: 'Order #', group: 'Invoice', sample: 'PO-1237418' },
       'customer_number' => { label: 'Customer #', group: 'Invoice', sample: 'C-00177434' },
       'batch_id' => { label: 'Batch id', group: 'Invoice', sample: '4641.20251021_085405.Invoice-[2YVB]' },
-      'encumbrance' => { label: 'BDO / DO', group: 'Coding', sample: 'BDO_26000123' },
-      'object_code' => { label: 'Account (object)', group: 'Coding', sample: '2051' },
-      'fund' => { label: 'Fund', group: 'Coding', sample: '1000' },
-      'department' => { label: 'Department', group: 'Coding', sample: '4640' },
-      'program' => { label: 'Program', group: 'Coding', sample: '100' },
-      'activity' => { label: 'Activity', group: 'Coding', sample: '0001' },
-      'vendor_code' => { label: 'Vendor code', group: 'Coding', sample: 'VC0001234' },
+      **CODING.to_h do |field|
+        [field, { label: Aim::FiscalHelper::CODING_FIELD_LABELS.fetch(field), group: 'Coding', sample: CODING_SAMPLE[field] }]
+      end,
       'check_number' => { label: 'Check #', group: 'Fiscal', sample: '004512' },
       'check_date' => { label: 'Check date', group: 'Fiscal', format: DATE, sample: Date.new(2025, 7, 3) },
       'pay_doc_number' => { label: 'Pay doc #', group: 'Fiscal', sample: 'PV-2025-0712' },
@@ -56,8 +65,6 @@ module Aim
       'invoice_number' => 'INV-2026-0000123456-REV-03', 'document_type' => 'Statement', 'budget_unit' => '46410',
       'order_number' => 'PO-2026-00001237418-CHG-02', 'customer_number' => 'CUST-0000177434-00982',
       'batch_id' => '4641.20260930_235959.Consolidated Environmental Engineering Invoice 0000123456-[ZZ9Z]',
-      'encumbrance' => 'BDO_2026-000123456', 'object_code' => '2051-0000', 'fund' => '1000-0000', 'department' => '4640-0000',
-      'program' => '100-00000', 'activity' => '0001-0000', 'vendor_code' => 'VC000123456789',
       'check_number' => '0000045120', 'pay_doc_number' => 'PV-2026-0000712345'
     }.freeze
 
@@ -66,9 +73,6 @@ module Aim
       'vendor' => [Aim::Invoice, :vendor_name], 'invoice_number' => [Aim::Invoice, :invoice_number],
       'batch_id' => [Aim::Invoice, :batch_id], 'order_number' => [Aim::Invoice, :order_number],
       'customer_number' => [Aim::Invoice, :customer_number], 'document_type' => [Aim::Invoice, :document_type],
-      'object_code' => [Aim::CodingLine, :object_code], 'fund' => [Aim::CodingLine, :fund],
-      'department' => [Aim::CodingLine, :department], 'program' => [Aim::CodingLine, :program],
-      'activity' => [Aim::CodingLine, :activity], 'vendor_code' => [Aim::CodingLine, :vendor_code],
       'check_number' => [Aim::FiscalRecord, :check_number], 'pay_doc_number' => [Aim::FiscalRecord, :pay_doc_number]
     }.freeze
 
@@ -76,7 +80,29 @@ module Aim
 
     def formats = FIELDS.transform_values { |field| field[:format] }.compact
 
-    def samples = FIELDS.transform_values { |field| field[:sample] }
+    DEFAULT_AGENCY = 'GSA'
+
+    # Typical values: the fixed samples, with the coding, vendor and budget
+    # unit of +agency+'s fullest real coding rule (GSA's unless another is
+    # given), so the designer shows codes as they really read, each in its
+    # own field.
+    def samples(agency: nil) = FIELDS.transform_values { |field| field[:sample] }.merge(rule_sample(agency.presence || DEFAULT_AGENCY))
+
+    # +agency+'s coding rule with the most coding fields filled (any agency's
+    # when it has none), as stamp values.
+    def rule_sample(agency)
+      scored = CODING - ['encumbrance'] + ['encumbrance_number']
+      recent = Aim::CodingRule.order(id: :desc).limit(2000)
+      rules = recent.where(agency: agency).to_a.presence || recent.to_a
+      rule = rules.max_by { |row| scored.count { |field| sample_worthy?(row, field) } }
+      return {} unless rule
+
+      CODING.to_h { |field| [field, rule.public_send(field).presence] }
+            .merge('vendor' => rule.vendor_name, 'budget_unit' => rule.budget_unit, 'customer_number' => rule.customer_number)
+            .compact
+    rescue ActiveRecord::ActiveRecordError
+      {}
+    end
 
     def known?(name) = FIELDS.key?(name.to_s)
 
@@ -93,18 +119,25 @@ module Aim
         'subtotal' => invoice.subtotal, 'sales_tax' => invoice.sales_tax, 'budget_unit' => invoice.budget_unit,
         'document_type' => invoice.document_type, 'order_number' => invoice.order_number,
         'customer_number' => invoice.customer_number, 'batch_id' => invoice.batch_id,
-        'encumbrance' => coding&.encumbrance, 'object_code' => coding&.object_code, 'fund' => coding&.fund,
-        'department' => coding&.department, 'program' => coding&.program, 'activity' => coding&.activity,
-        'vendor_code' => coding&.vendor_code,
+        **CODING.to_h { |field| [field, coding&.public_send(field)] },
         'check_number' => record&.check_number, 'check_date' => record&.check_date,
         'pay_doc_number' => record&.pay_doc_number, 'stamped_on' => Time.zone.today
       }
     end
 
+    # A vendor code counts only when it is one (VC and digits); some lookups
+    # carry account notes in that column.
+    def sample_worthy?(row, field)
+      value = row.public_send(field)
+      field == 'vendor_code' ? value.to_s.match?(/\AVC\d+\z/) : value.present?
+    end
+
     # An invoice's own values, with samples standing in for any still empty
     # (no approver yet, no coding): what the designer's "This invoice" fills
     # in, so a layout can be judged on an invoice that is not approved yet.
-    def with_samples(invoice) = samples.merge(values(invoice).reject { |_, value| value.blank? })
+    def with_samples(invoice)
+      samples(agency: invoice.agency).merge(values(invoice).reject { |_, value| value.blank? })
+    end
 
     # Every field at its longest (WORST, WORST_SOURCES), for the designer.
     def worst_case
@@ -113,6 +146,7 @@ module Aim
         longest = longest_value(model, column)
         worst[field] = longest if longest && longest.length > worst[field].to_s.length
       end
+      worst.merge!(worst_coding)
       longest_name = longest_approver
       worst['approver'] = longest_name if longest_name && longest_name.length > worst['approver'].length
       worst.merge('total' => BigDecimal('-9999999.99'), 'subtotal' => BigDecimal('-9999999.99'),
@@ -120,6 +154,23 @@ module Aim
                   'invoice_date' => Date.new(2026, 9, 28), 'check_date' => Date.new(2026, 9, 28),
                   'stamped_on' => Date.new(2026, 9, 28), 'approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59),
                   'first_approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59))
+    end
+
+    # Each coding field's longest real value, in the rules or on coding lines;
+    # the sample where neither has one.
+    def worst_coding
+      columns = CODING - ['encumbrance']
+      longest = columns.to_h do |field|
+        [field, [Aim::CodingRule, Aim::CodingLine].filter_map { |model| longest_value(model, field) }.max_by(&:length)]
+      end
+      longest.merge('encumbrance' => longest_encumbrance).compact
+    end
+
+    def longest_encumbrance
+      Aim::CodingRule.where.not(encumbrance_number: [nil, ''])
+                     .order(Arel.sql("LEN(encumbrance_number) + LEN(ISNULL(encumbrance_type, '')) DESC")).first&.encumbrance
+    rescue ActiveRecord::ActiveRecordError
+      nil
     end
 
     def longest_value(model, column)

@@ -30,7 +30,7 @@
        data-stamp-designer-areas-value="<%= @layout.area_list.to_json %>"
        data-stamp-designer-shrink-value="<%= @layout.page_shrink || 100 %>"
        data-stamp-designer-position-value="<%= @layout.page_position || 'center' %>"
-       data-stamp-designer-samples-value="<%= stamp_values_data(Aim::StampFields.samples).to_json %>"
+       data-stamp-designer-samples-value="<%= stamp_values_data(Aim::StampFields.samples(agency: @group&.agency_id)).to_json %>"
        data-stamp-designer-worst-value="<%= stamp_values_data(Aim::StampFields.worst_case).to_json %>"
        data-stamp-designer-formats-value="<%= Aim::StampFields.formats.to_json %>"
        data-stamp-designer-sample-url-value="<%= sample_aim_stamp_layout_path(key) %>"
