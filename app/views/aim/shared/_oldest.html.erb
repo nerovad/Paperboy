@@ -1,16 +1,19 @@
-<%# The longest waiting (#131). Locals: oldest ([[invoice, days], ...]), path
-    (proc: invoice -> its page), owner (show whose queue). %>
+<%# The longest waiting (#131). Locals: oldest ([[invoice, days], ...], or
+    [[invoice, days old, days here], ...] for both of Aim::Waiting's clocks,
+    #190), path (proc: invoice -> its page), owner (show whose queue). %>
 <% if oldest.any? %>
+  <% two_clocks = oldest.first.size > 2 %>
   <table class="submission-table aim-people-table">
-    <thead><tr><th>Invoice</th><th>BU</th><th>Total</th><% if local_assigns[:owner] %><th>Queue</th><% end %><th>Waiting</th></tr></thead>
+    <thead><tr><th>Invoice</th><th>BU</th><th>Total</th><% if local_assigns[:owner] %><th>Queue</th><% end %><th><%= two_clocks ? 'Age' : 'Waiting' %></th><% if two_clocks %><th>Here</th><% end %></tr></thead>
     <tbody>
-      <% oldest.each do |invoice, days| %>
+      <% oldest.each do |invoice, days, here| %>
         <tr>
           <td class="is-strong"><%= link_to [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id, path.call(invoice) %></td>
           <td><%= invoice.budget_unit %></td>
           <td><%= number_to_currency(invoice.invoice_total) if invoice.invoice_total %></td>
           <% if local_assigns[:owner] %><td><%= invoice.queue_owner %></td><% end %>
           <td><%= days.zero? ? 'today' : pluralize(days, 'day') %></td>
+          <% if two_clocks %><td><%= here.zero? ? 'today' : pluralize(here, 'day') %></td><% end %>
         </tr>
       <% end %>
     </tbody>

@@ -137,7 +137,7 @@ class Db:
                     f"OUTPUT INSERTED.id VALUES ({placeholders}, SYSUTCDATETIME(), SYSUTCDATETIME())",
                     batch_id, state, command, *fields.values())
                 invoice_id = cursor.fetchone()[0]
-                _insert_event(cursor, self.events, invoice_id, None, state, actor, note)
+                _insert_event(cursor, self.events, self.invoices, invoice_id, None, state, actor, note)
                 conn.commit()
             except Exception:
                 conn.rollback()
@@ -224,7 +224,7 @@ class Db:
                     f"UPDATE {self.invoices} SET {columns}, updated_at = SYSUTCDATETIME() WHERE id = ?",
                     *assignments.values(), invoice_id)
                 if from_state != to_state:
-                    _insert_event(cursor, self.events, invoice_id, from_state, to_state, actor, note)
+                    _insert_event(cursor, self.events, self.invoices, invoice_id, from_state, to_state, actor, note)
                 conn.commit()
             except Exception:
                 conn.rollback()
@@ -237,8 +237,12 @@ def _row(cursor, record):
     return {column[0]: value for column, value in zip(cursor.description, record)}
 
 
-def _insert_event(cursor, events_table, invoice_id, from_state, to_state, actor, note):
+def _insert_event(cursor, events_table, invoices_table, invoice_id, from_state, to_state, actor, note):
+    """The event, with who holds the row after it (#190), read from the row
+    in the same transaction, as Paperboy's Aim::InvoiceEvent records it."""
     cursor.execute(
-        f"INSERT INTO {events_table} (invoice_id, action, from_state, to_state, actor, note, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, SYSUTCDATETIME())",
-        invoice_id, TRANSITION, from_state, to_state, actor, note)
+        f"INSERT INTO {events_table} (invoice_id, action, from_state, to_state, actor, note, created_at, "
+        "holder_employee_id, holder_name, holder_budget_unit, holder_source) "
+        "SELECT ?, ?, ?, ?, ?, ?, SYSUTCDATETIME(), assigned_employee_id, NULLIF(assigned_to, ''), budget_unit, 'recorded' "
+        f"FROM {invoices_table} WHERE id = ?",
+        invoice_id, TRANSITION, from_state, to_state, actor, note, invoice_id)

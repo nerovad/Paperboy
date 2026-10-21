@@ -140,7 +140,16 @@ def test_a_transition_writes_the_row_and_its_event_together(db):
     assert update[0].startswith("UPDATE aim.invoices SET attempt = ?, state = ?, finished_at = NULL, updated_at = SYSUTCDATETIME() WHERE id = ?")
     assert update[1] == (1, "extracting", 7)
     assert event[0].startswith("INSERT INTO aim.invoice_events")
-    assert event[1] == (7, "transition", "received", "extracting", "aim_worker", "attempt 1")
+    assert event[1] == (7, "transition", "received", "extracting", "aim_worker", "attempt 1", 7)
+
+
+def test_an_event_records_who_holds_the_row_after_it(db):
+    db.transition(7, "received", "extracting")
+
+    _, event = db.log
+    assert "holder_employee_id, holder_name, holder_budget_unit, holder_source" in event[0]
+    assert "SELECT ?, ?, ?, ?, ?, ?, SYSUTCDATETIME(), assigned_employee_id, NULLIF(assigned_to, ''), budget_unit, 'recorded'" in event[0]
+    assert event[0].endswith("FROM aim.invoices WHERE id = ?")
 
 
 def test_clearing_the_command_clears_the_lease_and_stamps(db):
@@ -167,7 +176,7 @@ def test_a_new_row_gets_its_first_event(db):
     insert, event = db.log
     assert invoice_id == 7
     assert insert[0].startswith("INSERT INTO aim.invoices (batch_id, state, command, budget_unit, created_at, updated_at) OUTPUT INSERTED.id")
-    assert event[1] == (7, "transition", None, "received", "aim_worker", "received from x")
+    assert event[1] == (7, "transition", None, "received", "aim_worker", "received from x", 7)
 
 
 def test_aliases_and_rules_are_read_from_their_tables(db):

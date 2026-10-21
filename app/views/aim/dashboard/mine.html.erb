@@ -17,7 +17,7 @@
 
   <%= render 'aim/shared/attention_tiles', tiles: @tiles %>
 
-  <h2 class="aim-profile-heading">Waiting longest in my queue</h2>
+  <h2 class="aim-profile-heading">Oldest in my queue</h2>
   <section class="aim-panel aim-agency-group-panel">
     <%= render 'aim/shared/oldest', oldest: @oldest, path: ->(invoice) { aim_invoice_path(invoice.batch_id, queue: 'ready_for_approval') } %>
   </section>
