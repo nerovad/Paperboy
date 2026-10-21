@@ -12,13 +12,14 @@ module Paperboy
       # +page+: a PDF::Reader::Page; +origin+: the crop box's lower left.
       def covers?(page, placed, origin)
         left, bottom = origin
+        outer_left, outer_bottom, outer_width, outer_height = placed.outer
         page.runs.any? do |run|
           next false if run.text.to_s.strip.empty?
 
           x = run.x - left
           y = run.y - bottom
-          x < placed.left + placed.width && x + run.width > placed.left &&
-            y < placed.top && y + run.font_size > placed.bottom
+          x < outer_left + outer_width && x + run.width > outer_left &&
+            y < outer_bottom + outer_height && y + run.font_size > outer_bottom
         end
       rescue StandardError
         false

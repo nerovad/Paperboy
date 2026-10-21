@@ -101,7 +101,7 @@ module Aim
         write_source(pages: 1)
         layout = Aim::StampLayout.new(created_by: 'x', area_list: [{ 'rows' => ['PREVIEW {approver}'] }])
 
-        result = Aim::ApprovalStamp.preview(@invoice, layout, values: { 'approver' => 'Martinez, Mark' })
+        result = Aim::ApprovalStamp.preview(layout, source: @invoice.pdf_path, values: { 'approver' => 'Martinez, Mark' })
 
         assert_includes PDF::Reader.new(StringIO.new(result.bytes)).pages.first.text, 'PREVIEW Martinez, Mark'
         assert_not File.exist?(Aim::ApprovalStamp.path(@invoice))

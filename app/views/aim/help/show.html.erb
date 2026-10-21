@@ -241,20 +241,28 @@
         Admins any group's and the default for groups without their own.</li>
       <li><strong>One stamping, any number of areas.</strong> The approval text, Fiscal's processing block (Budget Unit #,
         Account #, Initial, Date Processed), anything else: <em>Add stamp area</em> for each. All are written together.</li>
-      <li><strong>Placing an area:</strong> drag it on the invoice's page; pull its right edge to set its width. It keeps to
-        the nearest corner or edge, so an area put bottom right stays bottom right on letter, legal, landscape and turned
-        pages. <em>Pages</em> sets every page, the first or the last.</li>
+      <li><strong>Placing an area:</strong> drag it on the page; pull its right edge to set its width. It keeps to the
+        nearest corner or edge (<em>Kept to</em>), so an area put bottom right stays bottom right on letter, legal, landscape
+        and turned pages. <em>Turn</em> sets it at an angle in steps of 45 degrees; <em>Prints on</em> picks every page, the
+        first or the last.</li>
+      <li><strong>Preview on</strong> one of the group's recent invoices, or <em>Upload a PDF</em> of your own: it is only
+        shown and checked, never kept. Every page shows, in a pane that scrolls on its own; <strong>−</strong>, <strong>+</strong>
+        and <em>Fit</em> zoom it.</li>
+      <li><strong>Making room:</strong> <em>Shrink page contents</em> shrinks the invoice itself on the stamped copy (to 95%
+        down to 70%) and moves it to the centre, top, bottom, left or right, leaving a clear margin for the stamp. The
+        stamp is never shrunk, and the PDF as received is never changed.</li>
       <li><strong>What it says:</strong> its rows, one per line, with fields from the chips (<em>Approved by</em> puts in
         <code>{approver}</code>). A date field takes the format picked above the chips. A row whose fields are all empty
         is left out, so a second-approval row only prints when there is one.</li>
       <li><strong>How it looks:</strong> Helvetica, Times or Courier (the fonts every PDF reader has), size, colour, bold,
-        italic, alignment, line spacing, a border, and a background that can be see-through.</li>
+        italic, alignment, line spacing, a border, and a background: solid, 75%, 50%, 25% or clear.</li>
       <li><strong>Safety nets:</strong> an area grows into the page, never off it; it is pushed back inside if dragged out;
         text wraps to its width, and shrinks if it is still too tall. Text is never cut off. A layout that would not fit
         a page even at the smallest size cannot be saved. The designer also warns when an area sits over printing.</li>
-      <li><strong>Worst case</strong> fills every field with the longest values recent invoices have had. <strong>Check on
-        this invoice</strong> stamps the invoice picked with the layout as it stands, through the same code that stamps
-        approvals, and shows every page. Neither saves anything.</li>
+      <li><strong>Worst case</strong> fills every field with the longest values recent invoices have had. <strong>Check</strong>
+        has the server stamp the invoice picked (with its own values) or your uploaded PDF (with sample values) using the
+        layout as it stands, through the same code that stamps approvals, and shows every page and any safety net it
+        needed. Neither saves anything.</li>
       <li><strong>Saving</strong> keeps every version (History; <em>Load</em> opens an old one) and asks which invoices take
         it: those still with Fiscal (Fiscal Queue, On Hold, Report Queue) are stamped again, or only new approvals. If a
         safety net was needed on an invoice, its Fiscal page says so next to the stamp.</li>

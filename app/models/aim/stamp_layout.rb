@@ -6,6 +6,9 @@ module Aim
   # Each area is a Paperboy::Pdf::StampBox's settings plus its rows of text,
   # with fields from Aim::StampFields ("{approver}_{approved_at}").
   #
+  # A layout may also shrink each page's own contents (page_shrink percent,
+  # moved to page_position) to make room for the stamp.
+  #
   # Every save is a new row (append-only), so the rows are the history; the
   # newest for a group is its layout, the newest with no group is the default
   # for groups with none, and BUILT_IN -- the stamp AIM has always written --
@@ -16,6 +19,7 @@ module Aim
     MAX_AREAS = 10
     MAX_ROWS = 12
     MAX_ROW_LENGTH = 300
+    SHRINKS = [100, 95, 90, 85, 80, 75, 70].freeze
 
     # The approval stamp as it was before layouts: bottom right of every
     # page, 7pt Helvetica right-aligned over a white box.
@@ -31,6 +35,8 @@ module Aim
     belongs_to :agency_group, class_name: 'Aim::AgencyGroup', optional: true
 
     validates :created_by, presence: true
+    validates :page_shrink, inclusion: { in: SHRINKS }, allow_nil: true
+    validates :page_position, inclusion: { in: Paperboy::Pdf::Geometry::POSITIONS }, allow_nil: true
     validate :areas_make_sense
 
     scope :history_for, ->(group) { where(agency_group_id: group&.id).order(id: :desc) }
@@ -56,6 +62,13 @@ module Aim
     end
 
     def built_in? = new_record? && created_by == 'aim'
+
+    # Paperboy::Pdf::Stamp's shrink, or nil when the page is left as it is.
+    def shrink
+      return if page_shrink.nil? || page_shrink >= 100
+
+      { scale: page_shrink / 100.0, position: page_position.presence || 'center' }
+    end
 
     # The stamp areas filled for one invoice's +values+ (Aim::StampFields),
     # with rows whose fields are all empty left out, and areas left with no

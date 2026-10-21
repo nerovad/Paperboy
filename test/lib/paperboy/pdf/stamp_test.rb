@@ -83,6 +83,30 @@ module Paperboy
         assert_equal({ 1 => [:moved_inside], 2 => [:moved_inside] }, result.warnings)
       end
 
+      test 'a turned area and a clear background are drawn; the clear one adds no fill' do
+        reader, = stamp(source(pages: 1), box(lines: ['TURNED'], rotation: 45, background: '#ffff00', opacity: 0))
+
+        stream = reader.pages.first.raw_content
+        assert_includes stream, '(TURNED) Tj'
+        assert_match(/0\.707 -0\.707 0\.707 0\.707 [\d.]+ [\d.]+ cm/, stream)
+        assert_no_match(/1 1 0 rg/, stream, 'no yellow fill for a clear background')
+      end
+
+      test "shrinking the page moves its own contents, not the stamp's" do
+        path = source(pages: 2)
+        out = File.join(@dir, 'shrunk.pdf')
+        Stamp.new(path).write(out, shrink: { scale: 0.8, position: 'top' }) { [box(lines: ['ROOM'], pages: 'first')] }
+
+        pages = PDF::Reader.new(out).pages
+        page_text = pages.first.runs.find { |run| run.text.start_with?('Page') }
+        stamp_text = pages.first.runs.find { |run| run.text == 'ROOM' }
+        original = PDF::Reader.new(path).pages.first.runs.first
+        assert_in_delta original.font_size * 0.8, page_text.font_size, 0.01
+        assert_in_delta (original.y * 0.8) + (792 * 0.2), page_text.y, 0.5, 'shrunk toward the top: the room is left below'
+        assert_in_delta 7, stamp_text.font_size, 0.01, 'the stamp is never shrunk'
+        assert_includes pages.second.text, 'Page 2', 'every page is shrunk, stamp or not'
+      end
+
       test 'a file that is not a PDF cannot be stamped' do
         path = File.join(@dir, 'bad.pdf')
         File.write(path, 'not a pdf')

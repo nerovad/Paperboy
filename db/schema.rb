@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_160000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -423,6 +423,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_140000) do
     t.datetime "created_at", null: false
     t.string "created_by", null: false
     t.string "note", limit: 500
+    t.string "page_position", limit: 10
+    t.integer "page_shrink"
     t.index ["agency_group_id", "id"], name: "index_aim_stamp_layouts_on_group_and_id"
   end
 

@@ -65,6 +65,22 @@ module Paperboy
         assert_equal 200, huge.lines.size, 'every line is kept'
       end
 
+      test 'a turned area is kept on the page by the room its turned shape takes' do
+        flat = box(lines: ['A long line of stamp text'], size: 12).place(*LETTER)
+        turned = box(lines: ['A long line of stamp text'], size: 12, rotation: 45).place(*LETTER)
+        sideways = box(lines: ['A long line of stamp text'], size: 12, rotation: 90, anchor: 'top_left', x: 10, y: 10).place(*LETTER)
+
+        assert_equal 0, flat.rotation
+        assert_operator turned.outer[3], :>, flat.height, 'a slant takes more height than the text'
+        assert_in_delta 612 - 8, turned.outer[0] + turned.outer[2], 0.01, 'its turned shape, not the text, meets the margin'
+        assert_in_delta sideways.height, sideways.outer[2], 0.01, 'on its side, its height is the width it takes'
+        assert_in_delta 10, sideways.outer[0], 0.01
+      end
+
+      test 'turns are steps of 45 degrees; anything else is not turned' do
+        assert_equal [45, 315, 0], [box(rotation: 45), box(rotation: -45), box(rotation: 30)].map(&:rotation)
+      end
+
       test 'an area can be kept to the first or last page' do
         first = box(pages: 'first')
         last = box(pages: 'last')

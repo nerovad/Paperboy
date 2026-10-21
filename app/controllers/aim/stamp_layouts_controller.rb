@@ -11,10 +11,10 @@ module Aim
   # only new approvals. Checking a layout on a real invoice writes nothing.
   class StampLayoutsController < BaseController
     include Aim::StoredPdf
+    include Aim::StampSamples
 
     DEFAULT = 'default'
     RESTAMP_STATUSES = %w[review on_hold ready].freeze
-    SAMPLE_LIMIT = 25
 
     before_action :require_fiscal
     before_action :set_target, except: :index
@@ -33,8 +33,7 @@ module Aim
     end
 
     def update
-      layout = Aim::StampLayout.new(agency_group: @group, area_list: submitted_areas, note: params[:note].to_s.squish.presence,
-                                    created_by: current_user_email)
+      layout = designed_layout(agency_group: @group, note: params[:note].to_s.squish.presence)
       problem = too_big(layout)
       return redirect_to(edit_target_path, alert: problem) if problem
 
@@ -45,16 +44,15 @@ module Aim
       redirect_to edit_target_path, alert: e.record.errors.full_messages.to_sentence
     end
 
-    # The chosen invoice stamped with the layout as it stands in the designer,
-    # unsaved. The warnings ride in a header, page by page.
+    # The chosen invoice -- or a PDF the person uploaded, filled with sample
+    # values -- stamped with the layout as it stands in the designer, unsaved.
+    # The upload is read from its temporary file and kept nowhere. The
+    # warnings ride in a header, page by page.
     def preview
-      invoice = sample_invoice(params[:invoice_id])
-      source = invoice && store_file(invoice, 'pdf')
-      return head :not_found unless source
+      source, values = preview_source
+      return head(:not_found) unless source
 
-      layout = Aim::StampLayout.new(area_list: submitted_areas, created_by: current_user_email)
-      values = params[:worst_case] == '1' ? Aim::StampFields.worst_case : Aim::StampFields.values(invoice)
-      result = Aim::ApprovalStamp.preview(invoice, layout, values: values, source: source, check_overlap: true)
+      result = Aim::ApprovalStamp.preview(designed_layout, source: source, values: values, check_overlap: true)
       response.headers['X-Stamp-Warnings'] = Aim::ApprovalStamp.describe(result.warnings).to_s
       send_data result.bytes, type: 'application/pdf', disposition: 'inline', filename: 'stamp-preview.pdf'
     rescue Paperboy::Pdf::Unwritable => e
@@ -95,6 +93,11 @@ module Aim
 
     def edit_target_path = edit_aim_stamp_layout_path(target_key)
 
+    def designed_layout(**attributes)
+      Aim::StampLayout.new(area_list: submitted_areas, page_shrink: params[:page_shrink].presence&.to_i,
+                           page_position: params[:page_position].presence, created_by: current_user_email, **attributes)
+    end
+
     def current_layout
       @group ? Aim::StampLayout.current_for(@group) : (Aim::StampLayout.history_for(nil).first || Aim::StampLayout.built_in)
     end
@@ -109,17 +112,6 @@ module Aim
     rescue JSON::ParserError
       []
     end
-
-    # The group's invoices (any, for the default), newest first, that have a
-    # PDF: what the designer offers to lay the stamp on.
-    def sample_scope
-      scope = @group ? helpers.aim_agency_groups.invoices([@group]) : Aim::Invoice.all
-      scope.where.not(state: %w[deleted split]).where(pdf_purged_at: nil)
-    end
-
-    def sample_invoices = sample_scope.order(id: :desc).limit(SAMPLE_LIMIT).to_a
-
-    def sample_invoice(id) = id.present? ? sample_scope.find_by(id: id) : sample_scope.order(id: :desc).first
 
     def too_big(layout)
       box = layout.oversized_area(Aim::StampFields.worst_case) or return

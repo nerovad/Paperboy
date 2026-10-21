@@ -8,9 +8,21 @@ module Paperboy
     module StampDrawing
       module_function
 
+      # A turned area is drawn unturned about the origin, then turned and
+      # moved to its centre: clockwise as seen, so the angle is negative.
       def draw(box, placed, font:, state: nil)
+        return area(box, placed, font, state) if placed.rotation.zero?
+
+        centre_x, centre_y = placed.centre
+        radians = -placed.rotation * Math::PI / 180
+        turn = [Math.cos(radians), Math.sin(radians), -Math.sin(radians), Math.cos(radians), centre_x, centre_y]
+        "q\n#{turn.map { |n| number(n) }.join(' ')} cm\n" \
+          "#{area(box, placed.with(left: placed.left - centre_x, bottom: placed.bottom - centre_y), font, state)}Q\n"
+      end
+
+      def area(box, placed, font, state)
         body = +''
-        if box.background
+        if box.background && box.opacity.positive?
           body << "q\n"
           body << "/#{state} gs\n" if state
           body << "#{rgb(box.background)} rg\n#{rect(placed)} re f\nQ\n"

@@ -41,19 +41,23 @@ module Paperboy
       # block returns there. Returns a Result: the new file's bytes, and
       # { page number => [warning, ...] } for the pages that needed a safety
       # net. With +check_overlap+, an area over the page's own text is one too
-      # (:covers_text; unturned pages only).
-      def render(check_overlap: false)
+      # (:covers_text; unturned pages only). +shrink+, { scale:, position: },
+      # shrinks every page's own contents to make room for the stamp
+      # (Geometry.shrink); the stamp itself is never shrunk.
+      def render(check_overlap: false, shrink: nil)
         out = collect_objects
         @next_id = out.keys.map(&:first).max.to_i + 1
         @resources = StampResources.new { |object| add(out, object) }
-        open_q = add(out, stream("q\n"))
+        shared_q = add(out, stream("q\n"))
         warnings = {}
         refs = @objects.page_references
         refs.each_with_index do |ref, index|
           raise Unwritable, 'a page is not an indirect object' unless ref.is_a?(PDF::Reader::Reference)
 
           boxes = Array(yield(index, refs.size)).select { |box| box.on_page?(index, refs.size) && box.lines.any? }
-          next if boxes.empty?
+          next if boxes.empty? && shrink.nil?
+
+          open_q = shrink ? add(out, stream(shrink_content(ref, shrink))) : shared_q
 
           body, page_warnings = stamp_content(ref, boxes, check_overlap && @reader.page(index + 1))
           warnings[index + 1] = page_warnings if page_warnings.any?
@@ -64,8 +68,8 @@ module Paperboy
         raise Unwritable, e.message
       end
 
-      def write(destination, &block)
-        result = render(&block)
+      def write(destination, ...)
+        result = render(...)
         File.binwrite(destination, result.bytes)
         result
       end
@@ -130,11 +134,16 @@ module Paperboy
           placed = box.place(width, height)
           warnings.concat(placed.warnings)
           warnings << :covers_text if page && TextOverlap.covers?(page, placed, crop.first(2))
-          state = @resources.state_name(box.opacity) if box.background && box.opacity < 1
+          state = @resources.state_name(box.opacity) if box.background && box.opacity.positive? && box.opacity < 1
           body << StampDrawing.draw(box, placed, font: @resources.font_name(box), state: state)
         end
         body << "Q\n"
         [body, warnings.uniq]
+      end
+
+      def shrink_content(ref, shrink)
+        matrix = Geometry.shrink(box_of(ref), rotation_of(ref), shrink.fetch(:scale), shrink.fetch(:position))
+        "q\n#{matrix.map { |n| number(n) }.join(' ')} cm\n"
       end
 
       def number(value) = Writer.number(value)

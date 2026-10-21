@@ -20,7 +20,7 @@ export const FONT_FAMILIES = {
 export const AREA_DEFAULTS = {
   name: "Stamp", rows: [], anchor: "bottom_right", x: 8, y: 8, width: null, align: "right", font: "helvetica",
   bold: false, italic: false, size: 7, color: "#000000", leading: 8.5 / 7, background: "#ffffff", opacity: 1,
-  border: false, pages: "all"
+  border: false, pages: "all", rotation: 0
 }
 
 const TOKEN = /\{([a-z][a-z0-9_]*)(?:\|([^{}]*))?\}/g
@@ -107,29 +107,45 @@ export function measurer(area) {
 }
 
 // Where an area with +lines+ lands on a page +pageWidth+ by +pageHeight+:
-// { left, bottom, width, height, size, lines, warnings }.
+// { left, bottom, width, height (the area unturned, centred where it lands),
+// rotation, outer: { left, bottom, width, height } (the box its turned
+// shape takes up), size, lines, warnings }. Paperboy::Pdf::StampPlacement.
 export function place(area, lines, pageWidth, pageHeight, measure = measurer(area)) {
-  const warnings = []
   const roomWidth = pageWidth - (MARGIN * 2)
   const roomHeight = pageHeight - (MARGIN * 2)
+  const rotation = Number(area.rotation) || 0
+  const along = rotation % 180 === 0 ? roomWidth : rotation % 90 === 0 ? roomHeight : Math.min(roomWidth, roomHeight)
   let size = area.size
   for (;;) {
-    const limit = Math.min(area.width || Infinity, roomWidth) - (PAD * 2)
+    const limit = Math.min(area.width || Infinity, along) - (PAD * 2)
     const wrapped = lines.flatMap((line) => wrap(line, limit, (text) => measure(text, size)))
     const inner = area.width ? limit : Math.min(Math.max(0, ...wrapped.map((line) => measure(line, size))), limit)
     const width = inner + (PAD * 2)
     const height = (wrapped.length * size * area.leading) + (PAD * 2)
-    if (height <= roomHeight || size <= MIN_SIZE) {
+    const [outerWidth, outerHeight] = turned(width, height, rotation)
+    const fits = outerWidth <= roomWidth && outerHeight <= roomHeight
+    if (fits || size <= MIN_SIZE) {
+      const warnings = []
       if (size < area.size) warnings.push("shrunk")
-      if (height > roomHeight) warnings.push("too_big")
-      const [left, bottom] = anchored(area, pageWidth, pageHeight, width, height)
-      const keptLeft = keepInside(left, pageWidth, width)
-      const keptBottom = keepInside(bottom, pageHeight, height)
+      if (!fits) warnings.push("too_big")
+      const [left, bottom] = anchored(area, pageWidth, pageHeight, outerWidth, outerHeight)
+      const keptLeft = keepInside(left, pageWidth, outerWidth)
+      const keptBottom = keepInside(bottom, pageHeight, outerHeight)
       if (Math.abs(keptLeft - left) > 0.01 || Math.abs(keptBottom - bottom) > 0.01) warnings.push("moved_inside")
-      return { left: keptLeft, bottom: keptBottom, width, height, size, lines: wrapped, warnings }
+      const centreX = keptLeft + (outerWidth / 2)
+      const centreY = keptBottom + (outerHeight / 2)
+      return { left: centreX - (width / 2), bottom: centreY - (height / 2), width, height, rotation, size,
+        outer: { left: keptLeft, bottom: keptBottom, width: outerWidth, height: outerHeight }, lines: wrapped, warnings }
     }
     size = Math.max(size - 0.5, MIN_SIZE)
   }
+}
+
+function turned(width, height, rotation) {
+  const radians = (rotation * Math.PI) / 180
+  const cos = Math.abs(Math.cos(radians))
+  const sin = Math.abs(Math.sin(radians))
+  return [(width * cos) + (height * sin), (width * sin) + (height * cos)]
 }
 
 function wrap(line, limit, width) {

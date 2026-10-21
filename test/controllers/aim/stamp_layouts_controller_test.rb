@@ -107,18 +107,11 @@ module Aim
       assert_equal 0, Aim::StampLayout.count
     end
 
-    test 'a check stamps the invoice with the unsaved layout and writes nothing' do
-      in_store do
-        row = invoice('4601.C')
+    test 'the page shrink is saved with the layout' do
+      patch :update, params: { id: @gsa.id, areas: areas(['{approver}']), restamp: 'new', page_shrink: '85', page_position: 'top' }
 
-        post :preview, params: { id: @gsa.id, invoice_id: row.id, areas: areas(['CHECKED {vendor}']) }
-
-        assert_response :success
-        assert_equal 'application/pdf', response.media_type
-        assert_includes PDF::Reader.new(StringIO.new(response.body)).pages.first.text, 'CHECKED ACME'
-        assert_not File.exist?(Aim::ApprovalStamp.path(row))
-        assert_equal 0, Aim::StampLayout.count
-      end
+      layout = Aim::StampLayout.current_for(@gsa)
+      assert_equal [85, 'top', { scale: 0.85, position: 'top' }], [layout.page_shrink, layout.page_position, layout.shrink]
     end
 
     test 'the sample page is the invoice PDF, and only a group invoice' do

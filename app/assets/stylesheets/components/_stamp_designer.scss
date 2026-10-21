@@ -1,163 +1,382 @@
 @use "base/tokens" as *;
 
-// The stamp designer (#221): a page with its stamp areas over it, and the
-// panel that sets the selected area. Shared, not AIM's own, so any part of
-// Paperboy that stamps PDFs can use it.
-.stamp-designer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
-  gap: 1rem;
-  align-items: start;
-}
+// The stamp designer (#221): a top bar, then areas | pages | settings. The
+// pages scroll and zoom on their own; each side panel scrolls on its own.
+// Shared, not AIM's own, so any part of Paperboy that stamps PDFs can use it.
+// Fields and panels follow AIM's (.aim-panel, .aim-panel-header, .aim-field).
+$designer-height: calc(100vh - 15rem);
 
-@media (max-width: 1100px) {
-  .stamp-designer { grid-template-columns: 1fr; }
-}
-
-.stamp-designer__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.stamp-designer__bar {
   align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.stamp-designer__stage {
-  position: relative;
-  background: $surface-subtle;
-  border: 1px solid $border-muted;
-  border-radius: 6px;
-  padding: 0.5rem;
-  overflow: auto;
-}
-
-.stamp-designer__page-wrap {
-  position: relative;
-  width: 100%;
-}
-
-.stamp-designer__page {
-  display: block;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  background: #fff;
-}
-
-.stamp-designer__layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.stamp-area {
-  position: absolute;
-  box-sizing: border-box;
-  white-space: pre;
-  overflow: visible;
-  cursor: move;
-  user-select: none;
-  outline: 1px dashed rgba(37, 99, 235, 0.55);
-
-  &.is-selected { outline: 2px solid $blue-action; }
-  &.is-empty { opacity: 0.45; font-style: italic; }
-  &.is-some-pages { outline-style: dotted; }
-}
-
-.stamp-area__grip {
-  position: absolute;
-  top: 0;
-  right: -5px;
-  width: 10px;
-  height: 100%;
-  cursor: ew-resize;
-}
-
-.stamp-designer__panel {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  background: $surface-panel;
-  border: 1px solid $border-muted;
-  border-radius: 6px;
-  padding: 0.75rem;
-
-  label { font-size: 0.85rem; color: $label-color; display: flex; flex-direction: column; gap: 0.2rem; }
-  textarea { font-family: "Courier New", Courier, monospace; font-size: 0.85rem; min-height: 6rem; }
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.9rem;
 }
 
-.stamp-designer__row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+.stamp-designer__bar-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.stamp-designer__checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-
-  label { flex-direction: row; align-items: center; }
+.stamp-designer__label {
+  color: $text-color;
+  font-size: 0.76rem;
+  font-weight: 650;
 }
 
-.stamp-designer__areas {
-  display: flex;
-  flex-wrap: wrap;
+.stamp-designer__input,
+.stamp-designer__name {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  color: $text-strong;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 5px 8px;
+}
+
+.stamp-designer__input { max-width: 22rem; }
+
+.stamp-designer__or,
+.stamp-designer__file {
+  color: $text-muted;
+  font-size: 0.8rem;
+}
+
+.stamp-designer__file { font-style: italic; }
+
+.stamp-designer__upload { cursor: pointer; }
+
+.stamp-designer__switch {
+  align-items: center;
+  color: $text-color;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.82rem;
   gap: 0.35rem;
 }
 
-.stamp-designer__chips {
+.stamp-designer__body {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 15rem minmax(0, 1fr) 20rem;
+  height: $designer-height;
+  min-height: 34rem;
+}
+
+@media (max-width: 1200px) {
+  .stamp-designer__body {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .stamp-designer__stage { height: 70vh; }
+}
+
+.stamp-designer__side,
+.stamp-designer__stage {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  max-height: 11rem;
-  overflow: auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.stamp-designer__chip-group {
-  width: 100%;
-  font-size: 0.75rem;
+.stamp-designer__side { overflow-y: auto; }
+
+.stamp-designer__side-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.stamp-designer__panel-head {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.stamp-designer__name {
+  flex: 1;
+  font-weight: 650;
+  min-width: 0;
+}
+
+.stamp-designer__section {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+}
+
+.stamp-designer__hint {
   color: $text-muted;
-  margin-top: 0.25rem;
+  font-size: 0.76rem;
+  margin: 0;
 }
 
+// The area list.
+.stamp-designer__areas {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+
+.stamp-designer__area {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  color: $text-color;
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 2px;
+  padding: 7px 9px;
+  text-align: left;
+
+  strong { font-size: 0.82rem; }
+
+  span {
+    color: $text-muted;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.72rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: $text-muted;
+    font-size: 0.7rem;
+
+    &:empty { display: none; }
+  }
+
+  &:hover { border-color: $blue-action; }
+
+  &.is-selected {
+    border-color: $blue-action;
+    box-shadow: inset 3px 0 0 $blue-action;
+  }
+}
+
+// The pages.
+.stamp-designer__scroll {
+  background: $surface-muted;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+
+.stamp-designer__pages {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: min-content;
+}
+
+.stamp-designer__sheet {
+  position: relative;
+}
+
+.stamp-designer__page {
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  display: block;
+}
+
+.stamp-designer__layer {
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+
+.stamp-designer__page-number {
+  color: $text-muted;
+  font-size: 0.7rem;
+  left: 0;
+  position: absolute;
+  top: -16px;
+}
+
+.stamp-designer__zoom {
+  align-self: center;
+  color: $text-color;
+  font-size: 0.78rem;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.stamp-designer__status { flex: 1; }
+
+.stamp-area {
+  box-sizing: border-box;
+  cursor: move;
+  outline: 1px dashed rgba(37, 99, 235, 0.5);
+  overflow: visible;
+  position: absolute;
+  transform-origin: center center;
+  user-select: none;
+  white-space: pre;
+
+  &.is-selected { outline: 2px solid $blue-action; }
+  &.is-empty { font-style: italic; opacity: 0.45; }
+}
+
+.stamp-area__grip {
+  cursor: ew-resize;
+  height: 100%;
+  position: absolute;
+  right: -5px;
+  top: 0;
+  width: 10px;
+}
+
+// The settings.
 .stamp-designer__warnings {
   background: $warning-bg;
-  color: $warning-text;
   border: 1px solid $warning-border;
-  border-radius: 4px;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
+  border-radius: $radius-6;
+  color: $warning-text;
+  font-size: 0.78rem;
+  margin: 10px 12px 0;
+  padding: 7px 9px;
 }
 
-.stamp-designer__status {
-  font-size: 0.85rem;
-  color: $text-muted;
+.stamp-designer__group {
+  border-bottom: 1px solid $neutral-border-subtle;
+  display: grid;
+  gap: 9px;
+  padding: 10px 12px 12px;
+
+  &:not([open]) { padding-bottom: 10px; }
+
+  summary {
+    color: $text-strong;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 650;
+    list-style-position: inside;
+  }
+
+  textarea {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 0.78rem;
+    resize: vertical;
+  }
+}
+
+.stamp-designer__pair {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.stamp-designer__offsets {
+  display: grid;
+  gap: 8px;
+}
+
+.stamp-designer__colour {
+  height: 31px;
+  padding: 2px 4px !important;
+}
+
+.stamp-designer__segmented {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+
+  &.is-wrapping { flex-wrap: wrap; }
+
+  .btn {
+    border-radius: 0;
+    flex: 1 1 auto;
+    margin: 0;
+  }
+
+  .btn:first-child { border-radius: $radius-6 0 0 $radius-6; }
+  .btn:last-child { border-radius: 0 $radius-6 $radius-6 0; }
+}
+
+.stamp-designer__bold { font-weight: 800; }
+.stamp-designer__italic { font-style: italic; }
+
+// The 3 x 3 "kept to" picker: a square per anchor.
+.stamp-designer__anchors {
+  aspect-ratio: 1;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 5.5rem;
+  padding: 4px;
+}
+
+.stamp-designer__anchor {
+  background: $surface-control;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover { background: $surface-control-hover; }
+
+  &.active {
+    background: $blue-action;
+    border-color: $blue-action;
+  }
+}
+
+// Check and Save dialogs' contents.
+.stamp-designer__check-body {
+  max-height: 75vh;
+  overflow-y: auto;
 }
 
 .stamp-designer__preview {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: 12px;
+  justify-content: center;
 }
 
 .stamp-designer__preview-page {
-  border: 1px solid $border-muted;
+  border: 1px solid $neutral-border-subtle;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-// The save dialog's contents: one choice per line, then the note.
 .stamp-designer__choices {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   margin: 0.5rem 0 1rem;
 
-  label { display: flex; gap: 0.5rem; align-items: flex-start; }
+  label {
+    align-items: flex-start;
+    display: flex;
+    font-size: 0.85rem;
+    gap: 0.5rem;
+  }
 }
 
-.stamp-designer__note {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
+.stamp-designer__history {
+  margin-top: 0.75rem;
+  padding: 10px 14px;
+
+  summary {
+    color: $text-strong;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+
+  table { margin-top: 8px; }
 }

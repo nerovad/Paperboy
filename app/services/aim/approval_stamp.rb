@@ -37,19 +37,20 @@ module Aim
       return record.update!(stamp_error: 'no approval in the history') if values['approver'].blank?
 
       layout = layout_for(invoice)
-      result = write(invoice.pdf_path, path(invoice), layout.boxes(values))
+      result = write(invoice.pdf_path, path(invoice), layout.boxes(values), shrink: layout.shrink)
       record.update!(stamped_at: Time.current, stamp_error: nil, stamp_layout_id: layout.id,
                      stamp_warnings: describe(result.warnings))
     rescue Paperboy::Pdf::Unwritable, SystemCallError => e
       record.update!(stamped_at: nil, stamp_error: e.message.to_s.truncate(500))
     end
 
-    # The stamped PDF +layout+ would make of +invoice+, and its warnings,
-    # without writing anything (the designer's check, #221). With
+    # The stamped PDF +layout+ would make of the PDF at +source+ filled with
+    # +values+, and its warnings, without writing anything (the designer's
+    # check, #221). With
     # +check_overlap+, an area sitting over the page's own text is a warning.
-    def preview(invoice, layout, values: Aim::StampFields.values(invoice), source: invoice.pdf_path, check_overlap: false)
+    def preview(layout, source:, values:, check_overlap: false)
       boxes = layout.boxes(values)
-      Paperboy::Pdf::Stamp.new(source).render(check_overlap: check_overlap) { boxes }
+      Paperboy::Pdf::Stamp.new(source).render(check_overlap: check_overlap, shrink: layout.shrink) { boxes }
     end
 
     # "page 1: text made smaller to fit; page 2: ...", or nil.
@@ -62,9 +63,9 @@ module Aim
 
     # Written beside the target and renamed into place, so nobody is ever
     # served half a file.
-    def write(source, target, boxes)
+    def write(source, target, boxes, shrink: nil)
       temporary = "#{target}.part"
-      result = Paperboy::Pdf::Stamp.new(source).write(temporary) { boxes }
+      result = Paperboy::Pdf::Stamp.new(source).write(temporary, shrink: shrink) { boxes }
       File.rename(temporary, target)
       result
     ensure
