@@ -23,7 +23,9 @@ export const AREA_DEFAULTS = {
   border: false, pages: "all", rotation: 0
 }
 
-const TOKEN = /\{([a-z][a-z0-9_]*)(?:\|([^{}]*))?\}/g
+// A field is {name} or {name|format}; "[ _ ]{name}" puts " _ " before it
+// only when it has a value.
+const TOKEN = /(?:\[([^[\]{}]*)\])?\{([a-z][a-z0-9_]*)(?:\|([^{}]*))?\}/g
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
   "November", "December"]
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -38,11 +40,11 @@ export function fillRows(rows, values, formats = {}) {
 export function fillRow(row, values, formats = {}) {
   let fields = 0
   let filled = 0
-  const text = String(row).replace(TOKEN, (_, name, format) => {
+  const text = String(row).replace(TOKEN, (_, separator, name, format) => {
     fields += 1
     const shown = render(values[name], format || formats[name])
     if (shown) filled += 1
-    return shown
+    return shown && separator !== undefined ? separator + shown : shown
   })
   return { text, skip: fields > 0 && filled === 0 }
 }

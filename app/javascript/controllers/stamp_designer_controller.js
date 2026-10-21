@@ -23,7 +23,7 @@ const WARNINGS = {
 // which invoices take the layout. The designer fills the window below its
 // top, so only the pages and the settings scroll.
 export default class extends Controller {
-  static targets = ["pages", "scroller", "sample", "upload", "fileName", "worstCase", "list", "rows", "insert", "dateFormat",
+  static targets = ["pages", "scroller", "sample", "upload", "fileName", "worstCase", "list", "rows", "insert", "separator", "dateFormat",
     "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "body", "checkForm",
     "checkAreas", "checkShrink", "checkPosition", "checkWorst", "checkInvoice", "checkFile", "form", "areasField",
     "shrinkField", "positionField", "saveModal", "saveButton", "restampField"]
@@ -57,7 +57,15 @@ export default class extends Controller {
   fit() {
     if (!this.hasBodyTarget || window.innerWidth <= 1200) return
     const top = this.bodyTarget.getBoundingClientRect().top + window.scrollY
-    this.bodyTarget.style.height = `${Math.max(480, window.innerHeight - top - 16)}px`
+    let height = Math.max(480, window.innerHeight - top - 16)
+    this.bodyTarget.style.height = `${height}px`
+    // Whatever still overflows the window (the page's own padding and
+    // footer) comes off too, so the window itself never scrolls.
+    const overflow = document.documentElement.scrollHeight - window.innerHeight
+    if (overflow > 0) {
+      height = Math.max(480, height - overflow)
+      this.bodyTarget.style.height = `${height}px`
+    }
   }
 
   // A clear background is kept as a colour at no opacity.
@@ -363,6 +371,14 @@ export default class extends Controller {
     this.showPanel()
   }
 
+  // A separator goes in at the cursor as "[ _ ]": it prints only when the
+  // field after it has a value.
+  insertSeparator() {
+    const separator = this.separatorTarget.value
+    this.separatorTarget.value = ""
+    if (separator) this.insertText(`[${separator}]`)
+  }
+
   // A field goes in at the cursor; a date takes the format picked.
   insertField() {
     const option = this.insertTarget.selectedOptions[0]
@@ -370,11 +386,14 @@ export default class extends Controller {
     if (!field) return
     const dated = ["date", "datetime"].includes(option.dataset.kind)
     const format = dated ? this.dateFormatTarget.value : ""
-    const token = format ? `{${field}|${format}}` : `{${field}}`
+    this.insertTarget.value = ""
+    this.insertText(format ? `{${field}|${format}}` : `{${field}}`)
+  }
+
+  insertText(token) {
     const rows = this.rowsTarget
     const at = rows.selectionStart ?? rows.value.length
     rows.value = rows.value.slice(0, at) + token + rows.value.slice(rows.selectionEnd ?? at)
-    this.insertTarget.value = ""
     rows.focus()
     rows.setSelectionRange(at + token.length, at + token.length)
     rows.dispatchEvent(new Event("input"))

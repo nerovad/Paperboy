@@ -36,8 +36,16 @@ module Paperboy
                                      'Check {none} for {name}'])
       end
 
+      test 'a separator in brackets prints only when the field after it has a value' do
+        row = fill('{name}_{received}[ _ ]{none}[ _ ]{total|plain}[ - ]{none}')
+
+        assert_equal 'Martinez, Mark_06/24/2025 _ 1234.50', row.text
+        assert_equal 'Total [note] 1234.50', fill('Total [note] {total|plain}').text, 'a space after the bracket: plain text'
+        assert_equal 'Plain [brackets] stay', fill('Plain [brackets] stay').text
+      end
+
       test 'the fields a row names' do
-        assert_equal %w[received at name], StampTemplate.fields('{received}- {at|%H:%M} {name} {not a field}')
+        assert_equal %w[received at name], StampTemplate.fields('{received}- {at|%H:%M}[ _ ]{name} {not a field}')
       end
     end
   end

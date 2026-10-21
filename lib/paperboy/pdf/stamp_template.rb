@@ -9,18 +9,23 @@ module Paperboy
     # * a number takes "money" ($1,234.50, the default) or "plain" (1234.50);
     # * text takes "upper" or "lower", or nothing.
     #
+    # A separator in square brackets just before a field -- "[ _ ]{program}"
+    # -- prints only when that field has a value, so a row of optional
+    # fields joined by separators never shows a separator with nothing after
+    # it. Brackets not followed by a field are plain text.
+    #
     # A field with no value prints as +blank+. A row whose fields are all
     # empty is left out (#skip?), so a row that only applies sometimes -- a
     # second approval -- needs no condition of its own. A row of plain text
     # always prints.
     class StampTemplate
-      TOKEN = /\{([a-z][a-z0-9_]*)(?:\|([^{}]*))?\}/
+      TOKEN = /(?:\[([^\[\]{}]*)\])?\{([a-z][a-z0-9_]*)(?:\|([^{}]*))?\}/
 
       Row = Data.define(:text, :fields, :filled) do
         def skip? = fields.any? && filled.zero?
       end
 
-      def self.fields(text) = text.to_s.scan(TOKEN).map(&:first)
+      def self.fields(text) = text.to_s.scan(TOKEN).map(&:second)
 
       # +values+: { 'name' => value }; +formats+: { 'name' => default format }.
       def initialize(values, formats: {}, blank: '')
@@ -33,11 +38,13 @@ module Paperboy
         fields = []
         filled = 0
         out = text.to_s.gsub(TOKEN) do
-          name = Regexp.last_match(1)
+          separator, name, style = Regexp.last_match.captures
           fields << name
-          shown = render(@values[name], Regexp.last_match(2).presence || @formats[name])
+          shown = render(@values[name], style.presence || @formats[name])
           filled += 1 if shown.present?
-          shown.presence || @blank
+          if separator then shown.present? ? "#{separator}#{shown}" : ''
+          else shown.presence || @blank
+          end
         end
         Row.new(text: out, fields: fields, filled: filled)
       end

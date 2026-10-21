@@ -251,9 +251,11 @@
       <li><strong>Making room:</strong> <em>Shrink page contents</em> shrinks the invoice itself on the stamped copy (to 95%
         down to 70%) and moves it to the centre, top, bottom, left or right, leaving a clear margin for the stamp. The
         stamp is never shrunk, and the PDF as received is never changed.</li>
-      <li><strong>What it says:</strong> its rows, one per line, with fields from the chips (<em>Approved by</em> puts in
-        <code>{approver}</code>). A date field takes the format picked above the chips. A row whose fields are all empty
-        is left out, so a second-approval row only prints when there is one.</li>
+      <li><strong>What it says:</strong> its rows, one per line, with fields from <em>Insert a field</em> (<em>Approved by</em> puts in
+        <code>{approver}</code>). A date field takes the format picked beside it. <em>Insert a separator</em> puts in a
+        separator like <code>[ _ ]</code> that prints only when the field after it has a value, so
+        <code>{approver}[ _ ]{program}</code> never ends in a stray underscore. A row whose fields are all empty is left
+        out, so a second-approval row only prints when there is one.</li>
       <li><strong>How it looks:</strong> Helvetica, Times or Courier (the fonts every PDF reader has), size, colour, bold,
         italic, alignment, line spacing, a border, and a background: solid, 75%, 50%, 25% or clear.</li>
       <li><strong>Safety nets:</strong> an area grows into the page, never off it; it is pushed back inside if dragged out;

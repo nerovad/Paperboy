@@ -149,7 +149,20 @@
                 </select>
               </div>
             </div>
-            <p class="stamp-designer__hint">A row whose fields are all empty is left out.</p>
+            <div class="aim-field">
+              <label for="stamp-separator">Insert a separator</label>
+              <select id="stamp-separator" data-stamp-designer-target="separator" data-action="stamp-designer#insertSeparator">
+                <option value="">Choose…</option>
+                <% { ' _ ' => 'Underscore  ( _ )', '_' => 'Underscore, no spaces  (_)', ' - ' => 'Dash  ( - )', ' / ' => 'Slash  ( / )',
+                     ', ' => 'Comma  (, )', ' | ' => 'Bar  ( | )', ' · ' => 'Dot  ( · )', ' ' => 'Space' }.each do |value, label| %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+            <p class="stamp-designer__hint">
+              A separator goes in as <code>[ _ ]</code> and prints only when the field after it has a value.
+              A row whose fields are all empty is left out.
+            </p>
           </details>
 
           <details class="stamp-designer__group" open>
