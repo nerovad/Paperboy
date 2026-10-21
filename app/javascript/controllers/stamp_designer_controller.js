@@ -23,13 +23,13 @@ const WARNINGS = {
 // which invoices take the layout. The designer fills the window below its
 // top, so only the pages and the settings scroll.
 export default class extends Controller {
-  static targets = ["pages", "scroller", "sample", "upload", "fileName", "worstCase", "list", "rows", "insert", "separator", "dateFormat",
+  static targets = ["pages", "scroller", "sample", "upload", "fileName", "fill", "list", "rows", "insert", "separator", "dateFormat",
     "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "body", "checkForm",
-    "checkAreas", "checkShrink", "checkPosition", "checkWorst", "checkInvoice", "checkFile", "form", "areasField",
+    "checkAreas", "checkShrink", "checkPosition", "checkFill", "checkInvoice", "checkFile", "form", "areasField",
     "shrinkField", "positionField", "saveModal", "saveButton", "restampField"]
 
   static values = { areas: Array, shrink: Number, position: String, samples: Object, worst: Object, formats: Object,
-    sampleUrl: String, previewUrl: String }
+    sampleUrl: String, valuesUrl: String, previewUrl: String }
 
   connect() {
     this.areas = this.areasValue.map((area) => this.normalise(area))
@@ -38,6 +38,9 @@ export default class extends Controller {
     this.pageShrink = this.shrinkValue || 100
     this.pagePosition = this.positionValue || "center"
     this.sheets = []
+    this.fillMode = "invoice"
+    this.invoiceValues = null
+    this.showFill()
     this.showPanel()
     this.showPageSettings()
     this.fit()
@@ -53,19 +56,23 @@ export default class extends Controller {
     window.removeEventListener("resize", this.onResize)
   }
 
-  // The three panels take the window's height below where they start.
+  // The three panels take the height left in whatever scrolls the page
+  // (the layout's content area, or the window), so that never scrolls.
   fit() {
     if (!this.hasBodyTarget || window.innerWidth <= 1200) return
-    const top = this.bodyTarget.getBoundingClientRect().top + window.scrollY
-    let height = Math.max(480, window.innerHeight - top - 16)
+    const scroller = this.pageScroller()
+    const view = scroller === document.scrollingElement ? window.innerHeight : scroller.clientHeight
+    const viewTop = scroller === document.scrollingElement ? 0 : scroller.getBoundingClientRect().top
+    const top = this.bodyTarget.getBoundingClientRect().top - viewTop + scroller.scrollTop
+    let height = Math.max(320, view - top - 16)
     this.bodyTarget.style.height = `${height}px`
-    // Whatever still overflows the window (the page's own padding and
-    // footer) comes off too, so the window itself never scrolls.
-    const overflow = document.documentElement.scrollHeight - window.innerHeight
-    if (overflow > 0) {
-      height = Math.max(480, height - overflow)
-      this.bodyTarget.style.height = `${height}px`
-    }
+    const overflow = scroller.scrollHeight - view
+    if (overflow > 0) this.bodyTarget.style.height = `${Math.max(320, height - overflow)}px`
+  }
+
+  // The AIM page scrolls inside its own area; elsewhere the window does.
+  pageScroller() {
+    return this.element.closest(".aim-page") || document.scrollingElement
   }
 
   // A clear background is kept as a colour at no opacity.
@@ -83,7 +90,14 @@ export default class extends Controller {
     this.fileNameTarget.hidden = true
     if (this.hasUploadTarget) this.uploadTarget.value = ""
     if (!this.sampleTarget.value) return this.status("No invoice to preview on yet: upload a PDF.")
-    this.open({ url: `${this.sampleUrlValue}?invoice_id=${encodeURIComponent(this.sampleTarget.value)}`, withCredentials: true })
+    const id = encodeURIComponent(this.sampleTarget.value)
+    this.invoiceValues = null
+    fetch(`${this.valuesUrlValue}?invoice_id=${id}`, { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((values) => { this.invoiceValues = values; this.draw() })
+      .catch(() => {})
+    this.showFill()
+    this.open({ url: `${this.sampleUrlValue}?invoice_id=${id}`, withCredentials: true })
   }
 
   async useUpload() {
@@ -91,6 +105,8 @@ export default class extends Controller {
     if (!file) return
     if (file.size > MAX_UPLOAD) return this.status("That PDF is over 25 MB.")
     this.upload = file
+    this.invoiceValues = null
+    this.showFill()
     this.fileNameTarget.textContent = file.name
     this.fileNameTarget.hidden = false
     this.open({ data: await file.arrayBuffer() })
@@ -164,8 +180,26 @@ export default class extends Controller {
     context.drawImage(drawn, x, y)
   }
 
+  // What the fields are filled with, the same in the live view and Check:
+  // the invoice's own values (samples where it has none), samples, or
+  // every field at its longest. An uploaded PDF has no invoice: samples.
   values() {
-    return this.hasWorstCaseTarget && this.worstCaseTarget.checked ? this.worstValue : this.samplesValue
+    if (this.fillMode === "worst") return this.worstValue
+    if (this.fillMode === "invoice" && !this.upload && this.invoiceValues) return this.invoiceValues
+    return this.samplesValue
+  }
+
+  setFill(event) {
+    this.fillMode = event.currentTarget.dataset.value
+    this.showFill()
+    this.draw()
+  }
+
+  showFill() {
+    this.fillTargets.forEach((button) => {
+      button.classList.toggle("active", button.dataset.value === this.fillMode)
+      if (button.dataset.value === "invoice") button.disabled = Boolean(this.upload)
+    })
   }
 
   onPage(area, index) {
@@ -182,7 +216,7 @@ export default class extends Controller {
         const lines = fillRows(area.rows, this.values(), this.formatsValue)
         const placed = place(area, lines.length ? lines : ["(nothing to print)"], sheet.width, sheet.height)
         if (this.inkUnder(sheet, placed)) placed.warnings.push("covers_page")
-        sheet.layer.append(this.element(sheet, area, placed, index, !lines.length))
+        sheet.layer.append(this.areaElement(sheet, area, placed, index, !lines.length))
         return placed
       })
     })
@@ -190,7 +224,7 @@ export default class extends Controller {
     this.showWarnings()
   }
 
-  element(sheet, area, placed, index, empty) {
+  areaElement(sheet, area, placed, index, empty) {
     const box = document.createElement("div")
     box.className = `stamp-area${index === this.selected ? " is-selected" : ""}${empty ? " is-empty" : ""}`
     const scale = sheet.scale
@@ -431,7 +465,7 @@ export default class extends Controller {
     this.checkAreasTarget.value = JSON.stringify(this.areas)
     this.checkShrinkTarget.value = this.pageShrink
     this.checkPositionTarget.value = this.pagePosition
-    this.checkWorstTarget.value = this.hasWorstCaseTarget && this.worstCaseTarget.checked ? "1" : "0"
+    this.checkFillTarget.value = this.upload && this.fillMode === "invoice" ? "samples" : this.fillMode
     const files = new DataTransfer()
     if (this.upload) files.items.add(this.upload)
     this.checkFileTarget.files = files.files

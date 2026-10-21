@@ -204,6 +204,7 @@ Rails.application.routes.draw do
       member do
         post :preview
         get :sample
+        get :values
       end
     end
     resources :fiscal_reports, only: %i[index show], path: 'fiscal/reports', constraints: { id: /\d+/ } do

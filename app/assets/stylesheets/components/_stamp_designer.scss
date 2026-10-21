@@ -5,6 +5,12 @@
 // Shared, not AIM's own, so any part of Paperboy that stamps PDFs can use it.
 // Fields and panels follow AIM's (.aim-panel, .aim-panel-header, .aim-field).
 
+// The designer's own panels scroll, so its page needs only the room the
+// "Powered by GSA" badge takes, not the 120px other AIM pages leave.
+.aim-page.aim-profile-page.stamp-designer-page {
+  padding-bottom: 38px;
+}
+
 .stamp-designer__bar {
   align-items: center;
   display: flex;

@@ -64,5 +64,22 @@ module Aim
       post :preview, params: { id: @gsa.id, areas: areas(['X']), file: Rack::Test::UploadedFile.new(not_pdf, 'application/pdf') }
       assert_response :not_found
     end
+
+    test "the live view and Check fill alike: an invoice's own values, samples where it has none" do
+      in_store do
+        row = invoice('4601.F')
+
+        get :values, params: { id: @gsa.id, invoice_id: row.id }
+        values = response.parsed_body
+        assert_equal ['ACME', '004512'], [values.dig('vendor', 'value'), values.dig('check_number', 'value')],
+                     'its own vendor; no check yet, so the sample check number'
+
+        post :preview, params: { id: @gsa.id, invoice_id: row.id, areas: areas(['{vendor} check {check_number}']) }
+        assert_includes PDF::Reader.new(StringIO.new(response.body)).pages.first.text, 'ACME check 004512'
+
+        post :preview, params: { id: @gsa.id, invoice_id: row.id, fill: 'worst', areas: areas(['{approver}']) }
+        assert_includes PDF::Reader.new(StringIO.new(response.body)).pages.first.text, 'Montgomery-Fitzgerald'
+      end
+    end
   end
 end

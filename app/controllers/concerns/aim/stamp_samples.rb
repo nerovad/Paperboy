@@ -23,19 +23,28 @@ module Aim
 
     def sample_invoice(id) = id.present? ? sample_scope.find_by(id: id) : sample_scope.order(id: :desc).first
 
-    # [path, values] for a check: an uploaded PDF with sample values, or a
-    # group invoice with its own; nil when there is neither, or the upload is
-    # not a PDF or too big.
+    # [path, values] for a check: a group invoice, or an uploaded PDF, filled
+    # as the designer's "Fill with" says (fill_values); nil when there is
+    # neither, or the upload is not a PDF or too big.
     def preview_source
-      worst = params[:worst_case] == '1'
       if (upload = params[:file]).respond_to?(:path)
         return if upload.size > UPLOAD_LIMIT || File.binread(upload.path, 5) != '%PDF-'
 
-        return [upload.path, worst ? Aim::StampFields.worst_case : Aim::StampFields.samples]
+        return [upload.path, fill_values(nil)]
       end
       invoice = sample_invoice(params[:invoice_id])
       path = invoice && store_file(invoice, 'pdf')
-      [path, worst ? Aim::StampFields.worst_case : Aim::StampFields.values(invoice)] if path
+      [path, fill_values(invoice)] if path
+    end
+
+    # "worst": every field at its longest; "samples"; otherwise the invoice's
+    # own values with samples where they are empty (samples for an upload).
+    def fill_values(invoice)
+      case params[:fill]
+      when 'worst' then Aim::StampFields.worst_case
+      when 'samples' then Aim::StampFields.samples
+      else invoice ? Aim::StampFields.with_samples(invoice) : Aim::StampFields.samples
+      end
     end
   end
 end

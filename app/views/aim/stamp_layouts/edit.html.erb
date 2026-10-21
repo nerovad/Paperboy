@@ -12,7 +12,7 @@
        end)
      end
    end %>
-<div class="aim-page aim-profile-page">
+<div class="aim-page aim-profile-page stamp-designer-page">
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Stamp Layout · <%= stamp_target_name(@group) %></h1>
@@ -34,6 +34,7 @@
        data-stamp-designer-worst-value="<%= stamp_values_data(Aim::StampFields.worst_case).to_json %>"
        data-stamp-designer-formats-value="<%= Aim::StampFields.formats.to_json %>"
        data-stamp-designer-sample-url-value="<%= sample_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-values-url-value="<%= values_aim_stamp_layout_path(key) %>"
        data-stamp-designer-preview-url-value="<%= preview_aim_stamp_layout_path(key) %>">
 
     <section class="aim-panel stamp-designer__bar">
@@ -53,10 +54,15 @@
         <span class="stamp-designer__file" data-stamp-designer-target="fileName" hidden></span>
       </div>
       <div class="stamp-designer__bar-group">
-        <label class="stamp-designer__switch" title="Fill each field with the longest value recent invoices have had">
-          <input type="checkbox" data-stamp-designer-target="worstCase" data-action="stamp-designer#draw">
-          <span>Worst case</span>
-        </label>
+        <span class="stamp-designer__label">Fill with</span>
+        <div class="stamp-designer__segmented" role="group" aria-label="Fill the fields with">
+          <% { 'invoice' => ['This invoice', "The invoice's own values; samples where it has none yet (no approver, no coding)"],
+               'samples' => ['Samples', 'Typical values'],
+               'worst' => ['Worst case', 'Every field at its longest'] }.each do |mode, (label, hint)| %>
+            <button type="button" class="btn compact" title="<%= hint %>" data-stamp-designer-target="fill" data-value="<%= mode %>"
+                    data-action="stamp-designer#setFill"><%= label %></button>
+          <% end %>
+        </div>
         <button type="button" class="btn info compact" data-action="stamp-designer#check">Check</button>
         <button type="button" class="btn approve compact" data-action="stamp-designer#openSave">Save…</button>
       </div>
@@ -306,7 +312,7 @@
       <%= hidden_field_tag :areas, '', id: nil, data: { stamp_designer_target: 'checkAreas' } %>
       <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
       <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
-      <%= hidden_field_tag :worst_case, '', id: nil, data: { stamp_designer_target: 'checkWorst' } %>
+      <%= hidden_field_tag :fill, '', id: nil, data: { stamp_designer_target: 'checkFill' } %>
       <%= hidden_field_tag :invoice_id, '', id: nil, data: { stamp_designer_target: 'checkInvoice' } %>
       <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
     <% end %>

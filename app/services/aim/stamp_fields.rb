@@ -101,6 +101,11 @@ module Aim
       }
     end
 
+    # An invoice's own values, with samples standing in for any still empty
+    # (no approver yet, no coding): what the designer's "This invoice" fills
+    # in, so a layout can be judged on an invoice that is not approved yet.
+    def with_samples(invoice) = samples.merge(values(invoice).reject { |_, value| value.blank? })
+
     # Every field at its longest (WORST, WORST_SOURCES), for the designer.
     def worst_case
       worst = samples.merge(WORST)

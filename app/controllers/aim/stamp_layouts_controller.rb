@@ -60,6 +60,15 @@ module Aim
       head :unprocessable_content
     end
 
+    # A group invoice's own values, with samples where they are empty, for
+    # the designer's live view ("This invoice").
+    def values
+      invoice = sample_invoice(params[:invoice_id])
+      return head :not_found unless invoice
+
+      render json: helpers.stamp_values_data(Aim::StampFields.with_samples(invoice))
+    end
+
     # A sample invoice's PDF as it is now, unstamped, for the designer's page.
     def sample
       invoice = sample_invoice(params[:invoice_id])
