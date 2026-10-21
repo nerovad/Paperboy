@@ -56,13 +56,10 @@ module HsaAdoptionCards
       ENV.fetch("GSABSS_#{suffix}", nil).to_s.strip.presence
     end
 
-    # The same rule as config/database.yml: a username means SQL auth (CI,
-    # workstations); none means Kerberos from the ticket in KRB5CCNAME.
+    # Same rule as config/database.yml. A SQL login is sent. A blank
+    # username, or DOMAIN\user on Linux, uses the Kerberos ticket.
     def credential_options
-      username = gsabss('USERNAME')
-      return {} if username.nil?
-
-      { username: username, password: ENV.fetch('GSABSS_PASSWORD', nil) }
+      Paperboy::SqlLogin.credentials(gsabss('USERNAME'), ENV.fetch('GSABSS_PASSWORD', nil))
     end
   end
 end

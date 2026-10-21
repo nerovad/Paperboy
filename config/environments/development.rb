@@ -53,6 +53,17 @@ Rails.application.configure do
   config.assume_ssl = dev_https
   config.force_ssl  = dev_https
 
+  # A cookie is for the host, not the port. localhost:3001 and localhost:3223
+  # in one browser profile share it, so one server's response replaces the
+  # other's omniauth.state. The Entra callback then compares the returned
+  # state to nil and crashes in secure_compare. A private window has its own
+  # cookie jar, which is why that pairing works. .env sets PORT=3000 for every
+  # checkout, so the listen port has to come from bin/dev-local. Otherwise the
+  # checkout directory keeps two worktrees apart.
+  dev_session = ENV['PAPERBOY_DEV_PORT'].to_s.strip
+  dev_session = Rails.root.basename.to_s if dev_session.empty?
+  config.session_store :cookie_store, key: "_paperboy_dev_#{dev_session}_session"
+
   # Allow the dev hostname through Rails 8's Host Authorization middleware
   # (defaults only allow localhost). Cert SANs cover these names.
   config.hosts << 'dev-gsa-forms'

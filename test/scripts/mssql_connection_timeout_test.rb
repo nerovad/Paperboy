@@ -23,6 +23,26 @@ class MssqlConnectionTimeoutTest < Minitest::Test
     end
   end
 
+  def test_sql_login_is_sent
+    with_env('GSABSS_USERNAME' => 'GSAETL', 'GSABSS_PASSWORD' => 'secret') do
+      options = MssqlHelpers.connection_options('db.example', 'Paperboy', false)
+
+      assert_equal 'GSAETL', options[:username]
+      assert_equal 'secret', options[:password]
+    end
+  end
+
+  def test_domain_login_is_left_to_kerberos_on_linux
+    skip 'Windows keeps the domain login for SSPI' if Gem.win_platform?
+
+    with_env('GSABSS_USERNAME' => 'ENT\\125272', 'GSABSS_PASSWORD' => 'secret') do
+      options = MssqlHelpers.connection_options('db.example', 'Paperboy', false)
+
+      refute options.key?(:username)
+      refute options.key?(:password)
+    end
+  end
+
   private
 
   def with_env(values)

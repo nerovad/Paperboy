@@ -28,12 +28,10 @@ module DataRunner
     end
 
     def self.command_for(host:, database:, schema:, table:, file:)
-      trusted = MssqlHelpers.kerberos_host?(host)
-      username = nil
-      password = nil
+      username = MssqlHelpers.env_any('MSSQL_USERNAME', 'GSABSS_USERNAME')
+      password = MssqlHelpers.env_any('MSSQL_PASSWORD', 'GSABSS_PASSWORD')
+      trusted = MssqlHelpers.kerberos_host?(host) || Paperboy::SqlLogin.linux_domain_login?(username)
       unless trusted
-        username = MssqlHelpers.env_any('MSSQL_USERNAME', 'GSABSS_USERNAME')
-        password = MssqlHelpers.env_any('MSSQL_PASSWORD', 'GSABSS_PASSWORD')
         raise 'missing ENV (any of: MSSQL_USERNAME, GSABSS_USERNAME)' if username.to_s.strip.empty?
         raise 'missing ENV (any of: MSSQL_PASSWORD, GSABSS_PASSWORD)' if password.to_s.strip.empty?
       end

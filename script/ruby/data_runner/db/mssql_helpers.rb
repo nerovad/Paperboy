@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require_relative '../../../../lib/paperboy/sql_login'
 
 # Shared SQL Server helper methods for ETL stage scripts.
 module MssqlHelpers
@@ -112,7 +113,7 @@ module MssqlHelpers
 
   def append_sql_login!(opts)
     username = env_any('MSSQL_USERNAME', 'GSABSS_USERNAME')
-    return if username.to_s.strip.empty?
+    return unless Paperboy::SqlLogin.sql_credentials?(username)
 
     opts[:username] = username
     opts[:password] = env_any!('MSSQL_PASSWORD', 'GSABSS_PASSWORD')

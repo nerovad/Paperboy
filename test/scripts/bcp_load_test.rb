@@ -27,6 +27,19 @@ class BcpLoadTest < Minitest::Test
     ], argv
   end
 
+  def test_domain_login_uses_a_trusted_connection_on_linux
+    skip 'Windows keeps the domain login for SSPI' if Gem.win_platform?
+
+    with_env('GSABSS_USERNAME' => 'ENT\\125272', 'GSABSS_PASSWORD' => 'secret') do
+      argv = DataRunner::BcpLoad.command_for(
+        host: 'GSASQL16', database: 'Paperboy', schema: 'dbo', table: 'Units', file: 'units.csv'
+      )
+
+      assert_includes argv, '-T'
+      refute_includes argv, '-U'
+    end
+  end
+
   def test_sql_auth_command_hides_the_password_in_the_display
     argv = DataRunner::BcpLoad.command(
       executable: 'bcp',
@@ -92,5 +105,19 @@ class BcpLoadTest < Minitest::Test
     assert_includes sql, 'CONVERT(binary(32), NULLIF(stage.[PayloadHash], N\'\'), 2)'
     assert_includes sql, 'stage.[Note]'
     refute_includes sql, 'ISNULL(stage.[Note]'
+  end
+
+  private
+
+  def with_env(values)
+    keys = values.keys
+    previous = keys.to_h { |key| [key, ENV.fetch(key, nil)] }
+    values.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    keys.each do |key|
+      value = previous[key]
+      value.nil? ? ENV.delete(key) : ENV[key] = value
+    end
   end
 end

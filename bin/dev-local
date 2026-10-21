@@ -36,6 +36,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# .env sets PORT=3000, and dotenv will not override a value already set.
+# The session cookie uses this so two localhost ports do not share a jar.
+export PORT
+export PAPERBOY_DEV_PORT="$PORT"
+
 mkdir -p "$app_root/log"
 exec 2> >(tee "$app_root/log/error.log" >&2)
 mkdir -p "$app_root/tmp/pids"
