@@ -38,6 +38,14 @@ module HsaAdoptionCards
       assert_equal({ username: 'ci_user', password: 'ci_pass' }, Connection.new.options.slice(:username, :password))
     end
 
+    test 'a domain username is not sent from Linux' do
+      skip 'Windows keeps the domain login for SSPI' if Gem.win_platform?
+
+      ENV['GSABSS_USERNAME'] = 'ENT\\125272'
+      ENV['GSABSS_PASSWORD'] = 'secret'
+      refute Connection.new.options.key?(:username)
+    end
+
     test 'the database name can be overridden on its own' do
       ENV['HSA_ADOPT_SQL_DATABASE'] = 'GSA_Scan_Test'
       assert_equal 'GSA_Scan_Test', Connection.new.options[:database]
