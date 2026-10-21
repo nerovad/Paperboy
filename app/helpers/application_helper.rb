@@ -102,8 +102,14 @@ module ApplicationHelper
   # filtered out. Paperboy is the always-available base app; the secondary
   # apps are gated by the ACL "Applications" section (system admins bypass),
   # matching the profile-dropdown/form permission model.
+  #
+  # A signed-out visitor gets Paperboy alone, so the switcher has no dropdown.
+  # Global application grants would otherwise list Automated Invoice
+  # Management before anyone has logged in.
   def paperboy_apps
     apps = [{ key: 'paperboy', label: 'Paperboy', path: root_path }]
+    return apps unless current_user
+
     apps << { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path } if can_access_app?('data_runner')
     apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
     apps << { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path } if can_access_app?('digital_asset_management')
