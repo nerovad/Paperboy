@@ -323,6 +323,11 @@ Rails.application.routes.draw do
     get 'support', to: 'support#index', as: :support
   end
 
+  namespace :human_resources do
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

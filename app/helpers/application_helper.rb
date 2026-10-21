@@ -106,22 +106,35 @@ module ApplicationHelper
   # A signed-out visitor gets Paperboy alone, so the switcher has no dropdown.
   # Global application grants would otherwise list Automated Invoice
   # Management before anyone has logged in.
+  #
+  # app:new inserts a row into switcher_apps. A conditional on each row would
+  # push this method over the complexity limit.
   def paperboy_apps
     apps = [{ key: 'paperboy', label: 'Paperboy', path: root_path }]
     return apps unless current_user
 
-    apps << { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path } if can_access_app?('data_runner')
-    apps << { key: 'coa', label: 'Chart of Accounts', path: coa_root_path } if can_access_app?('coa')
-    apps << { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path } if can_access_app?('digital_asset_management')
-    apps << { key: 'aim', label: 'Automated Invoice Management', path: aim_root_path } if can_access_app?('aim')
-    apps << { key: 'print_production', label: 'Production', path: production_root_path } if can_access_app?('print_production')
-    apps << { key: 'billing', label: 'Billing', path: billing_root_path } if can_access_app?('billing')
-    apps << { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path } if can_access_app?('admin_tools')
-    apps << { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path } if can_access_app?('p2m')
-    apps << { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search', path: hsa_adoption_cards_root_path } if can_access_app?('hsa_adoption_cards')
-    apps << { key: 'development', label: 'Development', path: development_root_path } if can_access_app?('development')
-    apps << { key: 'itp', label: 'IT Portal', path: itp_root_path } if can_access_app?('itp')
+    switcher_apps.each do |app|
+      apps << app if can_access_app?(app.fetch(:key))
+    end
     [apps.first, *apps.drop(1).sort_by { |app| app.fetch(:label).downcase }]
+  end
+
+  # Secondary switcher apps. app:new inserts a row before the closing bracket.
+  def switcher_apps
+    [
+      { key: 'data_runner', label: 'Data Runner', path: data_runner_root_path },
+      { key: 'coa', label: 'Chart of Accounts', path: coa_root_path },
+      { key: 'digital_asset_management', label: 'Digital Asset Management', path: digital_asset_management_root_path },
+      { key: 'aim', label: 'Automated Invoice Management', path: aim_root_path },
+      { key: 'print_production', label: 'Production', path: production_root_path },
+      { key: 'billing', label: 'Billing', path: billing_root_path },
+      { key: 'admin_tools', label: 'Admin Tools', path: admin_tools_root_path },
+      { key: 'p2m', label: 'Print 2 Mail', path: p2m_root_path },
+      { key: 'hsa_adoption_cards', label: 'HSA Adoption Card Search', path: hsa_adoption_cards_root_path },
+      { key: 'development', label: 'Development', path: development_root_path },
+      { key: 'itp', label: 'IT Portal', path: itp_root_path },
+      { key: 'human_resources', label: 'Human Resources', path: human_resources_root_path }
+    ]
   end
 
   # Whether the current user may reach an app-switcher sub-application. System
@@ -161,34 +174,32 @@ module ApplicationHelper
   #
   # The Admin Tools screens are the one app whose controllers are not in a
   # matching namespace — they kept their original top-level routes — so they
-  # are matched by name instead (see +ADMIN_TOOLS+).
+  # are matched by name instead (see +ADMIN_TOOLS+). Every other app is a
+  # controller prefix in CONTROLLER_APP_KEYS, which app:new extends.
   def current_app_key
-    if controller_path.start_with?('admin_tools/') || current_admin_tool_key
-      'admin_tools'
-    elsif controller_path.start_with?('data_runner/')
-      'data_runner'
-    elsif controller_path.start_with?('coa/')
-      'coa'
-    elsif controller_path.start_with?('digital_asset_management/')
-      'digital_asset_management'
-    elsif controller_path.start_with?('aim/')
-      'aim'
-    elsif controller_path.start_with?('production/')
-      'print_production'
-    elsif controller_path.start_with?('billing/')
-      'billing'
-    elsif controller_path.start_with?('p2m/')
-      'p2m'
-    elsif controller_path.start_with?('hsa_adoption_cards/')
-      'hsa_adoption_cards'
-    elsif controller_path.start_with?('development/')
-      'development'
-    elsif controller_path.start_with?('itp/')
-      'itp'
-    else
-      'paperboy'
+    return 'admin_tools' if controller_path.start_with?('admin_tools/') || current_admin_tool_key
+
+    CONTROLLER_APP_KEYS.each do |prefix, key|
+      return key if controller_path.start_with?(prefix)
     end
+    'paperboy'
   end
+
+  # controller_path prefix => app switcher key. app:new inserts a row before
+  # the closing brace.
+  CONTROLLER_APP_KEYS = {
+    'data_runner/' => 'data_runner',
+    'coa/' => 'coa',
+    'digital_asset_management/' => 'digital_asset_management',
+    'aim/' => 'aim',
+    'production/' => 'print_production',
+    'billing/' => 'billing',
+    'p2m/' => 'p2m',
+    'hsa_adoption_cards/' => 'hsa_adoption_cards',
+    'development/' => 'development',
+    'itp/' => 'itp',
+    'human_resources/' => 'human_resources'
+  }.freeze
 
   def fetch_acl_groups
     Group.order(:Group_Name).pluck(:Group_Name, :GroupID)

@@ -668,7 +668,7 @@ Options:
 
 ```bash
 LABEL="Timesheet Portal"  # Display name; same as the second argument above.
-THEME=teal                # Accent: teal, blue, cyan, slate, or green.
+THEME=teal                # Accent: teal, blue, cyan, slate, green, or orange.
 DRY_RUN=1                 # Print planned changes without writing.
 ```
 

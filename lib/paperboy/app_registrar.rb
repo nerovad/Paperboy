@@ -42,18 +42,20 @@ module Paperboy
                                               text: block, label: 'config/routes.rb')
     end
 
-    # Two edits: the switcher entry (gated by the ACL grant) and the
-    # controller_path => app key mapping that highlights the current app.
+    # Two edits: a switcher row and a controller-prefix row. Both lists are
+    # tables so another app does not add a branch to paperboy_apps or
+    # current_app_key. The new row becomes the last item, and the row that
+    # was last gains the comma RuboCop requires between items.
     def application_helper
       path = 'app/helpers/application_helper.rb'
-      entry = "    apps << { key: '#{app.key}', label: '#{app.label}', " \
-              "path: #{app.key}_root_path } if can_access_app?('#{app.key}')\n"
-      branch = "    elsif controller_path.start_with?('#{app.key}/')\n      '#{app.key}'\n"
+      entry = "{ key: '#{app.key}', label: '#{app.label}', path: #{app.key}_root_path }"
+      branch = "'#{app.key}/' => '#{app.key}'"
 
-      content = insert_before(read(path), scope: 'def paperboy_apps', anchor: '^    \[apps\.first,',
-                                          text: entry, label: "#{path} (paperboy_apps)")
-      insert_before(content, scope: 'def current_app_key', anchor: '^    else$',
-                             text: branch, label: "#{path} (current_app_key)")
+      content = append_table_row(read(path), scope: 'def switcher_apps',
+                                             close: '^    \]$', indent: '      ', row: entry,
+                                             label: "#{path} (switcher_apps)")
+      append_table_row(content, scope: 'CONTROLLER_APP_KEYS = \{', close: '^  \}\.freeze$',
+                                indent: '    ', row: branch, label: "#{path} (CONTROLLER_APP_KEYS)")
     end
 
     def sidebar_dispatcher
@@ -82,6 +84,19 @@ module Paperboy
       path = 'app/assets/stylesheets/layout/_sidebar.scss'
       insert_before(read(path), anchor: '^  &\.data-runner-sidebar \{$',
                                 text: app.render('sidebar_theme.scss.tt'), label: path)
+    end
+
+    # Adds +row+ as the last item of the table that starts at +scope+ and ends
+    # at +close+. The previous last item gains a comma; +row+ does not, so the
+    # literal keeps RuboCop's no-trailing-comma style.
+    def append_table_row(content, scope:, close:, indent:, row:, label:)
+      re = Regexp.new("(#{scope}.*?)(^#{Regexp.escape(indent)})([^\\n]+)\\n(#{close})", Regexp::MULTILINE)
+      raise MissingAnchorError, missing(label) unless content.match?(re)
+
+      content.sub(re) do
+        match = ::Regexp.last_match
+        "#{match[1]}#{match[2]}#{match[3]},\n#{indent}#{row}\n#{match[4]}"
+      end
     end
 
     # Inserts +text+ before the first +anchor+ appearing after +scope+, so an

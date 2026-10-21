@@ -23,6 +23,8 @@
   <%= render "development/shared/sidebar" %>
 <% elsif controller_path.start_with?("itp/") %>
   <%= render "itp/shared/sidebar" %>
+<% elsif controller_path.start_with?("human_resources/") %>
+  <%= render "human_resources/shared/sidebar" %>
 <% else %>
   <%= render "shared/paperboy_sidebar" %>
 <% end %>

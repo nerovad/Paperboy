@@ -5,7 +5,7 @@ require_relative '../paperboy/app_destroyer'
 
 namespace :app do
   desc 'Scaffold a new sidebar app. Usage: rake app:new[hello_world] or rake app:new[hello_world,"Hello World"] ' \
-       '(env: LABEL=, THEME=teal|blue|cyan|slate|green, DRY_RUN=1)'
+       '(env: LABEL=, THEME=teal|blue|cyan|slate|green|orange, DRY_RUN=1)'
   task :new, %i[name label] => :environment do |_t, args|
     name = args[:name] || ENV.fetch('NAME', nil)
     if name.blank?
