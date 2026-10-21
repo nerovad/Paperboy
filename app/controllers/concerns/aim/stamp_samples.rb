@@ -37,13 +37,14 @@ module Aim
       [path, fill_values(invoice)] if path
     end
 
-    # "worst": every field at its longest; "samples"; otherwise the invoice's
-    # own values with samples where they are empty (samples for an upload).
+    # "worst": every field at its longest; "samples"; otherwise exactly what
+    # the invoice would print -- its own values, nothing filled in (samples
+    # for an upload, which has no invoice).
     def fill_values(invoice)
       case params[:fill]
       when 'worst' then Aim::StampFields.worst_case
       when 'samples' then Aim::StampFields.samples(agency: @group&.agency_id)
-      else invoice ? Aim::StampFields.with_samples(invoice) : Aim::StampFields.samples(agency: @group&.agency_id)
+      else invoice ? Aim::StampFields.values(invoice) : Aim::StampFields.samples(agency: @group&.agency_id)
       end
     end
   end

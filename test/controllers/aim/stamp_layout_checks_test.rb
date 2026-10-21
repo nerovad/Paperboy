@@ -65,17 +65,19 @@ module Aim
       assert_response :not_found
     end
 
-    test "the live view and Check fill alike: an invoice's own values, samples where it has none" do
+    test "the live view and Check fill alike: this invoice's own values only, nothing filled in" do
       in_store do
         row = invoice('4601.F')
 
         get :values, params: { id: @gsa.id, invoice_id: row.id }
         values = response.parsed_body
-        assert_equal %w[ACME 004512], [values.dig('vendor', 'value'), values.dig('check_number', 'value')],
-                     'its own vendor; no check yet, so the sample check number'
+        assert_equal ['ACME', nil], [values.dig('vendor', 'value'), values.dig('check_number', 'value')],
+                     'its own vendor; no check yet, so no check number'
 
-        post :preview, params: { id: @gsa.id, invoice_id: row.id, areas: areas(['{vendor} check {check_number}']) }
-        assert_includes PDF::Reader.new(StringIO.new(response.body)).pages.first.text, 'ACME check 004512'
+        post :preview, params: { id: @gsa.id, invoice_id: row.id, areas: areas(['{vendor}[ check ]{check_number}', 'Check {check_number}']) }
+        text = PDF::Reader.new(StringIO.new(response.body)).pages.first.text
+        assert_includes text, 'ACME'
+        assert_not_includes text, 'check', 'no check number: its separator and its row are left out'
 
         post :preview, params: { id: @gsa.id, invoice_id: row.id, fill: 'worst', areas: areas(['{approver}']) }
         assert_includes PDF::Reader.new(StringIO.new(response.body)).pages.first.text, 'Montgomery-Fitzgerald'

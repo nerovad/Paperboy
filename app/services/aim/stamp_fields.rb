@@ -109,13 +109,6 @@ module Aim
       field == 'vendor_code' ? value.to_s.match?(/\AVC\d+\z/) : value.present?
     end
 
-    # An invoice's own values, with samples standing in for any still empty
-    # (no approver yet, no coding): what the designer's "This invoice" fills
-    # in, so a layout can be judged on an invoice that is not approved yet.
-    def with_samples(invoice)
-      samples(agency: invoice.agency).merge(values(invoice).reject { |_, value| value.blank? })
-    end
-
     # Every field at its longest, for the designer (Aim::StampWorstCase).
     def worst_case = Aim::StampWorstCase.call
 

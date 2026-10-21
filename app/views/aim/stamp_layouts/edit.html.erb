@@ -56,7 +56,7 @@
       <div class="stamp-designer__bar-group">
         <span class="stamp-designer__label">Fill with</span>
         <div class="stamp-designer__segmented" role="group" aria-label="Fill the fields with">
-          <% { 'invoice' => ['This invoice', "The invoice's own values; samples where it has none yet (no approver, no coding)"],
+          <% { 'invoice' => ['This invoice', "Exactly what this invoice would print: its own values only. Rows whose fields it does not have yet are left out"],
                'samples' => ['Samples', 'Typical values'],
                'worst' => ['Worst case', 'Every field at its longest'] }.each do |mode, (label, hint)| %>
             <button type="button" class="btn compact" title="<%= hint %>" data-stamp-designer-target="fill" data-value="<%= mode %>"

@@ -181,11 +181,11 @@ export default class extends Controller {
   }
 
   // What the fields are filled with, the same in the live view and Check:
-  // the invoice's own values (samples where it has none), samples, or
-  // every field at its longest. An uploaded PDF has no invoice: samples.
+  // exactly what the invoice would print, samples, or every field at its
+  // longest. An uploaded PDF has no invoice: samples.
   values() {
     if (this.fillMode === "worst") return this.worstValue
-    if (this.fillMode === "invoice" && !this.upload && this.invoiceValues) return this.invoiceValues
+    if (this.fillMode === "invoice" && !this.upload) return this.invoiceValues || {}
     return this.samplesValue
   }
 
