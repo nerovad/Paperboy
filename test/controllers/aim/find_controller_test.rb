@@ -64,10 +64,11 @@ module Aim
       original = invoice('ORIG')
       invoice('DUP', review_reason: 'duplicate', duplicate_of_id: original.id)
       stuck = invoice('STUCK')
+      stuck.update_columns(created_at: 45.days.ago)
       stuck.events.update_all(created_at: 45.days.ago)
 
       { { owner: 'sam' } => %w[SAM], { budget_unit: '4602' } => %w[UNIT], { manual: '1' } => %w[SAM],
-        { duplicate: '1' } => %w[DUP], { stale: '1' } => %w[STUCK],
+        { duplicate: '1' } => %w[DUP], { stale: '1' } => %w[OLD STUCK],
         { from: '2026-03-01', to: '2026-03-31' } => %w[OLD] }.each do |filter, expected|
         get :index, params: filter
         assert_equal expected, found, filter.inspect

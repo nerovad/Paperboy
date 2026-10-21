@@ -1,10 +1,11 @@
-<%# Stale (#170): invoices in an active queue waiting Aim::Waiting.stale_days
-    or more, by queue and owner. Shown, never moved or purged. %>
-<h2 class="aim-profile-heading">Stale: waiting <%= pluralize(Aim::Waiting.stale_days, 'day') %> or more</h2>
+<%# Stale (#170): invoices in an active queue Aim::Waiting.stale_days old or
+    more (by age since #190, so a hand-off does not hide one), by queue and
+    whoever holds them now. Shown, never moved or purged. %>
+<h2 class="aim-profile-heading">Stale: <%= pluralize(Aim::Waiting.stale_days, 'day') %> old or more</h2>
 <section class="aim-panel aim-agency-group-panel aim-stale-panel">
   <% if stale.any? %>
     <table class="submission-table aim-people-table">
-      <thead><tr><th>Queue</th><th>Owner</th><th>Invoices</th><th>Longest</th></tr></thead>
+      <thead><tr><th>Queue</th><th>Held by</th><th>Invoices</th><th>Oldest</th></tr></thead>
       <tbody>
         <% stale.each do |queue, owner, count, days| %>
           <tr>
@@ -17,6 +18,6 @@
       </tbody>
     </table>
   <% else %>
-    <p class="aim-agency-group-meta">Nothing has waited that long.</p>
+    <p class="aim-agency-group-meta">Nothing is that old.</p>
   <% end %>
 </section>

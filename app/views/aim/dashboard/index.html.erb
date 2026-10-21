@@ -35,7 +35,7 @@
       <% end %>
     </section>
 
-    <h2 class="aim-profile-heading">Waiting longest for approval</h2>
+    <h2 class="aim-profile-heading">Oldest waiting for approval</h2>
     <section class="aim-panel aim-agency-group-panel">
       <%= render 'aim/shared/oldest', oldest: @oldest, owner: true,
                                       path: ->(invoice) { aim_invoice_path(invoice.batch_id, queue: 'ready_for_approval') } %>

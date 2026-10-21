@@ -52,7 +52,7 @@ module Aim
     end
 
     # At most CAP rows of +scope+, newest first; with stale, only those
-    # waiting Aim::Waiting.stale_days or more. +invoice+ maps a row to its
+    # Aim::Waiting.stale_days old or more (by age, #190). +invoice+ maps a row to its
     # invoice (a Fiscal record's, say). #capped? says whether there were more.
     def fetch(scope, invoice: :itself.to_proc)
       rows = stale? ? stale_only(scope.to_a, invoice) : scope.limit(CAP + 1).to_a
@@ -75,8 +75,8 @@ module Aim
     end
 
     def stale_only(rows, invoice)
-      since = Aim::Waiting.since(rows.map(&invoice))
-      rows.select { |row| (started = since[invoice.call(row).id]) && Aim::Waiting.days(started) >= Aim::Waiting.stale_days }
+      arrived = Aim::Waiting.arrived(rows.map(&invoice))
+      rows.select { |row| (born = arrived[invoice.call(row).id]) && Aim::Waiting.stale?(born) }
     end
 
     def read_date(field)

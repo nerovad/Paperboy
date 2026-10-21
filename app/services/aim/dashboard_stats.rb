@@ -28,8 +28,8 @@ module Aim
                  count: ready.where(manual_entry: true).count, path: routes.aim_invoices_path(queue: 'ready_for_approval')),
         Tile.new(key: 'second', label: 'Awaiting second approval', tone: 'info', hint: 'over their BU\'s amount',
                  count: ready.where.not(first_approved_by: nil).count, path: routes.aim_invoices_path(queue: 'ready_for_approval')),
-        Tile.new(key: 'stale', label: 'Waiting over a week', tone: 'warning', hint: 'in Ready for Approval',
-                 count: waited(ready, WEEK).size, path: routes.aim_invoices_path(queue: 'ready_for_approval')),
+        Tile.new(key: 'stale', label: 'Over a week old', tone: 'warning', hint: 'in Ready for Approval',
+                 count: aged(ready, WEEK).size, path: routes.aim_invoices_path(queue: 'ready_for_approval')),
         Tile.new(key: 'failed', label: 'Failed', tone: 'danger', hint: 'open one to see why',
                  count: invoices.where(state: 'failed').count, path: routes.aim_invoices_path(queue: 'failed'))
       ]
@@ -41,8 +41,8 @@ module Aim
       [
         Tile.new(key: 'queue', label: 'In my queue', tone: 'info', hint: 'ready for my approval',
                  count: ready.count, path: routes.aim_my_queue_path),
-        Tile.new(key: 'stale', label: 'Waiting over a week', tone: 'warning', hint: 'the oldest are below',
-                 count: waited(ready, WEEK).size, path: routes.aim_my_queue_path),
+        Tile.new(key: 'stale', label: 'Over a week old', tone: 'warning', hint: 'the oldest are below',
+                 count: aged(ready, WEEK).size, path: routes.aim_my_queue_path),
         Tile.new(key: 'second', label: 'My second approvals', tone: 'info', hint: 'high-dollar, first approval given',
                  count: ready.where.not(first_approved_by: nil).count, path: routes.aim_my_queue_path),
         Tile.new(key: 'manual', label: 'To type in', tone: 'warning', hint: 'Manual Data Entry Needed',
@@ -80,17 +80,20 @@ module Aim
       }
     end
 
-    # The +limit+ longest waiting in +state+: [[invoice, days], ...].
+    # The +limit+ oldest in +state+: [[invoice, days old, days here], ...]
+    # (Aim::Waiting's two clocks, #190).
     def oldest(state, limit: 5)
-      waited(invoices.where(state: state), 0.seconds).sort_by { |_, seconds| -seconds }.first(limit)
-                                                     .map { |invoice, seconds| [invoice, (seconds / 1.day).floor] }
+      list = aged(invoices.where(state: state), 0.seconds).sort_by { |_, seconds| -seconds }.first(limit)
+      here = Aim::Waiting.since(list.map(&:first))
+      list.map { |invoice, seconds| [invoice, (seconds / 1.day).floor, Aim::Waiting.days(here.fetch(invoice.id, invoice.created_at), now: @now)] }
     end
 
-    # Invoices in any active queue waiting +days+ or more (#170), by queue
-    # then owner: [[queue, owner, count, oldest days], ...], longest first.
-    # Never finished ones: nothing here is purged or moved, only shown.
+    # Invoices in any active queue +days+ old or more (#170, by age since
+    # #190), by queue then whoever holds them now: [[queue, owner, count,
+    # oldest days], ...], oldest first. Never finished ones: nothing here is
+    # purged or moved, only shown.
     def stale(days: Aim::Waiting.stale_days)
-      waited(invoices.where(state: Aim::Invoice::STATES - Aim::Invoice::TERMINAL_STATES), days.days)
+      aged(invoices.where(state: Aim::Invoice::STATES - Aim::Invoice::TERMINAL_STATES), days.days)
         .group_by { |invoice, _| [invoice.queue, invoice.queue_owner] }
         .map { |(queue, owner), rows| [queue, owner, rows.size, (rows.map(&:last).max / 1.day).floor] }
         .sort_by { |row| -row.last }
@@ -123,13 +126,14 @@ module Aim
       out.sort_by { |group, _| group.name }.to_h
     end
 
-    # [[invoice, seconds waiting], ...] since it last reached its state or
-    # changed hands (Aim::Waiting), at least +at_least+.
-    def waited(scope, at_least)
+    # [[invoice, seconds old], ...] since it arrived (Aim::Waiting.arrived),
+    # at least +at_least+. Age, not time with its holder, so handing an
+    # invoice on does not make it young again.
+    def aged(scope, at_least)
       list = scope.to_a
-      since = Aim::Waiting.since(list)
+      arrived = Aim::Waiting.arrived(list)
       list.filter_map do |invoice|
-        seconds = @now - since.fetch(invoice.id, invoice.created_at)
+        seconds = @now - arrived.fetch(invoice.id, invoice.created_at)
         [invoice, seconds] if seconds >= at_least
       end
     end
