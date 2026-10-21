@@ -8,7 +8,9 @@
     queue when the page is not one queue's. %>
 <% fiscal_statuses = local_assigns.fetch(:fiscal_statuses, nil) || {} %>
 <% viewer = session.dig(:user, 'email') || session.dig('user', 'email') %>
-<%# How long each has waited where it is (#170); finished ones are not waiting. %>
+<%# How long each has waited (#170): its age, which decides stale, and how long
+    it has been where it is now (#190). Finished ones are not waiting. %>
+<% arrived = Aim::Waiting.arrived(invoices) %>
 <% waiting = Aim::Waiting.since(invoices) %>
 <% stale_days = Aim::Waiting.stale_days %>
 <table class="submission-table aim-queue-table aim-queue-table--review">
@@ -80,9 +82,11 @@
           <span class="badge <%= badge_class %>"><%= badge_text %></span>
           <% if invoice.awaiting_second_approval? %><span class="badge is-scheduled">Second approval</span><% end %>
           <% if invoice.manual_entry %><span class="badge is-pending" title="The AI has not read it">Manual Data Entry Needed</span><% end %>
-          <% if (started = waiting[invoice.id]) && (days = Aim::Waiting.days(started)).positive? %>
+          <% if (born = arrived[invoice.id]) && (days = Aim::Waiting.days(born)).positive? %>
+            <% started = waiting[invoice.id] || born %>
+            <% here = [Aim::Waiting.days(started), days].min %>
             <span class="badge <%= days >= stale_days ? 'is-denied' : 'is-scheduled' %>"
-                  title="Waiting here since <%= started.strftime('%B %-d, %Y') %><%= '; stale' if days >= stale_days %>"><%= pluralize(days, 'day') %></span>
+                  title="Arrived <%= born.strftime('%B %-d, %Y') %>; here since <%= started.strftime('%B %-d, %Y') %><%= '; stale' if days >= stale_days %>"><%= pluralize(days, 'day') %><% if here < days %> · <%= here.zero? ? 'here today' : "#{here} here" %><% end %></span>
           <% end %>
           <% if (fiscal_status = fiscal_statuses[invoice.id]) %>
             <span class="badge is-sent">Fiscal: <%= Aim::FiscalRecord::STATUS_LABELS[fiscal_status] %></span>

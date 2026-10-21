@@ -17,6 +17,7 @@ module Aim
     def waiting(batch_id, days, state: 'needs_review')
       row = Aim::Invoice.create!(batch_id: batch_id, state: state, actor: 'aim_worker', budget_unit: '4601',
                                  vendor_name: 'ACME', invoice_number: batch_id)
+      row.update_columns(created_at: days.days.ago)
       row.events.update_all(created_at: days.days.ago)
       row
     end
@@ -30,6 +31,17 @@ module Aim
       assert_select 'tr[title=OLD] span.badge.is-denied', text: '45 days'
       assert_select 'tr[title=MID] span.badge.is-scheduled', text: '12 days'
       assert_select 'tr[title=NEW] span.badge', text: /days?\z/, count: 0
+    end
+
+    test 'an old invoice just handed on stays red and says how long it has been here (#190)' do
+      passed = waiting('PASSED', 45)
+      passed.events.create!(action: 'assignment', actor: 'x', created_at: 3.days.ago)
+      today = waiting('TODAY', 9)
+      today.events.create!(action: 'assignment', actor: 'x', created_at: 1.hour.ago)
+
+      get :index, params: { queue: 'needs_review' }
+      assert_select 'tr[title=PASSED] span.badge.is-denied', text: '45 days · 3 here'
+      assert_select 'tr[title=TODAY] span.badge.is-scheduled', text: '9 days · here today'
     end
 
     test 'the AIM # shows on queue rows and the review page, and Search older invoices finds it' do
@@ -72,6 +84,7 @@ module Aim
       @controller.define_singleton_method(:current_user_group_names) { Set['aim_admin'] }
       @controller.helpers.define_singleton_method(:can_access_app?) { |*| true }
       row = Aim::Invoice.create!(batch_id: 'STUCK', state: 'failed', actor: 'aim_worker', budget_unit: '4601', agency: 'GSA')
+      row.update_columns(created_at: 40.days.ago)
       row.events.update_all(created_at: 40.days.ago)
 
       get :index

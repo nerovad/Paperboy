@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -289,9 +289,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_090000) do
     t.string "actor", null: false
     t.datetime "created_at", null: false
     t.string "from_state", limit: 50
+    t.string "holder_budget_unit", limit: 10
+    t.integer "holder_employee_id"
+    t.string "holder_name"
+    t.string "holder_source", limit: 20
     t.bigint "invoice_id", null: false
     t.text "note"
     t.string "to_state", limit: 50
+    t.index ["holder_employee_id", "created_at"], name: "index_aim_invoice_events_on_holder_and_created_at"
     t.index ["invoice_id", "created_at"], name: "index_aim_invoice_events_on_invoice_id_and_created_at"
   end
 
