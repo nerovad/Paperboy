@@ -93,13 +93,7 @@ module Aim
     # The stamp areas filled for one invoice's +values+ (Aim::StampFields),
     # with rows whose fields are all empty left out, and areas left with no
     # rows dropped.
-    def boxes(values)
-      template = Paperboy::Pdf::StampTemplate.new(values, formats: Aim::StampFields.formats)
-      area_list.filter_map do |area|
-        lines = template.lines(Array(area['rows']))
-        Paperboy::Pdf::StampBox.build(area.except('name', 'rows').merge('lines' => lines)) if lines.any?
-      end
-    end
+    def boxes(values) = Paperboy::Pdf::StampAreas.boxes(area_list, values, formats: Aim::StampFields.formats)
 
     # The first area that would not fit a letter page, either way up, even
     # at the smallest size, filled with +values+; nil when all fit.

@@ -1,0 +1,171 @@
+<%# The stamp designer's settings for the selected area (#221, shared since #230).
+    Locals: field_groups ([[group, [[field, label, kind], ...]], ...]) for
+    Insert a field; extra (HTML at the end, such as a history). %>
+<aside class="aim-panel stamp-designer__side">
+  <div class="aim-panel-header stamp-designer__panel-head">
+    <input type="text" class="stamp-designer__name" maxlength="60" aria-label="Area name"
+           data-stamp-designer-target="control" data-key="name" data-action="input->stamp-designer#edit">
+    <button type="button" class="btn deny compact" data-action="stamp-designer#removeArea" title="Remove this area">Remove</button>
+  </div>
+  <div class="stamp-designer__side-scroll">
+    <p class="stamp-designer__warnings" data-stamp-designer-target="warnings" hidden></p>
+
+    <details class="stamp-designer__group" open>
+      <summary>Text</summary>
+      <div class="aim-field">
+        <label for="stamp-rows">Rows, one per line</label>
+        <textarea id="stamp-rows" rows="4" data-stamp-designer-target="control rows" data-key="rows"
+                  data-action="input->stamp-designer#edit"></textarea>
+      </div>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label for="stamp-insert">Insert a field</label>
+          <select id="stamp-insert" data-stamp-designer-target="insert" data-action="stamp-designer#insertField">
+            <option value="">Choose…</option>
+            <% field_groups.each do |group, fields| %>
+              <optgroup label="<%= group %>">
+                <% fields.each do |field, label, kind| %>
+                  <option value="<%= field %>" data-kind="<%= kind %>"><%= label %></option>
+                <% end %>
+              </optgroup>
+            <% end %>
+          </select>
+        </div>
+        <div class="aim-field">
+          <label for="stamp-date-format">Dates as</label>
+          <select id="stamp-date-format" data-stamp-designer-target="dateFormat">
+            <% StampDesignerHelper::DATE_FORMATS.each do |format, example| %>
+              <option value="<%= format %>"><%= example %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="aim-field">
+        <label for="stamp-separator">Insert a separator</label>
+        <select id="stamp-separator" data-stamp-designer-target="separator" data-action="stamp-designer#insertSeparator">
+          <option value="">Choose…</option>
+          <% { ' _ ' => 'Underscore  ( _ )', '_' => 'Underscore, no spaces  (_)', ' - ' => 'Dash  ( - )', ' / ' => 'Slash  ( / )',
+               ', ' => 'Comma  (, )', ' | ' => 'Bar  ( | )', ' · ' => 'Dot  ( · )', ' ' => 'Space' }.each do |value, label| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
+        </select>
+      </div>
+      <p class="stamp-designer__hint">
+        A separator goes in as <code>[ _ ]</code> and prints only when the field after it has a value.
+        A row whose fields are all empty is left out.
+      </p>
+    </details>
+
+    <details class="stamp-designer__group" open>
+      <summary>Look</summary>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label for="stamp-font">Font</label>
+          <select id="stamp-font" data-stamp-designer-target="control" data-key="font" data-action="stamp-designer#edit">
+            <% Paperboy::Pdf::Fonts::FAMILIES.each do |family, face| %>
+              <option value="<%= family %>"><%= face[:label] %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="aim-field">
+          <label for="stamp-size">Size (pt)</label>
+          <input id="stamp-size" type="number" min="6" max="36" step="0.5" data-stamp-designer-target="control" data-key="size"
+                 data-action="input->stamp-designer#edit">
+        </div>
+      </div>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label for="stamp-colour">Text colour</label>
+          <input id="stamp-colour" type="color" class="stamp-designer__colour" data-stamp-designer-target="control" data-key="color"
+                 data-action="input->stamp-designer#edit">
+        </div>
+        <div class="aim-field">
+          <label>Style</label>
+          <div class="stamp-designer__segmented" role="group" aria-label="Style">
+            <button type="button" class="btn compact stamp-designer__bold" data-stamp-designer-target="toggle" data-key="bold"
+                    data-action="stamp-designer#toggle" title="Bold">B</button>
+            <button type="button" class="btn compact stamp-designer__italic" data-stamp-designer-target="toggle" data-key="italic"
+                    data-action="stamp-designer#toggle" title="Italic">I</button>
+            <button type="button" class="btn compact" data-stamp-designer-target="toggle" data-key="border"
+                    data-action="stamp-designer#toggle" title="A thin border round the area">Border</button>
+          </div>
+        </div>
+      </div>
+      <div class="aim-field">
+        <label>Align</label>
+        <%= stamp_designer_segmented('align', { 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right' }, 'Align') %>
+      </div>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label for="stamp-background">Background</label>
+          <select id="stamp-background" data-stamp-designer-target="control" data-key="opacity" data-action="stamp-designer#edit">
+            <% [[1, 'Solid'], [0.75, '75%'], [0.5, '50%'], [0.25, '25%'], [0, 'Clear']].each do |value, label| %>
+              <option value="<%= value %>"><%= label %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="aim-field">
+          <label for="stamp-background-colour">Background colour</label>
+          <input id="stamp-background-colour" type="color" class="stamp-designer__colour" data-stamp-designer-target="control"
+                 data-key="background" data-action="input->stamp-designer#edit">
+        </div>
+      </div>
+      <div class="aim-field">
+        <label for="stamp-leading">Line spacing</label>
+        <select id="stamp-leading" data-stamp-designer-target="control" data-key="leading" data-action="stamp-designer#edit">
+          <% [[1, 'Tight'], [8.5 / 7, 'Normal'], [1.5, 'Loose'], [2, 'Double']].each do |value, label| %>
+            <option value="<%= value %>"><%= label %></option>
+          <% end %>
+        </select>
+      </div>
+    </details>
+
+    <details class="stamp-designer__group" open>
+      <summary>Placement</summary>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label>Kept to</label>
+          <div class="stamp-designer__anchors" role="group" aria-label="Kept to">
+            <% Paperboy::Pdf::StampBox::ANCHORS.each do |anchor| %>
+              <button type="button" class="stamp-designer__anchor" title="<%= anchor.humanize %>" aria-label="<%= anchor.humanize %>"
+                      data-stamp-designer-target="choice" data-key="anchor" data-value="<%= anchor %>"
+                      data-action="stamp-designer#choose"></button>
+            <% end %>
+          </div>
+        </div>
+        <div class="stamp-designer__offsets">
+          <div class="aim-field">
+            <label for="stamp-x">Across (pt)</label>
+            <input id="stamp-x" type="number" step="1" data-stamp-designer-target="control" data-key="x" data-action="input->stamp-designer#edit">
+          </div>
+          <div class="aim-field">
+            <label for="stamp-y">Up / down (pt)</label>
+            <input id="stamp-y" type="number" step="1" data-stamp-designer-target="control" data-key="y" data-action="input->stamp-designer#edit">
+          </div>
+        </div>
+      </div>
+      <div class="stamp-designer__pair">
+        <div class="aim-field">
+          <label for="stamp-width">Width (pt)</label>
+          <input id="stamp-width" type="number" min="20" step="1" placeholder="Fits the text" data-stamp-designer-target="control"
+                 data-key="width" data-action="input->stamp-designer#edit">
+        </div>
+        <div class="aim-field">
+          <label for="stamp-rotation">Turn</label>
+          <select id="stamp-rotation" data-stamp-designer-target="control" data-key="rotation" data-action="stamp-designer#edit">
+            <% Paperboy::Pdf::StampBox::ROTATIONS.each do |degrees| %>
+              <option value="<%= degrees %>"><%= degrees.zero? ? 'None' : "#{degrees}°" %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="aim-field">
+        <label>Prints on</label>
+        <%= stamp_designer_segmented('pages', { 'all' => 'Every page', 'first' => 'First page', 'last' => 'Last page' }, 'Prints on') %>
+      </div>
+      <p class="stamp-designer__hint">Drag an area on the page to move it; drag its right edge to set the width.</p>
+    </details>
+
+    <%= extra %>
+  </div>
+</aside>

@@ -17,6 +17,19 @@
   gap: 0.4rem;
 }
 
+.stamp-designer__short { width: 7rem; }
+.stamp-designer__tiny { width: 4rem; }
+
+// A new Bates counter's form: its fields in a row.
+.stamp-designer__new {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .aim-field { flex: 0 1 14rem; }
+}
+
 .stamp-designer__bar {
   align-items: center;
   display: flex;

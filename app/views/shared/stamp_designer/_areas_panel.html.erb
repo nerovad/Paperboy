@@ -1,0 +1,33 @@
+<%# The stamp designer's left panel (#221, shared since #230): the stamp areas and
+    the page shrink. Locals: shrinks (percents offered). %>
+<aside class="aim-panel stamp-designer__side">
+  <div class="aim-panel-header stamp-designer__panel-head">
+    <h2 class="aim-panel-title">Stamp areas</h2>
+    <button type="button" class="btn compact" data-action="stamp-designer#addArea">+ Add</button>
+  </div>
+  <div class="stamp-designer__areas" data-stamp-designer-target="list"></div>
+
+  <div class="aim-panel-header stamp-designer__panel-head">
+    <h2 class="aim-panel-title">Page</h2>
+  </div>
+  <div class="stamp-designer__section">
+    <div class="aim-field">
+      <label for="stamp-shrink">Shrink page contents</label>
+      <select id="stamp-shrink" data-stamp-designer-target="shrink" data-action="stamp-designer#setShrink">
+        <% shrinks.each do |percent| %>
+          <option value="<%= percent %>"><%= percent == 100 ? 'No (100%)' : "#{percent}%" %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="aim-field">
+      <label>Move contents to</label>
+      <div class="stamp-designer__segmented is-wrapping" role="group" aria-label="Move contents to">
+        <% { 'center' => 'Centre', 'top' => 'Top', 'bottom' => 'Bottom', 'left' => 'Left', 'right' => 'Right' }.each do |value, text| %>
+          <button type="button" class="btn compact" data-stamp-designer-target="position" data-value="<%= value %>"
+                  data-action="stamp-designer#setPosition"><%= text %></button>
+        <% end %>
+      </div>
+    </div>
+    <p class="stamp-designer__hint">Shrinks the invoice itself on the stamped copy to make room for the stamp. The stamp is never shrunk.</p>
+  </div>
+</aside>

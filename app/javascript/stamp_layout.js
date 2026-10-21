@@ -59,6 +59,7 @@ function render(field, format) {
     return amount < 0 ? `-${shown}` : shown
   }
   const text = String(field.value)
+  if (/^0+$/.test(format || "") && /^\d+$/.test(text)) return String(parseInt(text, 10)).padStart(format.length, "0")
   if (format === "upper") return text.toUpperCase()
   if (format === "lower") return text.toLowerCase()
   return text

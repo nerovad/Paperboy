@@ -1,0 +1,15 @@
+<%# The stamp designer's pages, scrolling and zooming on their own (#221). %>
+<main class="aim-panel stamp-designer__stage">
+  <div class="aim-panel-header stamp-designer__panel-head">
+    <span class="stamp-designer__hint stamp-designer__status" data-stamp-designer-target="status"></span>
+    <div class="stamp-designer__segmented" role="group" aria-label="Zoom">
+      <button type="button" class="btn compact" data-action="stamp-designer#zoomOut" title="Zoom out">−</button>
+      <span class="stamp-designer__zoom" data-stamp-designer-target="zoomLabel">100%</span>
+      <button type="button" class="btn compact" data-action="stamp-designer#zoomIn" title="Zoom in">+</button>
+      <button type="button" class="btn compact" data-action="stamp-designer#zoomFit" title="Fit the page width">Fit</button>
+    </div>
+  </div>
+  <div class="stamp-designer__scroll" data-stamp-designer-target="scroller">
+    <div class="stamp-designer__pages" data-stamp-designer-target="pages"></div>
+  </div>
+</main>

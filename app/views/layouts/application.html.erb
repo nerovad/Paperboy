@@ -151,6 +151,9 @@
                 <% if sql_dashboards_viewer? %>
                   <%= link_to "Dashboards", sql_dashboards_dashboards_path %>
                 <% end %>
+                <% if can_use_app_feature?('paperboy', 'bates_stamp') %>
+                  <%= link_to "Bates Stamp", bates_counters_path %>
+                <% end %>
                 <%# Lands on the console picker, which forwards straight through
                     for users who only hold one console. %>
                 <% if available_authorization_consoles.any? %>

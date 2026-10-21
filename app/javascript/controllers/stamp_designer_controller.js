@@ -26,10 +26,10 @@ export default class extends Controller {
   static targets = ["pages", "scroller", "sample", "upload", "fileName", "fill", "list", "rows", "insert", "separator", "dateFormat",
     "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "body", "checkForm",
     "checkAreas", "checkShrink", "checkPosition", "checkFill", "checkInvoice", "checkFile", "form", "areasField",
-    "shrinkField", "positionField", "saveModal", "saveButton", "restampField"]
+    "shrinkField", "positionField", "saveModal", "saveButton", "restampField", "batesStart", "checkStart", "stampButton"]
 
   static values = { areas: Array, shrink: Number, position: String, samples: Object, worst: Object, formats: Object,
-    sampleUrl: String, valuesUrl: String, previewUrl: String }
+    sampleUrl: String, valuesUrl: String, previewUrl: String, stampUrl: String }
 
   connect() {
     this.areas = this.areasValue.map((area) => this.normalise(area))
@@ -38,13 +38,15 @@ export default class extends Controller {
     this.pageShrink = this.shrinkValue || 100
     this.pagePosition = this.positionValue || "center"
     this.sheets = []
-    this.fillMode = "invoice"
+    this.fillMode = this.hasFillTarget ? "invoice" : "samples"
     this.invoiceValues = null
+    this.uploads = []
     this.showFill()
     this.showPanel()
     this.showPageSettings()
     this.fit()
-    this.useInvoice()
+    if (this.hasSampleTarget) this.useInvoice()
+    else this.status("Upload a PDF to lay the stamp on.")
     this.onResize = () => {
       clearTimeout(this.resizing)
       this.resizing = setTimeout(() => { this.fit(); this.renderPages() }, 150)
@@ -87,7 +89,8 @@ export default class extends Controller {
 
   useInvoice() {
     this.upload = null
-    this.fileNameTarget.hidden = true
+    this.uploads = []
+    if (this.hasFileNameTarget) this.fileNameTarget.hidden = true
     if (this.hasUploadTarget) this.uploadTarget.value = ""
     if (!this.sampleTarget.value) return this.status("No invoice to preview on yet: upload a PDF.")
     const id = encodeURIComponent(this.sampleTarget.value)
@@ -100,16 +103,19 @@ export default class extends Controller {
     this.open({ url: `${this.sampleUrlValue}?invoice_id=${id}`, withCredentials: true })
   }
 
+  // One file, or several for a Bates run; the first is the one laid out.
   async useUpload() {
-    const file = this.uploadTarget.files[0]
-    if (!file) return
-    if (file.size > MAX_UPLOAD) return this.status("That PDF is over 25 MB.")
-    this.upload = file
+    const files = [...this.uploadTarget.files]
+    if (!files.length) return
+    if (files.some((file) => file.size > MAX_UPLOAD)) return this.status("A PDF is over 25 MB.")
+    this.uploads = files
+    this.upload = files[0]
     this.invoiceValues = null
     this.showFill()
-    this.fileNameTarget.textContent = file.name
+    this.fileNameTarget.textContent = files.length > 1 ? `${files.length} files (showing ${files[0].name})` : files[0].name
     this.fileNameTarget.hidden = false
-    this.open({ data: await file.arrayBuffer() })
+    if (this.hasStampButtonTarget) this.stampButtonTarget.disabled = false
+    this.open({ data: await files[0].arrayBuffer() })
   }
 
   async open(source) {
@@ -183,10 +189,23 @@ export default class extends Controller {
   // What the fields are filled with, the same in the live view and Check:
   // exactly what the invoice would print, samples, or every field at its
   // longest. An uploaded PDF has no invoice: samples.
-  values() {
+  values(sheetIndex = 0) {
+    if (this.hasBatesStartTarget) return { ...this.samplesValue, ...this.batesValues(sheetIndex) }
     if (this.fillMode === "worst") return this.worstValue
     if (this.fillMode === "invoice" && !this.upload) return this.invoiceValues || {}
     return this.samplesValue
+  }
+
+  // A Bates page's fields, numbered from the next number typed on the page;
+  // its zeros set the width ("000123": six digits, from 123).
+  batesValues(sheetIndex) {
+    const start = this.batesStartTarget.value.trim()
+    const digits = /^\d+$/.test(start) ? start.length : 1
+    const number = (parseInt(start, 10) || 0) + sheetIndex
+    const text = (value) => ({ kind: "text", value: String(value) })
+    const padded = String(number).padStart(digits, "0")
+    return { number: text(padded), bates: text(padded), bates_number: text(number), page: text(sheetIndex + 1),
+      pages: text(this.sheets.length) }
   }
 
   setFill(event) {
@@ -213,7 +232,7 @@ export default class extends Controller {
       sheet.layer.replaceChildren()
       return this.areas.map((area, index) => {
         if (!this.onPage(area, sheet.index)) return null
-        const lines = fillRows(area.rows, this.values(), this.formatsValue)
+        const lines = fillRows(area.rows, this.values(sheet.index), this.formatsValue)
         const placed = place(area, lines.length ? lines : ["(nothing to print)"], sheet.width, sheet.height)
         if (this.inkUnder(sheet, placed)) placed.warnings.push("covers_page")
         sheet.layer.append(this.areaElement(sheet, area, placed, index, !lines.length))
@@ -465,11 +484,15 @@ export default class extends Controller {
     this.checkAreasTarget.value = JSON.stringify(this.areas)
     this.checkShrinkTarget.value = this.pageShrink
     this.checkPositionTarget.value = this.pagePosition
-    this.checkFillTarget.value = this.upload && this.fillMode === "invoice" ? "samples" : this.fillMode
+    if (this.hasCheckFillTarget) this.checkFillTarget.value = this.upload && this.fillMode === "invoice" ? "samples" : this.fillMode
+    if (this.hasBatesStartTarget) {
+      if (!this.upload) return this.status("Upload a PDF first.")
+      this.checkStartTarget.value = this.batesStartTarget.value
+    }
     const files = new DataTransfer()
     if (this.upload) files.items.add(this.upload)
     this.checkFileTarget.files = files.files
-    this.checkInvoiceTarget.value = this.upload ? "" : this.sampleTarget.value
+    if (this.hasCheckInvoiceTarget) this.checkInvoiceTarget.value = this.upload ? "" : this.sampleTarget.value
     this.checkFormTarget.submit()
     this.status("The check opened in a new tab.")
   }
@@ -477,6 +500,7 @@ export default class extends Controller {
   // Saving
 
   openSave() {
+    if (!this.hasSaveModalTarget) return this.save()
     this.restampFieldTargets.forEach((radio) => { radio.checked = false })
     this.saveButtonTarget.disabled = true
     this.saveModalTarget.hidden = false
@@ -495,6 +519,32 @@ export default class extends Controller {
     this.shrinkFieldTarget.value = this.pageShrink
     this.positionFieldTarget.value = this.pagePosition
     this.formTarget.requestSubmit()
+  }
+
+  // A Bates run: every uploaded file stamped from the counter's next number,
+  // which moves on; the stamped file (or a zip of them) downloads, then the
+  // page reloads to show the new next number and the run.
+  async stamp() {
+    if (!this.uploads.length) return this.status("Upload the PDFs to stamp first.")
+    this.stampButtonTarget.disabled = true
+    this.status(`Stamping ${this.uploads.length} file${this.uploads.length === 1 ? "" : "s"}…`)
+    const body = new FormData()
+    this.uploads.forEach((file) => body.append("files[]", file))
+    body.append("authenticity_token", document.querySelector('meta[name="csrf-token"]')?.content || "")
+    const response = await fetch(this.stampUrlValue, { method: "POST", body, credentials: "same-origin" })
+    if (!response.ok) {
+      this.stampButtonTarget.disabled = false
+      return this.status(response.headers.get("X-Bates-Error") || "The files could not be stamped; no numbers were used.")
+    }
+    const name = (response.headers.get("Content-Disposition") || "").match(/filename="([^"]+)"/)?.[1] || "bates.pdf"
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(await response.blob())
+    link.download = name
+    document.body.append(link)
+    link.click()
+    link.remove()
+    this.status(`Stamped: ${response.headers.get("X-Bates-Range") || ""}. Downloading ${name}.`)
+    setTimeout(() => window.location.reload(), 1500)
   }
 
   status(message) {
