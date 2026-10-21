@@ -71,7 +71,7 @@ module Aim
 
         get :values, params: { id: @gsa.id, invoice_id: row.id }
         values = response.parsed_body
-        assert_equal ['ACME', '004512'], [values.dig('vendor', 'value'), values.dig('check_number', 'value')],
+        assert_equal %w[ACME 004512], [values.dig('vendor', 'value'), values.dig('check_number', 'value')],
                      'its own vendor; no check yet, so the sample check number'
 
         post :preview, params: { id: @gsa.id, invoice_id: row.id, areas: areas(['{vendor} check {check_number}']) }
