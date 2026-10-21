@@ -144,3 +144,20 @@
   border: 1px solid $border-muted;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
+
+// The save dialog's contents: one choice per line, then the note.
+.stamp-designer__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+
+  label { display: flex; gap: 0.5rem; align-items: flex-start; }
+}
+
+.stamp-designer__note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}

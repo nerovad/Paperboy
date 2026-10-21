@@ -167,11 +167,13 @@
           </div>
           <div class="pb-modal__body">
             <p class="pb-modal__message">The layout is kept as a new version. Which invoices take it?</p>
+            <div class="stamp-designer__choices">
             <label><input type="radio" name="restamp" value="fiscal" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
               Stamp again the approved invoices still with Fiscal (Review, On hold, Ready); exported and archived ones keep theirs</label>
             <label><input type="radio" name="restamp" value="new" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
               New approvals only</label>
-            <label>Note (optional)
+            </div>
+            <label class="stamp-designer__note">Note (optional)
               <%= text_field_tag :note, '', maxlength: 500, data: { stamp_designer_target: 'noteField' } %>
             </label>
             <div class="pb-modal__actions">
