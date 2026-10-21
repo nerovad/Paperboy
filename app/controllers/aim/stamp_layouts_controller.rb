@@ -71,8 +71,7 @@ module Aim
 
     # A sample invoice's PDF as it is now, unstamped, for the designer's page.
     def sample
-      invoice = sample_invoice(params[:invoice_id])
-      path = invoice && store_file(invoice, 'pdf')
+      path = sample_pdf_path
       return head :not_found unless path
 
       send_file path, type: 'application/pdf', disposition: 'inline'

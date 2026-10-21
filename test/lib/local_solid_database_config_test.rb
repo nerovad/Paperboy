@@ -58,13 +58,13 @@ class LocalSolidDatabaseConfigTest < ActiveSupport::TestCase
     script = File.read(Rails.root.join('bin/dev-local'))
     export_at = script.index('export PAPERBOY_LOCAL_SOLID=1')
     prepare_at = script.index('local_solid:prepare')
-    precompile_at = script.index('assets:precompile')
+    assets_at = script.index('dartsass:build')
 
     assert export_at
     assert prepare_at
-    assert precompile_at
+    assert assets_at
     assert_operator export_at, :<, script.index('bundle exec')
-    assert_operator prepare_at, :<, precompile_at
+    assert_operator prepare_at, :<, assets_at
   end
 
   test 'deployed units do not set the workstation variable' do

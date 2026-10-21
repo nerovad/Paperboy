@@ -23,6 +23,14 @@ module Aim
 
     def sample_invoice(id) = id.present? ? sample_scope.find_by(id: id) : sample_scope.order(id: :desc).first
 
+    # The PDF of the group invoice asked for, as the store holds it: a path
+    # Aim::StoredPdf#store_file builds inside the store, never one from the
+    # request.
+    def sample_pdf_path
+      invoice = sample_invoice(params[:invoice_id])
+      invoice && store_file(invoice, 'pdf')
+    end
+
     # [path, values] for a check: a group invoice, or an uploaded PDF, filled
     # as the designer's "Fill with" says (fill_values); nil when there is
     # neither, or the upload is not a PDF or too big.
