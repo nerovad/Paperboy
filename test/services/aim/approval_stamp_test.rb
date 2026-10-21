@@ -97,7 +97,7 @@ module Aim
     end
 
     test 'each safety net is named once, with the pages it was needed on' do
-      warnings = { 1 => [:moved_inside], 2 => [:moved_inside, :shrunk], 3 => [:moved_inside], 5 => [:moved_inside] }
+      warnings = { 1 => [:moved_inside], 2 => %i[moved_inside shrunk], 3 => [:moved_inside], 5 => [:moved_inside] }
 
       assert_equal 'moved back inside the page (pages 1-3, 5); text made smaller to fit (page 2)',
                    Aim::ApprovalStamp.describe(warnings)
