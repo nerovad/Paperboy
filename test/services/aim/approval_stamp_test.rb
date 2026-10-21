@@ -87,13 +87,20 @@ module Aim
         Aim::ApprovalStamp.stamp!(record)
 
         record.reload
-        assert_equal [layout.id, 'page 1: moved back inside the page'], [record.stamp_layout_id, record.stamp_warnings]
+        assert_equal [layout.id, 'moved back inside the page (page 1)'], [record.stamp_layout_id, record.stamp_warnings]
         first, second = PDF::Reader.new(Aim::ApprovalStamp.path(@invoice)).pages.map(&:text)
         assert_includes first, 'Approved by nobody@example.com'
         assert_includes first, 'Budget Unit # 4641'
         assert_includes second, 'Approved by nobody@example.com'
         assert_not_includes second, 'Budget Unit #', 'that area is on the first page only'
       end
+    end
+
+    test 'each safety net is named once, with the pages it was needed on' do
+      warnings = { 1 => [:moved_inside], 2 => [:moved_inside, :shrunk], 3 => [:moved_inside], 5 => [:moved_inside] }
+
+      assert_equal 'moved back inside the page (pages 1-3, 5); text made smaller to fit (page 2)',
+                   Aim::ApprovalStamp.describe(warnings)
     end
 
     test 'a preview stamps nothing on disk' do

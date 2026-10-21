@@ -62,7 +62,7 @@
       </div>
     </section>
 
-    <div class="stamp-designer__body">
+    <div class="stamp-designer__body" data-stamp-designer-target="body">
       <aside class="aim-panel stamp-designer__side">
         <div class="aim-panel-header stamp-designer__panel-head">
           <h2 class="aim-panel-title">Stamp areas</h2>
@@ -261,22 +261,42 @@
             </div>
             <p class="stamp-designer__hint">Drag an area on the page to move it; drag its right edge to set the width.</p>
           </details>
+
+          <details class="stamp-designer__group stamp-designer__history">
+            <summary>History · <%= pluralize(@history.size, 'saved version') %></summary>
+            <% if @history.any? %>
+              <ul class="stamp-designer__versions">
+                <% @history.each do |version| %>
+                  <li>
+                    <div>
+                      <strong><%= l(version.created_at.in_time_zone, format: :short) %></strong>
+                      <span><%= version.created_by %> · <%= pluralize(version.area_list.size, 'area') %><%= " · page #{version.page_shrink}% #{version.page_position}" if version.shrink %></span>
+                      <% if version.note.present? %><em><%= version.note %></em><% end %>
+                    </div>
+                    <%= link_to 'Load', edit_aim_stamp_layout_path(key, version: version.id), class: 'btn compact',
+                                title: 'Open this version in the designer; saving it makes it the newest' %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="stamp-designer__hint">Not saved yet.</p>
+            <% end %>
+          </details>
         </div>
       </aside>
     </div>
 
-    <div class="pb-modal-backdrop" data-stamp-designer-target="checkModal" hidden>
-      <div class="pb-modal pb-modal--xl" role="dialog" aria-modal="true" aria-labelledby="stamp-check-title">
-        <div class="pb-modal__header">
-          <h3 id="stamp-check-title">Check</h3>
-          <button type="button" class="pb-modal__close" aria-label="Close" data-action="stamp-designer#closeCheck">✕</button>
-        </div>
-        <div class="pb-modal__body stamp-designer__check-body">
-          <p class="pb-modal__message" data-stamp-designer-target="previewNote"></p>
-          <div class="stamp-designer__preview" data-stamp-designer-target="preview"></div>
-        </div>
-      </div>
-    </div>
+    <%# Check: the layout stamped by the server, opened in a new tab in the
+        browser's own PDF viewer. Writes nothing. %>
+    <%= form_with url: preview_aim_stamp_layout_path(key), method: :post, multipart: true,
+                  data: { stamp_designer_target: 'checkForm', turbo: false }, html: { target: '_blank' } do %>
+      <%= hidden_field_tag :areas, '', id: nil, data: { stamp_designer_target: 'checkAreas' } %>
+      <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
+      <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
+      <%= hidden_field_tag :worst_case, '', id: nil, data: { stamp_designer_target: 'checkWorst' } %>
+      <%= hidden_field_tag :invoice_id, '', id: nil, data: { stamp_designer_target: 'checkInvoice' } %>
+      <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
+    <% end %>
 
     <%= form_with url: aim_stamp_layout_path(key), method: :patch, data: { stamp_designer_target: 'form', turbo: false } do %>
       <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>
@@ -310,29 +330,4 @@
     <% end %>
   </div>
 
-  <details class="aim-panel stamp-designer__history">
-    <summary>History · <%= pluralize(@history.size, 'saved version') %></summary>
-    <% if @history.any? %>
-      <table class="submission-table aim-people-table">
-        <thead><tr><th>Saved</th><th>By</th><th>Areas</th><th>Page</th><th>Note</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
-        <tbody>
-          <% @history.each do |version| %>
-            <tr>
-              <td><%= l(version.created_at.in_time_zone, format: :short) %></td>
-              <td><%= version.created_by %></td>
-              <td><%= version.area_list.size %></td>
-              <td><%= version.shrink ? "#{version.page_shrink}%, #{version.page_position}" : 'As is' %></td>
-              <td><%= version.note %></td>
-              <td class="aim-people-table__actions">
-                <%= link_to 'Load', edit_aim_stamp_layout_path(key, version: version.id), class: 'btn compact',
-                            title: 'Open this version in the designer; saving it makes it the newest' %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    <% else %>
-      <p class="stamp-designer__hint">Not saved yet.</p>
-    <% end %>
-  </details>
 </div>

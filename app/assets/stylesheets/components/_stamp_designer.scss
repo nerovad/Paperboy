@@ -4,7 +4,6 @@
 // pages scroll and zoom on their own; each side panel scrolls on its own.
 // Shared, not AIM's own, so any part of Paperboy that stamps PDFs can use it.
 // Fields and panels follow AIM's (.aim-panel, .aim-panel-header, .aim-field).
-$designer-height: calc(100vh - 15rem);
 
 .stamp-designer__bar {
   align-items: center;
@@ -65,8 +64,8 @@ $designer-height: calc(100vh - 15rem);
   display: grid;
   gap: 0.75rem;
   grid-template-columns: 15rem minmax(0, 1fr) 20rem;
-  height: $designer-height;
-  min-height: 34rem;
+  height: calc(100vh - 15rem);
+  min-height: 30rem;
 }
 
 @media (max-width: 1200px) {
@@ -335,24 +334,7 @@ $designer-height: calc(100vh - 15rem);
   }
 }
 
-// Check and Save dialogs' contents.
-.stamp-designer__check-body {
-  max-height: 75vh;
-  overflow-y: auto;
-}
-
-.stamp-designer__preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-}
-
-.stamp-designer__preview-page {
-  border: 1px solid $neutral-border-subtle;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
+// The Save dialog's contents.
 .stamp-designer__choices {
   display: flex;
   flex-direction: column;
@@ -367,16 +349,34 @@ $designer-height: calc(100vh - 15rem);
   }
 }
 
-.stamp-designer__history {
-  margin-top: 0.75rem;
-  padding: 10px 14px;
+.stamp-designer__versions {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 
-  summary {
-    color: $text-strong;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 650;
+  li {
+    align-items: center;
+    border: 1px solid $neutral-border-subtle;
+    border-radius: $radius-6;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    padding: 6px 8px;
   }
 
-  table { margin-top: 8px; }
+  div {
+    display: grid;
+    font-size: 0.76rem;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  span,
+  em {
+    color: $text-muted;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

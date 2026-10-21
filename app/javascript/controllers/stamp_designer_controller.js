@@ -18,12 +18,15 @@ const WARNINGS = {
 // sizes), drag its right edge to fix its width, and set it on the right.
 // The live view fills fields with sample values ("Worst case": the longest
 // recent ones) and is drawn with the same sums as the server
-// (stamp_layout.js). Check has the server stamp the file for real and shows
-// the result; nothing is saved. Save asks which invoices take the layout.
+// (stamp_layout.js). Check has the server stamp the file for real and opens
+// it in a new tab, in the browser's PDF viewer; nothing is saved. Save asks
+// which invoices take the layout. The designer fills the window below its
+// top, so only the pages and the settings scroll.
 export default class extends Controller {
   static targets = ["pages", "scroller", "sample", "upload", "fileName", "worstCase", "list", "rows", "insert", "dateFormat",
-    "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "checkModal", "preview",
-    "previewNote", "form", "areasField", "shrinkField", "positionField", "saveModal", "saveButton", "restampField"]
+    "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "body", "checkForm",
+    "checkAreas", "checkShrink", "checkPosition", "checkWorst", "checkInvoice", "checkFile", "form", "areasField",
+    "shrinkField", "positionField", "saveModal", "saveButton", "restampField"]
 
   static values = { areas: Array, shrink: Number, position: String, samples: Object, worst: Object, formats: Object,
     sampleUrl: String, previewUrl: String }
@@ -37,13 +40,24 @@ export default class extends Controller {
     this.sheets = []
     this.showPanel()
     this.showPageSettings()
+    this.fit()
     this.useInvoice()
-    this.onResize = () => { clearTimeout(this.resizing); this.resizing = setTimeout(() => this.renderPages(), 150) }
+    this.onResize = () => {
+      clearTimeout(this.resizing)
+      this.resizing = setTimeout(() => { this.fit(); this.renderPages() }, 150)
+    }
     window.addEventListener("resize", this.onResize)
   }
 
   disconnect() {
     window.removeEventListener("resize", this.onResize)
+  }
+
+  // The three panels take the window's height below where they start.
+  fit() {
+    if (!this.hasBodyTarget || window.innerWidth <= 1200) return
+    const top = this.bodyTarget.getBoundingClientRect().top + window.scrollY
+    this.bodyTarget.style.height = `${Math.max(480, window.innerHeight - top - 16)}px`
   }
 
   // A clear background is kept as a colour at no opacity.
@@ -392,46 +406,19 @@ export default class extends Controller {
     this.positionTargets.forEach((button) => button.classList.toggle("active", button.dataset.value === this.pagePosition))
   }
 
-  // The server's check: the file really stamped, nothing saved.
-  async check() {
-    this.checkModalTarget.hidden = false
-    this.previewNoteTarget.textContent = "Stamping…"
-    this.previewTarget.replaceChildren()
-    const body = new FormData()
-    body.append("areas", JSON.stringify(this.areas))
-    body.append("page_shrink", this.pageShrink)
-    body.append("page_position", this.pagePosition)
-    body.append("worst_case", this.hasWorstCaseTarget && this.worstCaseTarget.checked ? "1" : "0")
-    if (this.upload) body.append("file", this.upload)
-    else body.append("invoice_id", this.sampleTarget.value)
-    body.append("authenticity_token", document.querySelector('meta[name="csrf-token"]')?.content || "")
-    const response = await fetch(this.previewUrlValue, { method: "POST", body, credentials: "same-origin" })
-    const warnings = response.headers.get("X-Stamp-Warnings") || ""
-    if (!response.ok) {
-      this.previewNoteTarget.textContent = warnings || "The file could not be stamped."
-      return
-    }
-    const pdfjs = await loadPdfJs()
-    const pdf = await pdfjs.getDocument({ data: await response.arrayBuffer() }).promise
-    for (let number = 1; number <= Math.min(pdf.numPages, MAX_PAGES); number += 1) {
-      const page = await pdf.getPage(number)
-      const plain = page.getViewport({ scale: 1 })
-      const viewport = page.getViewport({ scale: 420 / plain.width })
-      const canvas = document.createElement("canvas")
-      canvas.width = Math.floor(viewport.width)
-      canvas.height = Math.floor(viewport.height)
-      canvas.className = "stamp-designer__preview-page"
-      this.previewTarget.append(canvas)
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise
-    }
-    const source = this.upload ? this.upload.name : this.sampleTarget.selectedOptions[0]?.textContent
-    const filled = this.upload ? "sample values" : "this invoice's own values"
-    this.previewNoteTarget.textContent = `${source}, stamped by the server with ${filled}. ` +
-      (warnings ? `Safety nets used: ${warnings}.` : "No safety net was needed.") + " Nothing was saved."
-  }
-
-  closeCheck() {
-    this.checkModalTarget.hidden = true
+  // The server's check: the file stamped for real, opened in a new tab in
+  // the browser's PDF viewer. Nothing is saved.
+  check() {
+    this.checkAreasTarget.value = JSON.stringify(this.areas)
+    this.checkShrinkTarget.value = this.pageShrink
+    this.checkPositionTarget.value = this.pagePosition
+    this.checkWorstTarget.value = this.hasWorstCaseTarget && this.worstCaseTarget.checked ? "1" : "0"
+    const files = new DataTransfer()
+    if (this.upload) files.items.add(this.upload)
+    this.checkFileTarget.files = files.files
+    this.checkInvoiceTarget.value = this.upload ? "" : this.sampleTarget.value
+    this.checkFormTarget.submit()
+    this.status("The check opened in a new tab.")
   }
 
   // Saving

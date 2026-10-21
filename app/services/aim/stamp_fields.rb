@@ -44,10 +44,33 @@ module Aim
       'stamped_on' => { label: 'Date stamped', group: 'Fiscal', format: DATE, sample: Date.new(2025, 6, 27) }
     }.freeze
 
-    # Fields whose text can run long, for the designer's worst case: the
-    # longest each has had on recent invoices.
-    LONG_TEXT = { 'vendor' => :vendor_name, 'invoice_number' => :invoice_number, 'batch_id' => :batch_id,
-                  'order_number' => :order_number, 'customer_number' => :customer_number }.freeze
+    # The designer's worst case: every field at its longest. Text fields take
+    # the longest value they have ever had in AIM (WORST_SOURCES), or the
+    # stand-in here when that is longer -- so a new install, or a field
+    # nobody has filled yet, is still stretched. Money is a large credit;
+    # dates fall in September, the widest month.
+    WORST = {
+      'approver' => 'Montgomery-Fitzgerald, Alexandria Catherine', 'approver_initials' => 'AMF',
+      'first_approver' => 'Vasquez-Delacroix, Maximiliano Sebastian',
+      'vendor' => 'Consolidated Environmental Engineering & Laboratory Services of Southern California, Inc.',
+      'invoice_number' => 'INV-2026-0000123456-REV-03', 'document_type' => 'Statement', 'budget_unit' => '46410',
+      'order_number' => 'PO-2026-00001237418-CHG-02', 'customer_number' => 'CUST-0000177434-00982',
+      'batch_id' => '4641.20260930_235959.Consolidated Environmental Engineering Invoice 0000123456-[ZZ9Z]',
+      'encumbrance' => 'BDO_2026-000123456', 'object_code' => '2051-0000', 'fund' => '1000-0000', 'department' => '4640-0000',
+      'program' => '100-00000', 'activity' => '0001-0000', 'vendor_code' => 'VC000123456789',
+      'check_number' => '0000045120', 'pay_doc_number' => 'PV-2026-0000712345'
+    }.freeze
+
+    # Where each text field's longest real value is found: [model, column].
+    WORST_SOURCES = {
+      'vendor' => [Aim::Invoice, :vendor_name], 'invoice_number' => [Aim::Invoice, :invoice_number],
+      'batch_id' => [Aim::Invoice, :batch_id], 'order_number' => [Aim::Invoice, :order_number],
+      'customer_number' => [Aim::Invoice, :customer_number], 'document_type' => [Aim::Invoice, :document_type],
+      'object_code' => [Aim::CodingLine, :object_code], 'fund' => [Aim::CodingLine, :fund],
+      'department' => [Aim::CodingLine, :department], 'program' => [Aim::CodingLine, :program],
+      'activity' => [Aim::CodingLine, :activity], 'vendor_code' => [Aim::CodingLine, :vendor_code],
+      'check_number' => [Aim::FiscalRecord, :check_number], 'pay_doc_number' => [Aim::FiscalRecord, :pay_doc_number]
+    }.freeze
 
     module_function
 
@@ -78,14 +101,35 @@ module Aim
       }
     end
 
-    # Samples with each long text field as long as it has been on the last
-    # +recent+ invoices: what the designer's worst case fills in.
-    def worst_case(recent: 500)
-      rows = Aim::Invoice.order(id: :desc).limit(recent)
-      LONG_TEXT.each_with_object(samples.dup) do |(field, column), out|
-        longest = rows.pluck(column).compact.max_by(&:length)
-        out[field] = longest if longest && longest.length > out[field].to_s.length
+    # Every field at its longest (WORST, WORST_SOURCES), for the designer.
+    def worst_case
+      worst = samples.merge(WORST)
+      WORST_SOURCES.each do |field, (model, column)|
+        longest = longest_value(model, column)
+        worst[field] = longest if longest && longest.length > worst[field].to_s.length
       end
+      longest_name = longest_approver
+      worst['approver'] = longest_name if longest_name && longest_name.length > worst['approver'].length
+      worst.merge('total' => BigDecimal('-9999999.99'), 'subtotal' => BigDecimal('-9999999.99'),
+                  'sales_tax' => BigDecimal('-999999.99'), 'received' => Date.new(2026, 9, 28),
+                  'invoice_date' => Date.new(2026, 9, 28), 'check_date' => Date.new(2026, 9, 28),
+                  'stamped_on' => Date.new(2026, 9, 28), 'approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59),
+                  'first_approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59))
+    end
+
+    def longest_value(model, column)
+      model.where.not(column => [nil, '']).order(Arel.sql("LEN(#{model.connection.quote_column_name(column)}) DESC"))
+           .limit(1).pluck(column).first
+    rescue ActiveRecord::ActiveRecordError
+      nil
+    end
+
+    # The longest "Last, First" among the people who work AIM.
+    def longest_approver
+      Employee.where(id: Aim::Member.select(:employee_id)).pluck(:first_name, :last_name)
+              .map { |first, last| Employee.format_sort_name(first, last) }.max_by(&:length)
+    rescue ActiveRecord::ActiveRecordError
+      nil
     end
 
     # The last approval: who, as "Last, First", and when.

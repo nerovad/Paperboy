@@ -53,12 +53,20 @@ module Aim
       Paperboy::Pdf::Stamp.new(source).render(check_overlap: check_overlap, shrink: layout.shrink) { boxes }
     end
 
-    # "page 1: text made smaller to fit; page 2: ...", or nil.
+    # "moved back inside the page (pages 1-51); text made smaller to fit
+    # (page 3)", or nil: each safety net once, with the pages it was needed on.
     def describe(warnings)
       return if warnings.blank?
 
-      warnings.map { |page, list| "page #{page}: #{list.map { |key| WARNINGS.fetch(key, key.to_s) }.join(', ')}" }
-              .join('; ').truncate(500)
+      pages = Hash.new { |hash, key| hash[key] = [] }
+      warnings.each { |page, list| list.each { |key| pages[key] << page } }
+      pages.map { |key, list| "#{WARNINGS.fetch(key, key.to_s)} (#{page_ranges(list)})" }.join('; ').truncate(500)
+    end
+
+    # [1, 2, 3, 5] -> "pages 1-3, 5"; [4] -> "page 4".
+    def page_ranges(pages)
+      runs = pages.sort.uniq.slice_when { |a, b| b != a + 1 }.map { |run| run.size > 1 ? "#{run.first}-#{run.last}" : run.first.to_s }
+      "#{pages.uniq.size == 1 ? 'page' : 'pages'} #{runs.join(', ')}"
     end
 
     # Written beside the target and renamed into place, so nobody is ever
