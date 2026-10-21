@@ -16,8 +16,8 @@ const WARNINGS = {
 // own; each stamp area sits on the pages it prints on. Drag an area to move
 // it (it keeps to the nearest corner or edge, so it stays put on other page
 // sizes), drag its right edge to fix its width, and set it on the right.
-// The live view fills fields with sample values ("Worst case": the longest
-// recent ones) and is drawn with the same sums as the server
+// The live view fills fields as "Fill with" says (this invoice, samples, or
+// the longest values) and is drawn with the same sums as the server
 // (stamp_layout.js). Check has the server stamp the file for real and opens
 // it in a new tab, in the browser's PDF viewer; nothing is saved. Save asks
 // which invoices take the layout. The designer fills the window below its

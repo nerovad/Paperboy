@@ -58,7 +58,7 @@
         <div class="stamp-designer__segmented" role="group" aria-label="Fill the fields with">
           <% { 'invoice' => ['This invoice', "Exactly what this invoice would print: its own values only. Rows whose fields it does not have yet are left out"],
                'samples' => ['Samples', 'Typical values'],
-               'worst' => ['Worst case', 'Every field at its longest'] }.each do |mode, (label, hint)| %>
+               'worst' => ['Longest values', 'Every field at the longest it has been in AIM, to see the layout at its fullest'] }.each do |mode, (label, hint)| %>
             <button type="button" class="btn compact" title="<%= hint %>" data-stamp-designer-target="fill" data-value="<%= mode %>"
                     data-action="stamp-designer#setFill"><%= label %></button>
           <% end %>
