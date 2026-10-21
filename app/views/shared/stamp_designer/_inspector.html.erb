@@ -1,5 +1,6 @@
 <%# The stamp designer's settings for the selected area (#221, shared since #230).
-    Locals: field_groups ([[group, [[field, label, kind], ...]], ...]) for
+    Locals: snippets ([[label, text], ...], optional: ready-made rows put in
+    whole, listed first as Common); field_groups ([[group, [[field, label, kind], ...]], ...]) for
     Insert a field; extra (HTML at the end, such as a history). %>
 <aside class="aim-panel stamp-designer__side">
   <div class="aim-panel-header stamp-designer__panel-head">
@@ -22,6 +23,13 @@
           <label for="stamp-insert">Insert a field</label>
           <select id="stamp-insert" data-stamp-designer-target="insert" data-action="stamp-designer#insertField">
             <option value="">Choose…</option>
+            <% if local_assigns[:snippets].present? %>
+              <optgroup label="Common">
+                <% snippets.each do |label, text| %>
+                  <option value="snippet" data-snippet="<%= text %>"><%= label %></option>
+                <% end %>
+              </optgroup>
+            <% end %>
             <% field_groups.each do |group, fields| %>
               <optgroup label="<%= group %>">
                 <% fields.each do |field, label, kind| %>

@@ -26,13 +26,14 @@ module Paperboy
       def stamp(paths)
         number = @bates.start
         warnings = {}
-        files = paths.each_with_index.map do |path, file_index|
-          stamper = Stamp.new(path)
+        stampers = paths.map { |path| Stamp.new(path) }
+        last = @bates.start + stampers.sum { |stamper| [stamper.page_count - @skip, 0].max } - 1
+        files = stampers.each_with_index.map do |stamper, file_index|
           first = number
           result = stamper.render(shrink: @shrink) do |index, count|
             next [] if index < @skip
 
-            StampAreas.boxes(@areas, @values.merge(@bates.page_values(first + index - @skip, index + 1, count)))
+            StampAreas.boxes(@areas, @values.merge(@bates.page_values(first + index - @skip, index + 1, count, last: last)))
           end
           warnings[file_index + 1] = result.warnings if result.warnings.any?
           number += [stamper.page_count - @skip, 0].max

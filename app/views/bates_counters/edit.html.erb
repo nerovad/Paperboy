@@ -76,7 +76,7 @@
           <% end %>
         </details>
       <% end %>
-      <%= render 'shared/stamp_designer/inspector', field_groups: field_groups, extra: runs %>
+      <%= render 'shared/stamp_designer/inspector', field_groups: field_groups, snippets: BatesCounter::SNIPPETS, extra: runs %>
     </div>
 
     <%= form_with url: preview_bates_counter_path(@counter), method: :post, multipart: true,

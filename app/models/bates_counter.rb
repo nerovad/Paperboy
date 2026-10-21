@@ -21,11 +21,19 @@ class BatesCounter < ApplicationRecord
   # The fields a Bates stamp can use, with samples for the designer.
   FIELDS = {
     'number' => { label: 'Running number', group: 'Numbering' },
-    'page' => { label: 'Page of the file', group: 'Numbering' },
-    'pages' => { label: 'Pages in the file', group: 'Numbering' },
+    'last_number' => { label: 'Last number in the set', group: 'Numbering' },
+    'page' => { label: 'Page number (in its file)', group: 'Numbering' },
+    'pages' => { label: 'Page count (of its file)', group: 'Numbering' },
     'stamped_on' => { label: 'Date stamped', group: 'Time stamp', format: '%m/%d/%Y' },
     'stamped_at' => { label: 'Date and time stamped', group: 'Time stamp', format: '%m/%d/%Y %-I:%M %p' }
   }.freeze
+
+  # Ready-made rows, listed first in Insert a field.
+  SNIPPETS = [
+    ['Running number', '{number}'], ['Bates number with a prefix', 'GSA-{number}'], ['Page number', '{page}'],
+    ['Page x of y', 'Page {page} of {pages}'], ['Running number of the last', '{number} of {last_number}'],
+    ['Date and time stamped', '{stamped_at}']
+  ].freeze
 
   has_many :runs, -> { order(id: :desc) }, class_name: 'BatesRun', inverse_of: :counter, dependent: :restrict_with_exception
 

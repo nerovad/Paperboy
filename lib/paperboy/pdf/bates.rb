@@ -12,6 +12,7 @@ module Paperboy
     #   {bates}         the same, by its usual name
     #   {bates_number}  the number alone, unpadded: 123
     #   {page} {pages}  this page and the document's page count
+    #   {last_number}   the last number the whole run takes, padded alike
     # A prefix can also be plain text in the row: "GSA-{number}".
     Bates = Data.define(:prefix, :digits, :start) do
       # "000123" as a start: six digits, from 123 -- the zeros set the width.
@@ -28,9 +29,9 @@ module Paperboy
 
       # The fields for page +page+ (from 1) of +pages+, numbered +number+.
       # Text, so a number is never shown as money.
-      def page_values(number, page, pages)
+      def page_values(number, page, pages, last: nil)
         { 'number' => label(number), 'bates' => label(number), 'bates_number' => number.to_s, 'page' => page.to_s,
-          'pages' => pages.to_s }
+          'pages' => pages.to_s, 'last_number' => last && label(last) }.compact
       end
     end
   end

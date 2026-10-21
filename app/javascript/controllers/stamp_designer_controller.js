@@ -205,8 +205,9 @@ export default class extends Controller {
     const number = (parseInt(start, 10) || 0) + sheetIndex - this.skippedPages()
     const text = (value) => ({ kind: "text", value: String(value) })
     const padded = String(number).padStart(digits, "0")
+    const last = (parseInt(start, 10) || 0) + Math.max(this.sheets.length - this.skippedPages(), 1) - 1
     return { number: text(padded), bates: text(padded), bates_number: text(number), page: text(sheetIndex + 1),
-      pages: text(this.sheets.length) }
+      pages: text(this.sheets.length), last_number: text(String(last).padStart(digits, "0")) }
   }
 
   setFill(event) {
@@ -444,6 +445,10 @@ export default class extends Controller {
     const option = this.insertTarget.selectedOptions[0]
     const field = this.insertTarget.value
     if (!field) return
+    if (option.dataset.snippet) {
+      this.insertTarget.value = ""
+      return this.insertText(option.dataset.snippet)
+    }
     const dated = ["date", "datetime"].includes(option.dataset.kind)
     const format = dated ? this.dateFormatTarget.value : ""
     this.insertTarget.value = ""

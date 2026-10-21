@@ -59,6 +59,14 @@ module Paperboy
         assert_includes second[1], '000007 p2'
         assert_equal [5, 7, 3], [result.first_number, result.last_number, result.pages]
       end
+
+      test 'the last number is the last the whole set takes, padded alike' do
+        result = BatesRun.new(Bates.from_start('000001'), [{ 'rows' => ['{number} of {last_number}'] }])
+                         .stamp([pdf('f.pdf', 2), pdf('g.pdf', 3)])
+
+        assert_includes texts(result.files.first).first, '000001 of 000005'
+        assert_includes texts(result.files.second).last, '000005 of 000005'
+      end
     end
   end
 end
