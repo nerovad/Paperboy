@@ -1,0 +1,211 @@
+<%# The stamp designer (#221): stamp_designer_controller draws the areas over a
+    sample invoice's first page; Check stamps the invoice on the server;
+    Save makes a new version and asks which invoices take it. %>
+<% key = @group&.id || 'default' %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Stamp Layout: <%= stamp_target_name(@group) %></h1>
+      <p class="aim-page-subtitle">
+        Every area is written on the PDF in the one stamping when an invoice is approved.
+        <% if @layout.built_in? %>Nothing has been saved yet: this is the stamp AIM has always written.<% end %>
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'All stamp layouts', aim_stamp_layouts_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <div data-controller="stamp-designer"
+       data-stamp-designer-areas-value="<%= @layout.area_list.to_json %>"
+       data-stamp-designer-samples-value="<%= stamp_values_data(Aim::StampFields.samples).to_json %>"
+       data-stamp-designer-worst-value="<%= stamp_values_data(Aim::StampFields.worst_case).to_json %>"
+       data-stamp-designer-formats-value="<%= Aim::StampFields.formats.to_json %>"
+       data-stamp-designer-sample-url-value="<%= sample_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-preview-url-value="<%= preview_aim_stamp_layout_path(key) %>">
+
+    <div class="stamp-designer__toolbar">
+      <label class="aim-agency-group-meta">Lay it on
+        <select data-stamp-designer-target="sample" data-action="stamp-designer#loadSample">
+          <% @samples.each do |invoice| %>
+            <option value="<%= invoice.id %>"><%= [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id %> (AIM-<%= invoice.id %>)</option>
+          <% end %>
+        </select>
+      </label>
+      <label class="aim-agency-group-meta" title="Fill each field with the longest value recent invoices have had">
+        <input type="checkbox" data-stamp-designer-target="worstCase" data-action="stamp-designer#draw"> Worst case
+      </label>
+      <button type="button" class="btn compact" data-action="stamp-designer#addArea">Add stamp area</button>
+      <button type="button" class="btn info compact" data-action="stamp-designer#check">Check on this invoice</button>
+      <button type="button" class="btn approve compact" data-action="stamp-designer#openSave">Save…</button>
+      <span class="stamp-designer__status" data-stamp-designer-target="status"></span>
+    </div>
+
+    <div class="stamp-designer">
+      <div class="stamp-designer__stage">
+        <div class="stamp-designer__page-wrap">
+          <canvas class="stamp-designer__page" data-stamp-designer-target="page"></canvas>
+          <div class="stamp-designer__layer" data-stamp-designer-target="layer"></div>
+        </div>
+      </div>
+
+      <aside class="stamp-designer__panel">
+        <div class="stamp-designer__areas" data-stamp-designer-target="list"></div>
+        <p class="stamp-designer__warnings" data-stamp-designer-target="warnings" hidden></p>
+        <label>Name
+          <input type="text" data-stamp-designer-target="control" data-key="name" data-action="input->stamp-designer#edit" maxlength="60">
+        </label>
+        <label>Rows (one per line; a row whose fields are all empty is left out)
+          <textarea data-stamp-designer-target="control rows" data-key="rows" data-action="input->stamp-designer#edit"></textarea>
+        </label>
+        <label>Date format for the next date field
+          <select data-stamp-designer-target="dateFormat">
+            <% Aim::StampLayoutsHelper::DATE_FORMATS.each do |format, example| %>
+              <option value="<%= format %>"><%= example %></option>
+            <% end %>
+          </select>
+        </label>
+        <div class="stamp-designer__chips">
+          <% stamp_field_groups.each do |group, fields| %>
+            <span class="stamp-designer__chip-group"><%= group %></span>
+            <% fields.each do |field, label, kind| %>
+              <button type="button" class="btn ghost compact" data-field="<%= field %>" data-kind="<%= kind %>"
+                      data-action="stamp-designer#insertField" title="{<%= field %>}"><%= label %></button>
+            <% end %>
+          <% end %>
+        </div>
+        <div class="stamp-designer__row">
+          <label>Font
+            <select data-stamp-designer-target="control" data-key="font" data-action="stamp-designer#edit">
+              <% Paperboy::Pdf::Fonts::FAMILIES.each do |family, face| %>
+                <option value="<%= family %>"><%= face[:label] %></option>
+              <% end %>
+            </select>
+          </label>
+          <label>Size (pt)
+            <input type="number" min="6" max="36" step="0.5" data-stamp-designer-target="control" data-key="size" data-action="input->stamp-designer#edit">
+          </label>
+          <label>Colour
+            <input type="color" data-stamp-designer-target="control" data-key="color" data-action="input->stamp-designer#edit">
+          </label>
+          <label>Line spacing
+            <select data-stamp-designer-target="control" data-key="leading" data-action="stamp-designer#edit">
+              <% [[1, 'Tight'], [8.5 / 7, 'Normal'], [1.5, 'Loose'], [2, 'Double']].each do |value, label| %>
+                <option value="<%= value %>"><%= label %></option>
+              <% end %>
+            </select>
+          </label>
+        </div>
+        <div class="stamp-designer__checks">
+          <label><input type="checkbox" data-stamp-designer-target="control" data-key="bold" data-action="stamp-designer#edit"> Bold</label>
+          <label><input type="checkbox" data-stamp-designer-target="control" data-key="italic" data-action="stamp-designer#edit"> Italic</label>
+          <label><input type="checkbox" data-stamp-designer-target="control" data-key="border" data-action="stamp-designer#edit"> Border</label>
+          <label><input type="checkbox" data-stamp-designer-target="control" data-key="background_on" data-action="stamp-designer#edit"> Background</label>
+        </div>
+        <div class="stamp-designer__row">
+          <label>Background
+            <input type="color" data-stamp-designer-target="control" data-key="background" data-action="input->stamp-designer#edit">
+          </label>
+          <label>See-through
+            <select data-stamp-designer-target="control" data-key="opacity" data-action="stamp-designer#edit">
+              <% [[1, 'Solid'], [0.75, '75%'], [0.5, '50%'], [0.25, '25%']].each do |value, label| %>
+                <option value="<%= value %>"><%= label %></option>
+              <% end %>
+            </select>
+          </label>
+          <label>Align
+            <select data-stamp-designer-target="control" data-key="align" data-action="stamp-designer#edit">
+              <option value="left">Left</option><option value="center">Centre</option><option value="right">Right</option>
+            </select>
+          </label>
+          <label>Pages
+            <select data-stamp-designer-target="control" data-key="pages" data-action="stamp-designer#edit">
+              <option value="all">Every page</option><option value="first">First page</option><option value="last">Last page</option>
+            </select>
+          </label>
+        </div>
+        <div class="stamp-designer__row">
+          <label>Kept to
+            <select data-stamp-designer-target="control" data-key="anchor" data-action="stamp-designer#edit">
+              <% Paperboy::Pdf::StampBox::ANCHORS.each do |anchor| %>
+                <option value="<%= anchor %>"><%= anchor.humanize %></option>
+              <% end %>
+            </select>
+          </label>
+          <label>Across (pt)
+            <input type="number" step="1" data-stamp-designer-target="control" data-key="x" data-action="input->stamp-designer#edit">
+          </label>
+          <label>Up/down (pt)
+            <input type="number" step="1" data-stamp-designer-target="control" data-key="y" data-action="input->stamp-designer#edit">
+          </label>
+          <label>Width (pt)
+            <input type="number" min="20" step="1" data-stamp-designer-target="control" data-key="width" data-action="input->stamp-designer#edit">
+          </label>
+        </div>
+        <div class="stamp-designer__checks">
+          <label><input type="checkbox" data-stamp-designer-target="control" data-key="auto_width" data-action="stamp-designer#edit"> Fit the width to the text</label>
+        </div>
+        <button type="button" class="btn deny compact" data-action="stamp-designer#removeArea">Remove this area</button>
+      </aside>
+    </div>
+
+    <h2 class="aim-profile-heading">Check on this invoice</h2>
+    <section class="aim-panel aim-agency-group-panel">
+      <p class="aim-agency-group-meta" data-stamp-designer-target="previewNote">
+        Stamps the invoice picked above with the layout as it is here, through the same code that stamps approvals. Nothing is saved.
+      </p>
+      <div class="stamp-designer__preview" data-stamp-designer-target="preview"></div>
+    </section>
+
+    <%= form_with url: aim_stamp_layout_path(key), method: :patch, data: { stamp_designer_target: 'form', turbo: false } do %>
+      <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>
+      <div class="pb-modal-backdrop" data-stamp-designer-target="saveModal" hidden>
+        <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="stamp-save-title">
+          <div class="pb-modal__header">
+            <h3 id="stamp-save-title">Save the stamp layout</h3>
+            <button type="button" class="pb-modal__close" aria-label="Close" data-action="stamp-designer#closeSave">✕</button>
+          </div>
+          <div class="pb-modal__body">
+            <p class="pb-modal__message">The layout is kept as a new version. Which invoices take it?</p>
+            <label><input type="radio" name="restamp" value="fiscal" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+              Stamp again the approved invoices still with Fiscal (Review, On hold, Ready); exported and archived ones keep theirs</label>
+            <label><input type="radio" name="restamp" value="new" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+              New approvals only</label>
+            <label>Note (optional)
+              <%= text_field_tag :note, '', maxlength: 500, data: { stamp_designer_target: 'noteField' } %>
+            </label>
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="stamp-designer#closeSave">Cancel</button>
+              <button type="button" class="btn approve" data-stamp-designer-target="saveButton" data-action="stamp-designer#save" disabled>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <h2 class="aim-profile-heading">History</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <% if @history.any? %>
+      <table class="submission-table aim-people-table">
+        <thead><tr><th>Saved</th><th>By</th><th>Areas</th><th>Note</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+        <tbody>
+          <% @history.each do |version| %>
+            <tr>
+              <td><%= l(version.created_at.in_time_zone, format: :short) %></td>
+              <td><%= version.created_by %></td>
+              <td><%= version.area_list.size %></td>
+              <td><%= version.note %></td>
+              <td class="aim-people-table__actions">
+                <%= link_to 'Load', edit_aim_stamp_layout_path(key, version: version.id), class: 'btn compact',
+                            title: 'Open this version in the designer; saving it makes it the newest' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="aim-agency-group-meta">Not saved yet.</p>
+    <% end %>
+  </section>
+</div>

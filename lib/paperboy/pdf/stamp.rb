@@ -40,8 +40,9 @@ module Paperboy
       # Yields each page's index and the page count, and stamps the boxes the
       # block returns there. Returns a Result: the new file's bytes, and
       # { page number => [warning, ...] } for the pages that needed a safety
-      # net.
-      def render
+      # net. With +check_overlap+, an area over the page's own text is one too
+      # (:covers_text; unturned pages only).
+      def render(check_overlap: false)
         out = collect_objects
         @next_id = out.keys.map(&:first).max.to_i + 1
         @resources = StampResources.new { |object| add(out, object) }
@@ -54,7 +55,7 @@ module Paperboy
           boxes = Array(yield(index, refs.size)).select { |box| box.on_page?(index, refs.size) && box.lines.any? }
           next if boxes.empty?
 
-          body, page_warnings = stamp_content(ref, boxes)
+          body, page_warnings = stamp_content(ref, boxes, check_overlap && @reader.page(index + 1))
           warnings[index + 1] = page_warnings if page_warnings.any?
           out[[ref.id, ref.gen]] = stamped_page(ref, open_q, add(out, stream(body)))
         end
@@ -117,13 +118,18 @@ module Paperboy
 
       def rotation_of(ref) = @objects.deref(inherited_value(ref, :Rotate)).to_i % 360
 
-      def stamp_content(ref, boxes)
-        width, height, matrix = Geometry.orientation(box_of(ref), rotation_of(ref))
+      # The page's stamp stream and its warnings. +page+ (a PDF::Reader::Page)
+      # asks for the overlap check.
+      def stamp_content(ref, boxes, page = nil)
+        crop = box_of(ref)
+        width, height, matrix = Geometry.orientation(crop, rotation_of(ref))
+        page = nil unless rotation_of(ref).zero?
         warnings = []
         body = "Q\nq\n#{matrix.map { |n| number(n) }.join(' ')} cm\n"
         boxes.each do |box|
           placed = box.place(width, height)
           warnings.concat(placed.warnings)
+          warnings << :covers_text if page && TextOverlap.covers?(page, placed, crop.first(2))
           state = @resources.state_name(box.opacity) if box.background && box.opacity < 1
           body << StampDrawing.draw(box, placed, font: @resources.font_name(box), state: state)
         end

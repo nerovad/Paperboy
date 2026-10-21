@@ -69,7 +69,7 @@ module Aim
 
       assert_not empty.valid?
       assert_not unknown.valid?
-      assert_includes unknown.errors.full_messages.join, 'unknown fields: salary'
+      assert_includes unknown.errors.full_messages.join, 'unknown fields: salary.'
     end
 
     test 'a saved layout is never changed, only followed by a newer one' do

@@ -17,7 +17,8 @@ module Aim
     WARNINGS = {
       shrunk: 'text made smaller to fit',
       moved_inside: 'moved back inside the page',
-      too_big: 'too big for the page even at the smallest size'
+      too_big: 'too big for the page even at the smallest size',
+      covers_text: 'sits over text on the page'
     }.freeze
 
     module_function
@@ -44,10 +45,11 @@ module Aim
     end
 
     # The stamped PDF +layout+ would make of +invoice+, and its warnings,
-    # without writing anything (the designer's check, #221).
-    def preview(invoice, layout, values: Aim::StampFields.values(invoice))
+    # without writing anything (the designer's check, #221). With
+    # +check_overlap+, an area sitting over the page's own text is a warning.
+    def preview(invoice, layout, values: Aim::StampFields.values(invoice), source: invoice.pdf_path, check_overlap: false)
       boxes = layout.boxes(values)
-      Paperboy::Pdf::Stamp.new(invoice.pdf_path).render { boxes }
+      Paperboy::Pdf::Stamp.new(source).render(check_overlap: check_overlap) { boxes }
     end
 
     # "page 1: text made smaller to fit; page 2: ...", or nil.

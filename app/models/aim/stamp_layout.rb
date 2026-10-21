@@ -68,25 +68,31 @@ module Aim
       end
     end
 
+    # The first area that would not fit a letter page, either way up, even
+    # at the smallest size, filled with +values+; nil when all fit.
+    def oversized_area(values)
+      boxes(values).find do |box|
+        [[612.0, 792.0], [792.0, 612.0]].any? { |size| box.place(*size).warnings.include?(:too_big) }
+      end
+    end
+
     private
 
     def areas_make_sense
       list = area_list
-      return errors.add(:areas, 'need at least one stamp area') if list.empty?
-      return errors.add(:areas, "can be at most #{MAX_AREAS}") if list.size > MAX_AREAS
+      return errors.add(:base, 'A stamp needs at least one area.') if list.empty?
+      return errors.add(:base, "A stamp can have at most #{MAX_AREAS} areas.") if list.size > MAX_AREAS
 
       list.each_with_index { |area, index| check_area(area, index + 1) }
     end
 
     def check_area(area, number)
-      rows = Array(area['rows'])
-      errors.add(:areas, "area #{number} needs at least one row of text") if rows.none?(&:present?)
-      errors.add(:areas, "area #{number} can have at most #{MAX_ROWS} rows") if rows.size > MAX_ROWS
-      rows.each do |row|
-        errors.add(:areas, "area #{number} has a row over #{MAX_ROW_LENGTH} characters") if row.to_s.length > MAX_ROW_LENGTH
-        unknown = Paperboy::Pdf::StampTemplate.fields(row).reject { |name| Aim::StampFields.known?(name) }
-        errors.add(:areas, "area #{number} names unknown fields: #{unknown.uniq.join(', ')}") if unknown.any?
-      end
+      rows = Array(area['rows']).map(&:to_s)
+      errors.add(:base, "Area #{number} needs at least one row of text.") if rows.none?(&:present?)
+      errors.add(:base, "Area #{number} can have at most #{MAX_ROWS} rows.") if rows.size > MAX_ROWS
+      errors.add(:base, "Area #{number} has a row over #{MAX_ROW_LENGTH} characters.") if rows.any? { |row| row.length > MAX_ROW_LENGTH }
+      unknown = rows.flat_map { |row| Paperboy::Pdf::StampTemplate.fields(row) }.uniq.reject { |name| Aim::StampFields.known?(name) }
+      errors.add(:base, "Area #{number} names unknown fields: #{unknown.join(', ')}.") if unknown.any?
     end
   end
 end

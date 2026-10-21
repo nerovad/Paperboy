@@ -200,6 +200,12 @@ Rails.application.routes.draw do
     get 'fiscal', to: 'fiscal#index', as: :fiscal
     get 'fiscal/dashboard', to: 'fiscal_dashboard#index', as: :fiscal_dashboard
     resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
+    resources :stamp_layouts, only: %i[index edit update], path: 'fiscal/stamps' do
+      member do
+        post :preview
+        get :sample
+      end
+    end
     resources :fiscal_reports, only: %i[index show], path: 'fiscal/reports', constraints: { id: /\d+/ } do
       member do
         get :download
