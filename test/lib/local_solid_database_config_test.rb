@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'erb'
-require 'yaml'
 
 class LocalSolidDatabaseConfigTest < ActiveSupport::TestCase
   SYSTEMD_UNITS = %w[
@@ -90,8 +88,10 @@ class LocalSolidDatabaseConfigTest < ActiveSupport::TestCase
     else
       ENV['PAPERBOY_LOCAL_SOLID'] = local_solid
     end
-    source = ERB.new(File.read(Rails.root.join(path))).result
-    YAML.safe_load(source, aliases: true)
+    # Rails names the ERB file. require_relative in database.yml is then
+    # relative to config/. A nameless ERB result is relative to the working
+    # directory, which walks out of the worktree.
+    ActiveSupport::ConfigurationFile.parse(Rails.root.join(path))
   ensure
     if original.nil?
       ENV.delete('PAPERBOY_LOCAL_SOLID')
