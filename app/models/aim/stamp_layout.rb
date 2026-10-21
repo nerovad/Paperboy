@@ -49,6 +49,26 @@ module Aim
 
     def self.built_in = new(areas: BUILT_IN.to_json, created_by: 'aim')
 
+    # What a group's designer may start from (#229): [[key, label], ...] --
+    # the default, the stamp AIM has always written, and every other group
+    # that has a layout of its own.
+    def self.start_options(except: nil)
+      groups = Aim::AgencyGroup.where(id: where.not(agency_group_id: nil).select(:agency_group_id))
+                               .where.not(id: except&.id).by_name
+      [['default', 'Default layout'], ['built_in', 'The stamp AIM has always written']] +
+        groups.map { |group| [group.id.to_s, "#{group.name}'s layout"] }
+    end
+
+    # The layout a start_options key names, to load into a designer; nil for
+    # a group with no layout of its own.
+    def self.start_from(key)
+      case key.to_s
+      when 'default' then history_for(nil).first || built_in
+      when 'built_in' then built_in
+      else (group = Aim::AgencyGroup.find_by(id: key)) && history_for(group).first
+      end
+    end
+
     # The areas as hashes: { 'name', 'rows', and StampBox's settings }.
     def area_list
       list = JSON.parse(areas.presence || '[]')
