@@ -32,7 +32,9 @@ module FormsApp
     #
     config.time_zone = 'Pacific Time (US & Canada)'
     config.active_job.queue_adapter = :solid_queue
-    config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore
+    # Rails already inserts the cookie session. A second CookieStore sits
+    # inside it and is the one OmniAuth writes omniauth.state into. The outer
+    # store then saves the cookie without that key, so the Entra callback
+    # compares the returned state to nil and crashes in secure_compare.
   end
 end
