@@ -23,7 +23,8 @@ class BatesCounter < ApplicationRecord
     'number' => { label: 'Running number', group: 'Numbering' },
     'page' => { label: 'Page of the file', group: 'Numbering' },
     'pages' => { label: 'Pages in the file', group: 'Numbering' },
-    'stamped_on' => { label: 'Date stamped', group: 'Other', format: '%m/%d/%Y' }
+    'stamped_on' => { label: 'Date stamped', group: 'Time stamp', format: '%m/%d/%Y' },
+    'stamped_at' => { label: 'Date and time stamped', group: 'Time stamp', format: '%m/%d/%Y %-I:%M %p' }
   }.freeze
 
   has_many :runs, -> { order(id: :desc) }, class_name: 'BatesRun', inverse_of: :counter, dependent: :restrict_with_exception
@@ -31,6 +32,7 @@ class BatesCounter < ApplicationRecord
   validates :name, presence: true, length: { maximum: 100 }, uniqueness: { case_sensitive: false }
   validates :digits, inclusion: { in: 1..12 }
   validates :next_number, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :first_page, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 999 }
   validates :page_shrink, inclusion: { in: SHRINKS }, allow_nil: true
   validates :page_position, inclusion: { in: Paperboy::Pdf::Geometry::POSITIONS }, allow_nil: true
   validates :created_by, presence: true
@@ -67,19 +69,19 @@ class BatesCounter < ApplicationRecord
     { scale: page_shrink / 100.0, position: page_position.presence || 'center' }
   end
 
-  def values = { 'stamped_on' => Time.zone.today }
+  def values = { 'stamped_on' => Time.zone.today, 'stamped_at' => Time.current }
 
   def formats = FIELDS.transform_values { |field| field[:format] }.compact
 
   # The PDFs at +paths+ (named +names+) stamped from this counter's next
   # number, without taking any numbers: a check.
-  def preview(paths) = Paperboy::Pdf::BatesRun.new(bates, area_list, values: values, shrink: shrink).stamp(paths)
+  def preview(paths) = stamper.stamp(paths)
 
   # Stamps the PDFs and takes their numbers: the counter moves on and the run
   # is logged, in one locked transaction. Returns [result, run].
   def run!(paths, names:, by:)
     with_lock do
-      result = Paperboy::Pdf::BatesRun.new(bates, area_list, values: values, shrink: shrink).stamp(paths)
+      result = stamper.stamp(paths)
       run = runs.create!(digits: digits, first_number: result.first_number, last_number: result.last_number,
                          page_count: result.pages, file_names: names.join("\n"), created_by: by)
       update!(next_number: result.last_number + 1, updated_by: by)
@@ -88,6 +90,8 @@ class BatesCounter < ApplicationRecord
   end
 
   private
+
+  def stamper = Paperboy::Pdf::BatesRun.new(bates, area_list, values: values, shrink: shrink, first_page: first_page)
 
   def areas_make_sense
     list = area_list

@@ -46,6 +46,19 @@ module Paperboy
 
         assert_includes texts(result.files.first).first, '00000042'
       end
+
+      test 'with a start page, the pages before it in each file get nothing and take no number' do
+        result = BatesRun.new(Bates.from_start('000005'), [{ 'rows' => ['{number} p{page}'] }], first_page: 2)
+                         .stamp([pdf('d.pdf', 3), pdf('e.pdf', 2)])
+
+        first, second = result.files.map { |bytes| texts(bytes) }
+        assert_not_includes first[0], '00000', 'the cover is left alone'
+        assert_includes first[1], '000005 p2'
+        assert_includes first[2], '000006 p3'
+        assert_not_includes second[0], '00000'
+        assert_includes second[1], '000007 p2'
+        assert_equal [5, 7, 3], [result.first_number, result.last_number, result.pages]
+      end
     end
   end
 end

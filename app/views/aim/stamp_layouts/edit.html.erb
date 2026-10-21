@@ -74,6 +74,7 @@
                     data-action="stamp-designer#setFill"><%= label %></button>
           <% end %>
         </div>
+        <button type="button" class="btn ghost compact" data-action="stamp-designer#openHelp">Help</button>
         <button type="button" class="btn info compact" data-action="stamp-designer#check">Check</button>
         <button type="button" class="btn approve compact" data-action="stamp-designer#openSave">Save…</button>
       </div>
@@ -118,6 +119,8 @@
       <%= hidden_field_tag :invoice_id, '', id: nil, data: { stamp_designer_target: 'checkInvoice' } %>
       <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
     <% end %>
+
+    <%= render 'shared/stamp_designer/help', bates: false %>
 
     <%= form_with url: aim_stamp_layout_path(key), method: :patch, data: { stamp_designer_target: 'form', turbo: false } do %>
       <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>

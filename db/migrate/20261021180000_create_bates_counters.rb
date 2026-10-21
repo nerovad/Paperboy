@@ -14,6 +14,7 @@ class CreateBatesCounters < ActiveRecord::Migration[8.1]
         t.string :name, limit: 100, null: false
         t.integer :digits, null: false, default: 6
         t.bigint :next_number, null: false, default: 1
+        t.integer :first_page, null: false, default: 1
         t.text :areas
         t.integer :page_shrink
         t.string :page_position, limit: 10

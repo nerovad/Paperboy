@@ -42,7 +42,8 @@ module Aim
                   'sales_tax' => BigDecimal('-999999.99'), 'received' => Date.new(2026, 9, 28),
                   'invoice_date' => Date.new(2026, 9, 28), 'check_date' => Date.new(2026, 9, 28),
                   'stamped_on' => Date.new(2026, 9, 28), 'approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59),
-                  'first_approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59))
+                  'first_approved_at' => Time.zone.local(2026, 9, 28, 23, 58, 59),
+                  'stamped_at' => Time.zone.local(2026, 9, 28, 23, 58, 59))
     end
 
     # Each coding field's longest real value, in the rules or on coding lines;

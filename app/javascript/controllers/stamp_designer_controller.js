@@ -26,7 +26,8 @@ export default class extends Controller {
   static targets = ["pages", "scroller", "sample", "upload", "fileName", "fill", "list", "rows", "insert", "separator", "dateFormat",
     "control", "choice", "toggle", "shrink", "position", "warnings", "status", "zoomLabel", "body", "checkForm",
     "checkAreas", "checkShrink", "checkPosition", "checkFill", "checkInvoice", "checkFile", "form", "areasField",
-    "shrinkField", "positionField", "saveModal", "saveButton", "restampField", "batesStart", "checkStart", "stampButton"]
+    "shrinkField", "positionField", "saveModal", "saveButton", "restampField", "batesStart", "batesFirstPage", "checkStart", "checkFirstPage", "stampButton",
+    "helpModal"]
 
   static values = { areas: Array, shrink: Number, position: String, samples: Object, worst: Object, formats: Object,
     sampleUrl: String, valuesUrl: String, previewUrl: String, stampUrl: String }
@@ -201,7 +202,7 @@ export default class extends Controller {
   batesValues(sheetIndex) {
     const start = this.batesStartTarget.value.trim()
     const digits = /^\d+$/.test(start) ? start.length : 1
-    const number = (parseInt(start, 10) || 0) + sheetIndex
+    const number = (parseInt(start, 10) || 0) + sheetIndex - this.skippedPages()
     const text = (value) => ({ kind: "text", value: String(value) })
     const padded = String(number).padStart(digits, "0")
     return { number: text(padded), bates: text(padded), bates_number: text(number), page: text(sheetIndex + 1),
@@ -221,7 +222,13 @@ export default class extends Controller {
     })
   }
 
+  // Pages before a Bates counter's Start on page get nothing.
+  skippedPages() {
+    return this.hasBatesFirstPageTarget ? Math.max(1, parseInt(this.batesFirstPageTarget.value, 10) || 1) - 1 : 0
+  }
+
   onPage(area, index) {
+    if (index < this.skippedPages()) return false
     if (area.pages === "first") return index === 0
     if (area.pages === "last") return index === this.sheets.length - 1
     return true
@@ -488,6 +495,7 @@ export default class extends Controller {
     if (this.hasBatesStartTarget) {
       if (!this.upload) return this.status("Upload a PDF first.")
       this.checkStartTarget.value = this.batesStartTarget.value
+      this.checkFirstPageTarget.value = this.batesFirstPageTarget.value
     }
     const files = new DataTransfer()
     if (this.upload) files.items.add(this.upload)
@@ -495,6 +503,16 @@ export default class extends Controller {
     if (this.hasCheckInvoiceTarget) this.checkInvoiceTarget.value = this.upload ? "" : this.sampleTarget.value
     this.checkFormTarget.submit()
     this.status("The check opened in a new tab.")
+  }
+
+  // Help
+
+  openHelp() {
+    this.helpModalTarget.hidden = false
+  }
+
+  closeHelp() {
+    this.helpModalTarget.hidden = true
   }
 
   // Saving

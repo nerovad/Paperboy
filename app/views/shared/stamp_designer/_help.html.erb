@@ -1,0 +1,117 @@
+<%# The stamp designer's Help (#230): how to stamp, by what you want to do --
+    Bates numbering, a record's details, the date and time -- and how areas
+    are placed, styled, checked and saved. Locals: bates (the Bates Stamp
+    page; otherwise AIM's stamp layouts). %>
+<div class="pb-modal-backdrop" data-stamp-designer-target="helpModal" hidden>
+  <div class="pb-modal pb-modal--xl stamp-help" role="dialog" aria-modal="true" aria-labelledby="stamp-help-title">
+    <div class="pb-modal__header">
+      <h3 id="stamp-help-title">How stamping works</h3>
+      <button type="button" class="pb-modal__close" aria-label="Close" data-action="stamp-designer#closeHelp">✕</button>
+    </div>
+    <div class="pb-modal__body stamp-help__body">
+      <p class="stamp-help__lede">
+        A stamp is one or more <strong>areas</strong> of text written onto every page (or some pages) of a PDF.
+        Each area's rows mix plain text with <strong>fields</strong> in braces, filled in when the stamp is written.
+        Pick a field from <em>Insert a field</em>; type anything around it.
+      </p>
+
+      <div class="stamp-help__grid">
+        <% if bates %>
+          <section class="stamp-help__card">
+            <h4>Bates numbering</h4>
+            <p>A running number on every page, continuing from one file into the next.</p>
+            <dl class="stamp-help__example">
+              <dt>Row</dt><dd><code>GSA-{number}</code></dd>
+              <dt>Next number</dt><dd><code>000001</code></dd>
+              <dt>Prints</dt><dd>GSA-000001, GSA-000002, GSA-000003 …</dd>
+            </dl>
+            <ul>
+              <li>The zeros in <em>Next number</em> set how many digits: <code>000123</code> is six digits, starting at 123.</li>
+              <li>A field can set its own width: <code>{number|00000000}</code>.</li>
+              <li><em>Start on page</em> leaves the pages before it (a cover) unstamped and unnumbered, in every file.</li>
+              <li><em>Stamp and download</em> takes the numbers: the counter moves on, and the run is listed under Runs.
+                <em>Check</em> takes none.</li>
+            </ul>
+          </section>
+        <% else %>
+          <section class="stamp-help__card">
+            <h4>The invoice's details</h4>
+            <p>Fields from the invoice, its approval, its coding and Fiscal's record.</p>
+            <dl class="stamp-help__example">
+              <dt>Row</dt><dd><code>{approver}_{approved_at}</code></dd>
+              <dt>Prints</dt><dd>Martinez, Mark_06/27/2025_12:27:03</dd>
+            </dl>
+            <ul>
+              <li><em>Fill with</em> shows the stamp as one invoice would print it, with samples, or with long values to see
+                the layout at its fullest.</li>
+              <li>A row whose fields are all empty is left out, so a second-approval row only prints when there is one.</li>
+            </ul>
+          </section>
+        <% end %>
+
+        <section class="stamp-help__card">
+          <h4>Separators that disappear</h4>
+          <p>A separator in square brackets prints only when the field after it has a value.</p>
+          <dl class="stamp-help__example">
+            <dt>Row</dt><dd><code>{approver}[ _ ]{program}[ _ ]{fund}</code></dd>
+            <dt>No program</dt><dd>Martinez, Mark _ G001</dd>
+          </dl>
+          <p class="stamp-help__note"><em>Insert a separator</em> puts one in. Text not in brackets always prints.</p>
+        </section>
+
+        <section class="stamp-help__card">
+          <h4>Date and time stamping</h4>
+          <p>When the stamp is written: <em>Date stamped</em> and <em>Date and time stamped</em>.</p>
+          <dl class="stamp-help__example">
+            <dt>Row</dt><dd><code>Received {stamped_at}</code></dd>
+            <dt>Prints</dt><dd>Received 10/21/2026 1:45 PM</dd>
+          </dl>
+          <p class="stamp-help__note">Pick <em>Dates as</em> before inserting a date to set its form, or write one yourself:
+            <code>{stamped_on|%Y-%m-%d}</code>.</p>
+        </section>
+
+        <section class="stamp-help__card">
+          <h4>Placing an area</h4>
+          <ul>
+            <li>Drag it on the page; drag its right edge to set its width.</li>
+            <li>It keeps to the nearest corner or edge (<em>Kept to</em>), so it stays put on letter, legal and landscape pages.</li>
+            <li><em>Turn</em> sets it at an angle; <em>Prints on</em> picks every page, the first or the last.</li>
+            <li><em>Shrink page contents</em> makes room for the stamp by shrinking the page itself; the stamp never shrinks.</li>
+          </ul>
+        </section>
+
+        <section class="stamp-help__card">
+          <h4>How it looks</h4>
+          <ul>
+            <li>Helvetica, Times or Courier -- the fonts every PDF reader has -- with size, colour, bold, italic and alignment.</li>
+            <li>A border, and a background from solid to clear.</li>
+            <li><em>+ Add</em> makes another area; every area prints in the same stamping.</li>
+          </ul>
+        </section>
+
+        <section class="stamp-help__card">
+          <h4>Safety nets</h4>
+          <ul>
+            <li>An area never runs off the page: it is pushed back inside, its text wraps, and it shrinks if it must.</li>
+            <li>Text is never cut off. A stamp too big for any page cannot be saved.</li>
+            <li>A yellow note warns when an area sits over printing on the page.</li>
+          </ul>
+        </section>
+
+        <section class="stamp-help__card">
+          <h4>Check and save</h4>
+          <ul>
+            <li><em>Check</em> stamps the file on the server, exactly as it will be stamped, and opens it in a new tab.
+              Nothing is saved.</li>
+            <% if bates %>
+              <li><em>Save</em> keeps the look, the next number and the start page for the next run.</li>
+            <% else %>
+              <li><em>Save…</em> keeps a new version (History) and asks which invoices take it. <em>Start from</em> loads the
+                default, another group's layout or the original stamp.</li>
+            <% end %>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

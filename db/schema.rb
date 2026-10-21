@@ -533,6 +533,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_180000) do
     t.datetime "created_at", null: false
     t.string "created_by", null: false
     t.integer "digits", default: 6, null: false
+    t.integer "first_page", default: 1, null: false
     t.string "name", limit: 100, null: false
     t.bigint "next_number", default: 1, null: false
     t.string "page_position", limit: 10

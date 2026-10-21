@@ -44,9 +44,9 @@ class BatesCountersControllerTest < ActionController::TestCase
     assert_select '[data-controller=stamp-designer][data-stamp-designer-areas-value*=?]', '{number}'
     assert_select 'input[name=start][value=?]', '0500'
 
-    patch :update, params: { id: made.id, start: '000777', areas: [{ 'rows' => ['GSA-{number}'] }].to_json }
+    patch :update, params: { id: made.id, start: '000777', first_page: '2', areas: [{ 'rows' => ['GSA-{number}'] }].to_json }
     made.reload
-    assert_equal [6, 777, ['GSA-{number}']], [made.digits, made.next_number, made.area_list.first['rows']]
+    assert_equal [6, 777, 2, ['GSA-{number}']], [made.digits, made.next_number, made.first_page, made.area_list.first['rows']]
   end
 
   test 'a check stamps the first PDF with the numbers on the page and takes none' do

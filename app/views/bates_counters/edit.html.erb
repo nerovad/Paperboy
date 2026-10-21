@@ -39,8 +39,13 @@
         <input type="text" name="start" form="bates-save" class="stamp-designer__input stamp-designer__short" maxlength="12" pattern="\d{1,12}"
                value="<%= @counter.start_text %>" title="The zeros set how many digits: 000123 is six digits, next 123"
                data-stamp-designer-target="batesStart" data-action="input->stamp-designer#draw" aria-label="Next number">
+        <span class="stamp-designer__label">Start on page</span>
+        <input type="number" name="first_page" form="bates-save" class="stamp-designer__input stamp-designer__tiny" min="1" max="999"
+               value="<%= @counter.first_page %>" title="Pages before it in each file get no stamp and take no number"
+               data-stamp-designer-target="batesFirstPage" data-action="input->stamp-designer#draw" aria-label="Start on page">
       </div>
       <div class="stamp-designer__bar-group">
+        <button type="button" class="btn ghost compact" data-action="stamp-designer#openHelp">Help</button>
         <button type="button" class="btn info compact" data-action="stamp-designer#check" title="Stamp the first PDF and open it in a new tab. No number is taken.">Check</button>
         <button type="button" class="btn compact" data-action="stamp-designer#openSave" title="Save the look and the numbering">Save</button>
         <button type="button" class="btn approve compact" data-stamp-designer-target="stampButton" data-action="stamp-designer#stamp" disabled
@@ -80,8 +85,11 @@
       <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
       <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
       <%= hidden_field_tag :start, '', id: nil, data: { stamp_designer_target: 'checkStart' } %>
+      <%= hidden_field_tag :first_page, '', id: nil, data: { stamp_designer_target: 'checkFirstPage' } %>
       <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
     <% end %>
+
+    <%= render 'shared/stamp_designer/help', bates: true %>
 
     <%= form_with url: bates_counter_path(@counter), method: :patch, id: 'bates-save', data: { stamp_designer_target: 'form', turbo: false } do %>
       <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>

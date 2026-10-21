@@ -83,11 +83,11 @@ class BatesCountersController < ApplicationController
 
   def actor = current_user&.email.presence || 'Unknown User'
 
-  # The name, and the next number as written with its zeros ("000123": six
-  # digits, from 123); each only when given.
+  # The name, the next number as written with its zeros ("000123": six
+  # digits, from 123), and the page stamping starts on; each only when given.
   def counter_params
-    given = params.permit(:name, :start).to_h.compact_blank
-    { name: given['name'], start_text: given['start'] }.compact
+    given = params.permit(:name, :start, :first_page).to_h.compact_blank
+    { name: given['name'], start_text: given['start'], first_page: given['first_page']&.to_i }.compact
   end
 
   def submitted_areas
