@@ -85,12 +85,26 @@ module Aim
 
     tests Aim::HelpController
 
-    test 'anyone signed in reads how AIM works' do
-      sign_in 9
+    test 'AIM staff read the full How AIM works, and can see what approvers see' do
+      sign_in 9, 'aim_admin'
       get :show
 
       assert_response :success
       %w[start roles groups upload working duplicates fiscal setup alerts faq].each { |id| assert_select "section##{id}" }
+      assert_select 'a[href=?]', aim_help_path(for: 'approver'), text: 'What approvers see'
+
+      get :show, params: { for: 'approver' }
+      assert_select 'h1', text: 'How to approve invoices'
+    end
+
+    test 'someone who only approves gets How to approve, not the full guide' do
+      sign_in 9
+      get :show
+
+      assert_response :success
+      assert_select 'h1', text: 'How to approve invoices'
+      assert_select 'section#setup', count: 0
+      assert_select 'nav a.nav-link', text: 'How AIM works', count: 0
     end
 
     # Every screenshot the page names is in git (#144): .gitignore drops PNGs
@@ -103,7 +117,7 @@ module Aim
       assert_operator names.size, :>=, 6
       assert_empty names - tracked, "Help screenshots not in git: #{(names - tracked).join(', ')}"
 
-      sign_in 9
+      sign_in 9, 'aim_admin'
       get :show
       assert_select 'figure.aim-help__shot img', names.size
     end

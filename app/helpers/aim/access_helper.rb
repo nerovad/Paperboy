@@ -94,6 +94,11 @@ module Aim
     # who also process invoices, so this is aim_queue_access? by another name.
     def aim_user_admin? = aim_queue_access?
 
+    # Who gets the full How AIM works: AIM Admins (in either mode), Fiscal and
+    # Group Admins, and BU Admins. Someone who only approves gets How to
+    # approve.
+    def aim_full_help? = aim_real_admin? || aim_fiscal? || aim_manages_people?
+
     # Who sees the Pipeline, Vendors and the Dashboard, and works every BU:
     # the AIM Admins, the aim_admin group in ACL (plus system admins, who
     # reach everything in Paperboy). One role, decided 2026-09-25. The

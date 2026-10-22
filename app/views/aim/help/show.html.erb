@@ -12,6 +12,10 @@
       <h1 class="aim-page-title">How AIM works</h1>
       <p class="aim-page-subtitle">What each part of AIM is for, and how to do the common things.</p>
     </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'What approvers see', aim_help_path(for: 'approver'), class: 'btn compact',
+                  title: 'The short How to approve, which people who only approve get instead of this page' %>
+    </div>
   </header>
 
   <nav class="aim-help__toc" aria-label="On this page">
