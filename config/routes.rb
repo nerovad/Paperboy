@@ -153,6 +153,7 @@ Rails.application.routes.draw do
       collection do
         patch :reassign_many
         patch :acknowledge
+        patch :waiting_many
       end
       member do
         get :pdf

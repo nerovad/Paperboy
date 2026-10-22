@@ -1014,6 +1014,19 @@
   font-size: 0.8rem;
 }
 
+.aim-waiting-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.aim-waiting-bar__count {
+  margin-right: 0.4rem;
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
 .aim-split-manual {
   display: flex;
   align-items: center;

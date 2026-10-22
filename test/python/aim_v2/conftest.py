@@ -198,12 +198,17 @@ class FakeDb:
         row["lease_until"] = now + timedelta(seconds=lease_seconds)
         return dict(row)
 
-    def renew_lease(self, invoice_id, lease_seconds):
-        self.rows[invoice_id]["lease_until"] = self._now() + timedelta(seconds=lease_seconds)
+    def renew_lease(self, invoice_id, lease_seconds, owner=None):
+        row = self.rows[invoice_id]
+        if owner is not None and row.get("lease_owner") != owner:
+            raise self.stopped(f"invoice {invoice_id} was taken from {owner}")
+        row["lease_until"] = self._now() + timedelta(seconds=lease_seconds)
 
     def transition(self, invoice_id, from_state, to_state, note=None, fields=None,
-                   command="keep", stamp=(), actor="aim_worker"):
+                   command="keep", stamp=(), actor="aim_worker", owner=None):
         row = self.rows[invoice_id]
+        if owner is not None and row.get("lease_owner") != owner:
+            raise self.stopped(f"invoice {invoice_id} was taken from {owner}")
         row.update(self._limited(fields))
         row["state"] = to_state
         if command != "keep":
@@ -222,4 +227,6 @@ class FakeDb:
 @pytest.fixture
 def fake_db(v2):
     store = v2("store")
-    return FakeDb(store.limited, columns=store.FIELD_LIMITS)
+    db = FakeDb(store.limited, columns=store.FIELD_LIMITS)
+    db.stopped = store.Stopped
+    return db

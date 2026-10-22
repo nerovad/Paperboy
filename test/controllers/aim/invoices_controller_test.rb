@@ -466,10 +466,14 @@ module Aim
       assert_includes row.events.pluck(:note).join("\n"), 'Manual Data Entry Needed: AI cannot read it'
     end
 
-    test 'sending to a queue needs a reason, and not while the worker has it' do
-      row = invoice('4601.N', state: 'extracting', pdf: false)
+    test 'sending to a queue needs a reason, and not while a worker that cannot be stopped has it (#192)' do
+      row = invoice('4601.N', state: 'extracting', pdf: false, lease_owner: 'SCAN02:aim_worker', lease_until: 10.minutes.from_now)
       act(row, 'send_to_queue', reason: 'stuck')
       assert_equal 'extracting', row.state
+
+      row = invoice('4601.N2', state: 'extracting', pdf: false, lease_owner: 'SCAN02:aim_worker+stop', lease_until: 10.minutes.from_now)
+      act(row, 'send_to_queue', reason: 'stuck', send_owner: 'SHARED')
+      assert_equal ['ready_for_approval', nil], [row.state, row.lease_owner], 'one that gives it up lets it go'
 
       row = invoice('4601.O', pdf: false)
       act(row, 'send_to_queue')
@@ -833,6 +837,65 @@ module Aim
 
       act(row, 'start_split', queue: 'ready_for_approval')
       assert_equal 'ready_for_approval', row.state
+    end
+
+    test 'Waiting for AI: hold, release, skip the AI, from the More menu (#192)' do
+      row = invoice('4601.AI1', state: 'received', command: 'extract')
+
+      get :show, params: { id: row.batch_id, queue: 'received' }
+      assert_select 'button[name=invoice_action][value=?]', 'hold_ai'
+      assert_select 'button[name=invoice_action][value=?]', 'skip_ai'
+
+      act(row, 'hold_ai', queue: 'received')
+      assert row.on_hold?
+      get :show, params: { id: row.batch_id, queue: 'received' }
+      assert_select '.badge', text: 'On hold'
+      assert_select 'button[name=invoice_action][value=?]', 'release_hold', text: 'Release to the AI'
+
+      act(row, 'release_hold', queue: 'received')
+      assert_equal 'extract', row.command
+
+      act(row, 'skip_ai', queue: 'received')
+      assert_equal ['needs_review', true], [row.state, row.manual_entry]
+      assert_redirected_to aim_invoice_path(row.batch_id, queue: 'needs_review')
+    end
+
+    test 'while a worker that cannot be stopped reads it, nothing is offered (#192)' do
+      row = invoice('4601.AI2', state: 'extracting', command: 'extract', lease_owner: 'SCAN02:aim_worker', lease_until: 10.minutes.from_now)
+
+      get :show, params: { id: row.batch_id, queue: 'received' }
+      %w[hold_ai skip_ai reject delete].each { |action| assert_select "button[value=#{action}], button[data-value=#{action}]", 0 }
+
+      act(row, 'skip_ai', queue: 'received')
+      assert_equal 'extracting', row.state
+      assert_match(/cannot be stopped/, flash[:alert])
+    end
+
+    test 'the Waiting for AI list acts on every ticked invoice it can, and says how many it could not (#192)' do
+      held = invoice('4601.AI3', state: 'received', command: 'extract')
+      reading = invoice('4601.AI4', state: 'extracting', command: 'extract', lease_owner: 'SCAN02:aim_worker+stop', lease_until: 10.minutes.from_now)
+      stuck = invoice('4601.AI5', state: 'extracting', command: 'extract', lease_owner: 'SCAN02:aim_worker', lease_until: 10.minutes.from_now)
+
+      get :index, params: { queue: 'received' }
+      assert_select 'form#aim-waiting-form button[value=?]', 'hold_ai'
+      # Reject and Delete ask why in a dialog, as on an invoice's page; no typed box on the bar.
+      assert_select 'form#aim-waiting-form button[data-action=?][data-value=?]', 'aim-reason#open', 'reject'
+      assert_select 'form#aim-waiting-form button[data-action=?][data-value=?]', 'aim-reason#open', 'delete'
+      assert_select 'form#aim-waiting-form select[name=reason]'
+      assert_select 'form#aim-waiting-form button[type=submit][name=bulk_action][value=?]', 'reject'
+      assert_select 'form#aim-waiting-form input[type=text][name=reason]', 0
+      assert_select 'input[type=checkbox][form=aim-waiting-form]', 2
+
+      patch :waiting_many, params: { queue: 'received', bulk_action: 'hold_ai', ids: [held, reading, stuck].map(&:batch_id) }
+      assert_equal([true, true, false], [held, reading, stuck].map { |row| row.reload.on_hold? })
+      assert_match(/Put on hold 2 invoices\. 1 could not be/, flash[:notice])
+
+      patch :waiting_many, params: { queue: 'received', bulk_action: 'delete', ids: [held.batch_id] }
+      assert_equal 'received', held.reload.state, 'Delete needs a reason'
+
+      patch :waiting_many, params: { queue: 'received', bulk_action: 'delete', reason: 'test upload', ids: [held.batch_id] }
+      assert_equal 'deleted', held.reload.state
+      assert_match(/test upload/, held.notes)
     end
 
     test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do

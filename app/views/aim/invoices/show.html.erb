@@ -129,6 +129,9 @@
       <%= link_to 'Back to Queue', queue_return_path, class: 'aim-kicker' %>
       <h1 class="aim-page-title"><%= @invoice.batch_id %></h1>
       <span class="aim-page-subtitle"><%= aim_state_label(state) %></span>
+      <% if @invoice.on_hold? %>
+        <span class="badge is-scheduled" title="The AI leaves it until the hold is released (#192)">On hold</span>
+      <% end %>
       <%# The short number people and Fiscal use, from intake on. %>
       <span class="aim-count-pill aim-handle" title="AIM # -- the same on every AIM and Fiscal page"><%= @invoice.handle %></span>
       <%# A reason with a notice of its own shows as that notice's chip. %>
@@ -293,9 +296,17 @@
           <% unknown_vendor = state == 'needs_review' && @invoice.review_reason == 'unknown_vendor' %>
           <% export_failed = state == 'failed' && @invoice.review_reason == 'export_error' %>
           <% sendable = aim_queue_access? && @invoice.sendable? %>
-          <% rejectable = @invoice.can_move_to?('rejected') %>
-          <% deletable = @invoice.can_move_to?('deleted') && aim_queue_access? %>
+          <%# Waiting for AI (#192): nothing while a worker that cannot be stopped is reading it. %>
+          <% from_ai = !@invoice.waiting_for_ai? || @invoice.ai_stoppable? %>
+          <% rejectable = @invoice.can_move_to?('rejected') && from_ai %>
+          <% deletable = @invoice.can_move_to?('deleted') && aim_queue_access? && from_ai %>
+          <% ai_control = aim_queue_access? && @invoice.waiting_for_ai? && @invoice.ai_stoppable? %>
           <% more = [] %>
+          <% if ai_control %>
+            <% more << ['Hold: the AI leaves it', 'aim-act-hold'] unless @invoice.on_hold? %>
+            <% more << ['Stop the AI and start again', 'aim-act-restart'] if state == 'extracting' %>
+            <% more << ['Skip the AI: to Action Needed', 'aim-act-skip-ai'] %>
+          <% end %>
           <% more << ['Learn & Retry AI', 'aim-act-learn-retry'] if unknown_vendor %>
           <% more << ['Retry AI', 'aim-act-retry-ai'] if state == 'needs_review' || export_failed %>
           <% more << ['Retry Export', 'aim-act-retry-export'] if state == 'failed' && !export_failed %>
@@ -323,6 +334,10 @@
                                                 data: { turbo_frame: 'aim-review-panel' } %>
               <% end %>
 
+              <% if ai_control && @invoice.on_hold? %>
+                <%= form.button 'Release to the AI', name: 'invoice_action', value: 'release_hold',
+                                data: { turbo_confirm: 'Take it off hold? The AI reads it next.' }, class: 'btn approve compact' %>
+              <% end %>
               <% if state == 'needs_review' %>
                 <% if unknown_vendor %>
                   <%= form.button 'Learn & Send to Approval', name: 'invoice_action', value: 'learn_and_send',
@@ -361,6 +376,19 @@
             </span>
 
             <%# The More menu's real buttons. %>
+            <% if ai_control %>
+              <%= form.button 'Hold', name: 'invoice_action', value: 'hold_ai', id: 'aim-act-hold', hidden: true, class: 'btn warning',
+                              data: { turbo_confirm: 'Hold it in Waiting for AI? The AI leaves it until someone releases the hold' \
+                                                     "#{', and stops reading it now' if state == 'extracting'}.",
+                                      confirm_title: 'Hold from the AI', confirm_label: 'Hold' } %>
+              <%= form.button 'Stop the AI and start again', name: 'invoice_action', value: 'restart_ai', id: 'aim-act-restart', hidden: true,
+                              class: 'btn warning', data: { turbo_confirm: 'Stop the AI and have it read this one again from the first page?',
+                                                            confirm_title: 'Start the AI again', confirm_label: 'Start again' } %>
+              <%= form.button 'Skip the AI', name: 'invoice_action', value: 'skip_ai', id: 'aim-act-skip-ai', hidden: true, class: 'btn warning',
+                              data: { turbo_confirm: "The AI will not read it#{' (it stops now)' if state == 'extracting'}: to Action Needed, " \
+                                                     'flagged Manual Data Entry Needed, for AIM staff to type in.',
+                                      confirm_title: 'Skip the AI', confirm_label: 'Skip the AI' } %>
+            <% end %>
             <% if unknown_vendor %>
               <%= form.button 'Learn & Retry AI', name: 'invoice_action', value: 'learn_and_retry', id: 'aim-act-learn-retry', hidden: true,
                               data: { turbo_confirm: 'Save this vendor match and have the AI read the invoice again?' }, class: 'btn warning' %>

@@ -25,7 +25,7 @@ module Aim
       'learn_and_retry' => :learn_and_retry,
       'learn_and_send' => :learn_and_send,
       'retry_export' => :retry_export
-    }.merge(Aim::InvoiceRoutingActions::ACTIONS, Aim::InvoiceSplitActions::ACTIONS).freeze
+    }.merge(Aim::InvoiceRoutingActions::ACTIONS, Aim::InvoiceSplitActions::ACTIONS, Aim::InvoiceAiActions::ACTIONS).freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
     # The value is the button's label, for the refusal without one.
@@ -151,9 +151,9 @@ module Aim
     end
 
     # The invoice's notes with one line added: when, what, who, and why.
-    def notes_with(verb)
+    def notes_with(verb, invoice = @invoice)
       line = "#{Time.zone.now.strftime('%Y-%m-%d %H:%M')} #{verb} by #{current_user_name || current_user_email}: #{reason}"
-      [@invoice.notes.presence, line].compact.join("\n")
+      [invoice.notes.presence, line].compact.join("\n")
     end
 
     # The invoice has left this person's hands.

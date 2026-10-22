@@ -23,6 +23,16 @@ TRANSITION = "transition"
 # clears it: the finished lists window and search on finished_at (#169).
 FINISHED_STATES = ("exported", "rejected", "deleted", "split")
 
+# Ends the worker's lease name (#192): this worker gives an invoice up when a
+# person takes it from the AI, so Paperboy offers Stop the AI on its rows.
+# A worker without it would write its result over the person's choice.
+STOPPABLE = "+stop"
+
+
+class Stopped(Exception):
+    """A person took the invoice while the worker had it: Paperboy cleared
+    the lease (Stop the AI, #192). The worker writes nothing and moves on."""
+
 # The columns a worker may write, and the most each holds (the limits in
 # db/migrate). Column names are only ever taken from here, never from a
 # document, so nothing a document says can change the SQL.
@@ -161,13 +171,18 @@ class Db:
             conn.commit()
             return row
 
-    def renew_lease(self, invoice_id, lease_seconds):
+    def renew_lease(self, invoice_id, lease_seconds, owner=None):
+        """Keep the lease; with `owner`, only while it is still theirs --
+        raises Stopped when a person has taken the invoice."""
+        guard, args = ("", ()) if owner is None else (" AND lease_owner = ?", (owner,))
         with self.connect() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                f"UPDATE {self.invoices} SET lease_until = DATEADD(second, ?, SYSUTCDATETIME()) WHERE id = ?",
-                int(lease_seconds), invoice_id)
+                f"UPDATE {self.invoices} SET lease_until = DATEADD(second, ?, SYSUTCDATETIME()) WHERE id = ?{guard}",
+                int(lease_seconds), invoice_id, *args)
             conn.commit()
+            if owner is not None and cursor.rowcount == 0:
+                raise Stopped(f"invoice {invoice_id} was taken from {owner}")
 
     def billing_pending(self, limit=50):
         """Rows whose billing row does not yet show their current state."""
@@ -195,13 +210,15 @@ class Db:
             return record[0] if record else None
 
     def transition(self, invoice_id, from_state, to_state, note=None, fields=None,
-                   command="keep", stamp=(), actor=ACTOR):
+                   command="keep", stamp=(), actor=ACTOR, owner=None):
         """Move a row to `to_state`, write its facts and its event together.
 
         `command` is 'keep' to leave it as it is (the worker is still on the
         job), None to clear it -- which also releases the lease -- or a new
         command to set. `stamp` names datetime columns set to now, in the
-        database's clock.
+        database's clock. With `owner`, the row moves only while that worker
+        still holds its lease; otherwise nothing is written and Stopped is
+        raised (#192).
         """
         fields = limited(fields)
         assignments = dict(fields)
@@ -217,12 +234,15 @@ class Db:
                 columns += f", {column} = SYSUTCDATETIME()"
         if from_state != to_state:
             columns += ", finished_at = SYSUTCDATETIME()" if to_state in FINISHED_STATES else ", finished_at = NULL"
+        guard, args = ("", ()) if owner is None else (" AND lease_owner = ?", (owner,))
         with self.connect() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(
-                    f"UPDATE {self.invoices} SET {columns}, updated_at = SYSUTCDATETIME() WHERE id = ?",
-                    *assignments.values(), invoice_id)
+                    f"UPDATE {self.invoices} SET {columns}, updated_at = SYSUTCDATETIME() WHERE id = ?{guard}",
+                    *assignments.values(), invoice_id, *args)
+                if owner is not None and cursor.rowcount == 0:
+                    raise Stopped(f"invoice {invoice_id} was taken from {owner}")
                 if from_state != to_state:
                     _insert_event(cursor, self.events, self.invoices, invoice_id, from_state, to_state, actor, note)
                 conn.commit()

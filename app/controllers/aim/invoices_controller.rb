@@ -8,6 +8,7 @@ module Aim
     include Aim::InvoiceActions
     include Aim::InvoiceRoutingActions
     include Aim::InvoiceSplitActions
+    include Aim::InvoiceAiActions
     include Aim::InvoiceCodingActions
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
@@ -20,7 +21,7 @@ module Aim
 
     # Declared once for every action it guards: a second before_action of the
     # same filter replaces the first, which is how Acknowledge lost its gate.
-    before_action :require_aim_admin, only: %i[index acknowledge]
+    before_action :require_aim_admin, only: %i[index acknowledge waiting_many]
     before_action :remember_queue_page, only: :index
     before_action :set_queue
     before_action :set_invoice, only: %i[show update pdf reassign lock unlock claim restore relookup]
