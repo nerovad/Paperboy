@@ -3,7 +3,7 @@
 The same harness rules as test/python/aim: every AIM_* variable is stripped
 so the real .env cannot leak in, every database connection is refused, and
 every path comes from tmp_path. `FakeDb` stands in for `store.Db` with the
-same methods, in memory, so the worker, intake, splitting and export are
+same methods, in memory, so the worker, intake and export are
 driven for real against it.
 """
 import importlib
@@ -19,7 +19,7 @@ REPO_ROOT = os.path.dirname(
 )
 V2_DIR = os.path.join(REPO_ROOT, "script", "python", "aim", "v2")
 V2_MODULES = ("worker_common", "batch_ids", "settings", "invoice_models", "cleaning", "vendors", "extraction",
-              "store", "intake", "splitting", "exporting", "worker")
+              "store", "intake", "exporting", "worker")
 
 
 @pytest.fixture(autouse=True)

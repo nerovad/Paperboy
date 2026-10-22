@@ -704,14 +704,27 @@ module Aim
       assert_select 'button[name=invoice_action][value=?]', 'approve_split'
     end
 
-    test 'an approved split saves the manifest and asks the worker to cut' do
+    test 'an approved split is cut at once: each invoice a new one for the AI to read (#192)' do
       row = invoice('4601.X', state: 'needs_split', pages: 3, manifest: { 'bu' => '4601', 'invoices' => [] }.to_json)
 
       act(row, 'approve_split', split: split_params(%w[ACME INV-1 1], %w[ACME INV-2 2-3]))
 
-      assert_equal %w[needs_split split], [row.state, row.command]
-      assert_equal [[1], [2, 3]], row.manifest_data['invoices'].pluck('pages')
-      assert_equal '4601', row.manifest_data['bu']
+      assert_equal 'split', row.state
+      assert_nil row.command, 'the worker is not asked to cut it'
+      assert_equal([['4601.X_SPLIT_1', 'extract', 1], ['4601.X_SPLIT_2', 'extract', 2]],
+                   row.children.order(:batch_id).map { |child| [child.batch_id, child.command, child.page_count] })
+      assert_match(/Split into 2 invoices/, flash[:notice])
+    end
+
+    test 'a split that cannot be cut says why, and nothing changes (#192)' do
+      row = invoice('4601.X2', state: 'needs_split', pdf: false, pages: 3)
+
+      act(row, 'approve_split', split: split_params(%w[ACME INV-1 1], %w[ACME INV-2 2-3]))
+
+      assert_response :unprocessable_content
+      assert_includes response.body, 'Not split: the PDF is not in the store.'
+      assert_equal 'needs_split', row.state
+      assert_empty row.children
     end
 
     test 'a split that does not make sense is refused, keeping what was typed' do
@@ -731,6 +744,73 @@ module Aim
 
       assert_equal %w[received extract], [row.state, row.command]
       assert_not row.split_check
+    end
+
+    test 'staff split an invoice by hand from Action Needed: every page starts in the first invoice (#192)' do
+      row = invoice('4601.S1', pages: 4, manifest: { 'bu' => '4601', 'invoices' => [{ 'pages' => [1, 2, 3, 4] }] }.to_json)
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_select 'button[name=invoice_action][value=?]', 'start_split'
+
+      act(row, 'start_split')
+
+      assert_equal 'needs_split', row.state
+      assert_nil row.command, 'nothing is cut until the split is approved'
+      assert_equal [{ 'vendor_name' => 'ACME', 'invoice_number' => 'INV-1', 'pages' => [1, 2, 3, 4] }], row.manifest_data['invoices']
+      assert_equal '4601', row.manifest_data['bu']
+      assert_equal ['needs_review', Aim::InvoiceCommands::SPLIT_BY_HAND, REVIEWER],
+                   row.events.last.values_at(:from_state, :note, :actor)
+      assert_redirected_to aim_invoice_path(row.batch_id, queue: 'needs_review')
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-4'
+      assert_select 'button[name=invoice_action][value=?]', 'keep_as_one'
+      assert_select 'button[name=invoice_action][value=?]', 'process_as_one', 0
+    end
+
+    test 'a ready invoice is split from its queue, and kept as one goes back there unread (#192)' do
+      row = invoice('4601.S2', state: 'ready_for_approval', pages: 2, assigned_employee_id: 42, assigned_to: 'Aim Staff',
+                               assignment_source: 'folder')
+
+      act(row, 'start_split', queue: 'ready_for_approval')
+      assert_equal 'needs_split', row.state
+
+      act(row, 'keep_as_one')
+
+      assert_equal 'ready_for_approval', row.state
+      assert_nil row.command, 'the AI does not read it again'
+      assert_equal 'kept as one invoice', row.events.last.note
+    end
+
+    test 'keep as one is for a split started by hand; the AI asked for this one (#192)' do
+      row = invoice('4601.S3', state: 'needs_split', pdf: false)
+
+      act(row, 'keep_as_one')
+
+      assert_equal 'needs_split', row.state
+      assert_match(/Process as One Invoice/, flash[:alert])
+    end
+
+    test 'an approved or exporting invoice is not split, nor is one the worker has (#192)' do
+      %w[approved exporting extracting failed].each_with_index do |state, index|
+        row = invoice("4601.S4#{index}", state: state, pdf: false)
+
+        act(row, 'start_split')
+
+        assert_equal state, row.state, "#{state} was split"
+      end
+    end
+
+    test 'an approver who is not AIM staff cannot split; they send it back (#192)' do
+      row = invoice('4601.S5', state: 'ready_for_approval', assigned_to: 'Jane Doe', assigned_employee_id: 7,
+                               assignment_source: 'folder')
+      as_owner_not_staff
+
+      get :show, params: { id: row.batch_id, queue: 'ready_for_approval' }
+      assert_select 'button[name=invoice_action][value=?]', 'start_split', 0
+
+      act(row, 'start_split', queue: 'ready_for_approval')
+      assert_equal 'ready_for_approval', row.state
     end
 
     test 'ready for approval is grouped by BU, then its shared queue and each person, collapsed' do

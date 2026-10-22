@@ -53,6 +53,17 @@ module Aim
       end
     end
 
+    test 'marks where invoices start become the split screen\'s pages, keeping each row\'s vendor (#192)' do
+      invoice = create_invoice(state: 'needs_split', page_count: 6,
+                               manifest: { 'bu' => '4601', 'invoices' => [{ 'vendor_name' => 'ACME', 'pages' => [1, 2, 3, 4, 5, 6] }] }.to_json)
+
+      invoice.mark_split_starts!([5, 3, 3, 9, 0])
+
+      assert_equal [[1, 2], [3, 4], [5, 6]], invoice.manifest_data['invoices'].pluck('pages')
+      assert_equal ['ACME', nil, nil], invoice.manifest_data['invoices'].pluck('vendor_name')
+      assert_equal '4601', invoice.manifest_data['bu']
+    end
+
     test 'every move the pipeline makes is allowed' do
       Aim::Invoice::TRANSITIONS.each do |from, destinations|
         destinations.each do |to|
@@ -174,17 +185,8 @@ module Aim
       assert_equal %w[approved export], [invoice.reload.state, invoice.command]
     end
 
-    test 'a split is approved in place, with the manifest and a command event' do
-      invoice = create_invoice(state: 'needs_split')
-      manifest = { 'invoices' => [{ 'pages' => [1] }, { 'pages' => [2] }] }
-
-      invoice.request_split!(manifest, actor: 'reviewer@example.test')
-
-      invoice.reload
-      assert_equal 'needs_split', invoice.state
-      assert_equal 'split', invoice.command
-      assert_equal manifest, invoice.manifest_data
-      assert_equal 'command', invoice.events.last.action
+    test 'the worker is never asked to split: Rails cuts a split (#192)' do
+      assert_not create_invoice(state: 'needs_split').update(command: 'split')
     end
 
     test 'a command must be one the worker knows' do

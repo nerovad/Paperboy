@@ -51,7 +51,8 @@ module Aim
     ].freeze
 
     # What the worker does next. NULL means nothing.
-    COMMANDS = %w[extract split export].freeze
+    # A split is cut in Rails (Aim::BatchSplit, #192), not by the worker.
+    COMMANDS = %w[extract export].freeze
 
     # A rejected or deleted invoice is finished, but AIM staff may bring one
     # back, with a reason: to Action Needed, or straight to its owner.
@@ -61,8 +62,8 @@ module Aim
       'received' => %w[extracting ready_for_approval rejected deleted],
       'extracting' => %w[needs_review needs_split ready_for_approval failed received],
       'needs_review' => %w[ready_for_approval received needs_split rejected deleted],
-      'needs_split' => %w[split received ready_for_approval rejected deleted],
-      'ready_for_approval' => %w[approved needs_review rejected deleted],
+      'needs_split' => %w[split received needs_review ready_for_approval rejected deleted],
+      'ready_for_approval' => %w[approved needs_review needs_split rejected deleted],
       'approved' => %w[exporting needs_review],
       'exporting' => %w[exported failed],
       'failed' => %w[received approved needs_review ready_for_approval rejected deleted],

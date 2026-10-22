@@ -2,7 +2,7 @@
 
 module Aim
   # A person's answer to "which pages are which invoice?" for a batch the AI
-  # thought held several. Plan step 5.7c.
+  # thought held several, or a person saw did (#192). Plan step 5.7c.
   #
   # Each row is an invoice: a vendor, an invoice number, and its pages written
   # the way people write them -- "1-3, 5". A row with no pages is a row the
@@ -28,6 +28,20 @@ module Aim
         Row.new(vendor_name: invoice['vendor_name'], invoice_number: invoice['invoice_number'],
                 pages_text: page_text(pages_from(invoice['pages'])))
       end
+    end
+
+    # The page each invoice starts on ([1, 4]), when the manifest's invoices
+    # run on from one another from page 1 (1-3, 4-5): what the PDF editor
+    # marks (#192). Anything else marks nothing: [].
+    def self.starts_from_manifest(manifest)
+      groups = Array(manifest.to_h['invoices']).map { |invoice| pages_from(invoice['pages']).sort }
+      next_page = 1
+      groups.each do |pages|
+        return [] unless pages.any? && pages == (next_page...(next_page + pages.size)).to_a
+
+        next_page += pages.size
+      end
+      groups.size > 1 ? groups.map(&:first) : []
     end
 
     # "1-3, 5" from [1, 2, 3, 5].
@@ -74,13 +88,10 @@ module Aim
       @errors.empty?
     end
 
-    # The manifest the splitter reads. Each invoice's pages are written as
-    # sorted, distinct integers -- parsed and checked here, once, so the
-    # worker (splitting.py) reads numbers and never parses page syntax.
-    # Keeping whatever else it already held --
-    # the BU, submitter and owner the AI worker wrote. A blank vendor or
-    # invoice number is left out rather than written as null: the splitter
-    # names a piece part_N only when the key is absent, and a null crashes it.
+    # The manifest Aim::BatchSplit cuts by. Each invoice's pages are written
+    # as sorted, distinct integers -- parsed and checked here, once. Keeping
+    # whatever else it already held -- the BU, submitter and owner the AI
+    # worker wrote. A blank vendor or invoice number is left out.
     def manifest(base = {})
       valid? unless @invoices
       base.to_h.merge('invoices' => @invoices.map { |invoice| invoice.except(:number).compact.transform_keys(&:to_s) })

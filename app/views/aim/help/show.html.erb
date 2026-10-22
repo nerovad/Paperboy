@@ -121,6 +121,21 @@
       <li><strong>Restore</strong> (on a rejected or deleted invoice's page): back to Action Needed, or straight to its
         owner, with a reason.</li>
     </ul>
+    <h3>One PDF, several invoices</h3>
+    <p>When the AI sees several invoices in one PDF it sends it to Action Needed as <em>Needs Split</em>, with the pages
+      it thinks each one has. When it misses them, AIM staff use <strong>More &rsaquo; Split into separate invoices…</strong>
+      from Action Needed or Ready for Approval (claim a ready one first): every page starts in one invoice.</p>
+    <ul>
+      <li>Type each invoice's pages (<em>1-3, 5</em>), or open <strong>Edit PDF</strong>, click the page an invoice starts
+        on and press <em>New invoice starts here</em>: the pages fill in as you go, and each start shows on the strip.</li>
+      <li>Every page must be in one invoice, and there must be at least two.</li>
+      <li><strong>Approve Split</strong> cuts the PDF at once. Each invoice becomes a new one, with its own AIM #, and the AI
+        reads it; the original is marked Split and lists them in its history.</li>
+      <li>Changes made in Edit PDF first are in the pieces -- but apply them before approving; the split waits until you do.</li>
+      <li>Changed your mind? <strong>More &rsaquo; Keep as One Invoice</strong> puts a split you started back where it was,
+        unread. For one the AI asked for, <em>Process as One Invoice</em> has the AI read it as one.</li>
+      <li>Approvers do not split: send it back saying it holds several invoices.</li>
+    </ul>
     <%= aim_help_shot('review', 'The review page: the PDF, the fields, and the buttons.') %>
   </section>
 

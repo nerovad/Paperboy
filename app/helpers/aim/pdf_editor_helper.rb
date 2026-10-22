@@ -8,7 +8,9 @@ module Aim
       version = Aim::PdfVersions.current(invoice)
       inserts = (1..(version&.insert_files&.size || 0)).map { |n| aim_pdf_source_invoice_path(invoice.batch_id, insert: n) }
       { controller: 'aim-pdf-editor', aim_pdf_editor_pdf_url_value: aim_pdf_source_invoice_path(invoice.batch_id),
-        aim_pdf_editor_insert_urls_value: inserts.to_json, aim_pdf_editor_plan_value: version&.plan || 'null' }
+        aim_pdf_editor_insert_urls_value: inserts.to_json, aim_pdf_editor_plan_value: version&.plan || 'null',
+        aim_pdf_editor_splitting_value: invoice.state == 'needs_split',
+        aim_pdf_editor_split_starts_value: Aim::SplitPlan.starts_from_manifest(invoice.manifest_data).to_json }
     end
 
     # "v4 · 10/19/26 2:10 PM · joshua.gannon · PDF edited: text added to page 2"

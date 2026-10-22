@@ -296,7 +296,11 @@
           <% more << ['Learn & Retry AI', 'aim-act-learn-retry'] if unknown_vendor %>
           <% more << ['Retry AI', 'aim-act-retry-ai'] if state == 'needs_review' || export_failed %>
           <% more << ['Retry Export', 'aim-act-retry-export'] if state == 'failed' && !export_failed %>
-          <% more << ['Process as One Invoice', 'aim-act-as-one'] if state == 'needs_split' %>
+          <%# Split by hand (#192): AIM staff, before approval. %>
+          <% splittable = aim_queue_access? && Aim::InvoiceCommands::SPLIT_BY_HAND_FROM.include?(state) %>
+          <% split_by_hand = state == 'needs_split' && @invoice.split_started_from.present? %>
+          <% more << ['Split into separate invoices…', 'aim-act-split'] if splittable %>
+          <% more << (split_by_hand ? ['Keep as One Invoice', 'aim-act-keep-one'] : ['Process as One Invoice', 'aim-act-as-one']) if state == 'needs_split' %>
           <% more << ['Send to a queue…', 'aim-act-send-queue'] if sendable %>
           <% more << ['Reject…', 'aim-act-reject', true] if rejectable %>
           <% more << ['Delete…', 'aim-act-delete', true] if deletable %>
@@ -369,7 +373,18 @@
               <%= form.button 'Retry Export', name: 'invoice_action', value: 'retry_export', id: 'aim-act-retry-export', hidden: true,
                               data: { turbo_confirm: 'Try sending it to billing again?' }, class: 'btn warning' %>
             <% end %>
-            <% if state == 'needs_split' %>
+            <% if splittable %>
+              <%= form.button 'Split into separate invoices', name: 'invoice_action', value: 'start_split', id: 'aim-act-split', hidden: true,
+                              data: { turbo_confirm: 'This PDF holds more than one invoice? Then say which pages are which. Nothing is cut until you approve the split.',
+                                      confirm_title: 'Split into separate invoices', confirm_label: 'Split' },
+                              class: 'btn warning' %>
+            <% end %>
+            <% if split_by_hand %>
+              <%= form.button 'Keep as One Invoice', name: 'invoice_action', value: 'keep_as_one', id: 'aim-act-keep-one', hidden: true,
+                              data: { turbo_confirm: "Leave it as one invoice, back in #{aim_state_label(@invoice.split_started_from)}?",
+                                      confirm_title: 'Keep as one invoice', confirm_label: 'Keep as One' },
+                              class: 'btn warning' %>
+            <% elsif state == 'needs_split' %>
               <%= form.button 'Process as One Invoice', name: 'invoice_action', value: 'process_as_one', id: 'aim-act-as-one', hidden: true,
                               data: { turbo_confirm: 'Keep this PDF as one invoice and have the AI read it?',
                                       confirm_title: 'Process as one invoice', confirm_label: 'Process as One' },

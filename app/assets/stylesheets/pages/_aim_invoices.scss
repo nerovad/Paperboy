@@ -1007,6 +1007,16 @@
   }
 }
 
+// Edit PDF holds changes the split would not see (#192).
+.aim-split-pending {
+  border-left: 4px solid $warning-border-strong;
+  background: $warning-soft-bg;
+  color: $warning-text;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+}
+
 .aim-split-table {
   border-collapse: collapse;
   width: 100%;
@@ -1218,6 +1228,22 @@
 .aim-pdf-thumb canvas {
   max-width: 100%;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+}
+
+// Where an invoice starts, marked for the split (#192).
+.aim-pdf-thumb.starts-invoice {
+  border-top: 3px solid $blue-action;
+  border-radius: 0 0 $radius-6 $radius-6;
+}
+
+.aim-pdf-thumb__start {
+  align-self: stretch;
+  border-radius: $radius-6;
+  background: $blue-notice-bg;
+  color: $blue-notice-text;
+  font-style: normal;
+  font-weight: 600;
+  text-align: center;
 }
 
 .aim-pdf-thumb span {

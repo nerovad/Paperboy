@@ -100,5 +100,16 @@ module Aim
       assert_equal %w[1-3 4-5], rows.map(&:pages_text)
       assert_equal 'ACME', rows.first.vendor_name
     end
+
+    test 'the editor marks where invoices start only when they run on from page 1 (#192)' do
+      starts = ->(*groups) { Aim::SplitPlan.starts_from_manifest('invoices' => groups.map { |pages| { 'pages' => pages } }) }
+
+      assert_equal [1, 4], starts.call([1, 2, 3], [4, 5])
+      assert_equal [1, 2, 3], starts.call([1], [2], [3])
+      assert_empty starts.call([1, 2, 3, 4]), 'one invoice has no starts to mark'
+      assert_empty starts.call([1, 3], [2]), 'pages that do not run on cannot be marks'
+      assert_empty starts.call([2, 3], [4]), 'nor ones that leave page 1 out'
+      assert_empty Aim::SplitPlan.starts_from_manifest({})
+    end
   end
 end

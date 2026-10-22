@@ -14,6 +14,11 @@
       <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#clearCrop">Uncrop</button>
       <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#text">Text</button>
       <button type="button" class="btn compact deny" data-action="aim-pdf-editor#toggleRemove" data-aim-pdf-editor-target="removeButton">Remove page</button>
+      <% if invoice.state == 'needs_split' %>
+        <%# Split (#192): the page an invoice starts on, for the split screen. %>
+        <button type="button" class="btn compact reassign" data-action="aim-pdf-editor#toggleSplitStart"
+                data-aim-pdf-editor-target="splitButton">New invoice starts here</button>
+      <% end %>
     </span>
     <span class="aim-pdf-toolbar__group" role="group" aria-label="The whole PDF">
       <label class="btn compact">Add pages from a PDF
@@ -57,6 +62,7 @@
       <%= form_with url: aim_edit_pdf_invoice_path(invoice.batch_id, from: from), method: :patch, multipart: true,
                     class: 'aim-pdf-toolbar__apply', data: { turbo: false, aim_pdf_editor_target: 'form' } do %>
         <%= hidden_field_tag :pages, '', id: nil, data: { aim_pdf_editor_target: 'pages' } %>
+        <%= hidden_field_tag :split_starts, '', id: nil, data: { aim_pdf_editor_target: 'splitStarts' } if invoice.state == 'needs_split' %>
         <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
         <input type="file" name="inserts[]" multiple hidden data-aim-pdf-editor-target="inserts">
         <button type="submit" class="btn approve compact" data-action="aim-pdf-editor#apply">Apply changes</button>

@@ -7,6 +7,7 @@ module Aim
   class InvoicesController < BaseController
     include Aim::InvoiceActions
     include Aim::InvoiceRoutingActions
+    include Aim::InvoiceSplitActions
     include Aim::InvoiceCodingActions
     include Aim::InvoiceAccess
     include Aim::InvoiceLocking
