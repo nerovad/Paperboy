@@ -1007,6 +1007,10 @@
   }
 }
 
+.aim-split-add {
+  margin-top: 8px;
+}
+
 // Edit PDF holds changes the split would not see (#192).
 .aim-split-pending {
   border-left: 4px solid $warning-border-strong;

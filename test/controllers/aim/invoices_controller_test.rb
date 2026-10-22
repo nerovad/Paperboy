@@ -765,6 +765,7 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
       assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-4'
       assert_select 'button[name=invoice_action][value=?]', 'keep_as_one'
+      assert_select 'button[data-action=?]', 'aim-split-editor#addRow', text: '+ Add an invoice'
       assert_select 'button[name=invoice_action][value=?]', 'process_as_one', 0
     end
 

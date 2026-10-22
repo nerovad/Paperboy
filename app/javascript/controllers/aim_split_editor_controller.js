@@ -36,8 +36,9 @@ export default class extends Controller {
     })
   }
 
-  // A copy of the last row, numbered on, empty.
-  addRow() {
+  // A copy of the last row, numbered on, empty: + Add an invoice, or a mark
+  // made in Edit PDF past the last row.
+  addRow(event) {
     const last = this.rowsTarget.lastElementChild
     const row = last.cloneNode(true)
     const index = this.rowsTarget.children.length
@@ -49,6 +50,8 @@ export default class extends Controller {
       input.value = ""
     })
     this.rowsTarget.appendChild(row)
+    if (event) row.querySelector("input")?.focus()
+    return row
   }
 
   guard(event) {
