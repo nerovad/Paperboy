@@ -1007,6 +1007,13 @@
   }
 }
 
+.aim-split-seen {
+  display: block;
+  margin-top: 2px;
+  color: $text-muted;
+  font-size: 0.8rem;
+}
+
 .aim-split-add {
   margin-top: 8px;
 }
@@ -1024,6 +1031,13 @@
 .aim-split-table {
   border-collapse: collapse;
   width: 100%;
+
+  th:first-child,
+  td:first-child {
+    width: 4.5rem;
+    vertical-align: top;
+    padding-top: 8px;
+  }
 
   th,
   td {

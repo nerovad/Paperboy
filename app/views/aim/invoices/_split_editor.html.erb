@@ -26,32 +26,31 @@
     before approving it; the pages above are numbered as they will be then.
   </p>
 
+  <%# Pages only (#192): the AI reads each new invoice and writes its own
+      vendor and number, so none are asked for. What the AI saw when it
+      proposed the split is shown, and kept, to help match the pages. %>
   <table class="aim-split-table">
     <thead>
       <tr>
-        <th scope="col">#</th>
-        <th scope="col">Vendor</th>
-        <th scope="col">Invoice #</th>
+        <th scope="col">Invoice</th>
         <th scope="col">Pages</th>
       </tr>
     </thead>
     <tbody data-aim-split-editor-target="rows">
-      <% rows = @split_rows.to_a + Array.new(2) { Aim::SplitPlan::Row.new } %>
+      <% rows = @split_rows.to_a + Array.new(@split_rows.to_a.size < 2 ? 2 - @split_rows.to_a.size : 0) { Aim::SplitPlan::Row.new } %>
       <% rows.each_with_index do |row, index| %>
         <tr>
           <td><%= index + 1 %></td>
           <td>
-            <%= text_field_tag "split[#{index}][vendor_name]", row.vendor_name,
-                               disabled: @read_only, aria: { label: "Invoice #{index + 1} vendor" } %>
-          </td>
-          <td>
-            <%= text_field_tag "split[#{index}][invoice_number]", row.invoice_number,
-                               disabled: @read_only, aria: { label: "Invoice #{index + 1} invoice number" } %>
-          </td>
-          <td>
             <%= text_field_tag "split[#{index}][pages_text]", row.pages_text,
                                placeholder: 'e.g. 1-3, 5', disabled: @read_only, data: { aim_split_editor_target: 'pages' },
                                aria: { label: "Invoice #{index + 1} pages" } %>
+            <% seen = [row.vendor_name, row.invoice_number].compact_blank %>
+            <% if seen.any? %>
+              <span class="aim-split-seen" data-aim-split-editor-target="seen">AI saw: <%= seen.join(' · ') %></span>
+              <%= hidden_field_tag "split[#{index}][vendor_name]", row.vendor_name, id: nil %>
+              <%= hidden_field_tag "split[#{index}][invoice_number]", row.invoice_number, id: nil %>
+            <% end %>
           </td>
         </tr>
       <% end %>

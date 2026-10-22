@@ -25,13 +25,13 @@ module Aim
 
     # Split by hand (#192): the AI took it for one invoice, a person sees
     # several. To Needs Split, with every page in one invoice for them to
-    # divide; nothing is cut until they approve the split.
+    # divide; nothing is cut until they approve the split. No vendor or
+    # number: the AI reads each piece for its own.
     def start_split!(actor:)
       raise Aim::Invoice::IllegalTransition, "#{batch_id}: only an invoice in Action Needed or Ready for Approval is split by hand." \
         unless SPLIT_BY_HAND_FROM.include?(state)
 
-      whole = { 'vendor_name' => vendor_name.presence, 'invoice_number' => invoice_number.presence,
-                'pages' => (1..page_count.to_i).to_a }.compact
+      whole = { 'pages' => (1..page_count.to_i).to_a }
       transition_to!('needs_split', actor: actor, note: SPLIT_BY_HAND, command: nil, lease_owner: nil, lease_until: nil,
                                     manifest: manifest_data.merge('invoices' => [whole]).to_json)
     end

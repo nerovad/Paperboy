@@ -8,7 +8,7 @@ import { pbAlert } from "pb_modal"
 // changes not yet applied the pages are numbered as they will be after
 // Apply, so Approve Split waits for Apply.
 export default class extends Controller {
-  static targets = ["rows", "pages", "pending"]
+  static targets = ["rows", "pages", "pending", "seen"]
 
   connect() {
     this.pending = false
@@ -43,6 +43,8 @@ export default class extends Controller {
     const row = last.cloneNode(true)
     const index = this.rowsTarget.children.length
     row.querySelector("td").textContent = `${index + 1}`
+    // A new invoice has no AI guess to show or keep.
+    row.querySelectorAll(".aim-split-seen, input[type=hidden]").forEach((element) => element.remove())
     row.querySelectorAll("input").forEach((input) => {
       input.name = input.name.replace(/split\[\d+\]/, `split[${index}]`)
       input.id = input.name.replace(/\]\[|\[|\]/g, "_").replace(/_$/, "")

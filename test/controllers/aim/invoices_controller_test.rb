@@ -702,6 +702,9 @@ module Aim
       assert_response :success
       assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-2'
       assert_select 'button[name=invoice_action][value=?]', 'approve_split'
+      # Pages only (#192): the AI reads each piece for its own vendor and number; its guess is shown.
+      assert_select 'input[type=text][name=?]', 'split[0][vendor_name]', 0
+      assert_select '.aim-split-seen', text: 'AI saw: ACME · INV-2'
     end
 
     test 'an approved split is cut at once: each invoice a new one for the AI to read (#192)' do
@@ -758,7 +761,7 @@ module Aim
 
       assert_equal 'needs_split', row.state
       assert_nil row.command, 'nothing is cut until the split is approved'
-      assert_equal [{ 'vendor_name' => 'ACME', 'invoice_number' => 'INV-1', 'pages' => [1, 2, 3, 4] }], row.manifest_data['invoices']
+      assert_equal [{ 'pages' => [1, 2, 3, 4] }], row.manifest_data['invoices'], 'no vendor or number: the AI reads each piece'
       assert_equal '4601', row.manifest_data['bu']
       assert_equal ['needs_review', Aim::InvoiceCommands::SPLIT_BY_HAND, REVIEWER],
                    row.events.last.values_at(:from_state, :note, :actor)
@@ -766,6 +769,7 @@ module Aim
 
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
       assert_select 'input[name=?][value=?]', 'split[0][pages_text]', '1-4'
+      assert_select '.aim-split-seen', 0
       assert_select 'button[name=invoice_action][value=?]', 'keep_as_one'
       assert_select 'button[data-action=?]', 'aim-split-editor#addRow', text: '+ Add an invoice'
       assert_select 'button[name=invoice_action][value=?]', 'process_as_one', 0
