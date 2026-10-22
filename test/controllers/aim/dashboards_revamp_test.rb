@@ -112,10 +112,11 @@ module Aim
     test 'every Help screenshot is there and tracked' do
       view = Rails.root.join('app/views/aim/help/show.html.erb').read
       names = view.scan(/aim_help_shot\('([a-z_]+)'/).flatten
+      approver = Rails.root.join('app/views/aim/help/approver.html.erb').read.scan(/aim_help_shot\('([a-z_]+)'/).flatten
       tracked = `git -C #{Rails.root} ls-files app/assets/images/aim/help`.lines.map { |line| File.basename(line.strip, '.png') }
 
       assert_operator names.size, :>=, 6
-      assert_empty names - tracked, "Help screenshots not in git: #{(names - tracked).join(', ')}"
+      assert_empty (names + approver) - tracked, "Help screenshots not in git: #{((names + approver) - tracked).join(', ')}"
 
       sign_in 9, 'aim_admin'
       get :show

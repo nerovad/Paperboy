@@ -23,6 +23,8 @@
       <li>Each row shows how old the invoice is (<em>12 days</em>); after a hand-off it says how long it has been with you
         too (<em>32 days · 3 here</em>). It turns red once it is late.</li>
     </ul>
+    <%= aim_help_shot('approver_mine', 'My AIM: what is waiting on you, your second approvals, anything to type in.') %>
+    <%= aim_help_shot('approver_queue', 'My Queue: the invoices waiting for your approval, each with its age.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section">
@@ -33,6 +35,7 @@
       <li>If it says <strong>Manual Data Entry Needed</strong>, type the details in from the PDF and save; the flag clears once
         everything an approval needs is in.</li>
     </ul>
+    <%= aim_help_shot('approver_review', 'An invoice: the PDF, what AIM read, and the buttons -- Approve, Send Back, Reject, Move.') %>
   </section>
 
   <section class="aim-panel aim-agency-group-panel aim-help__section">
