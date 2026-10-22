@@ -750,7 +750,9 @@ module Aim
       row = invoice('4601.S1', pages: 4, manifest: { 'bu' => '4601', 'invoices' => [{ 'pages' => [1, 2, 3, 4] }] }.to_json)
 
       get :show, params: { id: row.batch_id, queue: 'needs_review' }
-      assert_select 'button[name=invoice_action][value=?]', 'start_split'
+      # In Edit PDF's More, not the review form's (#192); it submits the review form.
+      assert_select '.aim-pdf-more button[form=aim-invoice-form][name=invoice_action][value=?]', 'start_split'
+      assert_select '.aim-review-more button', text: /Split into separate/, count: 0
 
       act(row, 'start_split')
 

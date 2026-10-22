@@ -1163,6 +1163,15 @@
   }
 }
 
+.aim-pdf-more__split {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid $neutral-border-subtle;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+
 .aim-pdf-more__check {
   border-top: 1px solid $neutral-border-subtle;
 }

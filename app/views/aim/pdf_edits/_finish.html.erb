@@ -1,7 +1,8 @@
 <%# Edit PDF's whole-PDF controls (#181, #192), in the Document panel's
     header beside Edit PDF and shown while the editor is open
     (aim_pdf_editor_controller): Versions, More (add pages, swap, read again),
-    Cancel and Apply. Locals: invoice, from ('fiscal' on Fiscal's page). %>
+    Cancel and Apply. Locals: invoice, from ('fiscal' on Fiscal's page),
+    splittable (offer Split into separate invoices, #192). %>
 <% from = local_assigns[:from] %>
 <% reread = invoice.can_move_to?('received') %>
 <% splitting = invoice.state == 'needs_split' %>
@@ -40,6 +41,12 @@
                              data: { action: 'change->aim-pdf-editor#swap' } %>
         </label>
         <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
+      <% end %>
+      <% if local_assigns[:splittable] %>
+        <%# Submits the review form, so what was typed there is saved first. %>
+        <button type="submit" form="aim-invoice-form" name="invoice_action" value="start_split" class="aim-pdf-more__item aim-pdf-more__split"
+                data-turbo-confirm="This PDF holds more than one invoice? Then say which pages are which. Nothing is cut until you approve the split."
+                data-confirm-title="Split into separate invoices" data-confirm-label="Split">Split into separate invoices…</button>
       <% end %>
       <% if reread %>
         <label class="aim-pdf-more__item aim-pdf-more__check" title="After Apply or Swap, the AI reads the invoice again">
