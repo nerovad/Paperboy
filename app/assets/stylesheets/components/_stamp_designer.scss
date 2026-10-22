@@ -17,6 +17,19 @@
   gap: 0.4rem;
 }
 
+.stamp-designer__short { width: 7rem; }
+.stamp-designer__tiny { width: 4rem; }
+
+// A new Bates counter's form: its fields in a row.
+.stamp-designer__new {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .aim-field { flex: 0 1 14rem; }
+}
+
 .stamp-designer__bar {
   align-items: center;
   display: flex;
@@ -391,4 +404,76 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
+
+// Help (#230): the dialog's contents, a card per task.
+.stamp-help__body {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.stamp-help__lede {
+  color: $text-color;
+  font-size: 0.9rem;
+  margin: 0 0 14px;
+}
+
+.stamp-help__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+
+.stamp-help__card {
+  background: $surface-base;
+  border: 1px solid $neutral-border-subtle;
+  border-radius: $radius-6;
+  font-size: 0.84rem;
+  padding: 12px 14px;
+
+  h4 {
+    color: $text-strong;
+    font-size: 0.92rem;
+    margin: 0 0 6px;
+  }
+
+  p { margin: 0 0 8px; }
+
+  ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  code {
+    background: $surface-muted;
+    border: 1px solid $neutral-border-subtle;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    padding: 0 4px;
+  }
+}
+
+.stamp-help__example {
+  background: $surface-muted;
+  border-radius: $radius-6;
+  display: grid;
+  gap: 4px 10px;
+  grid-template-columns: max-content 1fr;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+
+  dt {
+    color: $text-muted;
+    font-size: 0.76rem;
+    font-weight: 650;
+  }
+
+  dd { margin: 0; }
+}
+
+.stamp-help__note {
+  color: $text-muted;
+  font-size: 0.8rem;
 }

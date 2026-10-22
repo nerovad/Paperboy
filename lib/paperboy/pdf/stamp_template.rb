@@ -7,7 +7,9 @@ module Paperboy
     #
     # * a date or time takes a strftime format;
     # * a number takes "money" ($1,234.50, the default) or "plain" (1234.50);
-    # * text takes "upper" or "lower", or nothing.
+    # * text takes "upper" or "lower", or nothing;
+    # * a number written as text (a Bates number) takes zeros, "000000", to be
+    #   padded to that many digits: {number|000000} gives 000123.
     #
     # A separator in square brackets just before a field -- "[ _ ]{program}"
     # -- prints only when that field has a value, so a row of optional
@@ -71,6 +73,8 @@ module Paperboy
       end
 
       def text(value, style)
+        return value.to_i.to_s.rjust(style.length, '0') if style.to_s.match?(/\A0+\z/) && value.match?(/\A\d+\z/)
+
         case style
         when 'upper' then value.upcase
         when 'lower' then value.downcase

@@ -1,0 +1,100 @@
+<%# A Bates counter (#230): its numbering, the shared stamp designer laid on an
+    uploaded PDF (stamp_designer_controller, with Bates numbers per page), Check
+    (the first PDF stamped, opened in a new tab, no number taken), and Stamp
+    and download (every uploaded PDF numbered from the next number, which
+    moves on). %>
+<% field_groups = BatesCounter::FIELDS.group_by { |_, field| field[:group] }
+                                      .map { |group, fields| [group, fields.map { |name, field| [name, field[:label], field[:format] ? 'date' : 'text'] }] } %>
+<div class="aim-page aim-profile-page stamp-designer-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Bates Stamp · <%= @counter.name %></h1>
+      <p class="aim-page-subtitle">
+        Next number <strong><%= @counter.start_text %></strong>. Stamping takes one number per page, in upload order.
+        Put the number in with <em>Insert a field &rarr; Running number</em>; type any prefix beside it (<code>GSA-{number}</code>).
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'All counters', bates_counters_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <div class="stamp-designer" data-controller="stamp-designer"
+       data-stamp-designer-areas-value="<%= @counter.area_list.to_json %>"
+       data-stamp-designer-shrink-value="<%= @counter.page_shrink || 100 %>"
+       data-stamp-designer-position-value="<%= @counter.page_position || 'center' %>"
+       data-stamp-designer-samples-value="<%= stamp_values_data(@counter.values).to_json %>"
+       data-stamp-designer-formats-value="<%= @counter.formats.to_json %>"
+       data-stamp-designer-preview-url-value="<%= preview_bates_counter_path(@counter) %>"
+       data-stamp-designer-stamp-url-value="<%= stamp_bates_counter_path(@counter) %>">
+
+    <section class="aim-panel stamp-designer__bar">
+      <div class="stamp-designer__bar-group">
+        <label class="btn compact stamp-designer__upload">
+          Upload PDFs
+          <input type="file" accept="application/pdf,.pdf" multiple hidden data-stamp-designer-target="upload" data-action="stamp-designer#useUpload">
+        </label>
+        <span class="stamp-designer__file" data-stamp-designer-target="fileName" hidden></span>
+        <span class="stamp-designer__label">Next number</span>
+        <input type="text" name="start" form="bates-save" class="stamp-designer__input stamp-designer__short" maxlength="12" pattern="\d{1,12}"
+               value="<%= @counter.start_text %>" title="The zeros set how many digits: 000123 is six digits, next 123"
+               data-stamp-designer-target="batesStart" data-action="input->stamp-designer#draw" aria-label="Next number">
+        <span class="stamp-designer__label">Start on page</span>
+        <input type="number" name="first_page" form="bates-save" class="stamp-designer__input stamp-designer__tiny" min="1" max="999"
+               value="<%= @counter.first_page %>" title="Pages before it in each file get no stamp and take no number"
+               data-stamp-designer-target="batesFirstPage" data-action="input->stamp-designer#draw" aria-label="Start on page">
+      </div>
+      <div class="stamp-designer__bar-group">
+        <button type="button" class="btn ghost compact" data-action="stamp-designer#openHelp">Help</button>
+        <button type="button" class="btn info compact" data-action="stamp-designer#check" title="Stamp the first PDF and open it in a new tab. No number is taken.">Check</button>
+        <button type="button" class="btn compact" data-action="stamp-designer#openSave" title="Save the look and the numbering">Save</button>
+        <button type="button" class="btn approve compact" data-stamp-designer-target="stampButton" data-action="stamp-designer#stamp" disabled
+                title="Stamp every uploaded PDF from the next number and download them">Stamp and download</button>
+      </div>
+    </section>
+
+    <div class="stamp-designer__body" data-stamp-designer-target="body">
+      <%= render 'shared/stamp_designer/areas_panel', shrinks: BatesCounter::SHRINKS %>
+      <%= render 'shared/stamp_designer/stage' %>
+      <% runs = capture do %>
+        <details class="stamp-designer__group stamp-designer__history">
+          <summary>Runs · <%= pluralize(@runs.size, 'run') %></summary>
+          <% if @runs.any? %>
+            <ul class="stamp-designer__versions">
+              <% @runs.each do |run| %>
+                <li>
+                  <div>
+                    <strong><%= run.range %></strong>
+                    <span><%= run.created_by %> · <%= l(run.created_at.in_time_zone, format: :short) %> · <%= pluralize(run.page_count, 'page') %></span>
+                    <em><%= run.file_list.join(', ').truncate(120) %></em>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="stamp-designer__hint">Not used yet.</p>
+          <% end %>
+        </details>
+      <% end %>
+      <%= render 'shared/stamp_designer/inspector', field_groups: field_groups, snippets: BatesCounter::SNIPPETS, extra: runs %>
+    </div>
+
+    <%= form_with url: preview_bates_counter_path(@counter), method: :post, multipart: true,
+                  data: { stamp_designer_target: 'checkForm', turbo: false }, html: { target: '_blank' } do %>
+      <%= hidden_field_tag :areas, '', id: nil, data: { stamp_designer_target: 'checkAreas' } %>
+      <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
+      <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
+      <%= hidden_field_tag :start, '', id: nil, data: { stamp_designer_target: 'checkStart' } %>
+      <%= hidden_field_tag :first_page, '', id: nil, data: { stamp_designer_target: 'checkFirstPage' } %>
+      <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
+    <% end %>
+
+    <%= render 'shared/stamp_designer/help', bates: true %>
+
+    <%= form_with url: bates_counter_path(@counter), method: :patch, id: 'bates-save', data: { stamp_designer_target: 'form', turbo: false } do %>
+      <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>
+      <%= hidden_field_tag :page_shrink, '', data: { stamp_designer_target: 'shrinkField' } %>
+      <%= hidden_field_tag :page_position, '', data: { stamp_designer_target: 'positionField' } %>
+    <% end %>
+  </div>
+</div>

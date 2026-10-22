@@ -35,7 +35,8 @@ DEVELOPMENT_APP_FEATURES = [
 PAPERBOY_APP_FEATURES = [
   { key: 'form_collections', label: 'Form Collections (create and manage)' },
   { key: 'sql_dashboards', label: 'Dashboards (view)' },
-  { key: 'sql_dashboard_queries', label: 'Dashboards (write SQL and build)' }
+  { key: 'sql_dashboard_queries', label: 'Dashboards (write SQL and build)' },
+  { key: 'bates_stamp', label: 'Bates Stamp' }
 ].freeze
 
 class AppFeature

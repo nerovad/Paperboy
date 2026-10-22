@@ -118,6 +118,7 @@ class NavigationCatalog
     rows << { label: 'Records', path: records_path, keywords: 'my work tables' } if view.records_portal_path
     rows << { label: 'Reports', path: reports_path } if dropdown?('reports')
     rows << { label: 'Dashboards', path: sql_dashboards_dashboards_path, keywords: 'charts queries sql' } if sql_dashboards?
+    rows << { label: 'Bates Stamp', path: bates_counters_path, keywords: 'bates number pdf stamp pages' } if feature?('paperboy', 'bates_stamp')
     rows << { label: 'Authorizations', path: select_authorization_console_index_path } if view.available_authorization_consoles.any?
     rows << { label: 'Settings', path: settings_path } if dropdown?('settings')
     rows << { label: 'Help', path: help_path } if dropdown?('help')

@@ -50,7 +50,9 @@ module Aim
       'check_number' => { label: 'Check #', group: 'Fiscal', sample: '004512' },
       'check_date' => { label: 'Check date', group: 'Fiscal', format: DATE, sample: Date.new(2025, 7, 3) },
       'pay_doc_number' => { label: 'Pay doc #', group: 'Fiscal', sample: 'PV-2025-0712' },
-      'stamped_on' => { label: 'Date stamped', group: 'Fiscal', format: DATE, sample: Date.new(2025, 6, 27) }
+      'stamped_on' => { label: 'Date stamped', group: 'Fiscal', format: DATE, sample: Date.new(2025, 6, 27) },
+      'stamped_at' => { label: 'Date and time stamped', group: 'Fiscal', format: STAMP_TIME,
+                        sample: Time.zone.local(2025, 6, 27, 12, 27, 3) }
     }.freeze
 
     module_function
@@ -98,7 +100,7 @@ module Aim
         'customer_number' => invoice.customer_number, 'batch_id' => invoice.batch_id,
         **CODING.to_h { |field| [field, coding&.public_send(field)] },
         'check_number' => record&.check_number, 'check_date' => record&.check_date,
-        'pay_doc_number' => record&.pay_doc_number, 'stamped_on' => Time.zone.today
+        'pay_doc_number' => record&.pay_doc_number, 'stamped_on' => Time.zone.today, 'stamped_at' => Time.current
       }
     end
 

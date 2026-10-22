@@ -701,6 +701,14 @@ Rails.application.routes.draw do
   get '/dashboards', to: 'dashboards#index', as: :dashboards
 
   # SQL Dashboards: saved SQL drawn as charts (#129)
+  # Bates stamping (#230): counters, the shared stamp designer, check and stamp.
+  resources :bates_counters, only: %i[index create edit update], path: 'tools/bates' do
+    member do
+      post :preview
+      post :stamp
+    end
+  end
+
   namespace :sql_dashboards do
     root 'dashboards#index'
     resources :dashboards do
