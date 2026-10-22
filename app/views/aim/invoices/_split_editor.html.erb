@@ -58,5 +58,10 @@
   </table>
   <% unless @read_only %>
     <button type="button" class="btn compact aim-split-add" data-action="aim-split-editor#addRow">+ Add an invoice</button>
+    <%# As Upload's Skip the AI (#131): to this invoice's queue, flagged for typing in. %>
+    <label class="aim-split-manual">
+      <%= check_box_tag :split_manual, '1', params[:split_manual] == '1', id: 'aim-split-manual' %>
+      Skip the AI: each invoice goes to <%= aim_owner_label(@invoice.queue_owner) %> to be typed in by hand
+    </label>
   <% end %>
 </section>

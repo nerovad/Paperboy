@@ -9,7 +9,9 @@ module Aim
   # PDF -- <batch id>.pdf, so edits made before the split carry through --
   # written to <batch id>_SPLIT_<n>, a row inserted for each as +received+
   # with the +extract+ command, for the AI to read, and the batch ended as
-  # +split+, its history naming them.
+  # +split+, its history naming them. Or, with manual: true, as a skipped
+  # upload is (#131): each straight to the batch's queue in Ready for
+  # Approval, flagged Manual Data Entry Needed, for a person to type in.
   #
   # All or nothing: the pieces are written first, and the rows and the
   # batch's move are one transaction, so a failure leaves the batch waiting to
@@ -28,7 +30,8 @@ module Aim
 
     # The children, in order. Raises Failed, or IllegalTransition when the
     # batch is not waiting to be split.
-    def run!(actor:)
+    def run!(actor:, manual: false)
+      @manual = manual
       raise Aim::Invoice::IllegalTransition, "#{@invoice.batch_id} is not waiting to be split." unless @invoice.can_move_to?('split')
 
       pieces = @plan.manifest(@invoice.manifest_data)['invoices']
@@ -36,7 +39,8 @@ module Aim
       Aim::Invoice.transaction do
         children = pieces.each_with_index.map { |piece, index| insert_child(piece, index + 1, written[index], actor) }
         @invoice.transition_to!('split', actor: actor, command: nil, lease_owner: nil, lease_until: nil,
-                                         note: "split into #{children.size}: #{children.map(&:batch_id).join(', ')}")
+                                         note: "split into #{children.size}#{' to be typed in by hand' if manual}: " \
+                                               "#{children.map(&:batch_id).join(', ')}")
         children
       end
     rescue StandardError
@@ -72,7 +76,8 @@ module Aim
     def insert_child(piece, number, path, actor)
       Aim::Invoice.create!(
         **@invoice.attributes.slice(*KEPT).symbolize_keys,
-        batch_id: child_id(number), state: 'received', command: 'extract', actor: actor, parent_id: @invoice.id,
+        batch_id: child_id(number), state: @manual ? 'ready_for_approval' : 'received', command: (@manual ? nil : 'extract'),
+        manual_entry: @manual, actor: actor, parent_id: @invoice.id,
         split_check: false, page_count: piece['pages'].size, content_hash: Digest::SHA256.file(path).hexdigest,
         extracted_vendor_name: piece['vendor_name'], invoice_number: piece['invoice_number']
       )

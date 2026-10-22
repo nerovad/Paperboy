@@ -18,14 +18,20 @@ module Aim
     private
 
     # A person's split, checked by Aim::SplitPlan and cut at once: each
-    # invoice becomes a new one for the AI to read. A refused plan, or a PDF
+    # invoice becomes a new one for the AI to read, or, with Skip the AI,
+    # one in the batch's queue to be typed in by hand. A refused plan, or a PDF
     # that cannot be cut, re-renders the page with what was typed and why.
     def approve_split
       plan = split_plan_from_params
       return refuse_split(plan, 'The split was not approved. Nothing has changed.') unless plan.valid?
 
-      children = Aim::BatchSplit.new(@invoice, plan).run!(actor: current_user_email)
-      finish("Split into #{children.size} invoices. The AI reads each one; they reach the queues as it does.")
+      manual = params[:split_manual] == '1'
+      children = Aim::BatchSplit.new(@invoice, plan).run!(actor: current_user_email, manual: manual)
+      finish(if manual
+               "Split into #{children.size} invoices, each in #{helpers.aim_owner_label(@invoice.queue_owner)} to be typed in by hand."
+             else
+               "Split into #{children.size} invoices. The AI reads each one; they reach the queues as it does."
+             end)
     rescue Aim::BatchSplit::Failed => e
       plan.errors << "Not split: #{e.message}."
       refuse_split(plan, 'The split was not made. Nothing has changed.')

@@ -59,6 +59,17 @@ module Aim
       end
     end
 
+    test 'manual: each piece skips the AI, flagged to be typed in, in the batch\'s queue' do
+      in_store do
+        parent = batch
+        children = Aim::BatchSplit.new(parent, plan(%w[A 1 1], %w[B 2 2-3])).run!(actor: 'staff@example.test', manual: true)
+
+        assert_equal([['ready_for_approval', nil, true, 'Jane Doe']] * 2,
+                     children.map { |child| [child.state, child.command, child.manual_entry, child.assigned_to] })
+        assert_match(/split into 2 to be typed in by hand: /, parent.reload.events.last.note)
+      end
+    end
+
     test 'the current PDF is cut, so changes made in Edit PDF carry through' do
       in_store do
         parent = batch(text: 'edited')

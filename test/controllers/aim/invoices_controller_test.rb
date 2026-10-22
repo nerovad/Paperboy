@@ -719,6 +719,21 @@ module Aim
       assert_match(/Split into 2 invoices/, flash[:notice])
     end
 
+    test 'Skip the AI sends each piece to the batch\'s queue to be typed in, as Upload does (#192)' do
+      row = invoice('4601.XM', state: 'needs_split', pages: 3, assigned_to: 'Jane Doe', assigned_employee_id: 7, assignment_source: 'folder')
+
+      get :show, params: { id: row.batch_id, queue: 'needs_review' }
+      assert_select 'label.aim-split-manual', text: /Skip the AI: each invoice goes to Jane Doe's queue/
+
+      act(row, 'approve_split', split: split_params([nil, nil, '1'], [nil, nil, '2-3']), split_manual: '1')
+
+      assert_equal 'split', row.state
+      pieces = row.children.order(:batch_id).map { |child| child.attributes.values_at('state', 'command', 'manual_entry', 'assigned_employee_id') }
+      assert_equal [['ready_for_approval', nil, true, 7]] * 2, pieces
+      assert_match(/Jane Doe's queue to be typed in by hand/, flash[:notice])
+      assert_match(/to be typed in by hand/, row.events.last.note)
+    end
+
     test 'a split that cannot be cut says why, and nothing changes (#192)' do
       row = invoice('4601.X2', state: 'needs_split', pdf: false, pages: 3)
 
