@@ -4,7 +4,7 @@
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">My AIM</h1>
-      <p class="aim-page-subtitle">What is waiting on you. <%= link_to 'How AIM works', aim_help_path %></p>
+      <p class="aim-page-subtitle">What is waiting on you. <%= link_to(aim_full_help? ? 'How AIM works' : 'How to approve', aim_help_path) %></p>
     </div>
     <div class="aim-page-header__pills">
       <%= link_to 'My Queue', aim_my_queue_path, class: 'btn approve compact' %>

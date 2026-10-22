@@ -26,8 +26,12 @@ module Aim
       redirect_to aim_root_path, alert: 'Only Fiscal and AIM admins change stamp layouts.' if @groups.empty? && !helpers.aim_user_admin?
     end
 
+    # ?start_from= loads the default, the built-in stamp or another group's
+    # layout into the designer (#229); nothing is saved until Save.
     def edit
-      @layout = loaded_version || current_layout
+      started = Aim::StampLayout.start_from(params[:start_from]) if params[:start_from].present?
+      @start_from = params[:start_from] if started
+      @layout = loaded_version || started || current_layout
       @history = Aim::StampLayout.history_for(@group).limit(20).to_a
       @samples = sample_invoices
     end

@@ -12,6 +12,10 @@
       <h1 class="aim-page-title">How AIM works</h1>
       <p class="aim-page-subtitle">What each part of AIM is for, and how to do the common things.</p>
     </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'What approvers see', aim_help_path(for: 'approver'), class: 'btn compact',
+                  title: 'The short How to approve, which people who only approve get instead of this page' %>
+    </div>
   </header>
 
   <nav class="aim-help__toc" aria-label="On this page">
@@ -220,7 +224,10 @@
         report, move the invoices to Exported and note it in each one's history.</li>
       <li><strong>Reports</strong> lists every saved report: download it again exactly as made, or <em>Regenerate</em> it
         from the invoices' values now as a new number. Files are kept a year.</li>
-      <li><strong>Report Templates:</strong> save named layouts -- columns ticked, dragged into order, renamed; comma or tab.</li>
+      <li><strong>Fiscal Setup</strong> (Fiscal sidebar) holds what is set once and changed rarely, as tabs: Report
+        Templates and Stamp Layouts (and, for a Group Admin, their Agency Groups and Users &amp; Queues).</li>
+      <li><strong>Report Templates</strong> (Fiscal Setup): save named layouts -- columns ticked, dragged into order, renamed;
+        comma or tab.</li>
       <li><strong>Group settings</strong> (Fiscal settings tab): the Default report, hold reasons, tags, fields needed
         before Archive, reject reasons.</li>
       <li><strong>On an invoice's Fiscal page:</strong> Hold, Release or Back to Fiscal Queue on the left of the button row,
@@ -237,7 +244,7 @@
     <p>When an invoice is approved, AIM writes a stamp on a copy of its PDF: by default, bottom right of every page, the
       date it arrived and its invoice date, then who approved it and when. The PDF as received is kept unchanged.</p>
     <ul>
-      <li><strong>Stamp Layouts</strong> (Fiscal sidebar) is where a group's Fiscal change their group's stamp, and AIM
+      <li><strong>Stamp Layouts</strong> (Fiscal Setup) is where a group's Fiscal change their group's stamp, and AIM
         Admins any group's and the default for groups without their own.</li>
       <li><strong>One stamping, any number of areas.</strong> The approval text, Fiscal's processing block (Budget Unit #,
         Account #, Initial, Date Processed), anything else: <em>Add stamp area</em> for each. All are written together.</li>
@@ -268,6 +275,9 @@
         samples.</li>
       <li><strong>Check</strong> has the server stamp the invoice picked, or your uploaded PDF, with the layout as it
         stands, through the same code that stamps approvals, and opens the result in a new tab. Nothing is saved.</li>
+      <li><strong>Start from</strong> (top right) loads the default layout, the stamp AIM has always written, or another
+        group's layout into the designer, to change from there. A group with no layout of its own is stamped with the
+        default, and its designer opens on it. Nothing is saved until Save, which makes it this group's own.</li>
       <li><strong>Saving</strong> keeps every version (History; <em>Load</em> opens an old one) and asks which invoices take
         it: those still with Fiscal (Fiscal Queue, On Hold, Report Queue) are stamped again, or only new approvals. If a
         safety net was needed on an invoice, its Fiscal page says so next to the stamp.</li>

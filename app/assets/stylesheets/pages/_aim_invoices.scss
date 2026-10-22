@@ -1641,6 +1641,12 @@
   gap: 4px;
 }
 
+// Fiscal Setup's tabs (Aim::FiscalSetupHelper), above a setup page's title.
+.aim-fiscal-setup-tabs {
+  flex-wrap: wrap;
+  margin-bottom: -8px;
+}
+
 .aim-people-toolbar__filters {
   align-items: center;
   display: flex;

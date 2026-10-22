@@ -13,15 +13,34 @@
      end
    end %>
 <div class="aim-page aim-profile-page stamp-designer-page">
+  <%= render 'aim/shared/fiscal_setup_tabs' %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title">Stamp Layout · <%= stamp_target_name(@group) %></h1>
+      <% options = Aim::StampLayout.start_options(except: @group).reject { |key, _| @group.nil? && key == 'default' } %>
       <p class="aim-page-subtitle">
         Every area prints in the one stamping when an invoice is approved.
-        <% if @layout.built_in? %>Nothing saved yet: this is the stamp AIM has always written.<% end %>
+        <% if @start_from %>
+          <strong>Loaded from <%= options.to_h[@start_from].to_s.sub(/\AThe /, 'the ').presence || 'another layout' %>; not saved yet.</strong>
+          Save makes it <%= @group ? "#{@group.name}'s" : 'the default' %> layout.
+        <% elsif @group && @history.empty? %>
+          <strong><%= @group.name %> has no layout of its own yet</strong>, so it is stamped with the default, shown here.
+          Save gives it its own copy.
+        <% elsif @layout.built_in? %>
+          Nothing saved yet: this is the stamp AIM has always written.
+        <% end %>
       </p>
     </div>
     <div class="aim-page-header__pills">
+      <%= form_with url: edit_aim_stamp_layout_path(key), method: :get, class: 'stamp-designer__start', data: { turbo: false } do %>
+        <label class="stamp-designer__label" for="stamp-start-from">Start from</label>
+        <select id="stamp-start-from" name="start_from" class="stamp-designer__input">
+          <% options.each do |value, label| %>
+            <option value="<%= value %>" <%= 'selected' if value == @start_from %>><%= label %></option>
+          <% end %>
+        </select>
+        <button type="submit" class="btn compact" title="Load it into the designer. Unsaved changes here are lost; nothing is saved until Save.">Load</button>
+      <% end %>
       <%= link_to 'All stamp layouts', aim_stamp_layouts_path, class: 'btn compact' %>
     </div>
   </header>
