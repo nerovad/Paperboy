@@ -229,8 +229,11 @@ module Aim
       assert_select 'section.aim-document-panel[data-controller=aim-pdf-editor][data-aim-pdf-editor-pdf-url-value=?]',
                     aim_pdf_source_invoice_path(row.batch_id) do
         assert_select 'button[data-action=?]', 'aim-pdf-editor#open', text: 'Edit PDF'
-        assert_select '.aim-pdf-workspace[hidden] form[action=?]', aim_edit_pdf_invoice_path(row.batch_id)
-        assert_select '.aim-pdf-workspace form[action=?] input[type=file][name=file]', aim_replace_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-workspace[hidden] .aim-pdf-tools button[data-action=?]', 'aim-pdf-editor#turnLeft'
+        # Versions, More, Cancel and Apply sit in the panel's header, shown with the editor (#192).
+        assert_select '.aim-panel-header .aim-pdf-toolbar__finish[hidden] form[action=?]', aim_edit_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-toolbar__finish .aim-pdf-more form[action=?] input[type=file][name=file]', aim_replace_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-split-mark', 0, 'the split mark is for an invoice waiting to be split'
       end
 
       Aim::PdfVersion.create!(invoice: row, number: 1, kind: 'received', base_file: 'a.pdf', created_by: 'aim', note: 'as received')

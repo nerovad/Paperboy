@@ -1,86 +1,43 @@
 <%# Edit PDF (#181), inside the Document Preview: hidden until Edit PDF
-    (aim_pdf_editor_controller). A page strip on the left (click to look,
+    (aim_pdf_editor_controller), and open from the start on an invoice
+    waiting to be split (#192). A page strip on the left (click to look,
     drag to reorder), the chosen page big, one toolbar; Swap and Apply change
     the PDF at once, Cancel puts the viewer back. Locals: invoice, from
     ('fiscal' on Fiscal's page). %>
-<% from = local_assigns[:from] %>
-<% reread = invoice.can_move_to?('received') %>
-<div class="aim-pdf-workspace" hidden data-aim-pdf-editor-target="editor">
+<% splitting = invoice.state == 'needs_split' %>
+<div class="aim-pdf-workspace<%= ' is-splitting' if splitting %>" hidden data-aim-pdf-editor-target="editor">
+  <%# One bar (#192): the page's tools, and the split mark when it is
+      waiting to be split. The whole PDF's -- Versions, More, Cancel and
+      Apply -- are in the panel's header (_finish); zoom and where you are on
+      the line below. %>
   <div class="aim-pdf-toolbar">
-    <span class="aim-pdf-toolbar__group" role="group" aria-label="This page">
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#turnLeft">Turn left</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#turnRight">Turn right</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#crop">Crop</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#clearCrop">Uncrop</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#text">Text</button>
-      <button type="button" class="btn compact deny" data-action="aim-pdf-editor#toggleRemove" data-aim-pdf-editor-target="removeButton">Remove page</button>
-      <% if invoice.state == 'needs_split' %>
-        <%# Split (#192): the page an invoice starts on, for the split screen. %>
-        <button type="button" class="btn compact reassign" data-action="aim-pdf-editor#toggleSplitStart"
-                data-aim-pdf-editor-target="splitButton">New invoice starts here</button>
-      <% end %>
+    <span class="aim-pdf-tools" role="group" aria-label="This page">
+      <button type="button" class="btn compact ghost" title="Turn left" aria-label="Turn left" data-action="aim-pdf-editor#turnLeft"><%= aim_pdf_turn_icon(:left) %></button>
+      <button type="button" class="btn compact ghost" title="Turn right" aria-label="Turn right" data-action="aim-pdf-editor#turnRight"><%= aim_pdf_turn_icon(:right) %></button>
+      <button type="button" class="btn compact ghost" title="Crop: drag a box over what to keep" data-action="aim-pdf-editor#crop">Crop</button>
+      <button type="button" class="btn compact ghost" title="Take the crop off this page" data-action="aim-pdf-editor#clearCrop">Uncrop</button>
+      <button type="button" class="btn compact ghost" title="Add a text box: click the page" data-action="aim-pdf-editor#text">Text</button>
+      <button type="button" class="btn compact ghost" title="Remove this page (Keep page brings it back)"
+              data-action="aim-pdf-editor#toggleRemove" data-aim-pdf-editor-target="removeButton">Remove page</button>
     </span>
-    <span class="aim-pdf-toolbar__group" role="group" aria-label="The whole PDF">
-      <label class="btn compact">Add pages from a PDF
-        <input type="file" accept="application/pdf" hidden data-aim-pdf-editor-target="insertPicker" data-action="change->aim-pdf-editor#addPdf">
-      </label>
-      <%= form_with url: aim_replace_pdf_invoice_path(invoice.batch_id, from: from), method: :post, multipart: true,
-                    class: 'aim-pdf-toolbar__swap', data: { turbo: false } do %>
-        <label class="btn compact">Swap the whole PDF…
-          <%= file_field_tag :file, accept: 'application/pdf', hidden: true, id: nil,
-                             data: { action: 'change->aim-pdf-editor#swap' } %>
-        </label>
-        <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
-      <% end %>
-    </span>
-    <% versions = Aim::PdfVersions.all(invoice).reverse %>
-    <% if versions.any? %>
-      <%# Every swap, edit and restore (#182): look at any, or make one current again. %>
-      <details class="aim-actions-menu aim-pdf-versions" data-controller="aim-actions-menu">
-        <summary class="btn compact ghost">Versions (<%= versions.size %>) ▾</summary>
-        <div class="aim-actions-menu__list">
-          <% versions.each_with_index do |version, index| %>
-            <div class="aim-pdf-versions__row">
-              <span class="aim-pdf-versions__line"><%= aim_pdf_version_line(version) %><%= ' (current)' if index.zero? %></span>
-              <%= link_to 'View', aim_pdf_version_invoice_path(invoice.batch_id, version.number), target: '_blank', rel: 'noopener', class: 'btn compact ghost' %>
-              <% unless index.zero? %>
-                <%= button_to 'Restore', aim_restore_pdf_version_invoice_path(invoice.batch_id, version.number, from: from), method: :post,
-                              class: 'btn compact', form: { data: { turbo: false } },
-                              data: { turbo_confirm: "Make version #{version.number} the current PDF? The current one stays as a version.",
-                                      confirm_title: 'Restore a version', confirm_label: 'Restore' } %>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </details>
+    <% if splitting %>
+      <%# Split (#192): the page an invoice starts on, for the split screen. %>
+      <button type="button" class="btn compact reassign aim-pdf-split-mark" data-action="aim-pdf-editor#toggleSplitStart"
+              data-aim-pdf-editor-target="splitButton" title="The page shown starts a new invoice">New invoice starts here</button>
     <% end %>
-    <span class="aim-pdf-toolbar__group aim-pdf-toolbar__finish">
-      <% if reread %>
-        <label class="aim-pdf-toolbar__reread"><input type="checkbox" data-aim-pdf-editor-target="reread"> Read it again with the AI</label>
-      <% end %>
-      <button type="button" class="btn compact" data-action="aim-pdf-editor#cancel">Cancel</button>
-      <%= form_with url: aim_edit_pdf_invoice_path(invoice.batch_id, from: from), method: :patch, multipart: true,
-                    class: 'aim-pdf-toolbar__apply', data: { turbo: false, aim_pdf_editor_target: 'form' } do %>
-        <%= hidden_field_tag :pages, '', id: nil, data: { aim_pdf_editor_target: 'pages' } %>
-        <%= hidden_field_tag :split_starts, '', id: nil, data: { aim_pdf_editor_target: 'splitStarts' } if invoice.state == 'needs_split' %>
-        <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
-        <input type="file" name="inserts[]" multiple hidden data-aim-pdf-editor-target="inserts">
-        <button type="submit" class="btn approve compact" data-action="aim-pdf-editor#apply">Apply changes</button>
-      <% end %>
-    </span>
   </div>
-  <p class="aim-pdf-workspace__line">
-    <span class="aim-pdf-zoom" role="group" aria-label="Zoom">
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomOut" aria-label="Zoom out">−</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitPage">Fit page</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitWidth">Fit width</button>
-      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomIn" aria-label="Zoom in">+</button>
-      <span data-aim-pdf-editor-target="zoomLabel"></span>
-    </span>
+  <div class="aim-pdf-workspace__line">
     <strong data-aim-pdf-editor-target="pageLabel"></strong>
     <span data-aim-pdf-editor-target="hint"></span>
     <span data-aim-pdf-editor-target="status"></span>
-  </p>
+    <span class="aim-pdf-zoom" role="group" aria-label="Zoom">
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomOut" aria-label="Zoom out" title="Zoom out">−</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitPage">Fit page</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#fitWidth">Fit width</button>
+      <button type="button" class="btn compact ghost" data-action="aim-pdf-editor#zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+      <span class="aim-pdf-zoom__label" data-aim-pdf-editor-target="zoomLabel"></span>
+    </span>
+  </div>
   <div class="aim-pdf-workspace__body">
     <div class="aim-pdf-strip" data-aim-pdf-editor-target="strip" aria-label="Pages: click to look, drag to reorder"></div>
     <div class="aim-pdf-stage">

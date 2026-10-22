@@ -25,7 +25,7 @@ const SCROLL_EDGE = 36 // px from the panel edge that scrolls it while dragging
 export default class extends Controller {
   static targets = ["viewer", "editor", "strip", "stage", "status", "hint", "pageLabel", "removeButton",
                     "textBar", "boxLayer", "boxSize", "boxBold", "boxColor", "boxBg", "boxBorder", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel",
-                    "splitButton", "splitStarts"]
+                    "splitButton", "splitStarts", "finish"]
   static values = { pdfUrl: String, insertUrls: Array, plan: String, splitting: Boolean, splitStarts: Array }
 
   // --- opening and closing ---------------------------------------------------
@@ -34,6 +34,7 @@ export default class extends Controller {
     this.viewerTarget.hidden = true
     this.editorTarget.hidden = false
     this.openButtonTarget.hidden = true
+    if (this.hasFinishTarget) this.finishTarget.hidden = false
     this.boxes ||= new TextBoxes(this.boxLayerTarget, {
       onChange: () => { this.changed = true; this.drawThumb(this.current); this.showSplit() },
       onSelect: (box) => this.showBoxTools(box)
@@ -72,8 +73,13 @@ export default class extends Controller {
     this.editorTarget.hidden = true
     this.viewerTarget.hidden = false
     this.openButtonTarget.hidden = false
+    if (this.hasFinishTarget) this.finishTarget.hidden = true
     if (this.splittingValue) this.announce({ ranges: null, pending: false })
   }
+
+  // Waiting to be split (#192): the pages are what the person needs first,
+  // so the editor opens with the page.
+  connect() { if (this.splittingValue) this.open() }
 
   disconnect() { this.load = null }
 

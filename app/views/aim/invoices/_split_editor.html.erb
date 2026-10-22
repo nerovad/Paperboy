@@ -6,13 +6,9 @@
   <h3 id="aim-split-heading">Which pages are which invoice?</h3>
   <p class="aim-split-help">
     <% pages = " (#{pluralize(@split_page_count, 'page')})" if @split_page_count %>
-    <% if @split_by_hand %>
-      Split by hand: this PDF<%= pages %> holds more than one invoice. Say which pages belong to each, then approve.
-    <% else %>
-      The AI thinks this PDF<%= pages %> holds more than one invoice. Check which pages belong to each, then approve.
-    <% end %>
-    Write pages like <code>1-3, 5</code>, or open <strong>Edit PDF</strong> and mark the page each invoice starts on.
-    Clear a row to remove it; <em>+ Add an invoice</em> for another. Every page must belong to one invoice.
+    <%= @split_by_hand ? "This PDF#{pages} holds more than one invoice." : "The AI thinks this PDF#{pages} holds more than one invoice." %>
+    Click the page each invoice starts on and press <strong>New invoice starts here</strong>, or type pages like
+    <code>1-3, 5</code>. Every page belongs to one invoice; clear a row to drop it.
   </p>
 
   <% if @split_plan&.errors.present? %>

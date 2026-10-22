@@ -43,7 +43,7 @@ module Aim
 
       @invoice.start_split!(actor: current_user_email)
       redirect_to aim_invoice_path(@invoice.batch_id, queue: @invoice.queue),
-                  notice: 'Say which pages are which invoice, or mark where each starts in Edit PDF, then Approve Split.'
+                  notice: 'Click the page each invoice starts on and press New invoice starts here, then Approve Split.'
     end
 
     # A split started by hand, called off: back where it was, as it was,

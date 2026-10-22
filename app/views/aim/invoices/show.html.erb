@@ -155,6 +155,7 @@
         <h2 class="aim-panel-title">Document Preview</h2>
         <% if pdf_editable %>
           <button type="button" class="btn edit compact" data-aim-pdf-editor-target="openButton" data-action="aim-pdf-editor#open">Edit PDF</button>
+          <%= render 'aim/pdf_edits/finish', invoice: @invoice %>
         <% end %>
       </div>
 
