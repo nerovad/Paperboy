@@ -6,6 +6,10 @@
   <%= render "shared/app_switcher" %>
 
   <nav class="human-resources-links" aria-label="Human Resources actions">
+    <% if can_use_app_feature?('human_resources', 'data_refresh') %>
+      <%= link_to "Refresh Data", human_resources_data_refresh_path,
+                  class: "nav-link#{' active' if current_page?(human_resources_data_refresh_path)}" %>
+    <% end %>
     <% ["Employees", "Bargaining Units", "FLSA Status", "Job Salaries",
         "Unions", "Union codes", "VCHRP unions"].each do |label| %>
       <button type="button" class="nav-link" data-action="human-resources-sidebar#select"

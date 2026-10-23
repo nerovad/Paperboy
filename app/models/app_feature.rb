@@ -38,6 +38,15 @@ PAPERBOY_APP_FEATURES = [
   { key: 'sql_dashboard_queries', label: 'Dashboards (write SQL and build)' }
 ].freeze
 
+HUMAN_RESOURCES_APP_FEATURES = [
+  { key: 'data_refresh', label: 'Refresh Data' }
+].freeze
+
+# #43 spike 1 — Support summary / deep-link inside the IT Portal shell.
+ITP_APP_FEATURES = [
+  { key: 'support', label: 'Support' }
+].freeze
+
 class AppFeature
   FEATURES = {
     'paperboy' => PAPERBOY_APP_FEATURES,
@@ -118,10 +127,8 @@ class AppFeature
       { key: 'manage_groups', label: 'Create and manage DSL groups' }
     ],
     'development' => DEVELOPMENT_APP_FEATURES,
-    # #43 spike 1 — Support summary / deep-link inside the IT Portal shell.
-    'itp' => [
-      { key: 'support', label: 'Support' }
-    ]
+    'itp' => ITP_APP_FEATURES,
+    'human_resources' => HUMAN_RESOURCES_APP_FEATURES
   }.freeze
 
   # A DSL's feature key. Prefixed so a DSL can never be named the same thing as

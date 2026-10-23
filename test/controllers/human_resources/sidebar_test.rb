@@ -46,5 +46,18 @@ module HumanResources
       assert_select '.pb-modal__actions button[data-action=?]', 'human-resources-sidebar#dismiss', count: 2
       assert_select '[data-human-resources-sidebar-slideshow-url-value=?]', human_resources_root_path
     end
+
+    test 'Refresh Data is the first sidebar action when the grant is held' do
+      @controller.define_singleton_method(:current_user_feature_permission_keys) { ['human_resources:data_refresh'] }
+
+      get :home
+
+      assert_response :success
+      assert_select '.human-resources-links > a.nav-link:first-child[href=?]',
+                    human_resources_data_refresh_path, text: 'Refresh Data'
+      rendered = css_select('.human-resources-links button.nav-link').map { |node| node.text.strip }
+      assert_equal ACTIONS, rendered
+      assert_operator @response.body.index('Refresh Data'), :<, @response.body.index('Employees')
+    end
   end
 end

@@ -40,6 +40,11 @@ class AppFeatureTest < ActiveSupport::TestCase
                  AppFeature.for('coa').map { |feature| feature[:key] }
   end
 
+  test 'Human Resources Refresh Data is grantable' do
+    assert_equal [{ key: 'data_refresh', label: 'Refresh Data' }], AppFeature.for('human_resources')
+    assert_equal %w[human_resources:data_refresh], AppFeature.permission_keys_for('human_resources')
+  end
+
   test 'IT Portal Support is grantable' do
     assert_equal [{ key: 'support', label: 'Support' }], AppFeature.for('itp')
     assert_equal %w[itp:support], AppFeature.permission_keys_for('itp')

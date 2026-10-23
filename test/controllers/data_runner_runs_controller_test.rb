@@ -23,6 +23,17 @@ class DataRunnerRunsControllerTest < ActionController::TestCase
     output_path&.delete if output_path&.file?
   end
 
+  test 'keeps a Human Resources data refresh log in Human Resources' do
+    sign_in
+    run = DataRunner::GroupRun.create!(run_id: SecureRandom.uuid,
+                                       group_name: HumanResources::DataRefresh::GROUP_RUN_NAME,
+                                       status: 'succeeded', total_count: 1, completed_count: 1)
+
+    get :show, params: { id: run.run_id }
+
+    assert_redirected_to human_resources_data_refresh_run_log_path(run)
+  end
+
   private
 
   def sign_in
