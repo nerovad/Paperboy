@@ -29,18 +29,20 @@
     },
     to_csv: { sheet: 0, header_row: 0, data_row: 1 },
     header: [
-      ['id', 'id', 'bigint', 'IDENTITY(1,1) NOT NULL', nil],
-      ['group_run_id', 'group_run_id', 'bigint', 'NOT NULL', nil],
-      ['dsl_name', 'dsl_name', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['dsl_slug', 'dsl_slug', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['status', 'status', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['position', 'position', 'int', 'NOT NULL', nil],
-      ['error_message', 'error_message', 'nvarchar(max)', 'NULL', nil],
-      ['started_at', 'started_at', 'datetime2(6)', 'NULL', nil],
-      ['completed_at', 'completed_at', 'datetime2(6)', 'NULL', nil],
-      ['created_at', 'created_at', 'datetime2(6)', 'NOT NULL', nil],
-      ['updated_at', 'updated_at', 'datetime2(6)', 'NOT NULL', nil],
-      ['duration_ms', 'duration_ms', 'int', 'NULL', nil]
+
+      ['id',            'id',            'bigint',         'IDENTITY(1,1) NOT NULL', nil],
+      ['group_run_id',  'group_run_id',  'bigint',         'NOT NULL',               nil],
+      ['dsl_name',      'dsl_name',      'nvarchar(4000)', 'NOT NULL',               nil],
+      ['dsl_slug',      'dsl_slug',      'nvarchar(4000)', 'NOT NULL',               nil],
+      ['status',        'status',        'nvarchar(4000)', 'NOT NULL',               nil],
+      ['position',      'position',      'int',            'NOT NULL',               nil],
+      ['error_message', 'error_message', 'nvarchar(max)',  'NULL',                   nil],
+      ['started_at',    'started_at',    'datetime2(6)',   'NULL',                   nil],
+      ['completed_at',  'completed_at',  'datetime2(6)',   'NULL',                   nil],
+      ['created_at',    'created_at',    'datetime2(6)',   'NOT NULL',               nil],
+      ['updated_at',    'updated_at',    'datetime2(6)',   'NOT NULL',               nil],
+      ['duration_ms',   'duration_ms',   'int',            'NULL',                   nil],
+      ['current_step',  'current_step',  'nvarchar(4000)', 'NULL',                   nil]
     ],
     database_connections: [
       {

@@ -28,14 +28,19 @@
     },
     to_csv: { sheet: 0, header_row: 0, data_row: 1 },
     header: [
-      ['id', 'id', 'bigint', 'IDENTITY(1,1) NOT NULL', nil],
-      ['invoice_id', 'invoice_id', 'bigint', 'NOT NULL', nil],
-      ['action', 'action', 'nvarchar(50)', 'NOT NULL', nil],
-      ['from_state', 'from_state', 'nvarchar(50)', 'NULL', nil],
-      ['to_state', 'to_state', 'nvarchar(50)', 'NULL', nil],
-      ['actor', 'actor', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['note', 'note', 'nvarchar(max)', 'NULL', nil],
-      ['created_at', 'created_at', 'datetime2(6)', 'NOT NULL', nil]
+
+      ['id',                 'id',                 'bigint',         'IDENTITY(1,1) NOT NULL', nil],
+      ['invoice_id',         'invoice_id',         'bigint',         'NOT NULL',               nil],
+      ['action',             'action',             'nvarchar(50)',   'NOT NULL',               nil],
+      ['from_state',         'from_state',         'nvarchar(50)',   'NULL',                   nil],
+      ['to_state',           'to_state',           'nvarchar(50)',   'NULL',                   nil],
+      ['actor',              'actor',              'nvarchar(4000)', 'NOT NULL',               nil],
+      ['note',               'note',               'nvarchar(max)',  'NULL',                   nil],
+      ['created_at',         'created_at',         'datetime2(6)',   'NOT NULL',               nil],
+      ['holder_employee_id', 'holder_employee_id', 'int',            'NULL',                   nil],
+      ['holder_name',        'holder_name',        'nvarchar(255)',  'NULL',                   nil],
+      ['holder_budget_unit', 'holder_budget_unit', 'nvarchar(10)',   'NULL',                   nil],
+      ['holder_source',      'holder_source',      'nvarchar(20)',   'NULL',                   nil]
     ],
     database_connections: [
       {

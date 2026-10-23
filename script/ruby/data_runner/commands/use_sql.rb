@@ -5,6 +5,9 @@ require 'fileutils'
 require_relative 'dsl_map'
 require_relative '../helpers/etl_header_helpers'
 require_relative '../helpers/etl_helpers'
+require_relative '../helpers/column_definition'
+require_relative '../helpers/replication_header'
+require_relative '../db/mssql_helpers'
 require_relative '../constants/workflow'
 require_relative '../constants/workflow_paths'
 
@@ -142,6 +145,75 @@ def render_header_block(rows)
   lines.join("\n")
 end
 
+# A replication header is rewritten from the live source catalog.
+# A second run leaves the file alone when the merged rows already match.
+# The write is a temporary file renamed over the DSL, so a crash before the
+# rename leaves the original file in place.
+def record_replication(entry, clients, stats)
+  case apply_replication_header(entry, clients)
+  when :ok then stats.ok!
+  else stats.skip!
+  end
+rescue StandardError => e
+  puts "[FAIL] #{entry.key}: #{e}"
+  stats.fail!
+end
+
+def apply_replication_header(entry, clients)
+  unless Workflow.wants_step?(entry.cfg, :use_sql)
+    puts "[SKIP] #{entry.key}: step disabled (:use_sql)"
+    return :skip
+  end
+
+  target, columns = live_source_columns(entry.cfg, clients)
+  rows = DataRunner::ReplicationHeader.merge(entry.cfg[:header], columns)
+  if DataRunner::ReplicationHeader.unchanged?(entry.cfg[:header], rows)
+    puts "[SKIP] #{entry.key}: header matches #{target.label}"
+    return :skip
+  end
+
+  write_header(entry, rows)
+  puts "[OK] #{entry.key}: header updated (#{Array(entry.cfg[:header]).length} -> #{rows.length} column(s))"
+  :ok
+end
+
+def live_source_columns(cfg, clients)
+  MssqlHelpers.load_dotenv!
+  target = source_target(cfg)
+  key = [target.host, target.database]
+  client = clients[key] ||= MssqlHelpers.connect!(target.host, database: target.database)
+  columns = source_columns(client, target)
+  [target, columns]
+end
+
+def source_target(cfg)
+  target = EtlHelpers.source_database_target(
+    cfg,
+    env_host: MssqlHelpers.env_any('MSSQL_HOST', 'GSABSS_HOST'),
+    env_database: MssqlHelpers.env_any('MSSQL_DATABASE', 'GSABSS_DATABASE')
+  )
+  raise 'missing source host' if target.host.to_s.strip.empty?
+  raise 'missing source database' if target.database.to_s.strip.empty?
+  raise 'missing source table' if target.table.to_s.strip.empty?
+
+  target
+end
+
+def source_columns(client, target)
+  rows = client.execute(DataRunner::ColumnDefinition.query(target.schema, target.table)).to_a
+  columns = rows.filter_map { |row| DataRunner::ColumnDefinition.format(row) }
+  raise "missing source table or columns: #{target.label}" if columns.empty?
+
+  columns
+end
+
+def write_header(entry, rows)
+  updated = replace_header_block(File.read(entry.path), render_header_block(rows))
+  temporary = "#{entry.path}.tmp"
+  File.write(temporary, updated)
+  File.rename(temporary, entry.path)
+end
+
 def header_block(columns)
   destinations = EtlHeaderHelpers.uniquify(columns.map { |column| EtlHeaderHelpers.rails_header(column[:name]) })
   rows = columns.zip(destinations).map do |column, destination|
@@ -196,50 +268,54 @@ def matching_bracket_position(source, open_pos)
 end
 
 if __FILE__ == $PROGRAM_NAME
-  puts 'SQL to DSL started.'
+  clients = {}
+  begin
+    puts 'SQL to DSL started.'
 
-  entries_by_base = dsl_entries.to_h do |entry|
-    [EtlHelpers.base_for(entry.cfg), entry]
+    entries_by_base = dsl_entries.to_h do |entry|
+      [EtlHelpers.base_for(entry.cfg), entry]
+    end
+
+    stats = EtlHelpers::RunStats.new
+
+    sql_files(ARGV).each do |path|
+      base = File.basename(path, '.sql')
+      entry = entries_by_base[base]
+
+      if entry.nil?
+        puts "[SKIP] #{File.basename(path)}: no matching DSL entry"
+        stats.skip!
+        next
+      end
+
+      if EtlHelpers.source_strategy(entry.cfg) == :replicate
+        record_replication(entry, clients, stats)
+        next
+      end
+
+      unless File.exist?(path)
+        puts "[FAIL] #{File.basename(path)}: missing #{SQL_SCHEMA_DIR}/#{File.basename(path)}"
+        stats.fail!
+        next
+      end
+
+      begin
+        columns = sql_columns(File.read(path))
+        updated = replace_header_block(File.read(entry.path), header_block(columns))
+        File.write(entry.path, updated)
+        puts "[OK] #{File.basename(path)} -> config/data_runner/dsl/#{File.basename(entry.path)} " \
+             "(#{columns.length} column(s))"
+        stats.ok!
+      rescue StandardError => e
+        puts "[FAIL] #{File.basename(path)}: #{e}"
+        stats.fail!
+      end
+    end
+
+    puts "\n#{stats.summary}"
+    puts 'SQL to DSL completed.'
+    exit 1 if stats.fail.positive?
+  ensure
+    clients.each_value(&:close)
   end
-
-  stats = EtlHelpers::RunStats.new
-
-  sql_files(ARGV).each do |path|
-    base = File.basename(path, '.sql')
-    entry = entries_by_base[base]
-
-    if entry.nil?
-      puts "[SKIP] #{File.basename(path)}: no matching DSL entry"
-      stats.skip!
-      next
-    end
-
-    if EtlHelpers.source_strategy(entry.cfg) == :replicate
-      puts "[SKIP] #{entry.key}: replication keeps configured destination mappings"
-      stats.skip!
-      next
-    end
-
-    unless File.exist?(path)
-      puts "[FAIL] #{File.basename(path)}: missing #{SQL_SCHEMA_DIR}/#{File.basename(path)}"
-      stats.fail!
-      next
-    end
-
-    begin
-      columns = sql_columns(File.read(path))
-      updated = replace_header_block(File.read(entry.path), header_block(columns))
-      File.write(entry.path, updated)
-      puts "[OK] #{File.basename(path)} -> config/data_runner/dsl/#{File.basename(entry.path)} " \
-           "(#{columns.length} column(s))"
-      stats.ok!
-    rescue StandardError => e
-      puts "[FAIL] #{File.basename(path)}: #{e}"
-      stats.fail!
-    end
-  end
-
-  puts "\n#{stats.summary}"
-  puts 'SQL to DSL completed.'
-  exit 1 if stats.fail.positive?
 end

@@ -24,14 +24,16 @@ module Workflow
     inject
   ].freeze
 
-  # One streaming extract straight into the bcp applied file, then inject.
+  # Read the live source catalog into the header, stream the extract, then inject.
   # Manual refresh uses this list. Scheduled replication stays disabled.
   REPLICATE_STEPS = %i[
+    use_sql
     replicate
     inject
   ].freeze
 
   REFRESH_SEQUENCE = [
+    [:use_sql, 'use_sql.rb'],
     [:replicate, 'replicate.rb'],
     [:download, 'download.rb'],
     [:to_csv, 'to_csv.rb'],

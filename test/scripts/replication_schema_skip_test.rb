@@ -30,6 +30,27 @@ class ReplicationSchemaSkipTest < Minitest::Test
     end
   end
 
+  def test_enabled_replication_use_sql_ignores_schema_snapshot
+    with_replication do |root, path|
+      enabled = File.read(path).sub(
+        "source: { strategy: :replicate, local: 'replica.csv' },",
+        "steps: { manual: { enabled: true, steps: [:use_sql] } },\n          " \
+        "source: { strategy: :replicate, local: 'replica.csv' },"
+      )
+      File.write(path, enabled)
+      original = File.read(path)
+      schema = File.join(root, 'output/data_runner/04_SQL_SCHEMA/replica.sql')
+      FileUtils.mkdir_p(File.dirname(schema))
+      File.write(schema, "CREATE TABLE [dbo].[replica](\n[reviewed_column] int NOT NULL\n) ON [PRIMARY]\n")
+
+      output = run_command_allowing_failure(root, 'use_sql')
+      assert_includes output, '[FAIL] Replica:'
+      assert_includes output, 'missing source host'
+      refute_includes output, 'reviewed_column'
+      assert_equal original, File.read(path)
+    end
+  end
+
   def test_non_replication_still_applies_reviewed_schema
     with_replication do |root, path|
       File.write(path, File.read(path).sub('strategy: :replicate', 'strategy: :copy'))
@@ -70,10 +91,23 @@ class ReplicationSchemaSkipTest < Minitest::Test
   end
 
   def run_command(root, command)
-    script = File.join(root, "script/ruby/data_runner/commands/#{command}.rb")
-    output, status = Open3.capture2e({ 'GSABSS_ROOT' => root, 'DATARUNNER_OUTPUT_ROOT' => File.join(root, 'output/data_runner') },
-                                     RbConfig.ruby, script, 'Replica')
+    output, status = capture_command(root, command)
     assert status.success?, output
     output
+  end
+
+  def run_command_allowing_failure(root, command)
+    output, status = capture_command(root, command)
+    refute status.success?, output
+    output
+  end
+
+  def capture_command(root, command)
+    script = File.join(root, "script/ruby/data_runner/commands/#{command}.rb")
+    Open3.capture2e({
+                      'GSABSS_ROOT' => root,
+                      'DATARUNNER_OUTPUT_ROOT' => File.join(root, 'output/data_runner'),
+                      'DATARUNNER_INBOX' => File.join(root, 'inbox')
+                    }, RbConfig.ruby, script, 'Replica')
   end
 end

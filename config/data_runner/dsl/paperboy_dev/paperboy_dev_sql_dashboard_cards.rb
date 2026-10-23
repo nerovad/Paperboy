@@ -17,6 +17,7 @@
     group: {
       name: 'paperboy_dev'
     },
+    dependency: %w[Paperboy_dev_sql_dashboards Paperboy_dev_sql_dashboard_queries],
     source: {
       host: 'GSASQL16',
       database: 'Paperboy_Dev',

@@ -173,15 +173,21 @@ orchestration: {
   `reset[orchestrator]` runs postprocessing and resets every child DSL.
   Symbol arguments resolve from the orchestration context.
 
-- Replication (`source.strategy: :replicate`) copies source data using the
-  configured destination mappings. Import Database Table writes the DSL under
+- Replication (`source.strategy: :replicate`) copies a source table into the
+  configured destination. Import Database Table writes the DSL under
   `config/data_runner/dsl/<source_database>/<source_database>_<table>.rb`,
-  with the source columns in `header` and the standard manual and scheduled
-  step lists. `Refresh` runs `download`, `to_csv`, `use_dsl`, and `inject`,
-  and copies rows into the existing target table. `dump_sql` and `use_sql`
-  skip replication entries, and no source schema snapshot is created or
-  applied. `to_sql` still generates a destination table definition, including
-  `DROP TABLE`, when that step runs.
+  with the source columns in `header` and `Workflow::REPLICATE_STEPS` for the
+  manual list. Scheduled replication stays disabled. `Refresh` runs `use_sql`,
+  `replicate`, and `inject`. `use_sql` reads the live source columns and
+  rewrites `header` when that merged list differs. An existing source column
+  keeps its destination name, including a dropped column (`nil`). A new source
+  column is added under its own name. A source column that is gone is removed.
+  A matching header is left untouched, so a second refresh does not write the
+  file. `dump_sql` still skips replication entries, and a file in
+  `04_SQL_SCHEMA` is not applied. `replicate` streams the source rows.
+  `inject` copies those rows into the existing target table. `use_sql` does
+  not alter that table. `to_sql` still generates a destination table
+  definition, including `DROP TABLE`, when that step runs.
 
 - Use `inject.post_script` when a destination should run a local Ruby script
   after its inject transaction commits:

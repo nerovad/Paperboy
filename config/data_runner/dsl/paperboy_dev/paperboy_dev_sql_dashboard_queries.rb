@@ -47,7 +47,7 @@
         database: 'Paperboy',
         schema: 'pb',
         table: 'sql_dashboard_queries',
-        inject: { mode: :truncate_insert }
+        inject: { mode: :delete_insert, delete_where: '1 = 1' }
       }
     ]
   }
