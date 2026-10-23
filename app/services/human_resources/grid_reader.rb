@@ -18,7 +18,7 @@ module HumanResources
       sql = <<~SQL.squish
         SELECT #{list}
         FROM #{qualified(definition, connection)}#{filter_sql(definition, query, connection)}
-        ORDER BY #{quote(definition.columns.first, connection)}
+        ORDER BY #{order_by(definition, connection)}
         OFFSET #{offset.to_i} ROWS FETCH NEXT #{limit.to_i} ROWS ONLY
       SQL
       connection.exec_query(sql).to_a.map { |row| values(row, definition.columns) }
@@ -26,15 +26,33 @@ module HumanResources
 
     def self.qualified(definition, connection)
       ensure_gsabss!(definition)
+      return definition.from_clause.call(connection) if definition.from_clause
+
       "#{quote(definition.schema, connection)}.#{quote(definition.table, connection)}"
     end
     private_class_method :qualified
 
     def self.column_list(definition, connection)
       ensure_gsabss!(definition)
+      return definition.select_list.call(connection) if definition.select_list
+
       definition.columns.map { |name| quote(name, connection) }.join(', ')
     end
     private_class_method :column_list
+
+    def self.order_by(definition, connection)
+      return definition.order_clause.call(connection) if definition.order_clause
+
+      quote(definition.columns.first, connection)
+    end
+    private_class_method :order_by
+
+    def self.search_targets(definition, connection)
+      return definition.search_expressions.call(connection) if definition.search_expressions
+
+      definition.search_columns.map { |name| quote(name, connection) }
+    end
+    private_class_method :search_targets
 
     # Chart of Accounts counts a match when every typed character appears in
     # order. A page holds 200 rows, so the same rule runs in SQL and the grid
@@ -44,8 +62,8 @@ module HumanResources
       return '' if pattern.nil?
 
       quoted = connection.quote(pattern)
-      clauses = definition.search_columns.map do |name|
-        "LOWER(CAST(#{quote(name, connection)} AS nvarchar(4000))) LIKE #{quoted}"
+      clauses = search_targets(definition, connection).map do |expression|
+        "LOWER(CAST(#{expression} AS nvarchar(4000))) LIKE #{quoted}"
       end
       raise ArgumentError, 'Human Resources grid has no search columns' if clauses.empty?
 

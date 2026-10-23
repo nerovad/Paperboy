@@ -2,7 +2,7 @@
     Accounts collection. The slideshow is the namespace root, so opening a
     grid leaves that page and the slideshow stops. The search form stays
     outside the frame so a debounced submit does not replace the field. %>
-<section class="human-resources-page<%= " human-resources-page--employees" if @definition.slug == "employees" %>">
+<section class="human-resources-page<%= " human-resources-page--employees" if @definition.slug.in?(%w[employees gsa_employees]) %>">
   <h1><%= @definition.label %></h1>
 
   <%= form_with url: human_resources_grid_path(@definition.slug), method: :get,

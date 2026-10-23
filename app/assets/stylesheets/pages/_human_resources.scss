@@ -4,7 +4,7 @@
 // A Human Resources table is a centered page, the same placement as a Chart
 // of Accounts collection. The column header uses the sidebar accent. The
 // window is 24 rows tall so both scrollbars stay available, and the page
-// buttons sit under it. Employees is half again as wide as the other tables.
+// buttons sit under it. Employees and GSA Employee share the wider page.
 
 .human-resources-page {
   --sidebar-accent: #{$orange-action};

@@ -38,6 +38,35 @@ module HumanResources
       assert_not_includes sql, '[job_title]'
     end
 
+    test 'gsa employees joins gsa units and job salaries' do
+      connection = RecordingConnection.new(count: 1, rows: [{ 'employee_id' => 7, 'last_name' => 'Lee' }])
+      definition = GridCatalog.find!('gsa_employees')
+
+      GridReader.rows(definition, offset: 0, limit: 200, query: 'lee', connection: connection)
+
+      sql = connection.sql.last
+      assert_includes sql, 'INNER JOIN [units]'
+      assert_includes sql, '[employees].[unit] = [units].[unit_id]'
+      assert_includes sql, "[units].[agency_id] = 'GSA'"
+      assert_includes sql, '[employees].[job_code] = [job_salaries].[job_code_id]'
+      assert_includes sql, '[employees].[id] AS [employee_id]'
+      assert_includes sql, '[job_salaries].[job_title] AS [job_title]'
+      assert_includes sql, '[job_salaries].[rate_min] AS [rate_min]'
+      assert_includes sql, '[job_salaries].[rate_max] AS [rate_max]'
+      assert_includes sql, 'ORDER BY [employees].[id]'
+      assert_includes sql, "LOWER(CAST([units].[agency_id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([units].[division_id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([units].[department_id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([units].[unit_id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([job_salaries].[job_code_id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([job_salaries].[job_title] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([employees].[id] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([employees].[first_name] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_includes sql, "LOWER(CAST([employees].[last_name] AS nvarchar(4000))) LIKE '%l%e%e%'"
+      assert_not_includes sql, '[employees].[job_title]'
+      assert_not_includes sql, '[employees].[email]'
+    end
+
     test 'a blank query does not filter' do
       connection = RecordingConnection.new(count: 0, rows: [])
 
@@ -57,7 +86,8 @@ module HumanResources
     def definition_for(**overrides)
       values = { slug: 'bargaining_units', label: 'Bargaining Units', database: 'GSABSS', schema: 'dbo',
                  table: 'bargaining_units', columns: %w[bargaining_unit_id description],
-                 search_columns: %w[bargaining_unit_id description] }
+                 search_columns: %w[bargaining_unit_id description], select_list: nil, from_clause: nil,
+                 order_clause: nil, search_expressions: nil }
       Definition.new(**values, **overrides)
     end
 

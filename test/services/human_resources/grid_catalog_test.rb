@@ -17,9 +17,9 @@ module HumanResources
     test 'sidebar grids take their tables and columns from the human resources dsls' do
       sidebar = GridCatalog.sidebar
 
-      assert_equal ['Employees', 'Bargaining Units', 'FLSA Status', 'Job Salaries', 'Unions', 'Union codes',
-                    'VCHRP unions'], sidebar.map(&:label)
-      assert_equal TABLES.keys, sidebar.map(&:slug)
+      assert_equal ['Employees', 'GSA Employee', 'Bargaining Units', 'FLSA Status', 'Job Salaries', 'Unions',
+                    'Union codes', 'VCHRP unions'], sidebar.map(&:label)
+      assert_equal ['employees', 'gsa_employees', *TABLES.keys.drop(1)], sidebar.map(&:slug)
 
       TABLES.each do |slug, table|
         definition = GridCatalog.find!(slug)
@@ -48,6 +48,16 @@ module HumanResources
         assert_equal columns, definition.search_columns
         assert_empty definition.search_columns - definition.columns
       end
+    end
+
+    test 'gsa employees shows the joined columns and searches the named fields' do
+      gsa = GridCatalog.find!('gsa_employees')
+
+      assert_equal %w[agency_id division_id department_id unit_id employee_id first_name last_name job_code
+                      job_title at_will vchrp_code flsa_stat rate_basis rate_min rate_max], gsa.columns
+      assert_equal %w[agency_id division_id department_id unit_id job_code_id job_title employee_id
+                      first_name last_name], gsa.search_columns
+      assert_equal 'GSABSS', gsa.database
     end
 
     test 'employees keeps the source columns and omits the destination-only active flag' do

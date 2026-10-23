@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 module HumanResources
-  # The seven sidebar grids. Table and column names come from the Data Runner
-  # human_resources DSL. A replicated DSL is shown from its source table; a
-  # file import is shown from the table it loads. Search columns are named
-  # here, and they have to be columns that grid already shows.
+  # The sidebar grids. A single-table grid takes its names from the Data
+  # Runner human_resources DSL. A replicated DSL is shown from its source
+  # table; a file import is shown from the table it loads. GSA Employee is
+  # the employees, units, and job salary join.
   class GridCatalog
     SIDEBAR = [
       { slug: 'employees', label: 'Employees', search: %w[id last_name first_name] },
+      { slug: 'gsa_employees', label: 'GSA Employee', grid: GsaEmployees },
       { slug: 'bargaining_units', label: 'Bargaining Units', search: %w[bargaining_unit_id description] },
       { slug: 'flsa_statuses', label: 'FLSA Status', search: %w[flsa_stat_id description legend_rate_basis] },
       { slug: 'job_salaries', label: 'Job Salaries', search: %w[job_code_id job_title] },
@@ -16,7 +17,10 @@ module HumanResources
       { slug: 'vchrp_unions', label: 'VCHRP unions', search: %w[vchrp_union_id description] }
     ].freeze
 
-    Definition = Data.define(:slug, :label, :database, :schema, :table, :columns, :search_columns)
+    Definition = Data.define(
+      :slug, :label, :database, :schema, :table, :columns, :search_columns,
+      :select_list, :from_clause, :order_clause, :search_expressions
+    )
 
     def self.sidebar
       SIDEBAR.map { |item| find!(item[:slug]) }
@@ -25,6 +29,7 @@ module HumanResources
     def self.find!(slug)
       item = SIDEBAR.find { |entry| entry[:slug] == slug }
       raise ActiveRecord::RecordNotFound, 'Unknown Human Resources grid' unless item
+      return item[:grid].definition if item[:grid]
 
       config = DslCatalog.find!(slug).config
       source = config[:source] || {}
@@ -40,7 +45,8 @@ module HumanResources
 
       Definition.new(slug: slug, label: item[:label], database: place[:database].to_s,
                      schema: place[:schema].presence || 'dbo', table: place[:table], columns: columns,
-                     search_columns: search_columns)
+                     search_columns: search_columns, select_list: nil, from_clause: nil,
+                     order_clause: nil, search_expressions: nil)
     end
   end
 end

@@ -8,6 +8,7 @@ module HumanResources
 
     ACTIONS = [
       'Employees',
+      'GSA Employee',
       'Bargaining Units',
       'FLSA Status',
       'Job Salaries',
