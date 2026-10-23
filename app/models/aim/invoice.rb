@@ -52,8 +52,10 @@ module Aim
     ].freeze
 
     # What the worker does next. NULL means nothing.
-    # A split is cut in Rails (Aim::BatchSplit, #192), not by the worker.
-    COMMANDS = %w[extract export].freeze
+    # Paperboy never sets 'split' now: it cuts a split itself (Aim::BatchSplit,
+    # #192). It stays a valid value only while a row an older Paperboy asked
+    # the worker to split may exist (wiki: AIM Alignment, item 1).
+    COMMANDS = %w[extract split export].freeze
 
     # A rejected or deleted invoice is finished, but AIM staff may bring one
     # back, with a reason: to Action Needed, or straight to its owner.

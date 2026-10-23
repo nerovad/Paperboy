@@ -12,7 +12,9 @@ Each cycle it:
    (AI read; the row becomes `needs_review`, `needs_split`,
    `ready_for_approval` or `failed`), or `export` (billing row, Laserfiche
    XML, archive copy; `exported`). A split is cut by Paperboy when a person
-   approves it (`Aim::BatchSplit`); the worker only reads the pieces.
+   approves it (`Aim::BatchSplit`); the worker only reads the pieces. The
+   `split` command (`splitting.py`) is legacy, kept for a Paperboy older
+   than #192, and goes once none is left (wiki: AIM Alignment).
 
 Every outcome clears the command and the lease and writes an event.
 

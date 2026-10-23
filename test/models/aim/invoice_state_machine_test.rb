@@ -185,10 +185,6 @@ module Aim
       assert_equal %w[approved export], [invoice.reload.state, invoice.command]
     end
 
-    test 'the worker is never asked to split: Rails cuts a split (#192)' do
-      assert_not create_invoice(state: 'needs_split').update(command: 'split')
-    end
-
     test 'a command must be one the worker knows' do
       assert_not create_invoice(state: 'received').update(command: 'dance')
       assert create_invoice(state: 'received').update(command: nil)

@@ -22,6 +22,10 @@ from settings import Settings, load_environment
 from store import ACTOR, STOPPABLE, Db, Stopped
 from intake import Intake
 from extraction import EXTRACTION_ERROR, extract
+# LEGACY (#192): Paperboy cuts a split itself now (Aim::BatchSplit). This is
+# kept only for a Paperboy that still asks the worker to (command 'split'), so
+# the worker can be deployed ahead of it. Removal: wiki AIM Alignment, item 1.
+from splitting import SPLIT_ERROR, split_batch
 from exporting import billing_payload, EXPORT_ERROR, export_invoice, insert_billing_row
 from vendors import field_alias_text
 
@@ -30,8 +34,8 @@ IDLE_SLEEP_SECONDS = 5
 
 OUTCOME_STATES = {"split": "needs_split", "review": "needs_review", "clean": "ready_for_approval"}
 # The review_reason a failed command leaves on the row.
-# A split is cut by Paperboy (Aim::BatchSplit, #192); the worker reads the pieces.
-FAILURE_REASONS = {"extract": EXTRACTION_ERROR, "export": EXPORT_ERROR}
+# 'split' is LEGACY (#192, see the splitting import).
+FAILURE_REASONS = {"extract": EXTRACTION_ERROR, "split": SPLIT_ERROR, "export": EXPORT_ERROR}
 
 
 def data_fields(data):
@@ -114,7 +118,7 @@ class Worker:
 
     def dispatch(self, row):
         command = row.get("command")
-        handler = {"extract": self.do_extract, "export": self.do_export}.get(command)
+        handler = {"extract": self.do_extract, "split": self.do_split, "export": self.do_export}.get(command)
         print(f"\n[{command or 'no command'}] {row['batch_id']}")
         if handler is None:
             self.db.transition(row["id"], row["state"], row["state"],
@@ -174,6 +178,11 @@ class Worker:
             else "fully extracted")
         self.db.transition(row["id"], "extracting", state, note=note, fields=fields, command=None, owner=self.name)
         print(f"    [✓] {row['batch_id']} -> {state}" + (f" ({result.review_reason})" if result.review_reason else ""))
+
+    def do_split(self, row):
+        """LEGACY (#192): see the splitting import."""
+        children = split_batch(row, self.settings, self.db)
+        print(f"    [✓] {row['batch_id']} -> split into {len(children)}")
 
     def do_export(self, row):
         self.db.transition(row["id"], row["state"], "exporting")
