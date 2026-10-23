@@ -7,6 +7,9 @@
       manual: { enabled: true, steps: Workflow::REPLICATE_STEPS },
       scheduled: { enabled: false, frequency: :daily, steps: Workflow::REPLICATE_STEPS }
     },
+    group: {
+      name: 'human_resources'
+    },
     source: {
       host: 'GSASQL16.ent.co.ventura.ca.us',
       database: 'Paperboy_Dev',
