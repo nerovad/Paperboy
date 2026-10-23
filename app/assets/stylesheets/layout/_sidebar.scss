@@ -506,6 +506,13 @@
     --sidebar-accent-ring: #{rgba($orange-action, 0.2)};
     --sidebar-accent-soft: #{rgba($orange-action, 0.08)};
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
+
+    .human-resources-links .nav-link {
+      border: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
   }
 
   &.data-runner-sidebar {
