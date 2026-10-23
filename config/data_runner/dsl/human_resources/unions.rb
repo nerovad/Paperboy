@@ -31,7 +31,7 @@
     header: [
 
       ['union_id',    'union_id',    'nvarchar(max)', 'NULL', nil],
-      ['description', 'description', 'nvarchar(max)', 'NULL', nil],
+      ['description', 'description', 'nvarchar(max)', 'NULL', nil]
     ],
     database_connections: [
       {

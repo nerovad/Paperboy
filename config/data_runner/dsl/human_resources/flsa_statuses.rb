@@ -32,7 +32,7 @@
 
       ['flsa_stat_id',      'flsa_stat_id',      'nvarchar(max)', 'NULL', nil],
       ['description',       'description',       'nvarchar(max)', 'NULL', nil],
-      ['legend_rate_basis', 'legend_rate_basis', 'nvarchar(max)', 'NULL', nil],
+      ['legend_rate_basis', 'legend_rate_basis', 'nvarchar(max)', 'NULL', nil]
     ],
     database_connections: [
       {

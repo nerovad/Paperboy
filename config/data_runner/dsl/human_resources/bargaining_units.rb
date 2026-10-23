@@ -31,7 +31,7 @@
     header: [
 
       ['bargaining_unit_id', 'bargaining_unit_id', 'nvarchar(max)', 'NULL', nil],
-      ['description',        'description',        'nvarchar(max)', 'NULL', nil],
+      ['description',        'description',        'nvarchar(max)', 'NULL', nil]
     ],
     database_connections: [
       {

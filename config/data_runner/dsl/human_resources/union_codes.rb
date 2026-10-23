@@ -33,7 +33,7 @@
       ['union_id',    'union_id',    'nvarchar(max)', 'NULL', nil],
       ['barg_unit',   'barg_unit',   'nvarchar(max)', 'NULL', nil],
       ['vchrp_union', 'vchrp_union', 'nvarchar(max)', 'NULL', nil],
-      ['description', 'description', 'nvarchar(max)', 'NULL', nil],
+      ['description', 'description', 'nvarchar(max)', 'NULL', nil]
     ],
     database_connections: [
       {

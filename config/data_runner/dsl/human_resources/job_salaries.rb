@@ -39,7 +39,7 @@
       ['rate_min',       'rate_min',       'nvarchar(max)', 'NULL', nil],
       ['rate_max',       'rate_max',       'nvarchar(max)', 'NULL', nil],
       ['hours_per_year', 'hours_per_year', 'nvarchar(max)', 'NULL', nil],
-      ['pays_per_year',  'pays_per_year',  'nvarchar(max)', 'NULL', nil],
+      ['pays_per_year',  'pays_per_year',  'nvarchar(max)', 'NULL', nil]
     ],
     database_connections: [
       {
