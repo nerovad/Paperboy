@@ -120,10 +120,15 @@ mkdir -p "$app_root/storage"
 bundle exec rails local_solid:prepare
 
 # --- Assets -----------------------------------------------------------------
+# Clobber, never precompile: a precompiled manifest in public/assets wins over
+# live compilation, so every JavaScript and stylesheet edit made after start
+# would be served stale until the next clobber (AGENTS.md, "Working on CSS
+# locally"). Build the CSS once so the page is styled before the watcher's
+# first pass. test/scripts/dev_local_assets_test.rb keeps it this way.
 {
   bundle check || bundle install
   bundle exec bin/rails assets:clobber
-  bundle exec bin/rails assets:precompile
+  bundle exec bin/rails dartsass:build
 } 2>&1 | tee "$app_root/log/assets.log"
 
 # --- Dart Sass --------------------------------------------------------------

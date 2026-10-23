@@ -1,0 +1,36 @@
+<%# Stamp layouts (#221): each agency group's approval stamp, and the default
+    for groups with none, for those who may change them. %>
+<div class="aim-page aim-profile-page">
+  <%= render 'aim/shared/fiscal_setup_tabs' %>
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Stamp Layouts</h1>
+      <p class="aim-page-subtitle">What the approval stamp says and where it sits on the PDF, by agency group.</p>
+    </div>
+  </header>
+
+  <section class="aim-panel aim-agency-group-panel">
+    <table class="submission-table aim-queue-table aim-people-table">
+      <thead><tr><th>Agency group</th><th>Stamp areas</th><th>Last saved</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+      <tbody>
+        <% if aim_user_admin? %>
+          <tr>
+            <td class="is-strong"><%= stamp_target_name(nil) %></td>
+            <td><%= (@default || Aim::StampLayout.built_in).area_list.size %></td>
+            <td><%= @default ? "#{@default.created_by}, #{l(@default.created_at.in_time_zone, format: :short)}" : 'Never: the stamp AIM has always written' %></td>
+            <td class="aim-people-table__actions"><%= link_to 'Design', edit_aim_stamp_layout_path('default'), class: 'btn edit compact' %></td>
+          </tr>
+        <% end %>
+        <% @groups.each do |group| %>
+          <% layout = @layouts[group.id] %>
+          <tr>
+            <td class="is-strong"><%= group.name %></td>
+            <td><%= layout ? layout.area_list.size : 'Uses the default' %></td>
+            <td><%= layout ? "#{layout.created_by}, #{l(layout.created_at.in_time_zone, format: :short)}" : '' %></td>
+            <td class="aim-people-table__actions"><%= link_to 'Design', edit_aim_stamp_layout_path(group), class: 'btn edit compact' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</div>

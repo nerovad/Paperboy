@@ -7,6 +7,7 @@
 <% elsewhere = Aim::AgencyGroupUnit.includes(:agency_group).where(agency_id: @group.agency_id)
                                  .where.not(agency_group_id: @group.id).to_h { |row| [row.budget_unit, row.agency_group] } %>
 <div class="aim-page aim-profile-page">
+  <%= render 'aim/shared/fiscal_setup_tabs' %>
   <header class="aim-page-header">
     <div>
       <h1 class="aim-page-title"><%= @group.name %></h1>

@@ -1,0 +1,157 @@
+<%# The stamp designer (#221): areas on the left, the pages in the middle
+    (scrolling on their own, zoomable), the selected area's settings on the
+    right (stamp_designer_controller). Check stamps the invoice or an
+    uploaded PDF on the server, writing nothing; Save makes a new version and
+    asks which invoices take it. %>
+<% key = @group&.id || 'default' %>
+<div class="aim-page aim-profile-page stamp-designer-page">
+  <%= render 'aim/shared/fiscal_setup_tabs' %>
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Stamp Layout · <%= stamp_target_name(@group) %></h1>
+      <% options = Aim::StampLayout.start_options(except: @group).reject { |key, _| @group.nil? && key == 'default' } %>
+      <p class="aim-page-subtitle">
+        Every area prints in the one stamping when an invoice is approved.
+        <% if @start_from %>
+          <strong>Loaded from <%= options.to_h[@start_from].to_s.sub(/\AThe /, 'the ').presence || 'another layout' %>; not saved yet.</strong>
+          Save makes it <%= @group ? "#{@group.name}'s" : 'the default' %> layout.
+        <% elsif @group && @history.empty? %>
+          <strong><%= @group.name %> has no layout of its own yet</strong>, so it is stamped with the default, shown here.
+          Save gives it its own copy.
+        <% elsif @layout.built_in? %>
+          Nothing saved yet: this is the stamp AIM has always written.
+        <% end %>
+      </p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= form_with url: edit_aim_stamp_layout_path(key), method: :get, class: 'stamp-designer__start', data: { turbo: false } do %>
+        <label class="stamp-designer__label" for="stamp-start-from">Start from</label>
+        <select id="stamp-start-from" name="start_from" class="stamp-designer__input">
+          <% options.each do |value, label| %>
+            <option value="<%= value %>" <%= 'selected' if value == @start_from %>><%= label %></option>
+          <% end %>
+        </select>
+        <button type="submit" class="btn compact" title="Load it into the designer. Unsaved changes here are lost; nothing is saved until Save.">Load</button>
+      <% end %>
+      <%= link_to 'All stamp layouts', aim_stamp_layouts_path, class: 'btn compact' %>
+    </div>
+  </header>
+
+  <div class="stamp-designer" data-controller="stamp-designer"
+       data-stamp-designer-areas-value="<%= @layout.area_list.to_json %>"
+       data-stamp-designer-shrink-value="<%= @layout.page_shrink || 100 %>"
+       data-stamp-designer-position-value="<%= @layout.page_position || 'center' %>"
+       data-stamp-designer-samples-value="<%= stamp_values_data(Aim::StampFields.samples(agency: @group&.agency_id)).to_json %>"
+       data-stamp-designer-worst-value="<%= stamp_values_data(Aim::StampFields.worst_case).to_json %>"
+       data-stamp-designer-formats-value="<%= Aim::StampFields.formats.to_json %>"
+       data-stamp-designer-sample-url-value="<%= sample_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-values-url-value="<%= values_aim_stamp_layout_path(key) %>"
+       data-stamp-designer-preview-url-value="<%= preview_aim_stamp_layout_path(key) %>">
+
+    <section class="aim-panel stamp-designer__bar">
+      <div class="stamp-designer__bar-group">
+        <span class="stamp-designer__label">Preview on</span>
+        <select class="stamp-designer__input" data-stamp-designer-target="sample" data-action="stamp-designer#useInvoice"
+                aria-label="An invoice to preview on">
+          <% @samples.each do |invoice| %>
+            <option value="<%= invoice.id %>"><%= [invoice.vendor_name, invoice.invoice_number].compact_blank.join(' · ').presence || invoice.batch_id %> (AIM-<%= invoice.id %>)</option>
+          <% end %>
+        </select>
+        <span class="stamp-designer__or">or</span>
+        <label class="btn compact stamp-designer__upload">
+          Upload a PDF
+          <input type="file" accept="application/pdf,.pdf" hidden data-stamp-designer-target="upload" data-action="stamp-designer#useUpload">
+        </label>
+        <span class="stamp-designer__file" data-stamp-designer-target="fileName" hidden></span>
+      </div>
+      <div class="stamp-designer__bar-group">
+        <span class="stamp-designer__label">Fill with</span>
+        <div class="stamp-designer__segmented" role="group" aria-label="Fill the fields with">
+          <% { 'invoice' => ['This invoice', "Exactly what this invoice would print: its own values only. Rows whose fields it does not have yet are left out"],
+               'samples' => ['Samples', 'Typical values'],
+               'worst' => ['Long values', 'Long, realistic values (the longest AIM has seen, or long stand-ins) to see the layout at its fullest'] }.each do |mode, (label, hint)| %>
+            <button type="button" class="btn compact" title="<%= hint %>" data-stamp-designer-target="fill" data-value="<%= mode %>"
+                    data-action="stamp-designer#setFill"><%= label %></button>
+          <% end %>
+        </div>
+        <button type="button" class="btn ghost compact" data-action="stamp-designer#openHelp">Help</button>
+        <button type="button" class="btn info compact" data-action="stamp-designer#check">Check</button>
+        <button type="button" class="btn approve compact" data-action="stamp-designer#openSave">Save…</button>
+      </div>
+    </section>
+
+    <div class="stamp-designer__body" data-stamp-designer-target="body">
+      <%= render 'shared/stamp_designer/areas_panel', shrinks: Aim::StampLayout::SHRINKS %>
+      <%= render 'shared/stamp_designer/stage' %>
+      <% history = capture do %>
+      <details class="stamp-designer__group stamp-designer__history">
+        <summary>History · <%= pluralize(@history.size, 'saved version') %></summary>
+        <% if @history.any? %>
+          <ul class="stamp-designer__versions">
+            <% @history.each do |version| %>
+              <li>
+                <div>
+                  <strong><%= l(version.created_at.in_time_zone, format: :short) %></strong>
+                  <span><%= version.created_by %> · <%= pluralize(version.area_list.size, 'area') %><%= " · page #{version.page_shrink}% #{version.page_position}" if version.shrink %></span>
+                  <% if version.note.present? %><em><%= version.note %></em><% end %>
+                </div>
+                <%= link_to 'Load', edit_aim_stamp_layout_path(key, version: version.id), class: 'btn compact',
+                            title: 'Open this version in the designer; saving it makes it the newest' %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="stamp-designer__hint">Not saved yet.</p>
+        <% end %>
+      </details>
+      <% end %>
+      <%= render 'shared/stamp_designer/inspector', field_groups: stamp_field_groups, extra: history %>
+    </div>
+
+    <%# Check: the layout stamped by the server, opened in a new tab in the
+        browser's own PDF viewer. Writes nothing. %>
+    <%= form_with url: preview_aim_stamp_layout_path(key), method: :post, multipart: true,
+                  data: { stamp_designer_target: 'checkForm', turbo: false }, html: { target: '_blank' } do %>
+      <%= hidden_field_tag :areas, '', id: nil, data: { stamp_designer_target: 'checkAreas' } %>
+      <%= hidden_field_tag :page_shrink, '', id: nil, data: { stamp_designer_target: 'checkShrink' } %>
+      <%= hidden_field_tag :page_position, '', id: nil, data: { stamp_designer_target: 'checkPosition' } %>
+      <%= hidden_field_tag :fill, '', id: nil, data: { stamp_designer_target: 'checkFill' } %>
+      <%= hidden_field_tag :invoice_id, '', id: nil, data: { stamp_designer_target: 'checkInvoice' } %>
+      <input type="file" name="file" hidden data-stamp-designer-target="checkFile">
+    <% end %>
+
+    <%= render 'shared/stamp_designer/help', bates: false %>
+
+    <%= form_with url: aim_stamp_layout_path(key), method: :patch, data: { stamp_designer_target: 'form', turbo: false } do %>
+      <%= hidden_field_tag :areas, '', data: { stamp_designer_target: 'areasField' } %>
+      <%= hidden_field_tag :page_shrink, '', data: { stamp_designer_target: 'shrinkField' } %>
+      <%= hidden_field_tag :page_position, '', data: { stamp_designer_target: 'positionField' } %>
+      <div class="pb-modal-backdrop" data-stamp-designer-target="saveModal" hidden>
+        <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="stamp-save-title">
+          <div class="pb-modal__header">
+            <h3 id="stamp-save-title">Save the stamp layout</h3>
+            <button type="button" class="pb-modal__close" aria-label="Close" data-action="stamp-designer#closeSave">✕</button>
+          </div>
+          <div class="pb-modal__body">
+            <p class="pb-modal__message">The layout is kept as a new version. Which invoices take it?</p>
+            <div class="stamp-designer__choices">
+              <label><input type="radio" name="restamp" value="fiscal" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+                <span>Stamp again the approved invoices still with Fiscal (Fiscal Queue, On Hold, Report Queue). Exported and archived ones keep theirs.</span></label>
+              <label><input type="radio" name="restamp" value="new" data-stamp-designer-target="restampField" data-action="stamp-designer#chooseRestamp">
+                <span>New approvals only.</span></label>
+            </div>
+            <div class="aim-field">
+              <label for="stamp-note">Note (optional)</label>
+              <%= text_field_tag :note, '', id: 'stamp-note', maxlength: 500 %>
+            </div>
+            <div class="pb-modal__actions">
+              <button type="button" class="btn" data-action="stamp-designer#closeSave">Cancel</button>
+              <button type="button" class="btn approve" data-stamp-designer-target="saveButton" data-action="stamp-designer#save" disabled>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+</div>

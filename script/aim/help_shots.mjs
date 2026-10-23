@@ -141,5 +141,21 @@ if (await boxes.count()) {
   await shoot("fiscal_preview")
 }
 
+// How to approve (approver.html.erb): the same screens in Approver mode, as
+// someone who only approves sees them. The mode is this session's only.
+await post("/aim/mode", { _method: "patch", mode: "approver", authenticity_token: await csrf() })
+await visit("/aim/dashboard")
+await shoot("approver_mine")
+await visit("/aim/my_queue")
+await shoot("approver_queue")
+const mineLink = page.locator(".aim-queue-table a.btn", { hasText: /^(Open|Resume Review|View)$/ }).first()
+const mine = (await mineLink.count()) ? await mineLink.getAttribute("href") : null
+if (mine) {
+  await visit(mine)
+  await drawPdfPreview()
+  await shoot("approver_review")
+}
+await post("/aim/mode", { _method: "patch", mode: "admin", authenticity_token: await csrf() })
+
 await browser.close()
 console.log("Done. Look them over, then commit app/assets/images/aim/help/*.png.")

@@ -1,0 +1,10 @@
+<%# Fiscal Setup's tabs (Aim::FiscalSetupHelper): shown across the setup pages
+    when this page is one of them. %>
+<% if aim_fiscal_setup_page? %>
+  <nav class="aim-people-toolbar__views aim-fiscal-setup-tabs" aria-label="Fiscal Setup">
+    <% aim_fiscal_setup_tabs.each do |label, path, controller| %>
+      <%= link_to label, path, class: "btn compact #{controller == controller_name ? 'active' : 'ghost'}",
+                  aria: { current: (controller == controller_name ? 'page' : nil) } %>
+    <% end %>
+  </nav>
+<% end %>

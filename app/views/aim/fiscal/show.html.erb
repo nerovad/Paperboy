@@ -81,7 +81,10 @@
           <dt>Stamp</dt>
           <dd><%= if @record.stamped_at then 'On the PDF'
                   elsif @record.stamp_error then "Could not be added: #{@record.stamp_error}"
-                  else 'Being added; refresh in a minute' end %></dd>
+                  else 'Being added; refresh in a minute' end %>
+            <% if @record.stamped_at && @record.stamp_warnings.present? %>
+              <span class="badge is-pending" title="The stamp layout needed a safety net on this PDF">Fitted: <%= @record.stamp_warnings %></span>
+            <% end %></dd>
           <dt>Owner</dt><dd><%= @invoice.assigned_to.presence || 'Shared' %></dd>
         </dl>
 

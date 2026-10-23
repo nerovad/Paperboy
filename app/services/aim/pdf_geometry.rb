@@ -4,26 +4,16 @@ module Aim
   # Where things go on a page as a person sees it (#181): the page turned by
   # its /Rotate and cut to its crop box, with the origin at the bottom left as
   # displayed. The editor works in fractions of that view; these turn them
-  # into the page's own coordinates. The same sums as Aim::PdfStamp's.
+  # into the page's own coordinates. The page sums are Paperboy::Pdf::Geometry,
+  # shared with the stamp.
   module PdfGeometry
     module_function
 
     # The seen page's width and height, and the matrix from seen coordinates
-    # to the page's own.
-    def orientation(box, rotate)
-      llx, lly, urx, ury = box
-      case rotate
-      when 90 then [ury - lly, urx - llx, [0, 1, -1, 0, urx, lly]]
-      when 180 then [urx - llx, ury - lly, [-1, 0, 0, -1, urx, ury]]
-      when 270 then [ury - lly, urx - llx, [0, -1, 1, 0, llx, ury]]
-      else [urx - llx, ury - lly, [1, 0, 0, 1, llx, lly]]
-      end
-    end
+    # to the page's own (Paperboy::Pdf::Geometry, shared since #221).
+    def orientation(box, rotate) = Paperboy::Pdf::Geometry.orientation(box, rotate)
 
-    def apply(matrix, x, y)
-      a, b, c, d, e, f = matrix
-      [(a * x) + (c * y) + e, (b * x) + (d * y) + f]
-    end
+    def apply(matrix, x, y) = Paperboy::Pdf::Geometry.apply(matrix, x, y)
 
     # The crop box for { left:, top:, right:, bottom: }, fractions of the
     # seen page from its top left.
@@ -42,7 +32,7 @@ module Aim
     # Starts with Q, to follow a page wrapped in q.
     def text_stream(box, rotate, texts, fonts)
       width, height, matrix = orientation(box, rotate)
-      "Q\nq\n#{matrix.map { |n| PdfWriter.number(n) }.join(' ')} cm\n#{PdfTextBox.stream(texts, width, height, fonts)}Q\n"
+      "Q\nq\n#{matrix.map { |n| Paperboy::Pdf::Writer.number(n) }.join(' ')} cm\n#{PdfTextBox.stream(texts, width, height, fonts)}Q\n"
     end
 
     def literal(text)

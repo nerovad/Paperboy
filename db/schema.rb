@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_180000) do
   create_schema "aim"
 
   create_table "Employee_Groups", force: :cascade do |t|
@@ -246,6 +246,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
     t.bigint "invoice_id", null: false
     t.string "pay_doc_number", limit: 100
     t.string "stamp_error", limit: 500
+    t.bigint "stamp_layout_id"
+    t.string "stamp_warnings", limit: 500
     t.datetime "stamped_at"
     t.string "status", limit: 20, default: "review", null: false
     t.string "tags", limit: 500
@@ -415,6 +417,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
     t.index ["agency_group_id", "name"], name: "index_aim_report_templates_on_group_and_name", unique: true
   end
 
+  create_table "aim.stamp_layouts", force: :cascade do |t|
+    t.bigint "agency_group_id"
+    t.text "areas", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by", null: false
+    t.string "note", limit: 500
+    t.string "page_position", limit: 10
+    t.integer "page_shrink"
+    t.index ["agency_group_id", "id"], name: "index_aim_stamp_layouts_on_group_and_id"
+  end
+
   create_table "aim.user_budget_units", force: :cascade do |t|
     t.boolean "bu_admin", default: false, null: false
     t.string "budget_unit", limit: 10, null: false
@@ -513,6 +526,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_090000) do
     t.datetime "updated_at", null: false
     t.index ["employee_id", "starts_on", "ends_on"], name: "index_away_periods_on_employee_and_dates"
     t.index ["ends_on"], name: "index_away_periods_on_ends_on"
+  end
+
+  create_table "bates_counters", force: :cascade do |t|
+    t.text "areas"
+    t.datetime "created_at", null: false
+    t.string "created_by", null: false
+    t.integer "digits", default: 6, null: false
+    t.integer "first_page", default: 1, null: false
+    t.string "name", limit: 100, null: false
+    t.bigint "next_number", default: 1, null: false
+    t.string "page_position", limit: 10
+    t.integer "page_shrink"
+    t.datetime "updated_at", null: false
+    t.string "updated_by"
+    t.index ["name"], name: "index_bates_counters_on_name", unique: true
+  end
+
+  create_table "bates_runs", force: :cascade do |t|
+    t.bigint "bates_counter_id", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by", null: false
+    t.integer "digits", null: false
+    t.text "file_names"
+    t.bigint "first_number", null: false
+    t.bigint "last_number", null: false
+    t.integer "page_count", null: false
+    t.index ["bates_counter_id", "created_at"], name: "index_bates_runs_on_counter_and_created_at"
   end
 
   create_table "bike_locker_forms", force: :cascade do |t|

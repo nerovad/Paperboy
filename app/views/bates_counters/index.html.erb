@@ -1,0 +1,42 @@
+<%# Bates stamping (#230): the counters, each with its next number and last run,
+    and a form for a new one. %>
+<div class="aim-page aim-profile-page">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">Bates Stamp</h1>
+      <p class="aim-page-subtitle">Number every page of a set of PDFs with a running number. Each counter keeps its next number and its stamp's look.</p>
+    </div>
+  </header>
+
+  <section class="aim-panel aim-agency-group-panel">
+    <table class="submission-table aim-queue-table aim-people-table">
+      <thead><tr><th>Counter</th><th>Next number</th><th>Last run</th><th class="aim-people-table__actions" aria-label="Actions"></th></tr></thead>
+      <tbody>
+        <% @counters.each do |counter| %>
+          <% run = @last_runs[counter.id] %>
+          <tr>
+            <td class="is-strong"><%= link_to counter.name, edit_bates_counter_path(counter) %></td>
+            <td><%= counter.start_text %></td>
+            <td><%= run ? "#{run.range}, #{run.created_by}, #{l(run.created_at.in_time_zone, format: :short)}" : 'Not used yet' %></td>
+            <td class="aim-people-table__actions"><%= link_to 'Open', edit_bates_counter_path(counter), class: 'btn compact' %></td>
+          </tr>
+        <% end %>
+        <% if @counters.empty? %>
+          <tr><td colspan="4">No counters yet. Make one below.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <h2 class="aim-profile-heading">New counter</h2>
+  <section class="aim-panel aim-agency-group-panel">
+    <%= form_with url: bates_counters_path, method: :post, class: 'stamp-designer__new' do %>
+      <div class="aim-field"><%= label_tag :name, 'Name' %><%= text_field_tag :name, '', required: true, maxlength: 100, placeholder: 'Public records request 2026-014' %></div>
+      <div class="aim-field">
+        <%= label_tag :start, 'Starts at' %>
+        <%= text_field_tag :start, '000001', pattern: '\d{1,12}', maxlength: 12, title: 'The zeros set how many digits: 000001 is six digits from 1' %>
+      </div>
+      <%= submit_tag 'Create', class: 'btn approve compact' %>
+    <% end %>
+  </section>
+</div>

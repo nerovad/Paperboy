@@ -200,6 +200,13 @@ Rails.application.routes.draw do
     get 'fiscal', to: 'fiscal#index', as: :fiscal
     get 'fiscal/dashboard', to: 'fiscal_dashboard#index', as: :fiscal_dashboard
     resources :report_templates, only: %i[index new create edit update destroy], path: 'fiscal/templates'
+    resources :stamp_layouts, only: %i[index edit update], path: 'fiscal/stamps' do
+      member do
+        post :preview
+        get :sample
+        get :values
+      end
+    end
     resources :fiscal_reports, only: %i[index show], path: 'fiscal/reports', constraints: { id: /\d+/ } do
       member do
         get :download
@@ -706,6 +713,14 @@ Rails.application.routes.draw do
   get '/dashboards', to: 'dashboards#index', as: :dashboards
 
   # SQL Dashboards: saved SQL drawn as charts (#129)
+  # Bates stamping (#230): counters, the shared stamp designer, check and stamp.
+  resources :bates_counters, only: %i[index create edit update], path: 'tools/bates' do
+    member do
+      post :preview
+      post :stamp
+    end
+  end
+
   namespace :sql_dashboards do
     root 'dashboards#index'
     resources :dashboards do

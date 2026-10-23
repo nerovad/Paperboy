@@ -1,0 +1,67 @@
+<%# How to approve: the short guide for people who approve invoices in AIM and
+    do nothing else there. AIM staff, Fiscal and admins get the full How AIM
+    works (Aim::HelpController). %>
+<div class="aim-page aim-help">
+  <header class="aim-page-header">
+    <div>
+      <h1 class="aim-page-title">How to approve invoices</h1>
+      <p class="aim-page-subtitle">Everything you need to work the invoices AIM sends you.</p>
+    </div>
+    <div class="aim-page-header__pills">
+      <%= link_to 'My AIM', aim_root_path, class: 'btn compact' %>
+      <% if aim_full_help? %><%= link_to 'How AIM works (full)', aim_help_path, class: 'btn compact' %><% end %>
+    </div>
+  </header>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section">
+    <h2>Where your invoices are</h2>
+    <ul>
+      <li><strong>My AIM</strong> opens when you go to AIM: what is waiting on you, your second approvals, and anything to type
+        in.</li>
+      <li><strong>My Queue</strong> lists the invoices waiting for your approval. <strong>Shared Queues</strong> lists your
+        budget units' invoices that nobody owns yet; <em>Claim</em> one to make it yours.</li>
+      <li>Each row shows how old the invoice is (<em>12 days</em>); after a hand-off it says how long it has been with you
+        too (<em>32 days · 3 here</em>). It turns red once it is late.</li>
+    </ul>
+    <%= aim_help_shot('approver_mine', 'My AIM: what is waiting on you, your second approvals, anything to type in.') %>
+    <%= aim_help_shot('approver_queue', 'My Queue: the invoices waiting for your approval, each with its age.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section">
+    <h2>Reviewing an invoice</h2>
+    <ul>
+      <li>Open it: the PDF on one side, what AIM read on the other. Check the vendor, invoice #, date and total against the
+        PDF and correct anything wrong, then <strong>Save Changes</strong>.</li>
+      <li>If it says <strong>Manual Data Entry Needed</strong>, type the details in from the PDF and save; the flag clears once
+        everything an approval needs is in.</li>
+    </ul>
+    <%= aim_help_shot('approver_review', 'An invoice: the PDF, what AIM read, and the buttons -- Approve, Send Back, Reject, Move.') %>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section">
+    <h2>What to do with it</h2>
+    <ul>
+      <li><strong>Approve</strong> when it is right and should be paid. It goes on to billing and Fiscal. Over your budget
+        unit's second-approval amount the button says <em>Approve (first of two)</em> and it goes to the second approver.</li>
+      <li><strong>Send Back</strong> when the invoice is fine but AIM read it wrong or something is missing: AIM staff take
+        another look.</li>
+      <li><strong>Reject</strong> when it should not be paid through AIM at all -- not an invoice, not ours, a duplicate. Pick
+        a reason, or Other and type one.</li>
+      <li><strong>Move</strong> when it belongs in someone else's queue.</li>
+      <li>Each of these asks you first, and is recorded in the invoice's history.</li>
+    </ul>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section">
+    <h2>Finding an invoice</h2>
+    <ul>
+      <li><strong>Find an invoice</strong> on My AIM: type an AIM # (<em>AIM-118</em>), part of the vendor or invoice #, or an
+        exact amount. You find the invoices you can open.</li>
+    </ul>
+  </section>
+
+  <section class="aim-panel aim-agency-group-panel aim-help__section">
+    <h2>Need help?</h2>
+    <p>Ask your AIM staff or Fiscal contact, or post in the Paperboy-Support channel.</p>
+  </section>
+</div>
