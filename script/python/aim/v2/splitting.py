@@ -1,5 +1,12 @@
 """Split a batch into the invoices its manifest names.
 
+LEGACY (#192). Paperboy cuts a split itself now, at Approve Split
+(app/services/aim/batch_split.rb), and never sets the 'split' command. This
+stays only so a worker deployed ahead of that Paperboy still splits for the
+one it serves. Remove it, its dispatch in worker.py and test_split.py once
+every Paperboy the workers serve has #192 -- the wiki's AIM Alignment page,
+item 1, lists every piece.
+
 The manifest is on the row, written by extraction and corrected by a person
 on the Batch Split page. Each invoice's pages are cut into
 `_STORE/<parent>_SPLIT_<n>/`, one child row is inserted per invoice, and the

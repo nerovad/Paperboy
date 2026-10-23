@@ -20,14 +20,12 @@ module Aim
       'approve' => :approve,
       'send_back' => :send_back,
       'retry_ai' => :retry_ai,
-      'approve_split' => :approve_split,
-      'process_as_one' => :process_as_one,
       'reject' => :reject,
       'delete' => :delete_invoice,
       'learn_and_retry' => :learn_and_retry,
       'learn_and_send' => :learn_and_send,
       'retry_export' => :retry_export
-    }.merge(Aim::InvoiceRoutingActions::ACTIONS).freeze
+    }.merge(Aim::InvoiceRoutingActions::ACTIONS, Aim::InvoiceSplitActions::ACTIONS, Aim::InvoiceAiActions::ACTIONS).freeze
 
     # These ask why, and the reason is kept: in Notes, and on the history.
     # The value is the button's label, for the refusal without one.
@@ -95,27 +93,6 @@ module Aim
       finish('Export requested again.')
     end
 
-    def process_as_one
-      @invoice.request_extract!(actor: current_user_email, split_check: false, note: 'process as one invoice')
-      finish('Sent back through extraction as one invoice.')
-    end
-
-    # A person's corrected split, checked by Aim::SplitPlan, saved as the
-    # manifest the worker cuts by. A refused plan re-renders the page with what
-    # was typed and why.
-    def approve_split
-      plan = split_plan_from_params
-      unless plan.valid?
-        @split_plan = plan
-        prepare_review
-        flash.now[:alert] = 'The split was not approved. Nothing has changed.'
-        return render :show, status: :unprocessable_content
-      end
-
-      @invoice.request_split!(plan.manifest(@invoice.manifest_data), actor: current_user_email)
-      finish("Split approved into #{plan.manifest['invoices'].size} invoices. Each appears in the queues as it is cut.")
-    end
-
     def reject
       folder = rejected_folder(@invoice)
       copied = keep_copy(folder)
@@ -174,9 +151,9 @@ module Aim
     end
 
     # The invoice's notes with one line added: when, what, who, and why.
-    def notes_with(verb)
+    def notes_with(verb, invoice = @invoice)
       line = "#{Time.zone.now.strftime('%Y-%m-%d %H:%M')} #{verb} by #{current_user_name || current_user_email}: #{reason}"
-      [@invoice.notes.presence, line].compact.join("\n")
+      [invoice.notes.presence, line].compact.join("\n")
     end
 
     # The invoice has left this person's hands.
@@ -200,21 +177,6 @@ module Aim
     def rejected_folder(invoice)
       File.join(Aim::InvoiceDirectoryService.instance.rejected_dir,
                 "#{invoice.submitter.presence || 'Unknown'}_#{invoice.budget_unit.presence || 'Unknown'}")
-    end
-
-    # Rows arrive as split[0][pages_text] and so on, one per invoice.
-    def split_plan_from_params
-      rows = params.fetch(:split, {}).to_unsafe_h.sort_by { |index, _| index.to_i }.map do |_, row|
-        row.slice('vendor_name', 'invoice_number', 'pages_text')
-      end
-      Aim::SplitPlan.new(rows, page_count: @invoice.page_count)
-    end
-
-    # The rows the split editor shows: what the person typed if a split was
-    # refused, otherwise what the AI proposed.
-    def load_split_context
-      @split_page_count = @invoice.page_count
-      @split_rows = @split_plan&.rows || Aim::SplitPlan.rows_from_manifest(@invoice.manifest_data)
     end
   end
 end

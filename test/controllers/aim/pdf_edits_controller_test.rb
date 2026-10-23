@@ -229,8 +229,11 @@ module Aim
       assert_select 'section.aim-document-panel[data-controller=aim-pdf-editor][data-aim-pdf-editor-pdf-url-value=?]',
                     aim_pdf_source_invoice_path(row.batch_id) do
         assert_select 'button[data-action=?]', 'aim-pdf-editor#open', text: 'Edit PDF'
-        assert_select '.aim-pdf-workspace[hidden] form[action=?]', aim_edit_pdf_invoice_path(row.batch_id)
-        assert_select '.aim-pdf-workspace form[action=?] input[type=file][name=file]', aim_replace_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-workspace[hidden] .aim-pdf-tools button[data-action=?]', 'aim-pdf-editor#turnLeft'
+        # Versions, More, Cancel and Apply sit in the panel's header, shown with the editor (#192).
+        assert_select '.aim-panel-header .aim-pdf-toolbar__finish[hidden] form[action=?]', aim_edit_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-toolbar__finish .aim-pdf-more form[action=?] input[type=file][name=file]', aim_replace_pdf_invoice_path(row.batch_id)
+        assert_select '.aim-pdf-split-mark', 0, 'the split mark is for an invoice waiting to be split'
       end
 
       Aim::PdfVersion.create!(invoice: row, number: 1, kind: 'received', base_file: 'a.pdf', created_by: 'aim', note: 'as received')
@@ -247,6 +250,35 @@ module Aim
       get :show, params: { id: row.batch_id, queue: 'rejected' }
       assert_select '[data-controller=aim-pdf-editor]', count: 0
       assert_select 'button', text: 'Edit PDF', count: 0
+    end
+  end
+
+  # Edit PDF on an invoice waiting to be split (#192): "New invoice starts
+  # here" marks, carried through Apply to the split screen.
+  class PdfEditsSplitTest < PdfEditsTestCase
+    test 'marks set in the editor reach the split screen, numbered as the edited PDF the splitter cuts (#192)' do
+      in_store do
+        row = invoice(state: 'needs_split', pages: 4)
+        row.update!(manifest: { 'bu' => '4641', 'invoices' => [{ 'vendor_name' => 'ACME', 'invoice_number' => 'N-1', 'pages' => [1, 2, 3, 4] }] }.to_json)
+        # Page 2 removed; invoices start on the PDF's new pages 1 and 2.
+        pages = [{ source: 0, page: 1 }, { source: 0, page: 3 }, { source: 0, page: 4 }]
+        patch :update, params: { id: row.batch_id, pages: pages.to_json, split_starts: [2].to_json }
+
+        row.reload
+        assert_equal ['orig page 1', 'orig page 3', 'orig page 4'], texts(row.pdf_path), 'what the splitter cuts'
+        assert_equal [[1], [2, 3]], row.manifest_data['invoices'].pluck('pages')
+        assert_equal %w[ACME N-1], row.manifest_data['invoices'].first.values_at('vendor_name', 'invoice_number')
+        assert_equal %w[needs_split 4641], [row.state, row.manifest_data['bu']]
+      end
+    end
+
+    test 'marks mean nothing on an invoice that is not waiting to be split' do
+      in_store do
+        row = invoice
+        patch :update, params: { id: row.batch_id, pages: [{ source: 0, page: 1 }].to_json, split_starts: [2].to_json }
+
+        assert_empty row.reload.manifest_data
+      end
     end
   end
 end

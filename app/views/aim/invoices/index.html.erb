@@ -47,6 +47,37 @@
         <%= render 'aim/shared/list_pager' %>
         <%= render 'move_modal' %>
       </div>
+    <% elsif @queue == 'received' %>
+      <%# Waiting for AI (#192): hold invoices from the AI, release them, or take them from it. %>
+      <div class="aim-list-frame" data-controller="aim-waiting">
+        <%= form_with url: waiting_many_aim_invoices_path(queue: @queue), method: :patch, id: 'aim-waiting-form',
+                      class: 'aim-bulk-bar aim-waiting-bar', data: { turbo: false } do %>
+          <%= hidden_field_tag :bulk_action, '', id: nil %>
+          <span class="aim-waiting-bar__count">Selected: <strong data-aim-waiting-target="count">0</strong></span>
+          <% [['hold_ai', 'Hold', 'btn compact', 'Hold them in Waiting for AI? The AI leaves them until the hold is released, and stops any it is reading.'],
+              ['release_hold', 'Release to the AI', 'btn approve compact', 'Take them off hold? The AI reads them next.'],
+              ['skip_ai', 'Skip the AI', 'btn warning compact', 'The AI will not read them: to Action Needed, flagged Manual Data Entry Needed.']].each do |value, label, css, confirm| %>
+            <button type="submit" value="<%= value %>" class="<%= css %>" disabled data-aim-waiting-target="button"
+                    data-action="aim-waiting#submit" data-label="<%= label %>" data-confirm="<%= confirm %>"><%= label %></button>
+          <% end %>
+          <%# Reject and Delete ask why in a dialog, as on an invoice's page (aim_reason_controller). %>
+          <span data-controller="aim-reason">
+            <button type="button" class="btn deny compact" disabled data-aim-waiting-target="button" data-action="aim-reason#open"
+                    data-value="reject" data-commit="Reject" data-title="Reject the selected invoices">Reject</button>
+            <%= render 'aim/invoices/reject_modal', reasons: Aim::RejectReason.offered_for(aim_managing_group), name: 'bulk_action' %>
+          </span>
+          <span data-controller="aim-reason">
+            <button type="button" class="btn deny compact" disabled data-aim-waiting-target="button" data-action="aim-reason#open"
+                    data-value="delete" data-commit="Delete" data-title="Delete the selected invoices">Delete</button>
+            <%= render 'aim/shared/reason_modal', id: 'aim-waiting-delete', name: 'bulk_action', value: 'delete', submit: 'Delete',
+                                                  placeholder: 'Why delete them? Kept on each invoice.' %>
+          </span>
+        <% end %>
+        <section class="aim-panel aim-queue-panel" data-aim-queue-filter-target="scroll">
+          <%= render 'rows', invoices: @invoices, movable: false, waiting: true %>
+        </section>
+        <%= render 'aim/shared/list_pager' %>
+      </div>
     <% elsif @acknowledging %>
       <%# Rejected and Deleted (#169): what nobody has acknowledged yet. %>
       <div class="aim-list-frame" data-controller="aim-acknowledge">

@@ -1,8 +1,10 @@
 <%# Reject's dialog (#131): when to reject rather than send back or move, then
     a reason from the list -- every group's, then the invoice's group's own --
     or Other with a typed one. It sits inside the review form, as the shared
-    reason dialog does (aim_reason_controller). %>
-<% reasons = Aim::RejectReason.offered_for(aim_agency_groups.for_invoice(@invoice)) %>
+    reason dialog does (aim_reason_controller). On the Waiting for AI list
+    (#192) it rejects every ticked invoice: `reasons` and `name` (the
+    parameter the action is posted as) say so. %>
+<% reasons = local_assigns.fetch(:reasons) { Aim::RejectReason.offered_for(aim_agency_groups.for_invoice(@invoice)) } %>
 <div class="pb-modal-backdrop" data-aim-reason-target="backdrop" hidden>
   <div class="pb-modal pb-modal--lg" role="dialog" aria-modal="true" aria-labelledby="aim-reject-title">
     <div class="pb-modal__header">
@@ -31,7 +33,8 @@
       </div>
       <div class="pb-modal__actions">
         <button type="button" class="btn" data-action="aim-reason#close">Cancel</button>
-        <button type="submit" name="invoice_action" value="reject" class="btn deny" data-aim-reason-target="submit">Reject</button>
+        <button type="submit" name="<%= local_assigns.fetch(:name, 'invoice_action') %>" value="reject" class="btn deny"
+                data-aim-reason-target="submit">Reject</button>
       </div>
     </div>
   </div>

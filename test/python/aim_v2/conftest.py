@@ -3,7 +3,7 @@
 The same harness rules as test/python/aim: every AIM_* variable is stripped
 so the real .env cannot leak in, every database connection is refused, and
 every path comes from tmp_path. `FakeDb` stands in for `store.Db` with the
-same methods, in memory, so the worker, intake, splitting and export are
+same methods, in memory, so the worker, intake, splitting (legacy, #192) and export are
 driven for real against it.
 """
 import importlib
@@ -198,12 +198,17 @@ class FakeDb:
         row["lease_until"] = now + timedelta(seconds=lease_seconds)
         return dict(row)
 
-    def renew_lease(self, invoice_id, lease_seconds):
-        self.rows[invoice_id]["lease_until"] = self._now() + timedelta(seconds=lease_seconds)
+    def renew_lease(self, invoice_id, lease_seconds, owner=None):
+        row = self.rows[invoice_id]
+        if owner is not None and row.get("lease_owner") != owner:
+            raise self.stopped(f"invoice {invoice_id} was taken from {owner}")
+        row["lease_until"] = self._now() + timedelta(seconds=lease_seconds)
 
     def transition(self, invoice_id, from_state, to_state, note=None, fields=None,
-                   command="keep", stamp=(), actor="aim_worker"):
+                   command="keep", stamp=(), actor="aim_worker", owner=None):
         row = self.rows[invoice_id]
+        if owner is not None and row.get("lease_owner") != owner:
+            raise self.stopped(f"invoice {invoice_id} was taken from {owner}")
         row.update(self._limited(fields))
         row["state"] = to_state
         if command != "keep":
@@ -222,4 +227,6 @@ class FakeDb:
 @pytest.fixture
 def fake_db(v2):
     store = v2("store")
-    return FakeDb(store.limited, columns=store.FIELD_LIMITS)
+    db = FakeDb(store.limited, columns=store.FIELD_LIMITS)
+    db.stopped = store.Stopped
+    return db

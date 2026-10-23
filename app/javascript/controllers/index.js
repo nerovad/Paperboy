@@ -94,6 +94,8 @@ import AimOcrController from "controllers/aim_ocr_controller"
 import AimMoveModalController from "controllers/aim_move_modal_controller"
 import AimPressController from "controllers/aim_press_controller"
 import AimPdfEditorController from "controllers/aim_pdf_editor_controller"
+import AimSplitEditorController from "controllers/aim_split_editor_controller"
+import AimWaitingController from "controllers/aim_waiting_controller"
 import StampDesignerController from "controllers/stamp_designer_controller"
 import AimAcknowledgeController from "controllers/aim_acknowledge_controller"
 import AimDropzoneController from "controllers/aim_dropzone_controller"
@@ -230,6 +232,8 @@ application.register("aim-ocr", AimOcrController)
 application.register("aim-move-modal", AimMoveModalController)
 application.register("aim-press", AimPressController)
 application.register("aim-pdf-editor", AimPdfEditorController)
+application.register("aim-split-editor", AimSplitEditorController)
+application.register("aim-waiting", AimWaitingController)
 application.register("stamp-designer", StampDesignerController)
 application.register("aim-acknowledge", AimAcknowledgeController)
 application.register("aim-dropzone", AimDropzoneController)

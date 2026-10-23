@@ -8,6 +8,11 @@ import { TextBoxes, paintBox, DEFAULT_BOX } from "controllers/aim_pdf_text_boxes
 // are placed, moved, resized and typed in on it (aim_pdf_text_boxes, #182). Nothing changes until Apply, which posts the pages as JSON
 // (Aim::PdfEdit reads them) with any added PDFs; Cancel puts the viewer back.
 //
+// On an invoice waiting to be split (#192), "New invoice starts here" marks
+// the page an invoice starts on; the marks fill the split screen's pages
+// (aim-split:pages, aim_split_editor_controller) and are carried through
+// Apply.
+//
 // Crop and text are fractions of the page as seen (after turning), from its
 // top left; text is placed on the cropped page. Pages are drawn with pdf.js,
 // as OCR does.
@@ -19,8 +24,9 @@ const SCROLL_EDGE = 36 // px from the panel edge that scrolls it while dragging
 
 export default class extends Controller {
   static targets = ["viewer", "editor", "strip", "stage", "status", "hint", "pageLabel", "removeButton",
-                    "textBar", "boxLayer", "boxSize", "boxBold", "boxColor", "boxBg", "boxBorder", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel"]
-  static values = { pdfUrl: String, insertUrls: Array, plan: String }
+                    "textBar", "boxLayer", "boxSize", "boxBold", "boxColor", "boxBg", "boxBorder", "pages", "inserts", "insertPicker", "form", "openButton", "reread", "zoomLabel",
+                    "splitButton", "splitStarts", "finish"]
+  static values = { pdfUrl: String, insertUrls: Array, plan: String, splitting: Boolean, splitStarts: Array }
 
   // --- opening and closing ---------------------------------------------------
 
@@ -28,8 +34,9 @@ export default class extends Controller {
     this.viewerTarget.hidden = true
     this.editorTarget.hidden = false
     this.openButtonTarget.hidden = true
+    if (this.hasFinishTarget) this.finishTarget.hidden = false
     this.boxes ||= new TextBoxes(this.boxLayerTarget, {
-      onChange: () => { this.changed = true; this.drawThumb(this.current) },
+      onChange: () => { this.changed = true; this.drawThumb(this.current); this.showSplit() },
       onSelect: (box) => this.showBoxTools(box)
     })
     if (this.loaded) return this.drawStage()
@@ -47,6 +54,7 @@ export default class extends Controller {
       if (load !== this.load) return
       docs.forEach((doc, index) => this.sources.push({ doc, name: index ? `added PDF ${index}` : "this invoice" }))
       this.buildCards(JSON.parse(this.planValue || "null"))
+      this.markSavedStarts()
       this.loaded = true
       this.statusTarget.textContent = ""
       this.select(this.cards[0])
@@ -65,7 +73,13 @@ export default class extends Controller {
     this.editorTarget.hidden = true
     this.viewerTarget.hidden = false
     this.openButtonTarget.hidden = false
+    if (this.hasFinishTarget) this.finishTarget.hidden = true
+    if (this.splittingValue) this.announce({ ranges: null, pending: false })
   }
+
+  // Waiting to be split (#192): the pages are what the person needs first,
+  // so the editor opens with the page.
+  connect() { if (this.splittingValue) this.open() }
 
   disconnect() { this.load = null }
 
@@ -106,12 +120,12 @@ export default class extends Controller {
     element.className = "aim-pdf-thumb"
     element.draggable = true
     element.dataset.id = card.id
-    element.innerHTML = "<canvas></canvas><span></span>"
+    element.innerHTML = "<em class=\"aim-pdf-thumb__start\" hidden></em><canvas></canvas><span></span>"
     element.querySelector("span").textContent = label
     element.addEventListener("click", () => this.select(card))
     element.addEventListener("dragstart", (event) => { this.dragged = element; event.dataTransfer.effectAllowed = "move" })
     element.addEventListener("dragover", (event) => this.dragOver(event, element))
-    element.addEventListener("dragend", () => { this.dragged = null; if (this.current) this.showLabel() })
+    element.addEventListener("dragend", () => { this.dragged = null; if (this.current) this.showLabel(); this.showSplit() })
     this.stripTarget.appendChild(element)
     if (draw) this.drawThumb(card)
     return card
@@ -140,7 +154,57 @@ export default class extends Controller {
     const position = order.indexOf(this.current.id) + 1
     this.pageLabelTarget.textContent = `${this.current.label} · ${position} of ${order.length}${this.current.removed ? " · removed" : ""}`
     this.removeButtonTarget.textContent = this.current.removed ? "Keep page" : "Remove page"
+    if (this.hasSplitButtonTarget) this.splitButtonTarget.textContent = this.current.startsInvoice ? "Not a new invoice" : "New invoice starts here"
   }
+
+  // --- splitting (#192) --------------------------------------------------------
+
+  // The pages kept, in the strip's order: the PDF's pages once applied.
+  keptCards() {
+    return [...this.stripTarget.querySelectorAll(".aim-pdf-thumb")]
+      .map((element) => this.cards.find((card) => card.id === element.dataset.id)).filter((card) => !card.removed)
+  }
+
+  // The starts the split screen already had, when its invoices run on from
+  // one another (1-3, 4-5): marked on the kept pages they name.
+  markSavedStarts() {
+    if (!this.splittingValue) return
+    const kept = this.keptCards()
+    this.splitStartsValue.forEach((page) => { if (page > 1 && kept[page - 1]) kept[page - 1].startsInvoice = true })
+    this.showSplit(false)
+  }
+
+  toggleSplitStart() {
+    if (!this.current) return
+    const kept = this.keptCards()
+    if (this.current.removed) return pbAlert({ title: "A removed page", message: "Keep the page first: a removed page starts nothing." })
+    if (kept[0] === this.current) return pbAlert({ title: "The first page", message: "The first page always starts the first invoice." })
+    this.current.startsInvoice = !this.current.startsInvoice
+    this.splitTouched = true
+    this.showLabel()
+    this.showSplit()
+  }
+
+  // Each invoice's first page marked on the strip, and its pages sent to the
+  // split screen once a mark has been set here.
+  showSplit(announce = true) {
+    if (!this.splittingValue) return
+    const kept = this.keptCards()
+    const firsts = kept.map((card, index) => (index === 0 || card.startsInvoice ? index + 1 : null)).filter(Boolean)
+    this.cards.forEach((card) => {
+      const mark = this.thumb(card)?.querySelector(".aim-pdf-thumb__start")
+      const number = firsts.indexOf(kept.indexOf(card) + 1) + 1
+      if (!mark) return
+      mark.hidden = !(firsts.length > 1 && number > 0)
+      mark.textContent = `Invoice ${number}`
+      this.thumb(card).classList.toggle("starts-invoice", !mark.hidden && number > 1)
+    })
+    if (!announce) return
+    const ranges = firsts.map((first, index) => [first, (firsts[index + 1] || kept.length + 1) - 1])
+    this.announce({ ranges: this.splitTouched ? ranges : null, pending: this.changed })
+  }
+
+  announce(detail) { window.dispatchEvent(new CustomEvent("aim-split:pages", { detail })) }
 
   // --- tools -----------------------------------------------------------------
 
@@ -242,6 +306,7 @@ export default class extends Controller {
     this.changed = true
     this.drawThumb(card)
     if (card === this.current) this.setMode("view")
+    this.showSplit()
   }
 
   async addPdf() {
@@ -261,6 +326,7 @@ export default class extends Controller {
       }
       this.changed = true
       this.select(first)
+      this.showSplit()
     } catch (error) {
       console.error(error)
       pbAlert({ title: "Not added", message: `${file.name} could not be read as a PDF.` })
@@ -523,6 +589,9 @@ export default class extends Controller {
     if (!ok) return
     this.markReread(this.formTarget)
     this.pagesTarget.value = JSON.stringify(pages)
+    if (this.hasSplitStartsTarget && this.splitTouched) {
+      this.splitStartsTarget.value = JSON.stringify(this.keptCards().map((card, index) => (card.startsInvoice ? index + 1 : null)).filter(Boolean))
+    }
     const files = new DataTransfer()
     this.insertFiles.forEach((file) => files.items.add(file))
     this.insertsTarget.files = files.files

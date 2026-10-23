@@ -1,0 +1,67 @@
+<%# Edit PDF's whole-PDF controls (#181, #192), in the Document panel's
+    header beside Edit PDF and shown while the editor is open
+    (aim_pdf_editor_controller): Versions, More (add pages, swap, read again),
+    Cancel and Apply. Locals: invoice, from ('fiscal' on Fiscal's page),
+    splittable (offer Split into separate invoices, #192). %>
+<% from = local_assigns[:from] %>
+<% reread = invoice.can_move_to?('received') %>
+<% splitting = invoice.state == 'needs_split' %>
+<span class="aim-pdf-toolbar__finish" hidden data-aim-pdf-editor-target="finish">
+  <% versions = Aim::PdfVersions.all(invoice).reverse %>
+  <% if versions.any? %>
+    <%# Every swap, edit and restore (#182): look at any, or make one current again. %>
+    <details class="aim-actions-menu aim-pdf-versions" data-controller="aim-actions-menu">
+      <summary class="btn compact ghost">Versions (<%= versions.size %>) ▾</summary>
+      <div class="aim-actions-menu__list">
+        <% versions.each_with_index do |version, index| %>
+          <div class="aim-pdf-versions__row">
+            <span class="aim-pdf-versions__line"><%= aim_pdf_version_line(version) %><%= ' (current)' if index.zero? %></span>
+            <%= link_to 'View', aim_pdf_version_invoice_path(invoice.batch_id, version.number), target: '_blank', rel: 'noopener', class: 'btn compact ghost' %>
+            <% unless index.zero? %>
+              <%= button_to 'Restore', aim_restore_pdf_version_invoice_path(invoice.batch_id, version.number, from: from), method: :post,
+                            class: 'btn compact', form: { data: { turbo: false } },
+                            data: { turbo_confirm: "Make version #{version.number} the current PDF? The current one stays as a version.",
+                                    confirm_title: 'Restore a version', confirm_label: 'Restore' } %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+  <details class="aim-actions-menu aim-pdf-more" data-controller="aim-actions-menu">
+    <summary class="btn compact ghost">More ▾</summary>
+    <div class="aim-actions-menu__list">
+      <label class="aim-pdf-more__item">Add pages from a PDF…
+        <input type="file" accept="application/pdf" hidden data-aim-pdf-editor-target="insertPicker" data-action="change->aim-pdf-editor#addPdf">
+      </label>
+      <%= form_with url: aim_replace_pdf_invoice_path(invoice.batch_id, from: from), method: :post, multipart: true,
+                    class: 'aim-pdf-more__form', data: { turbo: false } do %>
+        <label class="aim-pdf-more__item">Swap the whole PDF…
+          <%= file_field_tag :file, accept: 'application/pdf', hidden: true, id: nil,
+                             data: { action: 'change->aim-pdf-editor#swap' } %>
+        </label>
+        <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
+      <% end %>
+      <% if local_assigns[:splittable] %>
+        <%# Submits the review form, so what was typed there is saved first. %>
+        <button type="submit" form="aim-invoice-form" name="invoice_action" value="start_split" class="aim-pdf-more__item aim-pdf-more__split"
+                data-turbo-confirm="This PDF holds more than one invoice? Then say which pages are which. Nothing is cut until you approve the split."
+                data-confirm-title="Split into separate invoices" data-confirm-label="Split">Split into separate invoices…</button>
+      <% end %>
+      <% if reread %>
+        <label class="aim-pdf-more__item aim-pdf-more__check" title="After Apply or Swap, the AI reads the invoice again">
+          <input type="checkbox" data-aim-pdf-editor-target="reread"> Read it again with the AI
+        </label>
+      <% end %>
+    </div>
+  </details>
+  <button type="button" class="btn compact" data-action="aim-pdf-editor#cancel"><%= splitting ? 'Close' : 'Cancel' %></button>
+  <%= form_with url: aim_edit_pdf_invoice_path(invoice.batch_id, from: from), method: :patch, multipart: true,
+                class: 'aim-pdf-toolbar__apply', data: { turbo: false, aim_pdf_editor_target: 'form' } do %>
+    <%= hidden_field_tag :pages, '', id: nil, data: { aim_pdf_editor_target: 'pages' } %>
+    <%= hidden_field_tag :split_starts, '', id: nil, data: { aim_pdf_editor_target: 'splitStarts' } if splitting %>
+    <%= hidden_field_tag :reread, '0', id: nil, data: { reread: true } %>
+    <input type="file" name="inserts[]" multiple hidden data-aim-pdf-editor-target="inserts">
+    <button type="submit" class="btn approve compact" data-action="aim-pdf-editor#apply">Apply changes</button>
+  <% end %>
+</span>

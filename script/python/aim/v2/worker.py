@@ -19,9 +19,12 @@ import time
 import traceback
 
 from settings import Settings, load_environment
-from store import ACTOR, Db
+from store import ACTOR, STOPPABLE, Db, Stopped
 from intake import Intake
 from extraction import EXTRACTION_ERROR, extract
+# LEGACY (#192): Paperboy cuts a split itself now (Aim::BatchSplit). This is
+# kept only for a Paperboy that still asks the worker to (command 'split'), so
+# the worker can be deployed ahead of it. Removal: wiki AIM Alignment, item 1.
 from splitting import SPLIT_ERROR, split_batch
 from exporting import billing_payload, EXPORT_ERROR, export_invoice, insert_billing_row
 from vendors import field_alias_text
@@ -31,6 +34,7 @@ IDLE_SLEEP_SECONDS = 5
 
 OUTCOME_STATES = {"split": "needs_split", "review": "needs_review", "clean": "ready_for_approval"}
 # The review_reason a failed command leaves on the row.
+# 'split' is LEGACY (#192, see the splitting import).
 FAILURE_REASONS = {"extract": EXTRACTION_ERROR, "split": SPLIT_ERROR, "export": EXPORT_ERROR}
 
 
@@ -53,7 +57,7 @@ class Worker:
     def __init__(self, settings, db, name=None, intake=None, billing_insert=None):
         self.settings = settings
         self.db = db
-        self.name = name or f"{socket.gethostname()}:{ACTOR}"
+        self.name = (name or f"{socket.gethostname()}:{ACTOR}") + STOPPABLE
         self.intake = intake or Intake(settings, db)
         # How the billing row is written; the tests hand in a recorder.
         self.billing_insert = billing_insert or insert_billing_row
@@ -122,6 +126,9 @@ class Worker:
             return
         try:
             handler(row)
+        except Stopped:
+            # Stop the AI (#192): the person's choice stands; nothing is written.
+            print(f"    [-] {row['batch_id']} was taken from the AI by a person; its result is dropped")
         except Exception as e:
             print(f"    [!] {command} failed for {row['batch_id']}: {e}")
             traceback.print_exc()
@@ -129,20 +136,27 @@ class Worker:
 
     def fail(self, row, reason, error):
         current = self.db.get(row["id"]) or row
-        self.db.transition(current["id"], current["state"], "failed",
-                           note=f"{reason}: {error}",
-                           fields={"review_reason": reason, "review_note": str(error)[:2000]},
-                           command=None)
+        try:
+            # Only while the worker still holds it: a person who stopped the AI
+            # (#192) has decided where it goes, failure or not.
+            self.db.transition(current["id"], current["state"], "failed",
+                               note=f"{reason}: {error}",
+                               fields={"review_reason": reason, "review_note": str(error)[:2000]},
+                               command=None, owner=self.name)
+        except Stopped:
+            print(f"    [-] {row['batch_id']} was taken from the AI by a person; the failure is not recorded")
 
     def do_extract(self, row):
-        self.db.transition(row["id"], row["state"], "extracting", note=f"attempt {int(row.get('attempt') or 0) + 1}")
+        # Every write while the AI has it is guarded by the lease (#192).
+        self.db.transition(row["id"], row["state"], "extracting", note=f"attempt {int(row.get('attempt') or 0) + 1}",
+                           owner=self.name)
         aliases = self.db.load_aliases()
         rules = self.db.load_rules()
         result = extract(
             self.settings.pdf_path(row["batch_id"]), self.settings, aliases, rules,
             field_alias_text=field_alias_text(self.settings.field_aliases_file),
             split_check=True if row.get("split_check") is None else bool(row.get("split_check")),
-            heartbeat=lambda: self.db.renew_lease(row["id"], LEASE_SECONDS),
+            heartbeat=lambda: self.db.renew_lease(row["id"], LEASE_SECONDS, owner=self.name),
         )
         if result.learned_alias:
             extracted, normalized, note = result.learned_alias
@@ -162,10 +176,11 @@ class Worker:
         note = result.review_note if result.outcome == "review" else (
             f"{len(result.manifest['invoices'])} invoices in one file" if result.outcome == "split"
             else "fully extracted")
-        self.db.transition(row["id"], "extracting", state, note=note, fields=fields, command=None)
+        self.db.transition(row["id"], "extracting", state, note=note, fields=fields, command=None, owner=self.name)
         print(f"    [✓] {row['batch_id']} -> {state}" + (f" ({result.review_reason})" if result.review_reason else ""))
 
     def do_split(self, row):
+        """LEGACY (#192): see the splitting import."""
         children = split_batch(row, self.settings, self.db)
         print(f"    [✓] {row['batch_id']} -> split into {len(children)}")
 

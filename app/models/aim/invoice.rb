@@ -20,6 +20,7 @@ module Aim
     include Aim::InvoiceNaming
     include Aim::InvoiceCoding
     include Aim::InvoiceManualEntry
+    include Aim::InvoiceAiControl
     include Aim::InvoiceSecondApproval
     include Aim::InvoiceDuplicates
     include Aim::Transitions
@@ -51,6 +52,9 @@ module Aim
     ].freeze
 
     # What the worker does next. NULL means nothing.
+    # Paperboy never sets 'split' now: it cuts a split itself (Aim::BatchSplit,
+    # #192). It stays a valid value only while a row an older Paperboy asked
+    # the worker to split may exist (wiki: AIM Alignment, item 1).
     COMMANDS = %w[extract split export].freeze
 
     # A rejected or deleted invoice is finished, but AIM staff may bring one
@@ -58,11 +62,11 @@ module Aim
     RESTORE_STATES = %w[needs_review ready_for_approval].freeze
 
     TRANSITIONS = {
-      'received' => %w[extracting ready_for_approval rejected deleted],
-      'extracting' => %w[needs_review needs_split ready_for_approval failed received],
+      'received' => %w[extracting needs_review ready_for_approval rejected deleted],
+      'extracting' => %w[needs_review needs_split ready_for_approval failed received rejected deleted],
       'needs_review' => %w[ready_for_approval received needs_split rejected deleted],
-      'needs_split' => %w[split received ready_for_approval rejected deleted],
-      'ready_for_approval' => %w[approved needs_review rejected deleted],
+      'needs_split' => %w[split received needs_review ready_for_approval rejected deleted],
+      'ready_for_approval' => %w[approved needs_review needs_split rejected deleted],
       'approved' => %w[exporting needs_review],
       'exporting' => %w[exported failed],
       'failed' => %w[received approved needs_review ready_for_approval rejected deleted],
@@ -110,26 +114,12 @@ module Aim
     # bug, not a validation message to show someone.
     def transition_to!(new_state, actor:, note: nil, **changes)
       check_move!(new_state)
+      check_ai_stoppable!
       self.actor = actor
-      assign_attributes(changes)
+      assign_attributes(WORKER_STATES.include?(new_state.to_s) ? changes : WORKER_LETS_GO.merge(changes))
       self.state = new_state.to_s
       @transition_note = note
       save!
-    end
-
-    # What a user's approval, Fiscal and billing cannot do without (the
-    # required fields, Joshua 2026-09-29).
-    REQUIRED_FOR_A_USER = { 'vendor_name' => 'a vendor name', 'invoice_number' => 'an invoice number',
-                            'invoice_date' => 'an invoice date', 'invoice_total' => 'an invoice total',
-                            'budget_unit' => 'a budget unit' }.freeze
-
-    def ready_for_a_user? = missing_for_a_user.empty?
-
-    def missing_for_a_user
-      missing = []
-      missing << 'a document type' if document_type.blank? || document_type == UNSETTLED_DOCUMENT_TYPE
-      REQUIRED_FOR_A_USER.each { |field, name| missing << name if public_send(field).blank? }
-      missing
     end
 
     private

@@ -59,6 +59,7 @@ module Aim
       pages = JSON.parse(params[:pages].to_s)
       uploads = Array(params[:inserts]).first(MAX_INSERTS).select { |file| file.respond_to?(:path) }
       Aim::PdfVersions.edit!(@invoice, pages, uploads.map { |file| [file.path, file.original_filename.to_s] }, actor: current_user_email)
+      keep_split_starts
       finish('PDF changes applied.')
     rescue JSON::ParserError, Aim::PdfVersions::Refused => e
       back_to_editor(alert: "Not applied: #{e.message}. Nothing has changed.")
@@ -101,6 +102,17 @@ module Aim
     helper_method :return_path
 
     def back_to_editor(alert:) = redirect_to(return_path, alert: alert)
+
+    # The editor's "New invoice starts here" marks, carried through Apply to
+    # the split screen (#192), numbered as the applied PDF's pages.
+    def keep_split_starts
+      return unless @invoice.state == 'needs_split' && params[:split_starts].present?
+
+      starts = JSON.parse(params[:split_starts].to_s)
+      @invoice.mark_split_starts!(starts) if starts.is_a?(Array)
+    rescue JSON::ParserError
+      nil
+    end
 
     # Read it again with the AI, when asked and the pipeline allows it.
     def finish(notice)

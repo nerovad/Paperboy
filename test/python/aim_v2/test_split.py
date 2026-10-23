@@ -19,7 +19,7 @@ def worker(v2, settings, fake_db):
 
     class OneJob:
         def run_once(self):
-            job = fake_db.claim_next("test-worker", 900)
+            job = fake_db.claim_next(real.name, 900)
             assert job is not None, "nothing to do"
             real.dispatch(job)
             return 1

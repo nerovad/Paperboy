@@ -159,6 +159,15 @@ summary.btn {
 }
 .btn.btn-secondary:hover { background-color: $surface-control-hover; }
 
+/* A disabled button looks disabled whatever its colour (#192): after every
+   variant, and as specific as their hover, so none of them wins over it. */
+.btn:is(.disabled, :disabled, [aria-disabled="true"]),
+.btn:is(.disabled, :disabled, [aria-disabled="true"]):hover {
+  background-color: $button-disabled-bg;
+  color: $surface-base;
+  box-shadow: none;
+}
+
 /* ---------------------------------------------------------------------------
    Form-page controls — the submit / next / back row inside a form body. These
    share the button family's metrics so they read as one system, but they size

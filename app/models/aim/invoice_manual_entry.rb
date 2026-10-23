@@ -8,11 +8,27 @@ module Aim
   # refuses until then anyway. Included by Aim::Invoice.
   module InvoiceManualEntry
     # Where an AIM Admin may send an invoice to a queue from: not while the
-    # worker holds it (extracting, exporting), and not once it is approved or
-    # finished.
-    SENDABLE_STATES = %w[received needs_review needs_split failed ready_for_approval].freeze
+    # export has it, and not once it is approved or finished.
+    # While the AI reads it too, when that worker can be stopped (#192,
+    # Aim::InvoiceAiControl).
+    SENDABLE_STATES = %w[received extracting needs_review needs_split failed ready_for_approval].freeze
 
-    def sendable? = SENDABLE_STATES.include?(state)
+    # What a user's approval, Fiscal and billing cannot do without (the
+    # required fields, Joshua 2026-09-29).
+    REQUIRED_FOR_A_USER = { 'vendor_name' => 'a vendor name', 'invoice_number' => 'an invoice number',
+                            'invoice_date' => 'an invoice date', 'invoice_total' => 'an invoice total',
+                            'budget_unit' => 'a budget unit' }.freeze
+
+    def ready_for_a_user? = missing_for_a_user.empty?
+
+    def missing_for_a_user
+      missing = []
+      missing << 'a document type' if document_type.blank? || document_type == Aim::Invoice::UNSETTLED_DOCUMENT_TYPE
+      REQUIRED_FOR_A_USER.each { |field, name| missing << name if public_send(field).blank? }
+      missing
+    end
+
+    def sendable? = SENDABLE_STATES.include?(state) && (!waiting_for_ai? || ai_stoppable?)
 
     # To +owner+'s queue (an employee id, or the shared queue), in Ready for
     # Approval, the worker's pending command dropped; +manual+ flags it; +unit+
