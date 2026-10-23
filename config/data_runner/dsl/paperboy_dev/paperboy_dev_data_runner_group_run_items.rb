@@ -42,7 +42,7 @@
       ['created_at',    'created_at',    'datetime2(6)',   'NOT NULL',               nil],
       ['updated_at',    'updated_at',    'datetime2(6)',   'NOT NULL',               nil],
       ['duration_ms',   'duration_ms',   'int',            'NULL',                   nil],
-      ['current_step',  'current_step',  'nvarchar(4000)', 'NULL',                   nil],
+      ['current_step',  'current_step',  'nvarchar(4000)', 'NULL',                   nil]
     ],
     database_connections: [
       {

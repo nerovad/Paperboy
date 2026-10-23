@@ -83,7 +83,7 @@
       ['finished_at',           'finished_at',           'datetime2(6)',   'NULL',                   nil],
       ['acknowledged_at',       'acknowledged_at',       'datetime2(6)',   'NULL',                   nil],
       ['acknowledged_by',       'acknowledged_by',       'nvarchar(255)',  'NULL',                   nil],
-      ['pdf_purged_at',         'pdf_purged_at',         'datetime2(6)',   'NULL',                   nil],
+      ['pdf_purged_at',         'pdf_purged_at',         'datetime2(6)',   'NULL',                   nil]
     ],
     database_connections: [
       {

@@ -46,7 +46,7 @@
       ['InaccurateWindowsIdentity', 'InaccurateWindowsIdentity', 'nvarchar(256)',    'NULL',                   nil],
       ['PrepWarningOverridden',     'PrepWarningOverridden',     'bit',              'NOT NULL',               nil],
       ['JobID',                     'JobID',                     'varchar(50)',      'NULL',                   nil],
-      ['Comment',                   'Comment',                   'nvarchar(1000)',   'NULL',                   nil],
+      ['Comment',                   'Comment',                   'nvarchar(1000)',   'NULL',                   nil]
     ],
     database_connections: [
       {

@@ -40,7 +40,7 @@
       ['hidden_form_keys',          'hidden_form_keys',          'nvarchar(max)',  'NULL',                   nil],
       ['default_search_mode',       'default_search_mode',       'nvarchar(4000)', 'NULL',                   nil],
       ['app_homes',                 'app_homes',                 'nvarchar(max)',  'NULL',                   nil],
-      ['start_app',                 'start_app',                 'nvarchar(50)',   'NULL',                   nil],
+      ['start_app',                 'start_app',                 'nvarchar(50)',   'NULL',                   nil]
     ],
     database_connections: [
       {

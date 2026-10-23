@@ -40,7 +40,7 @@
       ['holder_employee_id', 'holder_employee_id', 'int',            'NULL',                   nil],
       ['holder_name',        'holder_name',        'nvarchar(255)',  'NULL',                   nil],
       ['holder_budget_unit', 'holder_budget_unit', 'nvarchar(10)',   'NULL',                   nil],
-      ['holder_source',      'holder_source',      'nvarchar(20)',   'NULL',                   nil],
+      ['holder_source',      'holder_source',      'nvarchar(20)',   'NULL',                   nil]
     ],
     database_connections: [
       {

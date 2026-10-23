@@ -51,7 +51,7 @@
       ['complete_on_edit',           'complete_on_edit',           'bit',            'NOT NULL',               nil],
       ['completion_rule',            'completion_rule',            'nvarchar(4000)', 'NOT NULL',               nil],
       ['deny_rule',                  'deny_rule',                  'nvarchar(4000)', 'NOT NULL',               nil],
-      ['button_labels',              'button_labels',              'nvarchar(max)',  'NULL',                   nil],
+      ['button_labels',              'button_labels',              'nvarchar(max)',  'NULL',                   nil]
     ],
     database_connections: [
       {

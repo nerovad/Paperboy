@@ -47,7 +47,7 @@
       ['stamped_at',      'stamped_at',      'datetime2(6)',  'NULL',                   nil],
       ['stamp_error',     'stamp_error',     'nvarchar(500)', 'NULL',                   nil],
       ['stamp_layout_id', 'stamp_layout_id', 'bigint',        'NULL',                   nil],
-      ['stamp_warnings',  'stamp_warnings',  'nvarchar(500)', 'NULL',                   nil],
+      ['stamp_warnings',  'stamp_warnings',  'nvarchar(500)', 'NULL',                   nil]
     ],
     database_connections: [
       {
