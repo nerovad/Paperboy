@@ -28,14 +28,19 @@
     },
     to_csv: { sheet: 0, header_row: 0, data_row: 1 },
     header: [
-      ['id', 'id', 'bigint', 'IDENTITY(1,1) NOT NULL', nil],
-      ['employee_id', 'employee_id', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['inbox_email_notifications', 'inbox_email_notifications', 'bit', 'NOT NULL', nil],
-      ['created_at', 'created_at', 'datetime2(6)', 'NOT NULL', nil],
-      ['updated_at', 'updated_at', 'datetime2(6)', 'NOT NULL', nil],
-      ['column_prefs', 'column_prefs', 'nvarchar(max)', 'NULL', nil],
-      ['theme', 'theme', 'nvarchar(4000)', 'NOT NULL', nil],
-      ['dam_storage_location_id', 'dam_storage_location_id', 'int', 'NULL', nil]
+
+      ['id',                        'id',                        'bigint',         'IDENTITY(1,1) NOT NULL', nil],
+      ['employee_id',               'employee_id',               'nvarchar(4000)', 'NOT NULL',               nil],
+      ['inbox_email_notifications', 'inbox_email_notifications', 'bit',            'NOT NULL',               nil],
+      ['created_at',                'created_at',                'datetime2(6)',   'NOT NULL',               nil],
+      ['updated_at',                'updated_at',                'datetime2(6)',   'NOT NULL',               nil],
+      ['column_prefs',              'column_prefs',              'nvarchar(max)',  'NULL',                   nil],
+      ['theme',                     'theme',                     'nvarchar(4000)', 'NOT NULL',               nil],
+      ['dam_storage_location_id',   'dam_storage_location_id',   'int',            'NULL',                   nil],
+      ['hidden_form_keys',          'hidden_form_keys',          'nvarchar(max)',  'NULL',                   nil],
+      ['default_search_mode',       'default_search_mode',       'nvarchar(4000)', 'NULL',                   nil],
+      ['app_homes',                 'app_homes',                 'nvarchar(max)',  'NULL',                   nil],
+      ['start_app',                 'start_app',                 'nvarchar(50)',   'NULL',                   nil],
     ],
     database_connections: [
       {
