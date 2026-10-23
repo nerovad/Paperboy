@@ -18,6 +18,7 @@ class ApplicationAccessGateTest < ActionController::TestCase
     [Development::DashboardController, :home, 'Development'],
     [DigitalAssetManagement::DashboardController, :home, 'Digital Asset Management'],
     [HsaAdoptionCards::DashboardController, :home, 'HSA Adoption Card Search'],
+    [HumanResources::DashboardController, :home, 'Human Resources'],
     [Itp::DashboardController, :home, 'IT Portal'],
     [P2m::DashboardController, :home, 'Print 2 Mail'],
     [Production::DashboardController, :index, 'Production']

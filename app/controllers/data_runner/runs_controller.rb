@@ -7,6 +7,7 @@ module DataRunner
     def show
       @group_run = GroupRun.find_by(run_id: params[:id])
       return redirect_to billing_data_refresh_run_log_path(@group_run) if billing_data_refresh?
+      return redirect_to human_resources_data_refresh_run_log_path(@group_run) if human_resources_data_refresh?
 
       @output = TaskRunner.output!(params[:id])
     end
@@ -15,6 +16,10 @@ module DataRunner
 
     def billing_data_refresh?
       @group_run&.group_name == Billing::DataRefresh::GROUP_RUN_NAME
+    end
+
+    def human_resources_data_refresh?
+      @group_run&.group_name == HumanResources::DataRefresh::GROUP_RUN_NAME
     end
   end
 end

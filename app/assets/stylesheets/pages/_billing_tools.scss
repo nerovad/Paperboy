@@ -31,6 +31,10 @@
     background: $green-teal;
   }
 
+  &.human-resources-data-refresh-theme {
+    background: $orange-action;
+  }
+
   h1 {
     margin: 0;
   }
@@ -77,6 +81,10 @@
 
   &.p2m-data-refresh-theme {
     --data-refresh-accent: #{$green-teal};
+  }
+
+  &.human-resources-data-refresh-theme {
+    --data-refresh-accent: #{$orange-action};
   }
 
   .data-refresh-grid {

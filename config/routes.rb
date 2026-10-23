@@ -330,6 +330,18 @@ Rails.application.routes.draw do
     get 'support', to: 'support#index', as: :support
   end
 
+  namespace :human_resources do
+    root 'dashboard#home'
+    get 'dashboard', to: 'dashboard#index', as: :dashboard
+    resource :data_refresh, only: %i[show update] do
+      post :restart
+    end
+    get 'data_refresh/runs/:run_id', to: 'data_refreshes#progress', as: :data_refresh_run
+    get 'data_refresh/runs/:run_id/status', to: 'data_refreshes#status', as: :data_refresh_run_status
+    get 'data_refresh/runs/:run_id/log', to: 'data_refreshes#log', as: :data_refresh_run_log
+    resources :grids, only: :show
+  end
+
   namespace :data_runner do
     root 'dsls#index'
 

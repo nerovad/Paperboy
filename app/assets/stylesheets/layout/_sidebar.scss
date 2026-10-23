@@ -499,6 +499,27 @@
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$slate-action});
   }
 
+  &.human-resources-sidebar {
+    /* Orange theme (from $orange-action in _tokens.scss). */
+    --sidebar-accent: #{$orange-action};
+    --sidebar-accent-hover: #{$orange-status-text};
+    --sidebar-accent-ring: #{rgba($orange-action, 0.2)};
+    --sidebar-accent-soft: #{rgba($orange-action, 0.08)};
+    --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
+
+    .human-resources-links .nav-link {
+      /* A link otherwise sizes to its label, so the rows come out
+         different widths. border-box keeps the padding inside the sidebar. */
+      box-sizing: border-box;
+      display: block;
+      width: 100%;
+      border: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+  }
+
   &.data-runner-sidebar {
     /* Blue / navy theme (from $brand-navy in _tokens.scss). */
     --sidebar-accent: #{$brand-navy};

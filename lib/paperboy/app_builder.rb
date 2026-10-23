@@ -25,7 +25,9 @@ module Paperboy
       'blue' => ['$blue-action', '$blue-action-hover'],
       'cyan' => ['$cyan-action', '$cyan-action-hover'],
       'slate' => ['$slate-action', '$slate-action-hover'],
-      'green' => ['$primary-color', '$green-action-hover']
+      'green' => ['$primary-color', '$green-action-hover'],
+      # Chart of Accounts uses this pair in layout/_sidebar.scss.
+      'orange' => ['$orange-action', '$orange-status-text']
     }.freeze
 
     attr_reader :key, :label, :module_name, :theme

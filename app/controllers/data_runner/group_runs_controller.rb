@@ -28,10 +28,13 @@ module DataRunner
 
     def set_run
       @run = GroupRun.includes(:items).find(params[:id])
-      if @run.group_name == Billing::DataRefresh::GROUP_RUN_NAME
+      case @run.group_name
+      when Billing::DataRefresh::GROUP_RUN_NAME
         redirect_to billing_data_refresh_run_path(@run)
-      elsif @run.group_name == P2m::DataRefresh::GROUP_RUN_NAME
+      when P2m::DataRefresh::GROUP_RUN_NAME
         redirect_to p2m_data_refresh_run_path(@run)
+      when HumanResources::DataRefresh::GROUP_RUN_NAME
+        redirect_to human_resources_data_refresh_run_path(@run)
       end
     end
 

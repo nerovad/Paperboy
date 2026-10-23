@@ -124,9 +124,11 @@ import P2mQualityControlController from "controllers/p2m_quality_control_control
 import StartupWarningController from "controllers/startup_warning_controller"
 import PfaGridController from "controllers/pfa_grid_controller"
 import SqlChartController from "controllers/sql_chart_controller"
+import HumanResourcesGridSearchController from "controllers/human_resources_grid_search_controller"
 
 // Register controllers with their data-controller names
 application.register("slideshow", SlideshowController)
+application.register("human-resources-grid-search", HumanResourcesGridSearchController)
 application.register("date-range", DateRangeController)
 application.register("pdf-preview", PdfPreviewController)
 application.register("probation-transfer-request", ProbationTransferRequestController)

@@ -102,6 +102,7 @@ class NavigationCatalog
            when 'data_runner' then data_runner_rows
            when 'print_production' then production_rows
            when 'development' then development_rows
+           when 'human_resources' then human_resources_rows
            else []
            end
 
@@ -178,6 +179,12 @@ class NavigationCatalog
     Production::Links::ALL.map do |link|
       { label: link[:label], path: link[:url], keywords: link[:title].to_s, external: true }
     end
+  end
+
+  def human_resources_rows
+    return [] unless feature?('human_resources', 'data_refresh')
+
+    [{ label: 'Refresh Data', path: human_resources_data_refresh_path }]
   end
 
   def development_rows

@@ -8,6 +8,7 @@ class DataRefreshesControllerTest < ActiveSupport::TestCase
 
     assert_empty expected - Billing::DataRefreshesController.action_methods.to_a
     assert_empty expected - P2m::DataRefreshesController.action_methods.to_a
+    assert_empty expected - HumanResources::DataRefreshesController.action_methods.to_a
   end
 
   test 'loads the active billing period before building refresh groups' do

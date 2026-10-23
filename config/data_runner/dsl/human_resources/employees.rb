@@ -4,7 +4,7 @@
   'Employees',
   {
     steps: {
-      manual: { enabled: true, steps: Workflow::REPLICATE_STEPS },
+      manual: { enabled: false, steps: Workflow::REPLICATE_STEPS },
       scheduled: { enabled: false, frequency: :daily, steps: Workflow::REPLICATE_STEPS }
     },
     group: {
