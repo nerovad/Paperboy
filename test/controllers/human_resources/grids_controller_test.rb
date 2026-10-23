@@ -36,7 +36,7 @@ module HumanResources
       assert_select '.human-resources-sidebar .pb-modal-backdrop', count: 0
       assert_select '.human-resources-links a.nav-link.active[href=?]',
                     human_resources_grid_path('bargaining_units'), text: 'Bargaining Units'
-      assert_select 'section.human-resources-page h1', text: 'Bargaining Units'
+      assert_select 'section.human-resources-page:not(.human-resources-page--employees) h1', text: 'Bargaining Units'
       assert_select 'form.human-resources-grid-search[data-controller=?]' \
                     '[data-human-resources-grid-search-debounce-value=?][data-turbo-frame=?]',
                     'human-resources-grid-search', '250', 'human-resources-grid'
@@ -90,7 +90,7 @@ module HumanResources
       end
 
       assert_response :success
-      assert_select 'th', text: 'last_name'
+      assert_select 'section.human-resources-page--employees th', text: 'last_name'
       assert_select 'th', text: 'person_email'
       assert_select 'th', text: 'active', count: 0
       assert_select '.pagy.series-nav a[aria-label=Previous][aria-disabled=true]', text: '<'
