@@ -1,8 +1,7 @@
 <%# app/views/human_resources/shared/_sidebar.html.erb
     Sidebar for the Human Resources app. The app switcher header is shared with
     every other app; everything below it is this app's own navigation. %>
-<div class="sidebar human-resources-sidebar" data-controller="human-resources-sidebar"
-     data-human-resources-sidebar-slideshow-url-value="<%= human_resources_root_path %>">
+<div class="sidebar human-resources-sidebar">
   <%= render "shared/app_switcher" %>
 
   <nav class="human-resources-links" aria-label="Human Resources actions">
@@ -11,28 +10,8 @@
                   class: "nav-link#{' active' if current_page?(human_resources_data_refresh_path)}" %>
     <% end %>
     <% HumanResources::GridCatalog.sidebar.each do |grid| %>
-      <button type="button" class="nav-link" data-action="human-resources-sidebar#select"
-              data-human-resources-sidebar-label-param="<%= grid.label %>"
-              data-human-resources-sidebar-url-param="<%= human_resources_grid_path(grid.slug) %>"><%= grid.label %></button>
+      <%= link_to grid.label, human_resources_grid_path(grid.slug),
+                  class: "nav-link#{' active' if current_page?(human_resources_grid_path(grid.slug))}" %>
     <% end %>
   </nav>
-
-  <div class="pb-modal-backdrop" data-human-resources-sidebar-target="backdrop" hidden>
-    <section class="pb-modal pb-modal--xl pb-modal--sidebar-selection" role="dialog" aria-modal="true"
-             aria-labelledby="human-resources-selection-title">
-      <div class="pb-modal__header">
-        <h3 id="human-resources-selection-title" data-human-resources-sidebar-target="title"></h3>
-        <button type="button" class="pb-modal__close" aria-label="Close"
-                data-action="human-resources-sidebar#dismiss">✕</button>
-      </div>
-      <div class="pb-modal__body">
-        <turbo-frame id="human-resources-grid" data-human-resources-sidebar-target="grid">
-          <p class="human-resources-grid__waiting">Loading…</p>
-        </turbo-frame>
-      </div>
-      <div class="pb-modal__actions">
-        <button type="button" class="btn" data-action="human-resources-sidebar#dismiss">Cancel</button>
-      </div>
-    </section>
-  </div>
 </div>

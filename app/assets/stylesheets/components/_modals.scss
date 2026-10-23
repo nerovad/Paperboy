@@ -96,18 +96,6 @@
   }
 }
 
-/* Rendered inside a themed sidebar, so the header uses that sidebar's accent. */
-.pb-modal--sidebar-selection .pb-modal__header {
-  background: var(--sidebar-accent);
-  color: $surface-base;
-  border-bottom-color: var(--sidebar-accent);
-
-  h3,
-  .pb-modal__close { color: $surface-base; }
-
-  .pb-modal__close:hover { color: $surface-base; }
-}
-
 .pb-modal__close {
   background: $alpha-clear;
   border: 0;

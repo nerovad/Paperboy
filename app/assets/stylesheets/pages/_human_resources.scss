@@ -1,8 +1,50 @@
 @use "base/tokens" as *;
 
-// The Human Resources grid sits in the sidebar card. The column header uses
-// the sidebar accent. The window is a fixed height so both scrollbars stay
-// available, and the page buttons sit under it.
+// A Human Resources table is a centered page, the same placement as a Chart
+// of Accounts collection. The column header uses the sidebar accent. The
+// window keeps both scrollbars, and the page buttons sit under it.
+
+.human-resources-page {
+  --sidebar-accent: #{$orange-action};
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.human-resources-page h1 {
+  margin: 0 0 20px;
+  color: $text-color;
+}
+
+.human-resources-grid-search {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 16px;
+}
+
+.human-resources-grid-search__label {
+  display: block;
+  margin-bottom: 6px;
+  color: $text-color;
+}
+
+.human-resources-grid-search__input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid $border-color;
+  border-radius: $radius-6;
+  background: $surface-base;
+  color: $text-color;
+  font: inherit;
+}
+
+.human-resources-grid-search__input:focus {
+  outline: none;
+  border-color: $orange-action;
+  box-shadow: 0 0 0 3px rgba($orange-action, 0.2);
+}
 
 .human-resources-grid {
   min-width: 0;
@@ -31,13 +73,6 @@
   }
 }
 
-.human-resources-grid__nav {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.human-resources-grid__waiting,
 .human-resources-grid__error {
   margin: 0;
   color: $muted;

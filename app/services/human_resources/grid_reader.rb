@@ -5,17 +5,19 @@ module HumanResources
   # never from the request, and are quoted before they reach GSABSS.
   class GridReader
     IDENTIFIER = /\A[A-Za-z_][A-Za-z0-9_]*\z/
+    LIKE_LITERAL = { '%' => '[%]', '_' => '[_]', '[' => '[[]', ']' => '[]]' }.freeze
 
-    def self.count(definition, connection: GsabssBase.connection)
-      row = connection.exec_query("SELECT COUNT(*) AS tally FROM #{qualified(definition, connection)}").first
+    def self.count(definition, query: nil, connection: GsabssBase.connection)
+      sql = "SELECT COUNT(*) AS tally FROM #{qualified(definition, connection)}#{filter_sql(definition, query, connection)}"
+      row = connection.exec_query(sql).first
       (row['tally'] || row.values.first).to_i
     end
 
-    def self.rows(definition, offset:, limit:, connection: GsabssBase.connection)
+    def self.rows(definition, offset:, limit:, query: nil, connection: GsabssBase.connection)
       list = column_list(definition, connection)
       sql = <<~SQL.squish
         SELECT #{list}
-        FROM #{qualified(definition, connection)}
+        FROM #{qualified(definition, connection)}#{filter_sql(definition, query, connection)}
         ORDER BY #{quote(definition.columns.first, connection)}
         OFFSET #{offset.to_i} ROWS FETCH NEXT #{limit.to_i} ROWS ONLY
       SQL
@@ -33,6 +35,31 @@ module HumanResources
       definition.columns.map { |name| quote(name, connection) }.join(', ')
     end
     private_class_method :column_list
+
+    # Chart of Accounts counts a match when every typed character appears in
+    # order. A page holds 200 rows, so the same rule runs in SQL and the grid
+    # stays ordered by its first column.
+    def self.filter_sql(definition, query, connection)
+      pattern = like_pattern(query)
+      return '' if pattern.nil?
+
+      quoted = connection.quote(pattern)
+      clauses = definition.search_columns.map do |name|
+        "LOWER(CAST(#{quote(name, connection)} AS nvarchar(4000))) LIKE #{quoted}"
+      end
+      raise ArgumentError, 'Human Resources grid has no search columns' if clauses.empty?
+
+      " WHERE #{clauses.join(' OR ')}"
+    end
+    private_class_method :filter_sql
+
+    def self.like_pattern(query)
+      text = query.to_s.strip.downcase
+      return if text.empty?
+
+      "%#{text.chars.map { |char| LIKE_LITERAL.fetch(char, char) }.join('%')}%"
+    end
+    private_class_method :like_pattern
 
     def self.quote(name, connection)
       raise ArgumentError, 'Unsafe SQL identifier' unless IDENTIFIER.match?(name.to_s)

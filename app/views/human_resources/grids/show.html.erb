@@ -1,34 +1,42 @@
-<%= turbo_frame_tag 'human-resources-grid', data: { human_resources_sidebar_target: 'grid' } do %>
-  <% if @error %>
-    <p class="human-resources-grid__error" role="alert"><%= @error %></p>
-  <% else %>
-    <div class="human-resources-grid">
-      <%= render 'pfa/grid/table', columns: @grid.columns, rows: @grid.rows,
-                 header: ->(column) { column.label },
-                 cell: ->(column, row) { row[column.key] } %>
-      <div class="pagination-wrapper">
-        <nav class="human-resources-grid__nav" aria-label="Row navigation">
-          <% if @pagy.previous %>
-            <%= link_to 'Previous', human_resources_grid_path(@definition.slug, page: @pagy.previous),
-                        class: 'btn compact', data: { turbo_frame: 'human-resources-grid' } %>
-          <% else %>
-            <button type="button" class="btn compact" disabled>Previous</button>
-          <% end %>
-          <% if @pagy.next %>
-            <%= link_to 'Next', human_resources_grid_path(@definition.slug, page: @pagy.next),
-                        class: 'btn compact', data: { turbo_frame: 'human-resources-grid' } %>
-          <% else %>
-            <button type="button" class="btn compact" disabled>Next</button>
-          <% end %>
-        </nav>
-        <p class="pagination-info">
-          <% if @pagy.count.positive? %>
-            Showing <%= number_with_delimiter(@pagy.from) %>–<%= number_with_delimiter(@pagy.to) %> of <%= number_with_delimiter(@pagy.count) %> rows
-          <% else %>
-            Showing 0 of 0 rows
-          <% end %>
-        </p>
-      </div>
-    </div>
+<%# A Human Resources table is its own page, positioned like a Chart of
+    Accounts collection. The slideshow is the namespace root, so opening a
+    grid leaves that page and the slideshow stops. The search form stays
+    outside the frame so a debounced submit does not replace the field. %>
+<section class="human-resources-page">
+  <h1><%= @definition.label %></h1>
+
+  <%= form_with url: human_resources_grid_path(@definition.slug), method: :get,
+                html: { class: "human-resources-grid-search" },
+                data: { controller: "human-resources-grid-search",
+                        human_resources_grid_search_debounce_value: 250,
+                        turbo_frame: "human-resources-grid",
+                        action: "input->human-resources-grid-search#schedule " \
+                                 "search->human-resources-grid-search#schedule " \
+                                 "submit->human-resources-grid-search#cancel" } do %>
+    <%= label_tag :q, "Search #{@definition.label}", class: "human-resources-grid-search__label" %>
+    <%= search_field_tag :q, @query, class: "human-resources-grid-search__input",
+                          autocomplete: "off", placeholder: "Fuzzy search" %>
   <% end %>
-<% end %>
+
+  <%= turbo_frame_tag "human-resources-grid" do %>
+    <% if @error %>
+      <p class="human-resources-grid__error" role="alert"><%= @error %></p>
+    <% else %>
+      <div class="human-resources-grid">
+        <%= render "pfa/grid/table", columns: @grid.columns, rows: @grid.rows,
+                   header: ->(column) { column.label },
+                   cell: ->(column, row) { row[column.key] } %>
+        <div class="pagination-wrapper">
+          <%== @pagy.series_nav %>
+          <p class="pagination-info">
+            <% if @pagy.count.positive? %>
+              Showing <%= number_with_delimiter(@pagy.from) %>–<%= number_with_delimiter(@pagy.to) %> of <%= number_with_delimiter(@pagy.count) %> rows
+            <% else %>
+              Showing 0 of 0 rows
+            <% end %>
+          </p>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</section>
