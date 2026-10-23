@@ -10,15 +10,15 @@
       <%= link_to "Refresh Data", human_resources_data_refresh_path,
                   class: "nav-link#{' active' if current_page?(human_resources_data_refresh_path)}" %>
     <% end %>
-    <% ["Employees", "Bargaining Units", "FLSA Status", "Job Salaries",
-        "Unions", "Union codes", "VCHRP unions"].each do |label| %>
+    <% HumanResources::GridCatalog.sidebar.each do |grid| %>
       <button type="button" class="nav-link" data-action="human-resources-sidebar#select"
-              data-human-resources-sidebar-label-param="<%= label %>"><%= label %></button>
+              data-human-resources-sidebar-label-param="<%= grid.label %>"
+              data-human-resources-sidebar-url-param="<%= human_resources_grid_path(grid.slug) %>"><%= grid.label %></button>
     <% end %>
   </nav>
 
   <div class="pb-modal-backdrop" data-human-resources-sidebar-target="backdrop" hidden>
-    <section class="pb-modal pb-modal--sidebar-selection" role="dialog" aria-modal="true"
+    <section class="pb-modal pb-modal--xl pb-modal--sidebar-selection" role="dialog" aria-modal="true"
              aria-labelledby="human-resources-selection-title">
       <div class="pb-modal__header">
         <h3 id="human-resources-selection-title" data-human-resources-sidebar-target="title"></h3>
@@ -26,11 +26,12 @@
                 data-action="human-resources-sidebar#dismiss">✕</button>
       </div>
       <div class="pb-modal__body">
-        <p data-human-resources-sidebar-target="message"></p>
+        <turbo-frame id="human-resources-grid" data-human-resources-sidebar-target="grid">
+          <p class="human-resources-grid__waiting">Loading…</p>
+        </turbo-frame>
       </div>
       <div class="pb-modal__actions">
         <button type="button" class="btn" data-action="human-resources-sidebar#dismiss">Cancel</button>
-        <button type="button" class="btn approve" data-action="human-resources-sidebar#dismiss">Okay</button>
       </div>
     </section>
   </div>

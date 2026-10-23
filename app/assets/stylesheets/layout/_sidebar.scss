@@ -508,6 +508,11 @@
     --sidebar-gradient: linear-gradient(135deg, #{$sidebar-navy}, #{$orange-action});
 
     .human-resources-links .nav-link {
+      /* A button otherwise shrinks to its label, so the rows come out
+         different widths. border-box keeps the padding inside the sidebar. */
+      box-sizing: border-box;
+      display: block;
+      width: 100%;
       border: 0;
       font: inherit;
       text-align: left;

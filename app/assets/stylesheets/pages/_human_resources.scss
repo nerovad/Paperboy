@@ -1,0 +1,44 @@
+@use "base/tokens" as *;
+
+// The Human Resources grid sits in the sidebar card. The column header uses
+// the sidebar accent. The window is a fixed height so both scrollbars stay
+// available, and the page buttons sit under it.
+
+.human-resources-grid {
+  min-width: 0;
+
+  .pfa-grid__table th,
+  .pfa-grid__table td {
+    line-height: 1.25;
+  }
+
+  .pfa-grid__scrollport {
+    --human-resources-grid-row: calc(1.25 * 0.875rem + 20px);
+    height: min(calc(12 * var(--human-resources-grid-row)), calc(100vh - 18rem));
+    overflow: scroll;
+  }
+
+  .pfa-grid__table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .pfa-grid__table thead th {
+    background: var(--sidebar-accent, #{$orange-action});
+    color: $surface-base;
+    border-bottom-color: var(--sidebar-accent, #{$orange-action});
+    border-right-color: rgba(255, 255, 255, 0.25);
+  }
+}
+
+.human-resources-grid__nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.human-resources-grid__waiting,
+.human-resources-grid__error {
+  margin: 0;
+  color: $muted;
+}
