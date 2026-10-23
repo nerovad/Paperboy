@@ -31,10 +31,11 @@ class WorkflowTest < ActiveSupport::TestCase
     ENV[Workflow::ORCHESTRATION_ENV] = previous
   end
 
-  test 'replicate steps stream the extract and then inject' do
-    assert_equal %i[replicate inject], Workflow::REPLICATE_STEPS
+  test 'replicate steps read the live source, stream the extract, and then inject' do
+    assert_equal %i[use_sql replicate inject], Workflow::REPLICATE_STEPS
     assert_not_includes Workflow::ALL_STEPS, :replicate
-    assert_equal %w[replicate.rb inject.rb], Workflow.refresh_scripts(Workflow::REPLICATE_STEPS)
+    assert_not_includes Workflow::ALL_STEPS, :use_sql
+    assert_equal %w[use_sql.rb replicate.rb inject.rb], Workflow.refresh_scripts(Workflow::REPLICATE_STEPS)
     assert_equal %w[download.rb to_csv.rb use_dsl.rb inject.rb], Workflow.refresh_scripts(Workflow::SCHEDULED_STEPS)
 
     cfg = {
@@ -44,6 +45,7 @@ class WorkflowTest < ActiveSupport::TestCase
       }
     }
 
+    assert Workflow.wants_step?(cfg, :use_sql)
     assert Workflow.wants_step?(cfg, :replicate)
     assert Workflow.wants_step?(cfg, :inject)
     assert_not Workflow.wants_step?(cfg, :download)
